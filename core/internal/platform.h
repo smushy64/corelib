@@ -43,6 +43,8 @@ void platform_sleep( u32 ms );
 
 b32 platform_thread_create(
     ThreadMainFN* main, void* params, usize stack_size, void** handle );
+void platform_thread_destroy( void* handle );
+b32 platform_thread_exit_code( void* handle, int* out_exit_code );
 
 b32 platform_path_is_file( const Path path );
 b32 platform_path_is_directory( const Path path );

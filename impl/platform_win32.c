@@ -229,7 +229,23 @@ b32 platform_thread_create(
     *handle = thread_handle;
     return true;
 }
+void platform_thread_destroy( void* handle ) {
+    TerminateThread( handle, 0 );
+    CloseHandle( handle );
+}
+b32 platform_thread_exit_code( void* handle, int* out_exit_code ) {
+    DWORD result = WaitForSingleObject( handle, 0 );
+    if( result != WAIT_OBJECT_0 ) {
+        // thread has not yet finished.
+        return false;
+    }
 
+    DWORD exit_code = 0;
+    GetExitCodeThread( handle, &exit_code );
+
+    *out_exit_code = rcast( int, &exit_code );
+    return true;
+}
 attr_internal void internal_win32_log_error( DWORD error_code ) {
     #define CORE_WIN32_ERROR_BUFFER_SIZE (256)
     char internal_win32_error_buffer[CORE_WIN32_ERROR_BUFFER_SIZE];

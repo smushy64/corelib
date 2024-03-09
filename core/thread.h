@@ -37,7 +37,15 @@ attr_core_api void thread_sleep( u32 ms );
 attr_core_api Thread* thread_create(
     ThreadMainFN* thread_main, void* thread_main_params,
     usize thread_stack_size );
-
-// TODO(alicia): more thread functions
+/// @brief Forcibly stop a thread.
+/// @param[in] thread Thread to destroy.
+/// @warning Only use this if program needs to be forcibly shutdown.
+attr_core_api void thread_destroy( Thread* thread );
+/// @brief Check if thread has terminated and if it has, retrieve exit code.
+/// @param[in] thread Thread handle.
+/// @param[out] out_exit_code Pointer to write exit code to.
+/// Only written to if function returns true.
+/// @return True if thread has exited, false if it's still running.
+attr_core_api b32 thread_exit_code( Thread* thread, int* out_exit_code );
 
 #endif /* header guard */

@@ -23,4 +23,10 @@ attr_core_api Thread* thread_create(
     }
     return handle;
 }
+attr_core_api void thread_destroy( Thread* thread ) {
+    platform_thread_destroy( thread );
+}
+attr_core_api b32 thread_exit_code( Thread* thread, int* out_exit_code ) {
+    return platform_thread_exit_code( thread, out_exit_code );
+}
 
