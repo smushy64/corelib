@@ -19,7 +19,7 @@ It's a cross-platform library that provides math types & functions
 
 ## Links
 - [Source Code.](https://github.com/smushy64/corelib)
-- [Latest Release.]()
+- [Latest Release.](https://github.com/smushy64/corelib/releases/tag/v0.1.0)
 - [Build steps and generating documentation.](./BUILD.md)
 - [Changelog.](./CHANGELOG.md)
 
