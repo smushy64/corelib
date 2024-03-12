@@ -153,7 +153,7 @@ clean_build_junk: $(TARGET)
 
 test: $(TEST_TARGET)
 	@echo "Make: running tests . . ."
-	export LD_LIBRARY_PATH=./build:$LD_LIBRARY_PATH; $(TEST_TARGET)
+	cd $(OUTPUT_PATH); $(TEST_TARGET)
 
 print_info:
 	@echo "Make: Configuration:"
@@ -182,11 +182,12 @@ endif
 SOURCES      := $(call recurse,impl,*.c)
 SOURCES_FILE := $(OUTPUT_OBJ_PATH)/temp.c
 
-CFLAGS      :=
-CPPFLAGS    := CORE_ENABLE_EXPORT 
-LDFLAGS     :=
-INCLUDE     :=
-OUTPUT_FILE :=
+CFLAGS        :=
+CPPFLAGS      := CORE_ENABLE_EXPORT 
+LDFLAGS       :=
+INCLUDE       :=
+OUTPUT_FILE   :=
+WARNING_FLAGS :=
 
 CPPFLAGS += $(if $(CORE_ENABLE_STDLIB),CORE_ENABLE_STDLIB,)
 CPPFLAGS += $(if $(CORE_ENABLE_LOGGING),CORE_ENABLE_LOGGING,)
@@ -212,7 +213,7 @@ CPPFLAGS += CORE_LIB_VERSION_MINOR=$(CORE_LIB_VERSION_MINOR)
 CPPFLAGS += CORE_LIB_VERSION_PATCH=$(CORE_LIB_VERSION_PATCH)
 
 TEST_CPPFLAGS := $(subst CORE_ENABLE_EXPORT,,$(CPPFLAGS))
-INCLUDEFLAGS := -I.
+INCLUDEFLAGS  := -I.
 ifeq ($(COMPILER),msvc)
 	# TODO(alicia): finish msvc flags!
 	SOURCES_FILE := $(subst /,\\,$(SOURCES_FILE))
@@ -248,7 +249,8 @@ else
 		CFLAGS += $(if $(NO_SYMBOLS),,-g)
 	endif
 
-	CFLAGS   += -Wall -Wextra -Werror -Werror=vla
+	WARNING_FLAGS += -Wall -Wextra -Werror -Werror=vla
+	CFLAGS   += $(WARNING_FLAGS)
 	LDFLAGS  += -shared
 	LDFLAGS  += $(if $(CORE_ENABLE_STDLIB),,-nostdlib)
 
@@ -275,7 +277,7 @@ else
 endif
 
 DISPLAY_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(DEF) $(LDFLAGS)
-COMMAND_LINE      := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+COMMAND_LINE         := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 TEST_FILTER_CFLAGS   := -fPIC
 TEST_FILTER_LDFLAGS  := -shared -nostdlib
@@ -399,6 +401,16 @@ docs:
 	$(if $(OPEN_DOCS),echo "Make: opening documentation in $(DOCS_BROWSER) . . .",)
 	$(OPEN_DOCS)
 
+LSP_FLAGS := $(COMPILER_PATH) $(STD_VERSION) $(subst -I.,-I..,$(INCLUDEFLAGS)) $(DEF) -DCORE_COMMAND_LINE=\"\" -D_CLANGD $(WARNING_FLAGS) -nostdinc
+lsp:
+	@echo "Make: generating compile_flags.txt for clangd . . ."
+	-@rm -f ./core/compile_flags.txt 2> /dev/null || true
+	-@rm -f ./impl/compile_flags.txt 2> /dev/null || true
+	for i in $(LSP_FLAGS);\
+		do echo $$i >> ./core/compile_flags.txt;\
+	done
+	@cp ./core/compile_flags.txt ./impl/compile_flags.txt
+
 help:
 	@echo "Make recipes:"
 	@echo "   all      compile project for current platform."
@@ -446,15 +458,6 @@ clean:
 	-@rm -f $(OUTPUT_PATH)/* 2> /dev/null || true
 	@echo "Make: cleaning ./docs/html . . ."
 	-@rm -f ./docs/html/* -r 2> /dev/null || true
-
-spit:
-	# @echo $(INCLUDEFLAGS)
-	# @echo ${EXTERNAL_INCLUDE}
-	# @echo $(COMPILER_PATH)
-	# @echo $(STD_VERSION)
-	# @echo $(INCLUDEFLAGS)
-	# @$(foreach flag,$(CFLAGS),echo $(flag);)
-	# @$(foreach flag,$(DEF),echo $(flag);)
 
 err: ; $(ERROR_MSG)
 
