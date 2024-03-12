@@ -30,7 +30,10 @@
 
 #if defined(CORE_PLATFORM_WINDOWS)
     #include "impl/platform_win32.c"
+#elif defined(CORE_PLATFORM_LINUX)
+    #include "impl/platform_linux.c"
 #endif
+
 #include "impl/platform_dllmain.c"
 
 #endif /* header guard */

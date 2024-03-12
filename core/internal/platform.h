@@ -18,10 +18,9 @@ void* platform_heap_realloc(
 void platform_heap_free( void* buffer, const usize size );
 
 void platform_query_timestamp( TimeStamp* out_timestamp );
-u64  platform_query_ticks(void);
-
-extern u64 global_platform_ticks_per_second;
-void platform_set_ticks_per_second(void);
+CoreTicks platform_query_ticks(void);
+CoreTicks platform_ticks_diff( CoreTicks lhs, CoreTicks rhs );
+f64 platform_ticks_to_seconds( CoreTicks ticks );
 
 void platform_console_write( void* dst, usize len, const char* str );
 

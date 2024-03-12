@@ -27,6 +27,31 @@ typedef struct CoreTimeStamp {
     u32 second;
 } TimeStamp;
 
+#if defined(CORE_PLATFORM_WINDOWS)
+    /// @brief System ticks.
+    typedef i64 CoreTicks;
+#else
+    /// @brief System ticks.
+    typedef struct {
+        u64 sec;
+        u64 nsec;
+    } CoreTicks;
+#endif
+
+/// @brief Query ticks from system.
+///
+/// Useful for high resolution time keeping.
+/// @return Ticks.
+attr_core_api CoreTicks time_query_ticks(void);
+/// @brief Calculate difference between ticks.
+/// @param lhs, rhs Ticks to get difference of.
+/// @return Difference between @c lhs and @c rhs.
+attr_core_api CoreTicks time_ticks_diff( CoreTicks lhs, CoreTicks rhs );
+/// @brief Convert ticks to seconds.
+/// @param ticks Ticks from system.
+/// @return f64 Seconds.
+attr_core_api f64 time_ticks_to_seconds( CoreTicks ticks );
+
 #if defined(CORE_CPLUSPLUS)
 
 #include "core/macros.h" // IWYU pragma: keep
@@ -55,8 +80,8 @@ struct TimerBlock {
     StreamFormatFN* stream;
     /// @brief Target to stream to.
     void* target;
-    /// @brief Ticks when #TimerBlock is created.
-    u64 start_ticks;
+    /// @brief Ticks when #TimerBlock was created.
+    CoreTicks start_ticks;
 
     /// @brief Constructor.
     /// @param[in] opt_block_name (optional) Name of time block. Gets streamed at construction and destruction.
@@ -70,10 +95,9 @@ struct TimerBlock {
     ///
     /// Queries ticks and streams time between construction and destruction to #target.
     ~TimerBlock() {
-        u64 end_ticks = time_query_ticks();
-        f64 time_sec  =
-            (f64)(end_ticks - start_ticks) / (f64)time_query_ticks_per_second();
-        f64 time_ms = time_sec * 1000.0;
+        CoreTicks end_ticks = time_query_ticks();
+        f64 time_sec = time_ticks_to_seconds( time_ticks_diff( end_ticks, start_ticks ) );
+        f64 time_ms  = time_sec * 1000.0;
 
         if( opt_block_name ) {
             fmt( stream, target, str_cyan( "[TIMER] " ) "{cc}: {f64}sec ({f64}ms)\n",
@@ -148,15 +172,6 @@ attr_header b32 time_24hr_to_12hr( u32 hr24, u32* out_hr12 ) {
 
     return hr24 < 12;
 }
-
-/// @brief Query how many ticks there are per second.
-/// @return Ticks per second.
-attr_core_api u64 time_query_ticks_per_second(void);
-/// @brief Query ticks since hardware turned on.
-///
-/// Useful for relative high resolution time keeping.
-/// @return Ticks.
-attr_core_api u64 time_query_ticks(void);
 
 /// @brief Initialize global time keeping.
 ///

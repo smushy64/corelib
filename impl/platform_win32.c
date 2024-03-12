@@ -69,14 +69,24 @@ void platform_query_timestamp( TimeStamp* out_timestamp ) {
 u64 platform_query_ticks(void) {
     LARGE_INTEGER li;
     QueryPerformanceCounter( &li );
+    return li.QuadPart;
+}
+CoreTicks platform_query_ticks(void) {
+    LARGE_INTEGER li;
+    QueryPerformanceCounter( &li );
     return rcast( u64, &li.QuadPart );
 }
-
-u64 global_platform_ticks_per_second = 0;
-void platform_set_ticks_per_second(void) {
-    LARGE_INTEGER li;
-    QueryPerformanceFrequency( &li );
-    global_platform_ticks_per_second = rcast( u64, &li.QuadPart );
+CoreTicks platform_ticks_diff( CoreTicks lhs, CoreTicks rhs ) {
+    return lhs - rhs;
+}
+i64 global_platform_ticks_per_second = 0;
+f64 platform_ticks_to_seconds( CoreTicks ticks ) {
+    if( !global_platform_ticks_per_second ) {
+        LARGE_INTEGER li;
+        QueryPerformanceCounter( &li );
+        global_platform_ticks_per_second = li.QuadPart;
+    }
+    return (f64)(ticks) / (f64)global_platform_ticks_per_second;
 }
 
 void platform_console_write( void* dst, usize len, const char* str ) {
