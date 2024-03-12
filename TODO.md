@@ -1,4 +1,5 @@
 # Todo List
+- [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
@@ -26,4 +27,5 @@
 - [x] math: is_power_of_two
 - [x] math: RGB <-> HSL conversions
 - [x] thread: more functions (thread_destroy?)
+- [x] Makefile: generate compile_flags.txt
 

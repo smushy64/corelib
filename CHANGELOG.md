@@ -26,6 +26,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 - docs:memory: added warning about realloc not returning the same base pointer.
 - sync: added semaphore and mutex sizes.
 - test: added build description and command line print-out before tests are run.
+- Makefile: test now cd's into build path before running test.
+- Makefile: added lsp target for generating compile_commands.txt
 
 0.1.0
 ------
