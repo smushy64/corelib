@@ -223,7 +223,9 @@ attr_core_api void* memory_realloc(
     return platform_heap_realloc( old_buffer, (usize)old_size, (usize)new_size );
 }
 attr_core_api void memory_free( void* buffer, usize size ) {
-    platform_heap_free( buffer, (usize)size );
+    if( buffer ) {
+        platform_heap_free( buffer, (usize)size );
+    }
 }
 attr_core_api void* memory_alloc_aligned( usize size, usize alignment ) {
     void* ptr = memory_alloc( size + alignment + sizeof(void*) );

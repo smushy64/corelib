@@ -4,7 +4,7 @@
 
 CORE_LIB_VERSION_MAJOR=0
 CORE_LIB_VERSION_MINOR=1
-CORE_LIB_VERSION_PATCH=0
+CORE_LIB_VERSION_PATCH=1
 
 MAKEFLAGS += -s
 
@@ -153,7 +153,7 @@ clean_build_junk: $(TARGET)
 
 test: $(TEST_TARGET)
 	@echo "Make: running tests . . ."
-	$(TEST_TARGET)
+	export LD_LIBRARY_PATH=./build:$LD_LIBRARY_PATH; $(TEST_TARGET)
 
 print_info:
 	@echo "Make: Configuration:"
@@ -264,7 +264,9 @@ else
 			LDFLAGS += -lkernel32
 		endif
 	else
-		LDFLAGS += -Wl,--stack,0x100000
+		CFLAGS   += -fPIC
+		LDFLAGS  += -Wl,-z,stack-size=0x100000
+		CPPFLAGS += _GNU_SOURCE
 	endif
 
 	TEST_CPPFLAGS := $(addprefix -D,$(TEST_CPPFLAGS))
@@ -274,9 +276,17 @@ endif
 
 DISPLAY_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(DEF) $(LDFLAGS)
 COMMAND_LINE      := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
-TEST_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION) ./test/test.c $(TEST_OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(TEST_CPPFLAGS) $(filter-out -shared -nostdlib,$(LDFLAGS)) -L./build -l$(subst lib,,$(TARGET_NAME))
 
-$(TARGET): print_info $(OUTPUT_PATH) $(SOURCES_FILE)
+TEST_FILTER_CFLAGS   := -fPIC
+TEST_FILTER_LDFLAGS  := -shared -nostdlib
+TEST_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION)\
+	./test/test.c $(TEST_OUTPUT_FILE) $(INCLUDEFLAGS)\
+	$(filter-out $(TEST_FILTER_CFLAGS),$(CFLAGS))\
+	$(TEST_CPPFLAGS)\
+	$(filter-out $(TEST_FILTER_LDFLAGS),$(LDFLAGS))\
+	-L./build -l$(subst lib,,$(TARGET_NAME))
+
+$(TARGET): print_info $(OUTPUT_OBJ_PATH) $(SOURCES_FILE)
 	@echo "Make: "$(DISPLAY_COMMAND_LINE)
 	$(COMMAND_LINE)
 

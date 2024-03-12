@@ -57,6 +57,10 @@ attr_core_api const char* core_version_string( usize* opt_out_len );
 /// @param[out] opt_out_len (optional) Length of description string.
 /// @return Null-terminated UTF-8 description string.
 attr_core_api const char* core_build_description( usize* opt_out_len );
+/// @brief Get string that describes command line used to build library.
+/// @param[out] opt_out_len (optional) Length of command line string.
+/// @return Null-terminated UTF-8 command line string.
+attr_core_api const char* core_command_line( usize* opt_out_len );
 /// @brief Set logging level.
 ///
 /// If logging level is set to none, disables logging.

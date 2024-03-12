@@ -16,6 +16,9 @@
 #if defined(CORE_PLATFORM_WINDOWS)
     #define ___CORE_INTERNAL_SEMAPHORE_SIZE ( sizeof(void*) )
     #define ___CORE_INTERNAL_MUTEX_SIZE     ( sizeof(void*) )
+#elif defined(CORE_PLATFORM_LINUX)
+    #define ___CORE_INTERNAL_SEMAPHORE_SIZE (sizeof(void*))
+    #define ___CORE_INTERNAL_MUTEX_SIZE     (40) // sizeof pthread_mutex_t
 #else
     #error "Semaphore and Mutex sizes not defined on current platform!"
 #endif

@@ -51,6 +51,15 @@ int main( int argc, char** argv ) {
     int result = 0;
     #define test( fn ) result = fn(); if( result ) return result
 
+    String build_desc;
+    build_desc.cc = core_build_description( &build_desc.len );
+    String command_line;
+    command_line.cc = core_command_line( &command_line.len );
+
+    println( "running tests for core lib version {cc} . . .", core_version_string(NULL) );
+    println( "build desc:   {s}", build_desc );
+    println( "command line: {s}", command_line );
+
     test( core_lib_tests );
     test( core_collections_tests );
     test( core_math_tests );

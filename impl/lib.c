@@ -107,6 +107,13 @@ attr_core_api const char* core_build_description( usize* opt_out_len ) {
     }
     return global_build_description;
 }
+attr_global const char global_command_line[] = CORE_COMMAND_LINE;
+attr_core_api const char* core_command_line( usize* opt_out_len ) {
+    if( opt_out_len ) {
+        *opt_out_len = sizeof(global_command_line) - 1;
+    }
+    return global_command_line;
+}
 
 attr_global enum CoreLoggingLevel global_logging_level = CORE_LOGGING_LEVEL_NONE;
 attr_global Mutex global_logging_mutex;

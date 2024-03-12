@@ -75,12 +75,14 @@ attr_core_api void* memory_alloc( const usize size );
 /// @brief Reallocate buffer using default system allocator.
 ///
 /// New memory returned is always zeroed.
-/// @note Alignment of memory allocated is guaranteed to be #CORE_MEMORY_ALLOC_ALIGNMENT.
-/// @note To reallocate memory allocated with #memory_alloc_aligned(), use #memory_realloc_aligned().
 /// @param[in] old_buffer Pointer to buffer to reallocate.
 /// @param old_size Size of buffer before allocation.
 /// @param new_size Desired new size of buffer.
 /// @return Pointer to start of new buffer. Returns null if failed to reallocate.
+/// @note Alignment of memory allocated is guaranteed to be #CORE_MEMORY_ALLOC_ALIGNMENT.
+/// @note To reallocate memory allocated with #memory_alloc_aligned(), use #memory_realloc_aligned().
+/// @warning There is no guarantee that the
+/// returned pointer points to the same location that @c old_buffer points to!
 attr_core_api void* memory_realloc(
     void* old_buffer, usize old_size, usize new_size );
 /// @brief Free memory allocated using default system allocator.
