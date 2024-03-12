@@ -18,7 +18,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 
 0.1.1
 -----
-- Makefile: $(TARGET) now depends on $(OUTPUT_OBJ_PATH) instead of $(OUTPUT_PATH).
+
+- Makefile: ```$(TARGET)``` now depends on ```$(OUTPUT_OBJ_PATH)``` instead of ```$(OUTPUT_PATH)```.
 - Makefile: added linux build. NOTE: linux build is not complete.
 - lib: added core_command_line function for getting command line when project was built.
 - memory: memory_free now checks for null pointer so platform implementation doesn't have to.
