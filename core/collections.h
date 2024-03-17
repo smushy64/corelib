@@ -71,7 +71,35 @@ typedef struct Hashmap {
     /// @brief Largest key value. Used for search algorithm.
     u64   largest_key;
 } Hashmap;
-
+/// @brief Calculate number of bytes required to create packed bool list for given boolean count.
+/// @param boolean_count (usize) Number of booleans list should be able to hold.
+/// @return (usize) Bytes required to store given boolean count.
+#define packed_bool_memory_requirement( boolean_count )\
+    ( ((boolean_count) / 8) + (((boolean_count) % 8) ? 1 : 0 ) )
+/// @brief Calculate number of booleans can be packed in given number of bytes.
+/// @param byte_count (usize) Number of bytes that boolean array holds.
+/// @return (usize) Number of booleans that can be packed into number of bytes provided.
+#define packed_bool_cap( byte_count )\
+    ( byte_count * 8 )
+/// @brief Set packed boolean in byte array.
+/// @param[in] bytes (b8[]) Byte array holding packed booleans.
+/// @param index (usize) Index of boolean in byte array.
+/// @param value (b8) Value to set boolean to.
+#define packed_bool_set( bytes, index, value ) do {\
+    b8* at = (bytes) + ((index) / 8);\
+    b8  bitfield = (1 << ((index) % 8));\
+    if( (value) ) {\
+        *at |= bitfield;\
+    } else {\
+        *at &= ~bitfield;\
+    }\
+} while(0)
+/// @brief Get value of packed boolean in byte array.
+/// @param[in] bytes (b8[]) Byte array holding packed booleans.
+/// @param index (usize) Index of boolean in packed byte array.
+/// @return (b8) Value of boolean at given index in packed boolean byte array.
+#define packed_bool_get( bytes, index )\
+    (( (bytes)[(index) / 8] & (1 << ((index) % 8)) ) == (1 << ((index) % 8)))
 /// @brief Create a new stack.
 /// @param item_size Size of each item in stack.
 /// @param cap Number of items stack buffer can hold.
