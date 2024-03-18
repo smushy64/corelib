@@ -26,6 +26,15 @@
 #include "core/time.h"
 // IWYU pragma: end_keep
 
+attr_import void*
+memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
+
+attr_import void*
+memset( void* dst, int val, usize size );
+
+attr_import void*
+memmove( void* str1, const void* str2, usize n );
+
 #if defined(CORE_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
@@ -44,6 +53,7 @@
 int core_lib_tests(void);
 int core_collections_tests(void);
 int core_math_tests(void);
+int core_memory_tests(void);
 
 int main( int argc, char** argv ) {
     unused(argc,argv);
@@ -61,10 +71,27 @@ int main( int argc, char** argv ) {
     println( "command line: {s}", command_line );
 
     test( core_lib_tests );
+    test( core_memory_tests );
     test( core_collections_tests );
     test( core_math_tests );
 
     #undef test
+    return 0;
+}
+
+int core_memory_tests(void) {
+    {
+        u8 buf[]      = { 1, 2, 3, 4, 5 };
+        u8 expected[] = { 1, 1, 2, 3, 4 };
+        memory_copy_overlapped( buf + 1, buf, static_array_len( buf ) - 1 );
+
+        for( usize i = 0; i < static_array_len( buf ); ++i ) {
+            test_assert( buf[i] == expected[i], "memory_copy_overlapped failed!" );
+        }
+
+        success( "memory:memory_copy_overlapped" );
+    }
+
     return 0;
 }
 

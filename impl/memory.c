@@ -14,33 +14,15 @@
     #include "core/internal/sse.h"
 #endif
 
-attr_internal void internal_memory_copy_word(
-    void* attr_restrict dst, const void* attr_restrict src, usize size
-) {
-    usize* dstptr = (usize*)dst;
-    usize* srcptr = (usize*)src;
-    usize rem     = size;
-    usize sizeptr = rem;
-    if( size < sizeof(usize) ) {
-        goto internal_memory_copy_bytes;
-    }
+attr_clink attr_export void*
+memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
 
-    sizeptr /= sizeof(usize);
-    rem     %= sizeof(usize);
+attr_clink attr_export void*
+memset( void* dst, int val, usize size );
 
-    for( usize i = 0; i < sizeptr; ++i ) {
-        *dstptr++ = *srcptr++;
-    }
+attr_clink attr_export void*
+memmove( void* str1, const void* str2, usize n );
 
-internal_memory_copy_bytes:
-    {
-        u8* dstbyte = (u8*)dstptr;
-        u8* srcbyte = (u8*)srcptr;
-        for( usize i = 0; i < rem; ++i ) {
-            *dstbyte++ = *srcbyte++;
-        }
-    }
-}
 attr_internal void internal_memory_set_word( void* dst, u8 val, usize size ) {
 
     usize sizeptr = size / sizeof(usize);
@@ -69,6 +51,34 @@ attr_internal void internal_memory_set_word( void* dst, u8 val, usize size ) {
     }
 }
 
+
+attr_internal void internal_memory_copy_word(
+    void* attr_restrict dst, const void* attr_restrict src, usize size
+) {
+    usize* dstptr = (usize*)dst;
+    usize* srcptr = (usize*)src;
+    usize rem     = size;
+    usize sizeptr = rem;
+    if( size < sizeof(usize) ) {
+        goto internal_memory_copy_bytes;
+    }
+
+    sizeptr /= sizeof(usize);
+    rem     %= sizeof(usize);
+
+    for( usize i = 0; i < sizeptr; ++i ) {
+        *dstptr++ = *srcptr++;
+    }
+
+internal_memory_copy_bytes:
+    {
+        u8* dstbyte = (u8*)dstptr;
+        u8* srcbyte = (u8*)srcptr;
+        for( usize i = 0; i < rem; ++i ) {
+            *dstbyte++ = *srcbyte++;
+        }
+    }
+}
 
 #define INTERNAL_MEMORY_COPY_PREFER_SIMD_SIZE (gibibytes(1) + mebibytes(512))
 
@@ -106,64 +116,6 @@ attr_internal void internal_memory_copy_sse(
 
 #endif /* SSE */
 
-#if defined(CORE_COMPILER_MSVC)
-    #pragma function(memcpy)
-#endif
-attr_clink void* memcpy(
-    void* attr_restrict dst, const void* attr_restrict src, usize size
-) {
-    for( usize i = 0; i < size; ++i ) {
-        ((u8*)dst)[i] = ((u8*)src)[i];
-    }
-    return dst;
-}
-
-// TODO(alicia): copy backwards rather than stack allocate 256 chunk
-#if defined(CORE_COMPILER_MSVC)
-    #pragma function(memmove)
-#endif
-attr_clink void* memmove( void* str1, const void* str2, usize n ) {
-    // TODO(alicia): SIMD?
-    if( !n ) {
-        return str1;
-    }
-
-    #define BUFSIZE (256ULL)
-    u8 buf[BUFSIZE] = {0};
-
-    usize iter_count = n / BUFSIZE;
-    usize rem        = n % BUFSIZE;
-
-    for( usize i = 0; i < iter_count; ++i ) {
-        usize offset = i * BUFSIZE;
-        memcpy( buf, ((u8*)str2) + offset, BUFSIZE );
-        memcpy( ((u8*)str2) + offset, buf, BUFSIZE );
-    }
-
-    if( rem ) {
-        usize offset = iter_count * BUFSIZE;
-        memcpy( buf, ((u8*)str2) + offset, rem );
-        memcpy( ((u8*)str1) + offset, buf, rem );
-    }
-
-    #undef BUFSIZE
-    return str1;
-}
-
-#if defined(CORE_COMPILER_MSVC)
-    #pragma function(memset)
-#endif
-attr_clink void* memset( void* dst, int val, usize size ) {
-    u8 val8 = val;
-    if( val < 0 ) {
-        i8 sval8 = val;
-        val8     = rcast( u8, &sval8 );
-    }
-    // TODO(alicia): SIMD?
-    internal_memory_set_word( dst, val8, size );
-    return dst;
-}
-
 attr_core_api void memory_copy(
     void* attr_restrict dst, const void* attr_restrict src, usize size
 ) {
@@ -176,10 +128,12 @@ attr_core_api void memory_copy(
 attr_core_api void memory_copy_overlapped(
     void* dst, const void* src, usize size
 ) {
+    // TODO(alicia): implementation with sse
     (void)memmove( dst, src, size );
 }
 attr_core_api void memory_set( void* dst, u8 byte, usize size ) {
-    (void)memset( dst, byte, size );
+    // TODO(alicia): implementation with sse
+    internal_memory_set_word( dst, byte, size );
 }
 attr_core_api void memory_set_chunks(
     void* dst, usize chunk_size, const void* chunk, usize count

@@ -140,6 +140,10 @@ endif
 
 TEST_TARGET := $(OUTPUT_PATH)/test-$(TARGET_NAME)
 
+ifeq ($(TARGET_PLATFORM),win32)
+	TEST_TARGET := $(TEST_TARGET).exe
+endif
+
 ifeq ($(COMPILER),msvc)
 TARGET      := $(subst /,\\,$(TARGET))
 TEST_TARGET := $(subst /,\\,$(TEST_TARGET))
@@ -153,7 +157,7 @@ clean_build_junk: $(TARGET)
 
 test: $(TEST_TARGET)
 	@echo "Make: running tests . . ."
-	cd $(OUTPUT_PATH); $(TEST_TARGET)
+	cd $(OUTPUT_PATH); ../$(TEST_TARGET)
 
 print_info:
 	@echo "Make: Configuration:"
