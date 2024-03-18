@@ -25,7 +25,7 @@ attr_clink attr_export void* memcpy(
 #endif
 attr_clink attr_export void* memset( void* dst, int val, usize size ) {
     for( usize i = 0; i < size; ++i ) {
-        *((i8*)dst) = val;
+        *((i8*)dst + i) = val;
     }
     return dst;
 }
