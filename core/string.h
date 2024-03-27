@@ -81,11 +81,19 @@ attr_header String string_new( const char* cc, usize len ) {
     result.len = len;
     return result;
 }
-/// @brief Create a new const String from string literal.
-/// @param literal ASCII null-terminated string literal.
-/// @return String
-#define string_text( literal )\
-    string_new( literal, sizeof(literal) - 1 )
+#if defined(CORE_CPLUSPLUS)
+    /// @brief Create a new const String from string literal.
+    /// @param literal (const char*) String literal to create new string from.
+    /// @return Read-only String.
+    #define string_text( literal )\
+        String{ .cc=literal, .len=sizeof(literal) - 1 }
+#else
+    /// @brief Create a new const String from string literal.
+    /// @param literal (const char*) String literal to create new string from.
+    /// @return Read-only String.
+    #define string_text( literal )\
+        (struct CoreSlice){ .cc=literal, .len=sizeof(literal) - 1 }
+#endif
 /// @brief Create a new string from null-terminated ASCII string.
 /// @param opt_len (optional) Length of string (if 0, length is calculated).
 /// @param[in] ascii Pointer to string.
