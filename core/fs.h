@@ -202,37 +202,18 @@ attr_core_api b32 fs_directory_exists( const Path path );
 #if defined(CORE_PLATFORM_WINDOWS)
 
 // NOTE(alicia): on Windows, stdin, stdout and stderr are not
-// POSIX file descriptors, rather they are unique handles to
-// a Console. GetStdHandle is a function in Kernel32.dll that
-// retrieves the corresponding handles.
-// Pretty much every program compiled for Windows requires to
-// be linked to Kernel32 so this function is almost always available
-// so I'm forward declaring it here and defining the std handle 
-// macro functions to call that function with the appropriate enum.
+// POSIX file descriptors, rather they are unique handles to a console
+// so we need an actual function to retrieve the handles at run-time.
 
-#if defined(CORE_COMPILER_MSVC)
-    /// @brief Stdin handle.
-    /// @return Stdin handle.
-    attr_core_api void* stdin_handle(void);
-    /// @brief Stdout handle.
-    /// @return Stdout handle.
-    attr_core_api void* stdout_handle(void);
-    /// @brief Stderr handle.
-    /// @return Stderr handle.
-    attr_core_api void* stderr_handle(void);
-#else
-    attr_clink void* GetStdHandle( unsigned long nStdHandle );
-
-    /// @brief Stdin handle.
-    /// @return Stdin handle.
-    #define stdin_handle()  GetStdHandle( (unsigned long)(-10) )
-    /// @brief Stdout handle.
-    /// @return Stdout handle.
-    #define stdout_handle() GetStdHandle( (unsigned long)(-11) )
-    /// @brief Stderr handle.
-    /// @return Stderr handle.
-    #define stderr_handle() GetStdHandle( (unsigned long)(-12) )
-#endif
+/// @brief Stdin handle.
+/// @return Stdin handle.
+attr_core_api void* stdin_handle(void);
+/// @brief Stdout handle.
+/// @return Stdout handle.
+attr_core_api void* stdout_handle(void);
+/// @brief Stderr handle.
+/// @return Stderr handle.
+attr_core_api void* stderr_handle(void);
 
 #else /* Platform Win32 */
 

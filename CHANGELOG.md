@@ -20,6 +20,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 -----
 
 - collections: added packed_bool_* macro functions for creating and manipulating packed boolean arrays.
+- fs: win32: no longer declares GetStdHandle, platform win32 handles that.
 - lib: added core_command_line function for getting command line when project was built.
 - memory: memory_free now checks for null pointer so platform implementation doesn't have to.
 - memory: library now exports custom memcpy, memmove and memset so code that depends on corelib doesn't have to depend on cstdlib.

@@ -26,17 +26,15 @@ EnumDisplayDevicesAFN* in_EnumDisplayDevicesA = NULL;
 
 attr_internal void internal_win32_log_error( DWORD error_code );
 
-#if defined(CORE_COMPILER_MSVC)
-attr_core_api void* stdin_handle(void) {
+void* platform_win32_get_stdin(void) {
     return GetStdHandle( STD_INPUT_HANDLE );
 }
-attr_core_api void* stdout_handle(void) {
+void* platform_win32_get_stdout(void) {
     return GetStdHandle( STD_OUTPUT_HANDLE );
 }
-attr_core_api void* stderr_handle(void) {
+void* platform_win32_get_stderr(void) {
     return GetStdHandle( STD_ERROR_HANDLE );
 }
-#endif
 
 void* platform_heap_alloc( const usize size ) {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );

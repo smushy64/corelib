@@ -77,4 +77,10 @@ void* platform_library_get( const char* name );
 void platform_library_close( void* lib );
 void* platform_library_load( void* lib, const char* function );
 
+#if defined(CORE_PLATFORM_WINDOWS)
+void* platform_win32_get_stdin(void);
+void* platform_win32_get_stdout(void);
+void* platform_win32_get_stderr(void);
+#endif
+
 #endif /* header guard */

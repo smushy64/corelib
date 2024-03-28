@@ -130,3 +130,15 @@ attr_core_api b32 fs_directory_exists( const Path path ) {
     return platform_directory_exists( path );
 }
 
+#if defined(CORE_PLATFORM_WINDOWS)
+attr_core_api void* stdin_handle(void) {
+    return platform_win32_get_stdin();
+}
+attr_core_api void* stdout_handle(void) {
+    return platform_win32_get_stdout();
+}
+attr_core_api void* stderr_handle(void) {
+    return platform_win32_get_stderr();
+}
+#endif
+
