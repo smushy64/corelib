@@ -25,7 +25,9 @@ attr_core_api usize asciiz_len( const char* ascii ) {
 
     const char* start = ascii, *end = ascii;
     while( *end++ ) {}
-    return end - start;
+
+    usize res = end - start;
+    return res ? res - 1 : 0;
 }
 attr_core_api u64 text_buffer_hash( usize len, const char* text ) {
     // NOTE(alicia): elf-hash implementation
