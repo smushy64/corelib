@@ -22,12 +22,12 @@ attr_core_api usize asciiz_len( const char* ascii ) {
     if( !ascii ) {
         return 0;
     }
-
-    const char* start = ascii, *end = ascii;
-    while( *end++ ) {}
-
-    usize res = end - start;
-    return res ? res - 1 : 0;
+    usize res = 0;
+    const char* str = ascii;
+    while( *str++ ) {
+        res++;
+    }
+    return res;
 }
 attr_core_api u64 text_buffer_hash( usize len, const char* text ) {
     // NOTE(alicia): elf-hash implementation

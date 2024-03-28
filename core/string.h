@@ -56,7 +56,7 @@ attr_header char char_to_lower( const char c ) {
 
 /// @brief Calculate length of null-terminated ASCII string.
 /// @param[in] ascii Pointer to string.
-/// @return Length of string.
+/// @return Length of string excluding null-terminator.
 attr_core_api usize asciiz_len( const char* ascii );
 
 /// @brief Hash a text buffer.
