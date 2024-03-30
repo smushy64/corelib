@@ -252,6 +252,13 @@ attr_core_api String string_trim_leading_whitespace( const String src );
 /// @param src String to create substring from.
 /// @return String without trailing whitespace.
 attr_core_api String string_trim_trailing_whitespace( const String src );
+/// @brief Create a substring from source string by trimming leading and trailing whitespace.
+/// @param src String to create substring from.
+/// @return String without leading or trailing whitespace.
+attr_header String string_trim_whitespace( const String src ) {
+    String res = string_trim_leading_whitespace( src );
+    return string_trim_trailing_whitespace( res );
+}
 /// @brief Set all characters in string to provided ASCII character.
 /// @param str String to modify.
 /// @param c Character to set.
@@ -291,13 +298,25 @@ attr_always_inline
 attr_header void string_split(
     const String src, usize index, String* opt_out_first, String* opt_out_last
 ) {
-    if( opt_out_first ) {
-        opt_out_first->cc  = src.cc;
-        opt_out_first->len = index > src.len ? src.len : index;
+    String first = string_new(0, 0);
+    String last  = string_new(0, 0);
+
+    usize i = index > src.len ? src.len : index;
+
+    first.cc  = src.cc;
+    first.len = i;
+
+    last.cc  = src.cc + i + 1;
+    last.len = src.len - i;
+    if( last.len ) {
+        last.len--;
     }
-    if( opt_out_last && index < src.len ) {
-        opt_out_last->cc  = src.cc + index;
-        opt_out_last->len = (src.cc + src.len) - opt_out_last->cc;
+
+    if( opt_out_first ) {
+        *opt_out_first = first;
+    }
+    if( opt_out_last ) {
+        *opt_out_last = last;
     }
 }
 /// @brief Split source string into two substrings using first instance of character.

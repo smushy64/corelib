@@ -26,6 +26,9 @@ Indicates additions to API, minor bug fixes and other small changes.
 - memory: library now exports custom memcpy, memmove and memset so code that depends on corelib doesn't have to depend on cstdlib.
 - string: redefined string_text so that it can be used to initialize compile-time constants.
 - string: bug: asciiz_len included null-terminator.
+- string: bug: trim_*_whitespace functions not trimming properly
+- string: bug: string_split out_last contains split index!
+- string: added string_trim_whitespace, trims leading and trailing whitespace at the same time.
 - sync: added semaphore and mutex sizes.
 - Makefile: ```$(TARGET)``` now depends on ```$(OUTPUT_OBJ_PATH)``` instead of ```$(OUTPUT_PATH)```.
 - Makefile: added linux build. NOTE: linux build is not complete.
@@ -35,6 +38,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - docs:memory: added warning about realloc not returning the same base pointer.
 - test: added build description and command line print-out before tests are run.
 - test: test memmove/memory_copy_overlapped to make sure it still works properly.
+- test: test string_trim_*_whitespace functions.
 
 0.1.0
 ------

@@ -735,22 +735,25 @@ attr_core_api void string_reverse( String str ) {
     }
 }
 attr_core_api String string_trim_leading_whitespace( const String src ) {
-    usize pos = 0;
-    if( string_find_whitespace( src, &pos ) ) {
-        String result = src;
-        result.cc  += pos;
-        result.len -= pos;
-        return result;
+    for( usize i = 0; i < src.len; ++i ) {
+        if( !char_is_whitespace( src.cc[i] ) ) {
+            String res;
+            res.cc  = src.cc  + i;
+            res.len = src.len - i;
+            return res;
+        }
     }
 
     return src;
 }
 attr_core_api String string_trim_trailing_whitespace( const String src ) {
-    usize pos = 0;
-    if( string_find_last_whitespace( src, &pos ) ) {
-        String result = src;
-        result.len -= pos;
-        return result;
+    for( usize i = src.len; i-- > 0; ) {
+        if( !char_is_whitespace( src.cc[i] ) ) {
+            String res;
+            res.cc  = src.cc;
+            res.len = (i + 1) > src.len ? src.len : (i + 1);
+            return res;
+        }
     }
     return src;
 }

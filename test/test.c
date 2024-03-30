@@ -54,6 +54,7 @@ int core_lib_tests(void);
 int core_collections_tests(void);
 int core_math_tests(void);
 int core_memory_tests(void);
+int core_string_tests(void);
 
 int main( int argc, char** argv ) {
     unused(argc,argv);
@@ -74,8 +75,44 @@ int main( int argc, char** argv ) {
     test( core_memory_tests );
     test( core_collections_tests );
     test( core_math_tests );
+    test( core_string_tests );
 
     #undef test
+    return 0;
+}
+
+int core_string_tests(void) {
+    {
+        String a = string_trim_leading_whitespace( string_text( "   hello world" ) );
+        String b = string_text( "hello world" );
+
+        test_assert( string_cmp( a, b ), "trim leading whitespace failed! expected: ({usize})'{s}' got: ({usize})'{s}'", b.len, b, a.len, a );
+
+        success( "string:trim_leading_whitespace" );
+    }
+    {
+        String a = string_trim_trailing_whitespace( string_text( "hello world    " ) );
+        String b = string_text( "hello world" );
+
+        test_assert( string_cmp( a, b ), "trim trailing whitespace failed! expected: ({usize})'{s}' got: ({usize})'{s}'", b.len, b, a.len, a );
+
+        success( "string:trim_trailing_whitespace" );
+    }
+
+    {
+        String a     = string_text( "string:split" );
+        String left  = string_text( "string" );
+        String right = string_text( "split" );
+
+        String split_l, split_r;
+        string_split_char( a, ':', &split_l, &split_r );
+
+        test_assert( string_cmp( left, split_l ), "split produces bad string!" );
+        test_assert( string_cmp( right, split_r ), "split produces bad string!" );
+
+        success( "string:split" );
+    }
+
     return 0;
 }
 
