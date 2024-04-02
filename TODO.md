@@ -4,6 +4,8 @@
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
+- [ ] lib:log: fix logging new line
+- [ ] lib:log: remove color formatting
 - [ ] fs:platform: not reallocating when path needs to be null-terminated or full path is necessary.
 - [ ] fs: traverse directory.
 - [ ] fs: memory mapped file?
