@@ -1197,6 +1197,9 @@ attr_core_api struct Vector2 v2_rotate( struct Vector2 v, f32 angle ) {
 
     return v2_add( a, b );
 }
+attr_core_api f32 v2_angle( struct Vector2 a, struct Vector2 b ) {
+    return arc_cosine( v2_dot( a, b ) );
+}
 attr_core_api struct Vector2 v2_lerp(
     struct Vector2 a, struct Vector2 b, f32 t
 ) {
@@ -1222,6 +1225,9 @@ attr_core_api struct Vector3 v3_normalize( struct Vector3 x ) {
     } else {
         return v3_div( x, square_root( m ) );
     }
+}
+attr_core_api f32 v3_angle( struct Vector3 a, struct Vector3 b ) {
+    return arc_cosine( v3_dot( a, b ) );
 }
 attr_core_api struct Vector3 v3_lerp(
     struct Vector3 a, struct Vector3 b, f32 t

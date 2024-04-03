@@ -401,11 +401,7 @@ attr_header struct Vector3 v3_clamp_mag(
 /// @brief Calculate the angle between two vectors.
 /// @param a, b Vectors to calculate angle of.
 /// @return Angle (in radians) between vectors.
-attr_always_inline
-attr_header f32 v3_angle( struct Vector3 a, struct Vector3 b ) {
-    extern f32 arc_cosine( f32 x );
-    return arc_cosine( v3_dot( a, b ) );
-}
+attr_core_api f32 v3_angle( struct Vector3 a, struct Vector3 b );
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.

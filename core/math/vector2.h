@@ -292,11 +292,7 @@ attr_header struct Vector2 v2_clamp_mag(
 /// @brief Calculate the angle between two vectors.
 /// @param a, b Vectors to calculate angle of.
 /// @return Angle (in radians) between vectors.
-attr_always_inline
-attr_header f32 v2_angle( struct Vector2 a, struct Vector2 b ) {
-    extern f32 arc_cosine( f32 x );
-    return arc_cosine( v2_dot( a, b ) );
-}
+attr_core_api f32 v2_angle( struct Vector2 a, struct Vector2 b );
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
