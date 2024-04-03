@@ -1022,7 +1022,7 @@ attr_core_api struct Matrix4x4 m4_view(
         x.x, y.x, z.x, 0.0f,
         x.y, y.y, z.y, 0.0f,
         x.z, y.z, z.z, 0.0f,
-         dx,  dy,  dz, 0.0f );
+         dx,  dy,  dz, 1.0f );
 }
 attr_core_api struct Matrix4x4 m4_ortho(
     f32 left, f32 right,

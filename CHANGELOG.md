@@ -23,6 +23,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - fs: win32: no longer declares GetStdHandle, platform win32 handles that.
 - lib: added core_command_line function for getting command line when project was built.
 - math:vector2/3: no longer forward declares arc_cosine
+- math:mat4: bug: m4_view returning matrix with 0 in cell 15, should be 1
 - memory: memory_free now checks for null pointer so platform implementation doesn't have to.
 - memory: library now exports custom memcpy, memmove and memset so code that depends on corelib doesn't have to depend on cstdlib.
 - string: redefined string_text so that it can be used to initialize compile-time constants.
