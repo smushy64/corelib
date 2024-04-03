@@ -8,6 +8,7 @@
 #include "core/fs.h"
 #include "core/internal/platform.h"
 #include "core/internal/logging.h"
+#include "core/fmt.h"
 
 attr_core_api FileHandle* fs_file_open( const Path path, FileOpenFlags flags ) {
     b32 append = bitfield_check( flags, FILE_OPEN_FLAG_APPEND );
@@ -128,6 +129,19 @@ attr_core_api b32 fs_directory_delete( const Path path, b32 recursive ) {
 }
 attr_core_api b32 fs_directory_exists( const Path path ) {
     return platform_directory_exists( path );
+}
+
+attr_core_api usize fs_file_stream(
+    void* target, usize len, const void* buf
+) {
+    FileHandle* file = target;
+    b32 result = fs_file_write( file, len, buf );
+    return !result;
+}
+attr_core_api b32 fs_file_write_fmt_text_va(
+    FileHandle* file, usize format_len, const char* format, va_list va
+) {
+    return !fmt_text_va( fs_file_stream, file, format_len, format, va );
 }
 
 #if defined(CORE_PLATFORM_WINDOWS)

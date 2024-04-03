@@ -55,6 +55,7 @@ int core_collections_tests(void);
 int core_math_tests(void);
 int core_memory_tests(void);
 int core_string_tests(void);
+int core_path_tests(void);
 
 int main( int argc, char** argv ) {
     unused(argc,argv);
@@ -76,8 +77,44 @@ int main( int argc, char** argv ) {
     test( core_collections_tests );
     test( core_math_tests );
     test( core_string_tests );
+    test( core_path_tests );
 
     #undef test
+    return 0;
+}
+
+int core_path_tests(void) {
+    {
+        Path a = path_text("test.txt");
+        Path expected_stem = path_text( "test" );
+        Path expected_ext  = path_text( ".txt" );
+
+        Path ext;
+        test_assert( path_extension( a, &ext ), "failed to get path extension!" );
+
+        Path stem;
+        test_assert( path_file_stem( a, &stem ), "failed to get file stem!" );
+
+        test_assert( string_cmp( ext, expected_ext ), "extension retrieved does not match expected! ({usize}){s} != ({usize}){s}", ext.len, ext, expected_ext.len, expected_ext );
+        success( "path:extension" );
+
+        test_assert( string_cmp( stem, expected_stem ), "file stem retrieved does not match expected! ({usize}){s} != ({usize}){s}", stem.len, stem, expected_stem.len, expected_stem );
+        success( "path:file_stem" );
+    }
+
+    {
+        usize buf_size = 256;
+        char  buf[256];
+        PathBuf path = path_buf_new( buf_size, buf );
+
+        path_buf_push( &path, path_text( "test" ) );
+        path_buf_set_extension( &path, path_text( ".txt" ) );
+
+        Path expected = path_text( "test.txt" );
+        test_assert( string_cmp( path.slice, expected ), "({usize}){s} != ({usize}){s}", path.len, path.slice, expected.len, expected );
+
+        success( "path:buf_set_extension" );
+    }
     return 0;
 }
 
@@ -272,7 +309,7 @@ int core_math_tests(void) {
     u64 rand_state = 0;{
         TimeStamp ts;
         time_query_timestamp( &ts );
-        rand_state = (((ts.day + ts.hour) % (ts.minute)) + ts.second) * 8546536385;
+        rand_state = (((ts.day + ts.hour) * (ts.minute)) + ts.second) * 8546536385;
     }
     {
         u16 value16    = 0x1B1A;

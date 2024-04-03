@@ -21,6 +21,10 @@ Indicates additions to API, minor bug fixes and other small changes.
 
 - collections: added packed_bool_* macro functions for creating and manipulating packed boolean arrays.
 - fs: win32: no longer declares GetStdHandle, platform win32 handles that.
+- fs: added fs_file_write_fmt_* functions for writing formatted text to file.
+- path: bug: path_file_stem() cut off last character of file stem
+- path: docs: added to documentation for path_buf_set_extension() and path_extension()
+- path: redefined path_text so that it can be used to initialize compile-time constants.
 - lib: added core_command_line function for getting command line when project was built.
 - math:vector2/3: no longer forward declares arc_cosine
 - math:mat4: bug: m4_view returning matrix with 0 in cell 15, should be 1
@@ -41,6 +45,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - test: added build description and command line print-out before tests are run.
 - test: test memmove/memory_copy_overlapped to make sure it still works properly.
 - test: test string_trim_*_whitespace functions.
+- test: added path tests.
 
 0.1.0
 ------

@@ -32,8 +32,7 @@ attr_header Path path_new( const char* cc, usize len ) {
 /// @brief Create a new const Path from string literal.
 /// @param literal Null-terminated string literal.
 /// @return Path
-#define path_text( literal )\
-    path_new( literal, sizeof(literal) - 1 )
+#define path_text( literal ) string_text( literal )
 /// @brief Create a new path from null-terminated path.
 /// @param opt_len (optional) Length of path (if 0, length is calculated).
 /// @param[in] ascii Pointer to path.
@@ -147,7 +146,7 @@ attr_core_api b32 path_file_name( const Path path, Path* out_file_name );
 attr_core_api b32 path_file_stem( const Path path, Path* out_file_stem );
 /// @brief Get file extension of path.
 /// @param path Path to get file extension of.
-/// @param[out] out_extension Path slice containing just file extension.
+/// @param[out] out_extension Path slice containing file extension with leading dot.
 /// @return True if path points to a file and has an extension.
 attr_core_api b32 path_extension( const Path path, Path* out_extension );
 /// @brief Pop off last chunk of path.
@@ -251,7 +250,7 @@ attr_header b32 path_buf_pop( PathBuf* path, Path* opt_out_chunk ) {
 }
 /// @brief Set the extension of a path buffer.
 /// @param[in] path Path to modify.
-/// @param ext Extension to set.
+/// @param ext Extension to set. Accepts extensions with or without leading dot.
 /// @return True if path had enough capacity for new extension.
 attr_core_api b32 path_buf_set_extension( PathBuf* path, const Path ext );
 

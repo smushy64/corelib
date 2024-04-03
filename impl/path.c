@@ -119,8 +119,7 @@ attr_core_api b32 path_file_stem( const Path path, Path* out_file_stem ) {
         string_find_last( file_stem, '.', &dot_pos ) &&
         dot_pos // NOTE(alicia): this is so that dot files don't get overlooked
     ) {
-        file_stem.len = file_stem.len - dot_pos;
-        file_stem.len = file_stem.len ? file_stem.len - 1 : file_stem.len;
+        file_stem.len = dot_pos;
     }
     if( !file_stem.len ) {
         return false;
@@ -259,7 +258,7 @@ attr_core_api b32 path_buf_push( PathBuf* path, const Path chunk ) {
 }
 attr_core_api b32 path_buf_set_extension( PathBuf* path, const Path new_ext ) {
     usize ext_required_cap = new_ext.len;
-    b32 new_ext_has_dot = new_ext.cc[0] == '.';
+    b32 new_ext_has_dot    = new_ext.cc[0] == '.';
     if( !new_ext_has_dot ) {
         ext_required_cap++;
     }

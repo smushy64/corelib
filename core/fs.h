@@ -105,6 +105,45 @@ attr_header b32 fs_file_write_no_offset(
     fs_file_set_offset( file, current );
     return true;
 }
+/// @brief Write formatted text to file.
+/// @param[in] file File to write to.
+/// @param format_len Length of format string.
+/// @param format Format string.
+/// @param va Variadic list of format arguments.
+/// @return True if write was successful, false if error encountered.
+attr_core_api b32 fs_file_write_fmt_text_va(
+    FileHandle* file, usize format_len, const char* format, va_list va );
+/// @brief Write formatted text to file.
+/// @param[in] file File to write to.
+/// @param format_len Length of format string.
+/// @param format Format string.
+/// @param ... Format arguments.
+/// @return True if write was successful, false if error encountered.
+attr_header b32 fs_file_write_fmt_text(
+    FileHandle* file, usize format_len, const char* format, ...
+) {
+    va_list va;
+    va_start( va, format );
+    b32 result = fs_file_write_fmt_text_va( file, format_len, format, va );
+    va_end( va );
+    return result;
+}
+/// @brief Write formatted string to file.
+/// @param[in] file (FileHandle*) File to write to.
+/// @param format (string literal) Format string.
+/// @param ... Format arguments.
+/// @return True if write was successful, false if error encountered.
+#define fs_file_write_fmt( file, format, ... )\
+    fs_file_write_fmt_text( file, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief File stream bytes function.
+/// @param[in] target (FileHandle*) Target file to write to.
+/// @param len Length of buffer to write.
+/// @param[in] buf Buffer to write.
+/// @return
+/// - @c 0 If write was successful
+/// - @c 1 If encountered an error while writing.
+attr_core_api usize fs_file_stream(
+    void* target, usize len, const void* buf );
 /// @brief Read data from file.
 ///
 /// Offset is moved by len bytes.
