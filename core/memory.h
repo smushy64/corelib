@@ -63,7 +63,6 @@ attr_header void memory_zero( void* dst, usize size ) {
 /// @return Aligned pointer.
 #define memory_align( src, alignment )\
     ((void*)((((usize)(src)) + (alignment)) & ~((usize)0x0F)))
-    // ((void*)( ( ( (usize)(src) ) - 1ULL + (alignment) ) & -((isize)(alignment)) ))
 
 /// @brief Allocate memory using default system allocator.
 ///
@@ -121,5 +120,11 @@ attr_core_api void* memory_realloc_aligned(
 /// @note Alignment MUST match alignment when buffer was allocated.
 attr_core_api void memory_free_aligned(
     void* buffer, const usize size, const usize alignment );
+/// @brief Calculate real size of aligned allocation.
+/// @param size Unaligned size of allocation.
+/// @param alignment Alignment.
+/// @return Size of aligned allocation.
+/// @note Alignment MUST be a power of 2.
+attr_core_api usize memory_calculate_aligned_size( usize size, usize alignment );
 
 #endif /* header guard */

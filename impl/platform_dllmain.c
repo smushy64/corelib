@@ -13,6 +13,14 @@
 
 #if defined(CORE_PLATFORM_WINDOWS)
 #include "core/macros.h"
+
+#if defined(CORE_CPLUSPLUS)
+#undef NULL
+#define NULL nullptr
+
+extern "C" {
+#endif
+
 #include <windows.h>
 
 BOOL WINAPI DllMainCRTStartup(
@@ -31,6 +39,10 @@ BOOL WINAPI DllMainCRTStartup(
     }
     return TRUE;
 }
+
+#if defined(CORE_PLUSPLUS)
+} /* extern C */
+#endif
 
 #endif /* Platform Windows */
 

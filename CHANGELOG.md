@@ -30,6 +30,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 - math:mat4: bug: m4_view returning matrix with 0 in cell 15, should be 1
 - memory: memory_free now checks for null pointer so platform implementation doesn't have to.
 - memory: library now exports custom memcpy, memmove and memset so code that depends on corelib doesn't have to depend on cstdlib.
+- memory: added memory_calculate_aligned_size() for calculating the actual size of aligned memory allocations.
+- platform_dllmain:win32: added extern "C" and redefined NULL to nullptr so that it compiled in C++
 - string: redefined string_text so that it can be used to initialize compile-time constants.
 - string: bug: asciiz_len included null-terminator.
 - string: bug: trim_*_whitespace functions not trimming properly

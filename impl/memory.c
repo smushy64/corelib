@@ -220,6 +220,9 @@ attr_core_api void memory_free_aligned(
     void* base = ((void**)buffer)[-1];
     memory_free( base, size + alignment + sizeof(void*) );
 }
+attr_core_api usize memory_calculate_aligned_size( usize size, usize alignment ) {
+    return size + alignment + sizeof(void*);
+}
 
 #undef INTERNAL_MEMORY_COPY_PREFER_SIMD_SIZE
 
