@@ -26,15 +26,6 @@
 #include "core/time.h"
 // IWYU pragma: end_keep
 
-attr_import void*
-memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
-
-attr_import void*
-memset( void* dst, int val, usize size );
-
-attr_import void*
-memmove( void* str1, const void* str2, usize n );
-
 #if defined(CORE_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
@@ -57,11 +48,22 @@ int core_memory_tests(void);
 int core_string_tests(void);
 int core_path_tests(void);
 
+void core_logging_callback(
+    CoreLoggingLevel level, usize len, const char* msg,
+    va_list va, void* user_params );
+
 int main( int argc, char** argv ) {
     unused(argc,argv);
 
     int result = 0;
-    #define test( fn ) result = fn(); if( result ) return result
+    #define test( fn ) result = fn(); if( result ) goto end
+
+    Mutex mtx = {};
+    mutex_create( &mtx );
+
+    core_set_logging_level( CORE_LOGGING_LEVEL_WARN );
+    core_set_logging_callback( core_logging_callback, &mtx );
+
 
     String build_desc;
     build_desc.cc = core_build_description( &build_desc.len );
@@ -80,7 +82,9 @@ int main( int argc, char** argv ) {
     test( core_path_tests );
 
     #undef test
-    return 0;
+end:
+    mutex_destroy( &mtx );
+    return result;
 }
 
 int core_path_tests(void) {
@@ -348,6 +352,28 @@ int core_math_tests(void) {
     }
 
     return 0;
+}
+
+void core_logging_callback(
+    CoreLoggingLevel level, usize len, const char* msg,
+    va_list va, void* user_params
+) {
+    Mutex* mtx = user_params;
+    mutex_lock( mtx );
+    switch( level ) {
+        case CORE_LOGGING_LEVEL_ERROR: {
+            print_err( CONSOLE_COLOR_RED "error: " );
+            print_err_text_va( len, msg, va );
+            print_err( "\n" CONSOLE_COLOR_RESET );
+        } break;
+        case CORE_LOGGING_LEVEL_WARN: {
+            print( CONSOLE_COLOR_YELLOW "warning: " );
+            print_text_va( len, msg, va );
+            print( "\n" CONSOLE_COLOR_RESET );
+        } break;
+        default: break;
+    }
+    mutex_unlock( mtx );
 }
 
 #if defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)

@@ -197,7 +197,7 @@ b32 platform_thread_create(
 ) {
     Semaphore sem;
     if( !semaphore_create( &sem ) ) {
-        core_error( "[WIN32] failed to create thread ready semaphore!" );
+        core_error( "win32: failed to create thread ready semaphore!" );
         return false;
     }
 
@@ -245,17 +245,23 @@ b32 platform_thread_exit_code( void* handle, int* out_exit_code ) {
     return true;
 }
 attr_internal void internal_win32_log_error( DWORD error_code ) {
-    #define CORE_WIN32_ERROR_BUFFER_SIZE (256)
-    char internal_win32_error_buffer[CORE_WIN32_ERROR_BUFFER_SIZE];
-
-    FormatMessageA(
-        FORMAT_MESSAGE_FROM_SYSTEM,
+#if defined(CORE_ENABLE_LOGGING)
+    char* buf = NULL;
+    DWORD res = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL, error_code, GetSystemDefaultLangID(),
-        internal_win32_error_buffer, CORE_WIN32_ERROR_BUFFER_SIZE, NULL );
+        (char*)&buf, 0, NULL );
 
-    core_error( "[WIN32 {u,X}] {cc}", error_code, internal_win32_error_buffer );
+    if( res && buf ) {
+        String message;
+        message.len = res - 1;
+        message.cc  = buf;
+        core_error( "win32: [{u,X,f}] {s}", error_code, message );
 
-    #undef CORE_WIN32_ERROR_BUFFER_SIZE
+        LocalFree( buf );
+    }
+#endif
+    unused( error_code );
 }
 
 struct Win32Path {
@@ -394,7 +400,7 @@ FileHandle* platform_file_open( const Path in_path, FileOpenFlags flags ) {
 
     if( handle == INVALID_HANDLE_VALUE ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to open file '{p}'!", in_path );
+        core_error( "win32: failed to open file '{p}'!", in_path );
         return NULL;
     } else {
         return handle;
@@ -460,13 +466,13 @@ attr_internal b32 internal_win32_write32(
 
     if( !result ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to write to file!" );
+        core_error( "win32: failed to write to file!" );
         return false;
     }
 
     if( written != len ) {
         core_error(
-            "[WIN32] failed to write requested bytes! "
+            "win32: failed to write requested bytes! "
             "requested: {u32} written: {u32}", len, written );
         return false;
     }
@@ -481,13 +487,13 @@ attr_internal b32 internal_win32_read32(
 
     if( !result ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to read {f,.2,m} from file!", (f64)len );
+        core_error( "win32: failed to read {f,.2,m} from file!", (f64)len );
         return false;
     }
 
     if( read != len ) {
         core_error(
-            "[WIN32] failed to read requested bytes! "
+            "win32: failed to read requested bytes! "
             "requested: {u32} read: {u32}", len, read );
         return false;
     }
@@ -532,7 +538,7 @@ b32 platform_file_copy(
 
     if( !result ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to copy '{p}' to '{p}'!", in_src, in_dst );
+        core_error( "win32: failed to copy '{p}' to '{p}'!", in_src, in_dst );
         return false;
     }
 
@@ -547,7 +553,7 @@ b32 platform_file_move(
     if( fail_if_dst_exists ) {
         if( fs_file_exists( dst.p ) ) {
             core_error(
-                "[WIN32] failed to move {p} to {p}, destination already exists!",
+                "win32: failed to move {p} to {p}, destination already exists!",
                 in_src, in_dst );
             path_win32_free( dst );
             path_win32_free( src );
@@ -563,7 +569,7 @@ b32 platform_file_move(
 
     if( !result ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to move '{p}' to '{p}'!", in_src, in_dst );
+        core_error( "win32: failed to move '{p}' to '{p}'!", in_src, in_dst );
         return false;
     }
 
@@ -577,7 +583,7 @@ b32 platform_file_delete( const Path in_path ) {
 
     if( !result ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to delete '{p}'!", in_path );
+        core_error( "win32: failed to delete '{p}'!", in_path );
         return false;
     }
 
@@ -627,7 +633,7 @@ b32 platform_directory_create( const Path in_path ) {
         }
 
         internal_win32_log_error( err );
-        core_error( "[WIN32] failed to create directory at path '{p}'!", in_path );
+        core_error( "win32: failed to create directory at path '{p}'!", in_path );
         return false;
     }
 
@@ -645,7 +651,7 @@ b32 platform_directory_item_count( const Path in_path, usize* out_count ) {
 
     if( find == INVALID_HANDLE_VALUE ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] Path '{p}' is not a valid directory!", in_path.cc );
+        core_error( "win32: Path '{p}' is not a valid directory!", in_path.cc );
         return false;
     }
 
@@ -685,7 +691,7 @@ attr_internal b32 internal_win32_directory_delete_recursive(
         char* new_buf = HeapReAlloc(\
             GetProcessHeap(), HEAP_ZERO_MEMORY, root->v, root->cap + 256 + c );\
         if( !new_buf ) {\
-            core_error( "[WIN32] recursive_delete: failed to reallocate root path!" );\
+            core_error( "win32: recursive_delete: failed to reallocate root path!" );\
             return false;\
         }\
         root->v    = new_buf;\
@@ -740,8 +746,8 @@ attr_internal b32 internal_win32_directory_delete_recursive(
                             NULL, error, 0, error_log, 256, NULL );
                     }
 
-                    core_error( "[WIN32] recursive_delete: "
-                        "failed to delete directory '{p}'! WIN32: {u32,X} {cc}",
+                    core_error( "win32: recursive_delete: "
+                        "failed to delete directory '{p}'! {u32,X} {cc}",
                         file_path.slice, error, error_log );
 
                     HeapFree( GetProcessHeap(), 0, error_log );
@@ -779,8 +785,8 @@ attr_internal b32 internal_win32_directory_delete_recursive(
                             NULL, error, 0, error_log, 256, NULL );
                     }
 
-                    core_error( "[WIN32] recursive_delete: "
-                        "failed to delete directory '{p}'! WIN32: {u32,X} {cc}",
+                    core_error( "win32: recursive_delete: "
+                        "failed to delete directory '{p}'! {u32,X} {cc}",
                         file_path.slice, error, error_log );
 
                     HeapFree( GetProcessHeap(), 0, error_log );
@@ -804,8 +810,8 @@ attr_internal b32 internal_win32_directory_delete_recursive(
                         NULL, error, 0, error_log, 256, NULL );
                 }
 
-                core_error( "[WIN32] recursive_delete: "
-                    "failed to delete file '{p}'! WIN32: {u32,X} {cc}",
+                core_error( "win32: recursive_delete: "
+                    "failed to delete file '{p}'! {u32,X} {cc}",
                     file_path.slice, error, error_log );
 
                 HeapFree( GetProcessHeap(), 0, error_log );
@@ -824,7 +830,7 @@ b32 platform_directory_delete( const Path in_path, b32 recursive ) {
     /* check if directory is valid */ {
         DWORD attributes = GetFileAttributesA( path.cc );
         if( attributes == INVALID_FILE_ATTRIBUTES ) {
-            core_error( "[WIN32] Path '{p}' is not a valid directory!", in_path.cc );
+            core_error( "win32: path '{p}' is not a valid directory!", in_path.cc );
             return false;
         }
     }
@@ -837,7 +843,7 @@ b32 platform_directory_delete( const Path in_path, b32 recursive ) {
 
         if( !result ) {
             internal_win32_log_error( GetLastError() );
-            core_error( "[WIN32] failed to delete empty directory '{p}'!", in_path );
+            core_error( "win32: failed to delete empty directory '{p}'!", in_path );
             return false;
         }
 
@@ -845,8 +851,8 @@ b32 platform_directory_delete( const Path in_path, b32 recursive ) {
     }
 
     if( !recursive && !is_empty ) {
-        core_error(
-            "[WIN32] attempted to delete a directory "
+        core_warn(
+            "win32: attempted to delete a directory "
             "that isn't empty without recursion!" );
         path_win32_free( path );
         return false;
@@ -858,7 +864,7 @@ b32 platform_directory_delete( const Path in_path, b32 recursive ) {
             GetProcessHeap(), HEAP_ZERO_MEMORY, path.len + 256 );
         if( !root.v ) {
             core_error(
-                "[WIN32] failed to allocate root path buffer "
+                "win32: failed to allocate root path buffer "
                 "for recursive directory delete!" );
             path_win32_free( path );
             return false;
@@ -878,7 +884,7 @@ b32 platform_directory_delete( const Path in_path, b32 recursive ) {
         if( ff == INVALID_HANDLE_VALUE ) {
             internal_win32_log_error( GetLastError() );
             core_error(
-                "[WIN32] failed to get first file in directory "
+                "win32: failed to get first file in directory "
                 "'{p}' for recursive delete!", in_path );
             path_win32_free( path );
             HeapFree( GetProcessHeap(), 0, root.v );
@@ -1071,7 +1077,7 @@ void* platform_library_open( const char* name ) {
     HMODULE module = LoadLibraryA( name );
     if( !module ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to load library '{cc}'!", name );
+        core_error( "win32: failed to load library '{cc}'!", name );
         return NULL;
     }
 
@@ -1087,7 +1093,7 @@ void* platform_library_load( void* lib, const char* function ) {
     void* addr = (void*)GetProcAddress( lib, function );
     if( !addr ) {
         internal_win32_log_error( GetLastError() );
-        core_error( "[WIN32] failed to load function '{cc}'!", function );
+        core_error( "win32: failed to load function '{cc}'!", function );
         return NULL;
     }
     return addr;

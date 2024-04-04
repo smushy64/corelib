@@ -1,12 +1,12 @@
 # Todo List
 - [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
+- [ ] platform:win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
 - [ ] lib:log: fix logging new line
 - [ ] lib:log: remove color formatting
-- [ ] fs:platform: not reallocating when path needs to be null-terminated or full path is necessary.
 - [ ] fs: traverse directory.
 - [ ] fs: memory mapped file?
 - [ ] math: simd (trig, linear algbra)

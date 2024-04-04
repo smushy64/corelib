@@ -28,12 +28,14 @@ Indicates additions to API, minor bug fixes and other small changes.
 - path: docs: added to documentation for path_buf_set_extension() and path_extension()
 - path: redefined path_text so that it can be used to initialize compile-time constants.
 - lib: added core_command_line function for getting command line when project was built.
+- lib: simplified logging and removed colorization and pre/suffixes from log messages.
 - math:vector2/3: no longer forward declares arc_cosine
 - math:mat4: bug: m4_view returning matrix with 0 in cell 15, should be 1
 - memory: memory_free now checks for null pointer so platform implementation doesn't have to.
 - memory: library now exports custom memcpy, memmove and memset so code that depends on corelib doesn't have to depend on cstdlib.
 - memory: added memory_calculate_aligned_size() for calculating the actual size of aligned memory allocations.
 - platform_dllmain:win32: added extern "C" and redefined NULL to nullptr so that it compiled in C++
+- platform_win32: internal_win32_log_error now heap allocates buffer using FormatMessageA
 - string: redefined string_text so that it can be used to initialize compile-time constants.
 - string: bug: asciiz_len included null-terminator.
 - string: bug: trim_*_whitespace functions not trimming properly
@@ -50,6 +52,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - test: test memmove/memory_copy_overlapped to make sure it still works properly.
 - test: test string_trim_*_whitespace functions.
 - test: added path tests.
+- test: added core_logging_callback
 
 0.1.0
 ------

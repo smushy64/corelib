@@ -11,33 +11,30 @@
 #include "core/attributes.h"
 #include "core/types.h"
 
-/// @brief Logging level bitfield.
-///
-/// Bitfield that defines which log messages are allowed to pass through
-/// to #CoreLoggingCallbackFN.
-enum CoreLoggingLevel {
-    /// @brief No logging messages.
-    ///
-    /// Disables formatting and streaming logging messages.
-    CORE_LOGGING_LEVEL_NONE  = (0),
-    /// @brief Only debug messages.
-    CORE_LOGGING_LEVEL_DEBUG = (1 << 0),
-    /// @brief Only info messages.
-    CORE_LOGGING_LEVEL_INFO  = (1 << 1),
-    /// @brief Only warning messages.
-    CORE_LOGGING_LEVEL_WARN  = (1 << 2),
-    /// @brief Only error messages.
-    CORE_LOGGING_LEVEL_ERROR = (1 << 3),
-};
+/// @brief Logging level.
+typedef enum CoreLoggingLevel {
+    /// @brief Do not log messages.
+    CORE_LOGGING_LEVEL_NONE,
+    /// @brief Only log error messages.
+    CORE_LOGGING_LEVEL_ERROR,
+    /// @brief Log warning and error messages.
+    CORE_LOGGING_LEVEL_WARN,
+} CoreLoggingLevel;
 
 /// @brief Function prototype for logging callback.
-/// @param level Log level of message.
-/// @param message_length Length of message.
-/// @param[in] message Message.
-/// @param[in] params Additional parameters.
+/// @details
+/// Logging messages are streamed without formatting,
+/// callback needs to use fmt_text_va or print_text_va to format messages.
+/// Messages never include new-line at the end of stream.
+/// To prevent cross-talk between threads, use a mutex.
+/// @param level Level of message. Can be error or warning.
+/// @param len Length of unformatted message.
+/// @param[in] msg Read-only pointer to unformatted message.
+/// @param[in] va Variadic argument list.
+/// @param[in] params User parameters.
 typedef void CoreLoggingCallbackFN(
-    enum CoreLoggingLevel level, usize message_length,
-    const char* message, void* params );
+    CoreLoggingLevel level, usize len, const char* msg,
+    va_list va, void* user_params );
 
 /// @brief Get version of core lib.
 ///
@@ -62,19 +59,21 @@ attr_core_api const char* core_build_description( usize* opt_out_len );
 /// @return Null-terminated UTF-8 command line string.
 attr_core_api const char* core_command_line( usize* opt_out_len );
 /// @brief Set logging level.
-///
-/// If logging level is set to none, disables logging.
-/// @note Logging can only be enabled if core library is compiled with CORE_ENABLE_LOGGING defined.
-/// @param level Bitfield defining what logging messages are provided.
-attr_core_api void core_set_logging_level( enum CoreLoggingLevel level );
+/// @details
+/// By default, the logging level is CORE_LOGGING_LEVEL_NONE,
+/// in other words, logging is disabled.
+/// @param level Enum defining what logging messages are sent.
+/// @note Logging can only be enabled if
+/// core library is compiled with CORE_ENABLE_LOGGING defined.
+attr_core_api void core_set_logging_level( CoreLoggingLevel level );
 /// @brief Query current logging level.
-/// @return Bitfield of logging level.
-attr_core_api enum CoreLoggingLevel core_query_logging_level(void);
+/// @return Logging level.
+attr_core_api CoreLoggingLevel core_query_logging_level(void);
 /// @brief Set callback for receiving log messages.
 /// @param[in] callback Function for receiving log messages.
-/// @param[in] params Additional parameters for callback.
+/// @param[in] user_params User parameters for callback.
 attr_core_api void core_set_logging_callback(
-    CoreLoggingCallbackFN* callback, void* params );
+    CoreLoggingCallbackFN* callback, void* user_params );
 /// @brief Clear logging callback.
 attr_core_api void core_clear_logging_callback(void);
 

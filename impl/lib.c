@@ -116,25 +116,11 @@ attr_core_api const char* core_command_line( usize* opt_out_len ) {
 }
 
 attr_global enum CoreLoggingLevel global_logging_level = CORE_LOGGING_LEVEL_NONE;
-attr_global Mutex global_logging_mutex;
-attr_global b32 global_logging_mutex_created = false;
 attr_global CoreLoggingCallbackFN* global_logging_callback = NULL;
 attr_global void* global_logging_callback_params = NULL;
 
 attr_core_api void core_set_logging_level( enum CoreLoggingLevel level ) {
-    if( !global_logging_mutex_created ) {
-        assert_log(
-            mutex_create( &global_logging_mutex ),
-            "failed to create logging mutex!" );
-        global_logging_mutex_created = true;
-    }
-
-    mutex_lock( &global_logging_mutex );
-
-    // TODO(alicia): check if level is valid?
     global_logging_level = level;
-
-    mutex_unlock( &global_logging_mutex );
 }
 attr_core_api enum CoreLoggingLevel core_query_logging_level(void) {
     return global_logging_level;
@@ -142,74 +128,37 @@ attr_core_api enum CoreLoggingLevel core_query_logging_level(void) {
 attr_core_api void core_set_logging_callback(
     CoreLoggingCallbackFN* callback, void* params
 ) {
-    if( !global_logging_mutex_created ) {
-        assert_log(
-            mutex_create( &global_logging_mutex ),
-            "failed to create logging mutex!" );
-        global_logging_mutex_created = true;
-    }
-
-    mutex_lock( &global_logging_mutex );
-
     global_logging_callback        = callback;
     global_logging_callback_params = params;
-
-    mutex_unlock( &global_logging_mutex );
 }
 attr_core_api void core_clear_logging_callback(void) {
-    if( !global_logging_mutex_created ) {
-        assert_log(
-            mutex_create( &global_logging_mutex ),
-            "failed to create logging mutex!" );
-        global_logging_mutex_created = true;
-    }
-
-    mutex_lock( &global_logging_mutex );
-
     global_logging_callback        = NULL;
     global_logging_callback_params = NULL;
-
-    mutex_unlock( &global_logging_mutex );
-
 }
-
-attr_internal usize internal_stream_logging_message(
-    void* target, usize count, const void* bytes
-) {
-    enum CoreLoggingLevel level = rcast( enum CoreLoggingLevel, target );
-    global_logging_callback(
-        level, count, (const char*)bytes,
-        global_logging_callback_params );
-
-    return 0;
-}
-
 attr_always_inline inline
-attr_internal b32 internal_logging_level_valid( enum CoreLoggingLevel level ) {
-    return bitfield_check( global_logging_level, level ) != 0;
+attr_internal b32 internal_logging_level_valid( CoreLoggingLevel level ) {
+    if( !global_logging_level ) {
+        return false;
+    }
+    return global_logging_level >= level;
 }
-
 void core_log(
-    enum CoreLoggingLevel level, usize format_len,
+    CoreLoggingLevel level, usize format_len,
     const char* format, ...
 ) {
-    if( !global_logging_mutex_created ) {
-        return;
-    }
-    mutex_lock( &global_logging_mutex );
-
-    if( !internal_logging_level_valid( level ) || !global_logging_callback ) {
-        mutex_unlock( &global_logging_mutex );
+    if( !(
+        global_logging_callback               &&
+        internal_logging_level_valid( level )
+    )) {
         return;
     }
 
     va_list va;
     va_start( va, format );
 
-    fmt_text_va( internal_stream_logging_message, &level, format_len, format, va );
+    global_logging_callback(
+        level, format_len, format, va, global_logging_callback_params );
 
     va_end( va );
-
-    mutex_unlock( &global_logging_mutex );
 }
 
