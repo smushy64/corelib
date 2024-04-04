@@ -19,6 +19,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.1
 -----
 
+- alloc: added alloc.h/.c for memory allocators.
+- alloc: AllocStack stack allocator implemented.
 - collections: added packed_bool_* macro functions for creating and manipulating packed boolean arrays.
 - fs: win32: no longer declares GetStdHandle, platform win32 handles that.
 - fs: added fs_file_write_fmt_* functions for writing formatted text to file.
