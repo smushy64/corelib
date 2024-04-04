@@ -40,7 +40,7 @@ BOOL WINAPI DllMainCRTStartup(
     return TRUE;
 }
 
-#if defined(CORE_PLUSPLUS)
+#if defined(CORE_CPLUSPLUS)
 } /* extern C */
 #endif
 
