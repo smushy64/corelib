@@ -70,7 +70,7 @@ f64 platform_query_milliseconds(void) {
     QueryPerformanceFrequency( &qpf );
     QueryPerformanceCounter( &qpc );
 
-    return (f64)( qpc.QuadPart * 1000) / (f64)qpf.QuadPart;
+    return ((f64)( qpc.QuadPart) / (f64)qpf.QuadPart) * 1000.0;
 }
 
 void platform_console_write( void* dst, usize len, const char* str ) {
