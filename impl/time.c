@@ -17,7 +17,7 @@ attr_core_api void time_query_timestamp( TimeStamp* out_timestamp ) {
 }
 
 attr_core_api f64 time_high_resolution_seconds(void) {
-    return platform_query_milliseconds() * 1000.0;
+    return platform_query_milliseconds() / 1000.0;
 }
 attr_core_api f64 time_high_resolution_milliseconds(void) {
     return platform_query_milliseconds();
