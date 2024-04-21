@@ -27,85 +27,15 @@ typedef struct CoreTimeStamp {
     u32 second;
 } TimeStamp;
 
-#if defined(CORE_CPLUSPLUS)
-
-#include "core/macros.h" // IWYU pragma: keep
-#include "core/fs.h"     // IWYU pragma: keep
-#include "core/fmt.h"
-#include "core/print.h"
-
-// NOTE(alicia): forward declaration
-
-attr_core_api u64 time_query_ticks_per_second(void);
-attr_core_api u64 time_query_ticks(void);
-
-/// @brief Time a block of code.
-///
-/// When block ends, streams time between construction and
-/// destruction to a streaming target.
-///
-/// @see core/stream.h
-/// @see #fmt()
-/// @see #time_query_ticks()
-/// @see #time_query_ticks_per_second()
-struct TimerBlock {
-    /// @brief Name of block. (optional)
-    const char* opt_block_name;
-    /// @brief Streaming function for formatting message.
-    StreamFormatFN* stream;
-    /// @brief Target to stream to.
-    void* target;
-    /// @brief Ticks when #TimerBlock is created.
-    u64 start_ticks;
-
-    /// @brief Constructor.
-    /// @param[in] opt_block_name (optional) Name of time block. Gets streamed at construction and destruction.
-    /// @param[in] stream Streaming function.
-    /// @param[in] target (optional) Target to stream to.
-    TimerBlock( const char* opt_block_name, StreamFormatFN* stream, void* target )
-    : opt_block_name(opt_block_name), stream(stream), target(target) {
-        start_ticks = time_query_ticks();
-    }
-    /// @brief Destructor
-    ///
-    /// Queries ticks and streams time between construction and destruction to #target.
-    ~TimerBlock() {
-        u64 end_ticks = time_query_ticks();
-        f64 time_sec  =
-            (f64)(end_ticks - start_ticks) / (f64)time_query_ticks_per_second();
-        f64 time_ms = time_sec * 1000.0;
-
-        if( opt_block_name ) {
-            fmt( stream, target, str_cyan( "[TIMER] " ) "{cc}: {f64}sec ({f64}ms)\n",
-                opt_block_name, time_sec, time_ms );
-        } else {
-            fmt( stream, target, str_cyan( "[TIMER]" ) ": {f64}sec ({f64}ms)\n",
-                time_sec, time_ms );
-        }
-    }
-};
-
-#if defined(CORE_ENABLE_DEBUG_TIMER_BLOCK)
-    /// @brief Start a debug timer for the current block.
-    ///
-    /// When code block ends, prints to stdout how long the block took to execute.
-    /// @note Only enabled if CORE_ENABLE_DEBUG_TIMER_BLOCK is defined.
-    /// @param name (optional) String literal name of timer block.
-    #define debug_timer_block( name )\
-        auto unique_id(_timer_block_) = TimerBlock( name, stream_console, stdout_handle() )
-#else
-    /// @brief Start a debug timer for the current block.
-    ///
-    /// When code block ends, prints to stdout how long the block took to execute.
-    #define debug_timer_block( ... )
-#endif
-
-#endif /* C++ Time Block */
-
+/// @brief Query high resolution clock seconds.
+/// @return Seconds.
+attr_core_api f64 time_high_resolution_seconds(void);
+/// @brief Query high resolution clock milliseconds.
+/// @return Milliseconds.
+attr_core_api f64 time_high_resolution_milliseconds(void);
 /// @brief Query time stamp from the system.
 /// @param[out] out_timestamp Pointer to TimeStamp struct.
 attr_core_api void time_query_timestamp( TimeStamp* out_timestamp );
-
 /// @brief Convert month to string.
 /// @param month Month to convert. Must be in range 1 -> 12.
 /// @param[out] opt_out_len (optional) Pointer to usize to receive string length.
@@ -149,65 +79,66 @@ attr_header b32 time_24hr_to_12hr( u32 hr24, u32* out_hr12 ) {
     return hr24 < 12;
 }
 
-/// @brief Query how many ticks there are per second.
-/// @return Ticks per second.
-attr_core_api u64 time_query_ticks_per_second(void);
-/// @brief Query ticks since hardware turned on.
-///
-/// Useful for relative high resolution time keeping.
-/// @return Ticks.
-attr_core_api u64 time_query_ticks(void);
+#if defined(CORE_ENABLE_DEBUG_TIMER_BLOCK)
+    // IWYU pragma: begin_keep
+    #include "core/stream.h"
+    #include "core/fmt.h"
+    #include "core/fs.h"
+    // IWYU pragma: end_keep
 
-/// @brief Initialize global time keeping.
-///
-/// Required to use following global time keeping functions.
-attr_core_api void time_global_timekeeping_initialize(void);
-/// @brief Update global time keeping.
-attr_core_api void time_global_timekeeping_update(void);
-/// @brief Query how many times global time keeping has been updated.
-/// @return Number of times global timekeeping has been updated. (or, how many frames have been rendered).
-attr_core_api u64 time_global_query_update_count(void);
-/// @brief Query how many seconds have elapsed since global time keeping was initialized.
-/// @return Elapsed seconds since start of global time keeping.
-attr_core_api f64 time_global_elapsed_sec(void);
-/// @brief Query how many seconds have elapsed since the last time
-/// global time keeping was updated.
-/// @note This value is multiplied with global time scale.
-/// @return Delta time since last update (or last frame).
-attr_core_api f64 time_global_delta_sec(void);
-/// @brief Query how many seconds have elapsed since the last time
-/// global time keeping was updated.
-/// @note This value is NOT multiplied with global time scale.
-/// @return Raw delta time since last update (or last frame).
-attr_core_api f64 time_global_unscaled_delta_sec(void);
-/// @brief Set global time scale.
-///
-/// This value is multiplied with delta time.
-/// @param time_scale New time scale.
-attr_core_api void time_global_set_time_scale( f64 time_scale );
-/// @brief Query global time scale.
-/// @return Global time scale.
-attr_core_api f64 time_global_query_time_scale(void);
+    attr_core_api void ___internal_get_debug_timer_block_stream(
+        StreamBytesFN** out_stream, void** out_params );
+    attr_core_api void ___internal_debug_timer_block_set_stream(
+        StreamBytesFN* stream, void* target );
 
-#if defined(CORE_ENABLE_TIME_GLOBAL_ALIAS)
-    /// @brief Query time elapsed since start of the program.
-    /// @return Time elapsed since start of program in seconds.
-    #define elapsed_time()        time_global_elapsed_sec()
-    /// @brief Query scaled time elapsed since the last frame or update.
-    /// @return Time elapsed since last frame/update in seconds.
-    #define delta_time()          time_global_delta_sec()
-    /// @brief Query time elapsed since the last frame or update.
-    /// @return Time elapsed since last frame/update in seconds.
-    #define unscaled_delta_time() time_global_unscaled_delta_sec()
-    /// @brief Query time scale.
-    /// @return Time scale.
-    #define time_scale()          time_global_query_time_scale()
-    /// @brief Set time scale.
-    /// @param scale New time scale.
-    #define time_set_scale(scale) time_global_set_time_scale( scale )
-    /// @brief Query how many updates/frames there have been since start of the program.
-    /// @return Number of updates/frames since start of the program.
-    #define time_frames()         time_global_query_update_count()
-#endif
+    /// @brief Time a block of code.
+    /// @details
+    /// Checks how many milliseconds it took to run block of code.
+    /// Prints result to stdout or if streaming function is defined
+    /// with debug_timer_block_set_stream(), outputs result to stream.
+    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
+    /// @param name (valid C-identifier) Name of timer block.
+    /// @param code (block of code) Code to time.
+    #define debug_timer_block( name, code ) do {\
+        f64 ___##name##_timer_block_time_begin = time_high_resolution_milliseconds();\
+        { code }\
+        f64 ___##name##_timer_block_time_end   = time_high_resolution_milliseconds();\
+        f64 ___##name##_timer_block_ms =\
+            ___##name##_timer_block_time_end - ___##name##_timer_block_time_begin;\
+        StreamBytesFN* ___##name##_timer_block_stream = NULL;\
+        void*          ___##name##_timer_block_params = NULL;\
+        ___internal_get_debug_timer_block_stream(\
+            &___##name##_timer_block_stream, &___##name##_timer_block_params );\
+        if( !___##name##_timer_block_stream ) {\
+            ___##name##_timer_block_stream = stream_console;\
+            ___##name##_timer_block_params = stdout_handle();\
+        }\
+        fmt( ___##name##_timer_block_stream,\
+            ___##name##_timer_block_params,\
+            "TIMER BLOCK '" #name "': {f}ms\n", ___##name##_timer_block_ms );\
+    } while(0)
+    /// @brief Set streaming function and target for debug timer blocks.
+    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
+    /// @param stream (StreamBytesFN*) Streaming function.
+    /// @param target (void*) Target to stream to.
+    #define debug_timer_block_set_stream( stream, target )\
+        ___internal_debug_timer_block_set_stream( stream, target )
+
+#else /* CORE_ENABLE_DEBUG_TIMER_BLOCK */
+    /// @brief Time a block of code.
+    /// @details
+    /// Checks how many milliseconds it took to run block of code.
+    /// Prints result to stdout or if streaming function is defined
+    /// with debug_timer_block_set_stream(), outputs result to stream.
+    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
+    /// @param name (valid C-identifier) Name of timer block.
+    /// @param code (block of code) Code to time.
+    #define debug_timer_block( name, code ) code
+    /// @brief Set streaming function and target for debug timer blocks.
+    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
+    /// @param stream (StreamBytesFN*) Streaming function.
+    /// @param target (void*) Target to stream to.
+    #define debug_timer_block_set_stream(...) unused( __VA_ARGS__ )
+#endif /* NOT CORE_ENABLE_DEBUG_TIMER_BLOCK */ 
 
 #endif /* header guard */

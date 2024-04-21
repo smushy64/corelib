@@ -64,17 +64,13 @@ void platform_query_timestamp( TimeStamp* out_timestamp ) {
     out_timestamp->minute = (u32)systime.wMinute;
     out_timestamp->second = (u32)systime.wSecond;
 }
-u64 platform_query_ticks(void) {
-    LARGE_INTEGER li;
-    QueryPerformanceCounter( &li );
-    return rcast( u64, &li.QuadPart );
-}
 
-u64 global_platform_ticks_per_second = 0;
-void platform_set_ticks_per_second(void) {
-    LARGE_INTEGER li;
-    QueryPerformanceFrequency( &li );
-    global_platform_ticks_per_second = rcast( u64, &li.QuadPart );
+f64 platform_query_milliseconds(void) {
+    LARGE_INTEGER qpf, qpc;
+    QueryPerformanceFrequency( &qpf );
+    QueryPerformanceCounter( &qpc );
+
+    return (f64)( qpc.QuadPart * 1000) / (f64)qpf.QuadPart;
 }
 
 void platform_console_write( void* dst, usize len, const char* str ) {

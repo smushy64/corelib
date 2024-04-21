@@ -18,11 +18,8 @@ void* platform_heap_realloc(
 void platform_heap_free( void* buffer, const usize size );
 
 void platform_query_timestamp( TimeStamp* out_timestamp );
-u64  platform_query_ticks(void);
 
-extern u64 global_platform_ticks_per_second;
-void platform_set_ticks_per_second(void);
-
+f64 platform_query_milliseconds(void);
 void platform_console_write( void* dst, usize len, const char* str );
 
 struct Semaphore;

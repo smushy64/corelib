@@ -19,6 +19,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.1
 -----
 
+- time: changed time_query_ticks and time_query_ticks_per_second to functions for querying seconds and milliseconds.
 - alloc: added alloc.h/.c for memory allocators.
 - alloc: AllocStack stack allocator implemented.
 - collections: added packed_bool_* macro functions for creating and manipulating packed boolean arrays.

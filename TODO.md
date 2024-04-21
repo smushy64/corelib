@@ -1,15 +1,14 @@
 # Todo List
+- [ ] process.h: API for creating processes and pipes.
 - [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
 - [ ] platform:win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
-- [ ] lib:log: fix logging new line
-- [ ] lib:log: remove color formatting
 - [ ] fs: traverse directory.
 - [ ] fs: memory mapped file?
-- [ ] math: simd (trig, linear algbra)
+- [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)
 - [ ] math: saturating,wrapping,checked add/sub/mul/div
 - [ ] math: generics/function overloads(C++)
@@ -25,6 +24,8 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] lib:log: fix logging new line
+- [x] lib:log: remove color formatting
 - [x] math: endian conversions
 - [x] math: is_power_of_two
 - [x] math: RGB <-> HSL conversions
