@@ -9,214 +9,269 @@
 #include "core/types.h"
 #include "core/attributes.h"
 
-#if defined(CORE_COMPILER_MSVC)
-    #pragma intrinsic(_InterlockedExchangeAdd)
-#endif
-
+// TODO(alicia): define platform sizes in build system!
 #if defined(CORE_PLATFORM_WINDOWS)
-    #define ___CORE_INTERNAL_SEMAPHORE_SIZE ( sizeof(void*) )
-    #define ___CORE_INTERNAL_MUTEX_SIZE     ( sizeof(void*) )
-#elif defined(CORE_PLATFORM_LINUX)
-    #define ___CORE_INTERNAL_SEMAPHORE_SIZE (sizeof(void*))
-    #define ___CORE_INTERNAL_MUTEX_SIZE     (40) // sizeof pthread_mutex_t
-#else
-    #error "Semaphore and Mutex sizes not defined on current platform!"
+    #define CORE_PLATFORM_SEMAPHORE_SIZE (sizeof(void*))
+    #define CORE_PLATFORM_MUTEX_SIZE     (sizeof(void*))
+#elif defined(CORE_PLATFORM_POSIX)
+    #define CORE_PLATFORM_SEMAPHORE_SIZE (sizeof(void*))
+    #define CORE_PLATFORM_MUTEX_SIZE     (40) // sizeof glibc pthread_mutex_t
 #endif
 
-/// @brief Opaque %Semaphore Handle.
+/// @brief Wait for sync object indefinitely.
+#define CORE_WAIT_INFINITE 0xFFFFFFFF
+
+/// @brief Semaphore.
 typedef struct Semaphore {
-#if !defined(CORE_DOXYGEN)
-    u8 handle[___CORE_INTERNAL_SEMAPHORE_SIZE];
-#endif
+    u8 opaque[CORE_PLATFORM_SEMAPHORE_SIZE];
 } Semaphore;
-/// @brief Opaque %Mutex Handle.
+/// @brief Mutex.
 typedef struct Mutex {
-#if !defined(CORE_DOXYGEN)
-    u8 handle[___CORE_INTERNAL_MUTEX_SIZE];
-#endif
+    u8 opaque[CORE_PLATFORM_MUTEX_SIZE];
 } Mutex;
 
-/// @brief Create a named semaphore.
-/// @param[in] opt_name (optional) Name of semaphore.
-/// @param[out] out_sem Pointer to receive semaphore.
-/// @return True if semaphore created successfully.
-attr_core_api b32 semaphore_create_named( const char* opt_name, Semaphore* out_sem );
 /// @brief Create a semaphore.
-/// @param[out] out_sem Pointer to receive semaphore.
-/// @return True if semaphore created successfully.
-attr_always_inline
-attr_header b32 semaphore_create( Semaphore* out_sem ) {
-    return semaphore_create_named( nullptr, out_sem );
-}
-/// @brief Destroy a semaphore.
-///
-/// Semaphore can be invalid (nullptr or semaphore wasn't actually created).
-/// @param[in] sem Semaphore to destroy.
-attr_core_api void semaphore_destroy( Semaphore* sem );
+/// @param[out] out_sem Pointer to write semaphore to.
+/// @return
+///     - @c true  : Created semaphore successfully.
+///     - @c false : Failed to create semaphore.
+attr_core_api b32  semaphore_create( Semaphore* out_sem );
 /// @brief Signal a semaphore.
 /// @param[in] sem Semaphore to signal.
 attr_core_api void semaphore_signal( Semaphore* sem );
-/// @brief Wait for semaphore to be signaled for given milliseconds.
-/// @note An ms value of #U32_MAX means the function will not return until semaphore is signaled.
-/// @param[in] sem Semaphore to wait for.
-/// @param ms Milliseconds to wait for, must be less than #U32_MAX.
-/// @return True if signaled in time, otherwise false.
+/// @brief Wait for semaphore for specified time.
+/// @param[in] sem Semaphore to wait on.
+/// @param     ms  Milliseconds to wait for. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - @c true  : Semaphore was signaled in time.
+///     - @c false : Wait for semaphore timed out.
 attr_core_api b32 semaphore_wait_timed( Semaphore* sem, u32 ms );
-/// @brief Wait for semaphore to be signaled indefinitely.
-/// @param[in] sem Semaphore to wait for.
+/// @brief Wait indefinitely for semaphore.
+/// @param[in] sem Semaphore to wait on.
 attr_always_inline
 attr_header void semaphore_wait( Semaphore* sem ) {
-    (void)semaphore_wait_timed( sem, 0xFFFFFFFF );
+    (void)semaphore_wait_timed( sem, CORE_WAIT_INFINITE );
 }
+/// @brief Destroy semaphore object.
+/// @param[in] sem Semaphore to destroy.
+attr_core_api void semaphore_destroy( Semaphore* sem );
 
-/// @brief Create a named mutex.
-/// @param[in] opt_name (optional) Mutex name.
-/// @param[out] out_mutex Pointer to receive mutex.
-/// @return True if mutex was created successfully.
-attr_core_api b32 mutex_create_named( const char* opt_name, Mutex* out_mutex );
 /// @brief Create a mutex.
-/// @param[out] out_mutex Pointer to receive mutex.
-/// @return True if mutex was created successfully.
+/// @param[out] out_mut Pointer to write mutex to.
+/// @return
+///     - @c true  : Created mutex successfully.
+///     - @c false : Failed to create mutex.
+attr_core_api b32 mutex_create( Mutex* out_mut );
+/// @brief Wait for mutex lock for specified time.
+/// @param[in] mut Mutex to wait for lock.
+/// @param     ms  Milliseconds to wait for. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - @c true  : Mutex lock was obtained in time.
+///     - @c false : Wait for mutex lock timed out.
+attr_core_api b32 mutex_lock_timed( Mutex* mut, u32 ms );
+/// @brief Wait for mutex lock indefinitely.
+/// @param[in] mut Mutex to wait for lock on.
 attr_always_inline
-attr_header b32 mutex_create( Mutex* out_mutex ) {
-    return mutex_create_named( nullptr, out_mutex );
+attr_header void mutex_lock( Mutex* mut ) {
+    (void)mutex_lock_timed( mut, CORE_WAIT_INFINITE );
 }
-/// @brief Destroy a mutex.
-/// @param[in] mutex Mutex to destroy.
-attr_core_api void mutex_destroy( Mutex* mutex );
-/// @brief Attempt to lock a mutex for given milliseconds.
-/// @note An ms value of #U32_MAX means the function will not return until mutex is available.
-/// @param[in] mutex Mutex to lock.
-/// @param ms Milliseconds to wait for lock, must be less than #U32_MAX.
-/// @return True if mutex locked within ms, otherwise false.
-attr_core_api b32 mutex_lock_timed( Mutex* mutex, u32 ms );
-/// @brief Attempt to lock a mutex indefinitely.
-/// @param[in] mutex Mutex to lock.
-attr_always_inline
-attr_header void mutex_lock( Mutex* mutex ) {
-    (void)mutex_lock_timed( mutex, 0xFFFFFFFF );
-}
-/// @brief Unlock a mutex.
-/// @param[in] mutex Mutex to unlock.
-attr_core_api void mutex_unlock( Mutex* mutex );
+/// @brief Release lock on mutex.
+/// @param[in] mut Mutex to unlock.
+attr_core_api void mutex_unlock( Mutex* mut );
+/// @brief Destroy mutex.
+/// @param[in] mut Mutex to destroy.
+attr_core_api void mutex_destroy( Mutex* mut );
 
 #if defined(CORE_COMPILER_MSVC)
-    /// @brief Multi-Threading safe add.
-    /// @param[in] addend Pointer to addend
-    /// @param value Value to add to addend
-    /// @return Previous value of addend.
-    #define interlocked_add( addend, value )\
-        _InterlockedExchangeAdd( (addend), (value) )
-    /// @brief Multi-Threading safe subtract.
-    /// @param[in] addend Pointer to addend
-    /// @param value Value to add to addend
-    /// @return Previous value of addend.
-    #define interlocked_sub( addend, value )\
-        _InterlockedExchangeAdd( (addend), -(value) )
-    /// @brief Multi-Threading safe increment.
-    /// @param[in] addend Pointer to addend
-    /// @return Previous value of addend.
-    #define interlocked_increment( addend )\
-        interlocked_add( addend, 1 )
-    /// @brief Multi-Threading safe decrement.
-    /// @param[in] addend Pointer to addend
-    /// @return Previous value of addend.
-    #define interlocked_decrement( addend )\
-        interlocked_sub( addend, 1 )
-    /// @brief Multi-Threading safe exchange.
-    /// @param[in] target Pointer to exchange.
-    /// @param value Value to exchange with.
-    /// @return initial value of target.
-    #define interlocked_exchange( target, value )\
-        _InterlockedExchange( (target), (value) )
-    /// @brief Multi-Threading safe compare and exchange.
-    /// @param[in] target Pointer to compare.
-    /// @param exchange Value to exchange with.
-    /// @param comperand Value to compare with.
-    /// @return initial value of target.
-    #define interlocked_compare_exchange( target, exchange, comperand )\
-        _InterlockedCompareExchange( (target), (exchange), (comperand) )
-#else
-    /// @brief Multi-Threading safe add.
-    /// @param[in] addend Pointer to addend
-    /// @param value Value to add to addend
-    /// @return Previous value of addend.
-    #define interlocked_add( addend, value )\
-        __sync_fetch_and_add( ( addend ), ( value ) )
-    /// @brief Multi-Threading safe subtract.
-    /// @param[in] addend Pointer to addend
-    /// @param value Value to add to addend
-    /// @return Previous value of addend.
-    #define interlocked_sub( addend, value )\
-        __sync_fetch_and_sub( ( addend ), ( value ) )
-    /// @brief Multi-Threading safe increment.
-    /// @param[in] addend Pointer to addend
-    /// @return Previous value of addend.
-    #define interlocked_increment( addend )\
-        __sync_fetch_and_add( ( addend ), 1 )
-    /// @brief Multi-Threading safe decrement.
-    /// @param[in] addend Pointer to addend
-    /// @return Previous value of addend.
-    #define interlocked_decrement( addend )\
-        __sync_fetch_and_sub( ( addend ), 1 )
-    /// @brief Multi-Threading safe exchange.
-    /// @param[in] target Pointer to exchange.
-    /// @param value Value to exchange with.
-    /// @return initial value of target.
-    #define interlocked_exchange( target, value )\
-        __sync_val_compare_and_swap( (target), *(target), (value) )
-    /// @brief Multi-Threading safe compare and exchange.
-    /// @param[in] target Pointer to compare.
-    /// @param exchange Value to exchange with.
-    /// @param comperand Value to compare with.
-    /// @return initial value of target.
-    #define interlocked_compare_exchange( target, exchange, comperand )\
-        __sync_val_compare_and_swap( (target), (comperand), (exchange) )
-#endif
-
-#if defined(CORE_DOXYGEN)
-    /// @brief Complete all reads and writes before fence.
-    #define read_write_fence()
-    /// @brief Complete all reads before fence.
-    #define read_fence()
-    /// @brief Complete all writes before fence.
-    #define write_fence()
-#endif
-
-#if defined(CORE_COMPILER_MSVC)
-    /// @brief Complete all reads and writes before fence.
-    #define read_write_fence()\
+    /// @brief Issue a full read write barrier.
+    #define read_write_barrier()\
         _ReadWriteBarrier()
-    /// @brief Complete all reads before fence.
-    #define read_fence()\
+    /// @brief Issue a full read barrier.
+    #define read_barrier()\
         _ReadBarrier()
-    /// @brief Complete all writes before fence.
-    #define write_fence()\
+    /// @brief Issue a full write barrier.
+    #define write_barrier()\
         _WriteBarrier()
+
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add32( atom, addend )\
+        _InterlockedAdd( (atom), (addend) )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange32( atom, exch )\
+        _InterlockedExchange( (atom), (exch) )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange32( atom, cmp, exch )\
+        _InterlockedCompareExchange( (atom), (exch), (cmp) )
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add64( atom, addend )\
+        _InterlockedAdd64( (atom), (addend) )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange64( atom, exch )\
+        _InterlockedExchange64( (atom), (exch) )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange64( atom, cmp, exch )\
+        _InterlockedCompareExchange64( (atom), (exch), (cmp) )
 #else
     #if defined(CORE_ARCH_X86)
-        /// @brief Complete all reads and writes before fence.
-        #define read_write_fence()\
+        /// @brief Issue a full read write barrier.
+        #define read_write_barrier()\
             __asm__ volatile ("mfence":::"memory")
-        /// @brief Complete all reads before fence.
-        #define read_fence()\
+        /// @brief Issue a full read barrier.
+        #define read_barrier()\
             __asm__ volatile ("lfence":::"memory")
-        /// @brief Complete all writes before fence.
-        #define write_fence()\
+        /// @brief Issue a full write barrier.
+        #define write_barrier()\
             __asm__ volatile ("sfence":::"memory")
     #elif defined(CORE_ARCH_ARM)
-        /// @brief Complete all reads and writes before fence.
-        #define read_write_fence()\
+        /// @brief Issue a full read write barrier.
+         #define read_write_barrier()\
             __asm__ volatile ("dmb":::"memory")
-        /// @brief Complete all reads before fence.
-        #define read_fence()\
+        /// @brief Issue a full read barrier.
+        #define read_barrier()\
             __asm__ volatile ("dmb":::"memory")
-        /// @brief Complete all writes before fence.
-        #define write_fence()\
+        /// @brief Issue a full write barrier.
+        #define write_barrier()\
             __asm__ volatile ("dmb st":::"memory")
     #else
-        #error "Fences not defined for current architecture!"
+        /// @brief Issue a full read write barrier.
+        #define read_write_barrier()
+            __sync_synchronize()
+        /// @brief Issue a full read barrier.
+        #define read_barrier()  read_write_barrier()
+        /// @brief Issue a full write barrier.
+        #define write_barrier() read_write_barrier()
     #endif
+
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add32( atom, addend )\
+        __sync_fetch_and_add( atom, addend )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange32( atom, exch )\
+        __sync_val_compare_and_swap( (atom), *(atom), (exch) )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange32( atom, cmp, exch )\
+        __sync_val_compare_and_swap( (atom), (cmp), (exch) )
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add64( atom, addend )\
+        __sync_fetch_and_add( atom, addend )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange64( atom, exch )\
+        __sync_val_compare_and_swap( (atom), *(atom), (exch) )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange64( atom, cmp, exch )\
+        __sync_val_compare_and_swap( (atom), (cmp), (exch) )
+#endif
+
+/// @brief Perform an atomic increment on signed integer.
+/// @param[out] atom Atomic integer to add one to.
+/// @return Previous value of @c atom.
+#define atomic_increment32( atom ) atomic_add32( atom, 1 )
+/// @brief Perform an atomic decrement on signed integer.
+/// @param[out] atom Atomic integer to subtract one from.
+/// @return Previous value of @c atom.
+#define atomic_decrement32( atom ) atomic_add32( atom, -1 )
+
+/// @brief Perform an atomic increment on signed integer.
+/// @param[out] atom Atomic integer to add one to.
+/// @return Previous value of @c atom.
+#define atomic_increment64( atom ) atomic_add64( atom, 1 )
+/// @brief Perform an atomic decrement on signed integer.
+/// @param[out] atom Atomic integer to subtract one from.
+/// @return Previous value of @c atom.
+#define atomic_decrement64( atom ) atomic_add64( atom, -1 )
+
+#if defined(CORE_ARCH_64_BIT)
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add_size( atom, addend ) atomic_add64( atom, addend )
+    /// @brief Perform an atomic increment on signed integer.
+    /// @param[out] atom Atomic integer to add one to.
+    /// @return Previous value of @c atom.
+    #define atomic_increment_size( atom ) atomic_increment64( atom )
+    /// @brief Perform an atomic decrement on signed integer.
+    /// @param[out] atom Atomic integer to subtract one from.
+    /// @return Previous value of @c atom.
+    #define atomic_decrement_size( atom ) atomic_decrement64( atom )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange_size( atom, exch ) atomic_exchange64( atom, exch )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange_size( atom, cmp, exch )\
+        atomic_compare_exchange64( atom, cmp, exch )
+#else
+    /// @brief Perform an atomic add on signed integer.
+    /// @param[out] atom   Atomic integer to add to.
+    /// @param      addend Value to add to atom.
+    /// @return Previous value of @c atom.
+    #define atomic_add_size( atom, addend ) atomic_add32( atom, addend )
+    /// @brief Perform an atomic increment on signed integer.
+    /// @param[out] atom Atomic integer to add one to.
+    /// @return Previous value of @c atom.
+    #define atomic_increment_size( atom ) atomic_increment32( atom )
+    /// @brief Perform an atomic decrement on signed integer.
+    /// @param[out] atom Atomic integer to subtract one from.
+    /// @return Previous value of @c atom.
+    #define atomic_decrement_size( atom ) atomic_decrement32( atom )
+    /// @brief Atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to exchange.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_exchange_size( atom, exch ) atomic_exchange32( atom, exch )
+    /// @brief Conditionally and atomically exchange value of atom with new value.
+    /// @param[out] atom Atomic integer to compare and exchange.
+    /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
+    /// @param      exch Value to exchange atom with.
+    /// @return Previous value of @c atom.
+    #define atomic_compare_exchange_size( atom, cmp, exch )\
+        atomic_compare_exchange32( atom, cmp, exch )
 #endif
 
 #endif /* header guard */

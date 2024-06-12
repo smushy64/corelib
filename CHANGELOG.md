@@ -1,6 +1,9 @@
 Changelog
 =========
 
+Major version 0 means library is in development so anything
+might change, including breaking changes.
+
 ## Major version
 Number between 0-65535.
 
@@ -15,6 +18,36 @@ Indicates implementation changes or bug fixes that affect behavior.
 Number between 0-255
 
 Indicates additions to API, minor bug fixes and other small changes.
+
+0.1.2
+-----
+
+- alloc: Implemented heap and stack functions.
+- alloc: Renamed AllocStack to StackAllocator and renamed functions accordingly.
+- alloc: Added AllocatorInterface structure and heap allocator interface.
+- collections: applied changes from slice.h
+- fmt: applied changes from string.h
+- fs: removed fs_directory_delete()
+- job_queue: applied changes from sync.h
+- macros/assertions: moved assertion macros from core/macros.h to core/assertions.h
+- macros: added struct_literal() macro for defining struct literals.
+- memory: renamed memory_copy_overlapped to memory_move.
+- path: applied changes from string.h
+- path: rewrote many functions. path_buf_* functions now use AllocatorInterface.
+- platform/win32: applied changes from sync.h
+- platform/win32: applied changes from string.h
+- platform/win32: removed platform_directory_delete()
+- slice: renamed CoreSlice/Buffer to ByteSlice/Buffer
+- slice: renamed GenericSlice/Buffer to ItemSlice/Buffer
+- string: applied changes from slice.h
+- string: rewrote most functions. removed SIMD "optimizations" for now.
+- string: renamed asciiz_len to cstr_len. renamed char_* functions to ascii_*.
+- string: string buf allocating functions now use AllocatorInterface.
+- sync: renamed interlocked_* functions to atomic_* and simplified mutex/semaphore api.
+- sync: renamed _fence functions to _barrier
+- test: deleted old tests and replaced with only string tests for now.
+- types: added 128-bit integers, atomic integers, hash integers, bsize and codepoints.
+- Makefile: bumped version to 0.1.2
 
 0.1.1
 -----

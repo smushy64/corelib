@@ -125,7 +125,7 @@ attr_core_api void memory_copy(
     internal_memory_copy_word( dst, src, size );
 #endif
 }
-attr_core_api void memory_copy_overlapped(
+attr_core_api void memory_move(
     void* dst, const void* src, usize size
 ) {
     // TODO(alicia): implementation with sse

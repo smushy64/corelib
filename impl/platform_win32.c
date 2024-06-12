@@ -180,7 +180,7 @@ attr_internal DWORD internal_win32_thread_proc( void* in ) {
 
     semaphore_signal( thread.sem );
 
-    u32 thread_id = interlocked_increment( &global_thread_id );
+    u32 thread_id = atomic_increment32( &global_thread_id );
     _ReadWriteBarrier();
 
     volatile int ret = thread.main( thread_id, thread.params );
@@ -281,7 +281,12 @@ attr_internal struct Win32Path path_to_win32( const Path in_path ) {
     // Or allocate more intelligently?
     HANDLE process_heap = GetProcessHeap();
 
-    b32 is_nt            = string_is_null_terminated( path.p );
+    b32 is_nt = false;
+    if( path.p.len ) {
+        if( !path.p.c[path.p.len - 1] || !path.p.c[path.p.len] ) {
+            is_nt = true;
+        }
+    }
     b32 is_lteq_max_path = path.len <= MAX_PATH;
 
     if( is_nt && is_lteq_max_path ) {
@@ -667,243 +672,6 @@ b32 platform_directory_item_count( const Path in_path, usize* out_count ) {
     return true;
 }
 
-attr_internal b32 internal_win32_directory_is_empty( struct Win32Path path ) {
-    WIN32_FIND_DATAA find = {0};
-    HANDLE first_file = FindFirstFileA( path.cc, &find );
-    int found     = FindNextFileA( first_file, &find );
-    FindClose( first_file );
-
-    return !found;
-}
-
-attr_internal b32 internal_win32_directory_delete_recursive(
-    HANDLE ff, WIN32_FIND_DATAA* ffd, PathBuf* root
-) {
-    if( ff == INVALID_HANDLE_VALUE ) {
-        return true;
-    }
-
-    #define realloc( c ) do {\
-        char* new_buf = HeapReAlloc(\
-            GetProcessHeap(), HEAP_ZERO_MEMORY, root->v, root->cap + 256 + c );\
-        if( !new_buf ) {\
-            core_error( "win32: recursive_delete: failed to reallocate root path!" );\
-            return false;\
-        }\
-        root->v    = new_buf;\
-        root->cap += 256 + c;\
-    } while(0)
-
-    #define push( c ) do {\
-        if( !string_buf_push( &file_path, c ) ) {\
-            realloc( 0 );\
-            file_path.v   = root->v;\
-            file_path.cap = root->cap;\
-            string_buf_push( &file_path, c );\
-        }\
-    } while(0)
-
-    do {
-        Path local_path = {0};
-        local_path.cc  = ffd->cFileName;
-        local_path.len = asciiz_len( local_path.c );
-
-        if(
-            path_cmp( local_path, path_text(".") ) ||
-            path_cmp( local_path, path_text("..") )
-        ) {
-            continue;
-        }
-
-        PathBuf file_path = *root;
-        if( !path_buf_push( &file_path, local_path ) ) {
-            realloc( local_path.len );
-            file_path = *root;
-            path_buf_push( &file_path, local_path );
-        }
-
-        if( bitfield_check( ffd->dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY ) ) {
-            push( '\\' ); push( '*' ); push( 0 );
-
-            HANDLE ff2 = FindFirstFileA( file_path.cc, ffd );
-            if( ff2 == INVALID_HANDLE_VALUE ) {
-                if( RemoveDirectoryA( file_path.cc ) == FALSE ) {
-                    // NOTE(alicia): heap allocating error buffer
-                    // to try to prevent stack overflow
-                    DWORD error = GetLastError();
-
-                    char* error_log =
-                        HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 256 );
-                    if( error_log ) {
-                        FormatMessageA(
-                            FORMAT_MESSAGE_FROM_SYSTEM    |
-                            FORMAT_MESSAGE_IGNORE_INSERTS |
-                            FORMAT_MESSAGE_MAX_WIDTH_MASK,
-                            NULL, error, 0, error_log, 256, NULL );
-                    }
-
-                    core_error( "win32: recursive_delete: "
-                        "failed to delete directory '{p}'! {u32,X} {cc}",
-                        file_path.slice, error, error_log );
-
-                    HeapFree( GetProcessHeap(), 0, error_log );
-                    return false;
-                }
-            } else {
-                // prevent null-terminator from interfering with
-                // generating child ___recursive_delete's file_path
-                file_path.len -= 3;
-                if( !internal_win32_directory_delete_recursive(
-                    ff2, ffd, &file_path
-                ) ) {
-                    FindClose( ff2 );
-                    root->cc= file_path.cc;
-                    root->cap = file_path.cap;
-                    return false;
-                }
-                root->cc  = file_path.cc;
-                root->cap = file_path.cap;
-
-                FindClose( ff2 );
-                push( 0 );
-                if( RemoveDirectoryA( file_path.cc ) == FALSE ) {
-                    // NOTE(alicia): heap allocating error buffer
-                    // to try to prevent stack overflow
-                    DWORD error = GetLastError();
-
-                    char* error_log =
-                        HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 256 );
-                    if( error_log ) {
-                        FormatMessageA(
-                            FORMAT_MESSAGE_FROM_SYSTEM    |
-                            FORMAT_MESSAGE_IGNORE_INSERTS |
-                            FORMAT_MESSAGE_MAX_WIDTH_MASK,
-                            NULL, error, 0, error_log, 256, NULL );
-                    }
-
-                    core_error( "win32: recursive_delete: "
-                        "failed to delete directory '{p}'! {u32,X} {cc}",
-                        file_path.slice, error, error_log );
-
-                    HeapFree( GetProcessHeap(), 0, error_log );
-                    return false;
-                }
-            }
-        } else {
-            push( 0 );
-            if( DeleteFileA( file_path.cc ) == FALSE ) {
-                // NOTE(alicia): heap allocating error buffer
-                // to try to prevent stack overflow
-                DWORD error = GetLastError();
-
-                char* error_log =
-                    HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 256 );
-                if( error_log ) {
-                    FormatMessageA(
-                        FORMAT_MESSAGE_FROM_SYSTEM    |
-                        FORMAT_MESSAGE_IGNORE_INSERTS |
-                        FORMAT_MESSAGE_MAX_WIDTH_MASK,
-                        NULL, error, 0, error_log, 256, NULL );
-                }
-
-                core_error( "win32: recursive_delete: "
-                    "failed to delete file '{p}'! {u32,X} {cc}",
-                    file_path.slice, error, error_log );
-
-                HeapFree( GetProcessHeap(), 0, error_log );
-                return false;
-            }
-        }
-    } while( FindNextFileA( ff, ffd ) );
-
-    #undef push
-    #undef realloc
-    return true;
-}
-
-b32 platform_directory_delete( const Path in_path, b32 recursive ) {
-    struct Win32Path path = path_to_win32( in_path );
-    /* check if directory is valid */ {
-        DWORD attributes = GetFileAttributesA( path.cc );
-        if( attributes == INVALID_FILE_ATTRIBUTES ) {
-            core_error( "win32: path '{p}' is not a valid directory!", in_path.cc );
-            return false;
-        }
-    }
-
-    b32 is_empty = internal_win32_directory_is_empty( path );
-
-    if( is_empty ) {
-        int result = RemoveDirectoryA( path.cc );
-        path_win32_free( path );
-
-        if( !result ) {
-            internal_win32_log_error( GetLastError() );
-            core_error( "win32: failed to delete empty directory '{p}'!", in_path );
-            return false;
-        }
-
-        return true;
-    }
-
-    if( !recursive && !is_empty ) {
-        core_warn(
-            "win32: attempted to delete a directory "
-            "that isn't empty without recursion!" );
-        path_win32_free( path );
-        return false;
-    }
-
-    if( recursive ) {
-        PathBuf root = {0};
-        root.v = HeapAlloc(
-            GetProcessHeap(), HEAP_ZERO_MEMORY, path.len + 256 );
-        if( !root.v ) {
-            core_error(
-                "win32: failed to allocate root path buffer "
-                "for recursive directory delete!" );
-            path_win32_free( path );
-            return false;
-        }
-        root.len = path.len;
-        root.cap = path.len + 256;
-        memory_copy( root.v, path.cc, path.len );
-
-        PathBuf root_ex = root;
-        root_ex.c[root_ex.len++] = '\\';
-        root_ex.c[root_ex.len++] = '*';
-        root_ex.c[root_ex.len++] = 0;
-
-        WIN32_FIND_DATAA ffd;
-        HANDLE ff = FindFirstFileA( root_ex.cc, &ffd );
-
-        if( ff == INVALID_HANDLE_VALUE ) {
-            internal_win32_log_error( GetLastError() );
-            core_error(
-                "win32: failed to get first file in directory "
-                "'{p}' for recursive delete!", in_path );
-            path_win32_free( path );
-            HeapFree( GetProcessHeap(), 0, root.v );
-            return false;
-        }
-
-        b32 result = internal_win32_directory_delete_recursive( ff, &ffd, &root );
-        FindClose( ff );
-
-        HeapFree( GetProcessHeap(), 0, root.v );
-
-        if( !result ) {
-            path_win32_free( path );
-            return false;
-        }
-    }
-
-    b32 result = platform_directory_delete( path.p, false );
-    path_win32_free( path );
-
-    return result;
-}
-
 attr_global char* global_working_directory     = NULL;
 attr_global usize global_working_directory_len = 0;
 
@@ -993,7 +761,7 @@ attr_internal void internal_win32_get_gpu_name(void) {
 
     EnumDisplayDevicesA( NULL, 0, &dd, EDD_GET_DEVICE_INTERFACE_NAME );
 
-    usize name_len  = asciiz_len( dd.DeviceString );
+    usize name_len  = cstr_len( dd.DeviceString );
     global_gpu_name = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, name_len + 1 );
 
     memory_copy( global_gpu_name, dd.DeviceString, name_len );

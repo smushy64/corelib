@@ -1,7 +1,8 @@
 /**
- * Description:  Implementation of corelib String functions.
- * Author:       Alicia Amarilla (smushyaa@gmail.com)
- * File Created: January 31, 2024
+ * @file   string.c
+ * @brief  String function implementations.
+ * @author Alicia Amarilla (smushyaa@gmail.com)
+ * @date   June 10, 2024
 */
 #include "core/types.h"
 #include "core/attributes.h"
@@ -10,7 +11,7 @@
 #include "core/string.h"
 #include "core/memory.h"
 #include "core/fmt.h"
-#include "core/sync.h"
+#include "core/alloc.h"
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
     #include "core/internal/sse.h" // IWYU pragma: keep
@@ -18,708 +19,234 @@
 
 #include "core/math.h"
 
-attr_core_api usize asciiz_len( const char* ascii ) {
-    if( !ascii ) {
+#define VECTOR_MIN_LEN (256)
+
+attr_core_api usize cstr_len( const cstr* c_string ) {
+    if( !c_string ) {
         return 0;
     }
-    usize res = 0;
-    const char* str = ascii;
-    while( *str++ ) {
-        res++;
-    }
-    return res;
+    const cstr* end = c_string;
+    while( *(++end) ) {}
+    return end - c_string;
 }
-attr_core_api u64 text_buffer_hash( usize len, const char* text ) {
-    // NOTE(alicia): elf-hash implementation
-    // TODO(alicia): SIMD?
-
-    unsigned char* ustr = (unsigned char*)text;
-
-    u64 x = 0, result = 0;
+attr_core_api usize cstr_len_utf8( const cstr* c_string ) {
+    return string_len_utf8( string_from_cstr( c_string ) );
+}
+attr_core_api hash64 hash_64( usize len, const void* buf ) {
+    const u8* u = (const u8*)buf;
+    hash64 x = 0, result = 0;
     for( usize i = 0; i < len; ++i ) {
-        result = ( result << 4 ) + ustr[i];
+        result = (result << 4) + u[i];
         x = result & 0xF000000000000000;
         if( x ) {
             result ^= x >> 24;
         }
         result &= ~x;
     }
-
     return result;
 }
+attr_core_api hash128 hash_128( usize len, const void* buf ) {
+    // TODO(alicia): 
+    unused( len, buf );
+    panic();
+}
 
-attr_core_api b32 string_cmp( const String a, const String b ) {
+attr_core_api usize string_len_utf8( String str ) {
+    usize res = 0;
+    for( usize i = 0; i < str.len; ++i ) {
+        if( (str.bytes[i] & 0xC0) != 0x80 ) {
+            res++;
+        }
+    }
+    return res;
+}
+attr_core_api codepoint string_index_utf8( String str, usize index ) {
+    // TODO(alicia): 
+    unused(str, index);
+    unreachable();
+}
+attr_core_api b32 string_cmp( String a, String b ) {
     if( a.len != b.len ) {
         return false;
     }
+    if( !a.len && !b.len ) {
+        return true;
+    }
     return memory_cmp( a.v, b.v, a.len );
 }
-attr_internal b32 internal_string_find_scalar(
-    const String str, const char c, usize* opt_out_pos
-) {
+
+attr_core_api b32 string_find( String str, char c, usize* opt_out_index ) {
     for( usize i = 0; i < str.len; ++i ) {
         if( str.cc[i] == c ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = i;
+            if( opt_out_index ) {
+                *opt_out_index = i;
             }
             return true;
         }
     }
     return false;
 }
-attr_internal b32 internal_string_find_last_scalar(
-    const String str, const char c, usize* opt_out_pos
-) {
-    for( usize i = str.len; i-- > 0; ) {
-        if( str.cc[i] == c ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = i;
-            }
-            return true;
-        }
-    }
-    return false;
-}
-attr_internal b32 internal_string_find_whitespace_scalar(
-    const String str, usize* opt_out_pos
-) {
-    for( usize i = 0; i < str.len; ++i ) {
-        if( char_is_whitespace( str.c[i] ) ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = i;
-            }
-            return true;
-        }
-    }
-    return false;
-}
-attr_internal void internal_string_to_upper_scalar( String str ) {
-    for( usize i = 0; i < str.len; ++i ) {
-        str.c[i] = char_to_upper( str.cc[i] );
-    }
-}
-attr_internal void internal_string_to_lower_scalar( String str ) {
-    for( usize i = 0; i < str.len; ++i ) {
-        str.c[i] = char_to_lower( str.cc[i] );
-    }
-}
-attr_internal usize internal_string_stream_to_upper_scalar(
-    StreamBytesFN* stream, void* target, const String str
-) {
-    char stream_buf[16];
-
-    usize res = 0;
-    usize wide_count = str.len / 16;
-    usize rem        = str.len % 16;
-
-    for( usize i = 0; i < wide_count; ++i ) {
-        const char* src = str.cc + (i * 16);
-        for( usize j = 0; j < 16; ++j ) {
-            stream_buf[j] = char_to_upper( src[j] );
-        }
-        res += stream( target, 16, stream_buf );
-    }
-    if( !rem ) {
-        return res;
-    }
-
-    const char* src = str.cc + (wide_count * 16);
-
-    usize stream_len = 0;
-    for( usize i = 0; i < rem; ++i ) {
-        stream_buf[stream_len++] = char_to_upper( src[i] );
-    }
-    res += stream( target, stream_len, stream_buf );
-    return res;
-}
-attr_internal usize internal_string_stream_to_lower_scalar(
-    StreamBytesFN* stream, void* target, const String str
-) {
-    char stream_buf[16];
-
-    usize res = 0;
-    usize wide_count = str.len / 16;
-    usize rem        = str.len % 16;
-
-    for( usize i = 0; i < wide_count; ++i ) {
-        const char* src = str.cc + (i * 16);
-        for( usize j = 0; j < 16; ++j ) {
-            stream_buf[j] = char_to_lower( src[j] );
-        }
-        res += stream( target, 16, stream_buf );
-    }
-    if( !rem ) {
-        return res;
-    }
-
-    const char* src = str.cc + (wide_count * 16);
-
-    usize stream_len = 0;
-    for( usize i = 0; i < rem; ++i ) {
-        stream_buf[stream_len++] = char_to_lower( src[i] );
-    }
-    res += stream( target, stream_len, stream_buf );
-    return res;
-}
-
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-
-#define CORE_ARCH_SSE_MIN_SEARCH_LEN (16 * 8)
-
-#define COMP_a           _mm_set1_epi8( 'a' - 1 )
-#define COMP_z           _mm_set1_epi8( 'z' + 1 )
-#define COMP_A           _mm_set1_epi8( 'A' - 1 )
-#define COMP_Z           _mm_set1_epi8( 'Z' + 1 )
-#define UPPER_LOWER_DIFF _mm_set1_epi8( 'a' - 'A' )
-
-attr_unused
-attr_internal void internal_string_to_upper_sse( String str ) {
-    if( !str.len ) {
-        return;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        internal_string_to_upper_scalar( str );
-        return;
-    }
-
-    const __m128i a    = COMP_a;
-    const __m128i z    = COMP_z;
-    const __m128i diff = UPPER_LOWER_DIFF;
-
-    __m128i* aligned = (__m128i*)memory_align( str.cc, 16 );
-    usize to_aligned = (const char*)aligned - str.cc;
-
-    internal_string_to_upper_scalar( string_new( str.cc, to_aligned ) );
-    usize aligned_len = (str.len - to_aligned) / sizeof(__m128i);
-    for( usize i = 0; i < aligned_len; ++i ) {
-        __m128i loaded = _mm_load_si128( aligned );
-
-        __m128i gt = _mm_cmpgt_epi8( loaded, a );
-        __m128i lt = _mm_cmplt_epi8( loaded, z );
-
-        __m128i mask = _mm_and_si128( gt, lt );
-
-        __m128i to_sub = _mm_and_si128( mask, diff );
-
-        __m128i res = _mm_sub_epi8( loaded, to_sub );
-        _mm_store_si128( aligned++, res );
-    }
-
-    String rem;
-    rem.cc  = (const char*)(aligned - 1);
-    rem.len = str.len - (rem.cc - str.cc);
-    internal_string_to_upper_scalar( rem );
-}
-attr_unused
-attr_internal usize internal_string_stream_to_upper_sse(
-    StreamBytesFN* stream, void* target, const String str
-) {
-    if( !str.len ) {
-        return 0;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        return internal_string_stream_to_upper_scalar( stream, target, str );
-    }
-
-    usize res = 0;
-    const __m128i a    = COMP_a;
-    const __m128i z    = COMP_z;
-    const __m128i diff = UPPER_LOWER_DIFF;
-
-    __m128i* aligned = (__m128i*)memory_align( str.cc, 16 );
-    usize to_aligned = (const char*)aligned - str.cc;
-
-    res += internal_string_stream_to_upper_scalar(
-        stream, target, string_new( str.cc, to_aligned ) );
-    usize offset  = to_aligned;
-
-    usize aligned_len = (str.len - to_aligned) / sizeof(__m128i);
-    attr_align(16) char buf[16];
-    for( usize i = 0; i < aligned_len; ++i ) {
-        __m128i loaded = _mm_load_si128( aligned++ );
-
-        __m128i gt = _mm_cmpgt_epi8( loaded, a );
-        __m128i lt = _mm_cmplt_epi8( loaded, z );
-
-        __m128i mask = _mm_and_si128( gt, lt );
-
-        __m128i to_sub = _mm_and_si128( mask, diff );
-
-        __m128i sub_res = _mm_sub_epi8( loaded, to_sub );
-
-        _mm_store_si128( (__m128i*)buf, sub_res );
-
-        res += stream( target, sizeof(buf), buf );
-        offset += sizeof(buf);
-    }
-
-    String rem;
-    rem.cc  = str.cc + offset;
-    rem.len = str.len - (usize)(rem.cc - str.cc);
-    res += internal_string_stream_to_upper_scalar( stream, target, rem );
-    return res;
-}
-attr_unused
-attr_internal void internal_string_to_lower_sse( String str ) {
-    if( !str.len ) {
-        return;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        internal_string_to_lower_scalar( str );
-        return;
-    }
-
-    const __m128i a    = COMP_A;
-    const __m128i z    = COMP_Z;
-    const __m128i diff = UPPER_LOWER_DIFF;
-
-    __m128i* aligned = (__m128i*)memory_align( str.cc, 16 );
-    usize to_aligned = (const char*)aligned - str.cc;
-
-    internal_string_to_lower_scalar( string_new( str.cc, to_aligned ) );
-    usize aligned_len = (str.len - to_aligned) / sizeof(__m128i);
-    for( usize i = 0; i < aligned_len; ++i ) {
-        __m128i loaded = _mm_load_si128( aligned );
-
-        __m128i gt = _mm_cmpgt_epi8( loaded, a );
-        __m128i lt = _mm_cmplt_epi8( loaded, z );
-
-        __m128i mask = _mm_and_si128( gt, lt );
-
-        __m128i to_add = _mm_and_si128( mask, diff );
-
-        __m128i res = _mm_add_epi8( loaded, to_add );
-        _mm_store_si128( aligned++, res );
-    }
-
-    String rem;
-    rem.cc  = (const char*)(aligned - 1);
-    rem.len = str.len - (rem.cc - str.cc);
-    internal_string_to_lower_scalar( rem );
-}
-attr_unused
-attr_internal usize internal_string_stream_to_lower_sse(
-    StreamBytesFN* stream, void* target, const String str
-) {
-    if( !str.len ) {
-        return 0;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        return internal_string_stream_to_lower_scalar( stream, target, str );
-    }
-
-    usize res = 0;
-    const __m128i a    = COMP_A;
-    const __m128i z    = COMP_Z;
-    const __m128i diff = UPPER_LOWER_DIFF;
-
-    __m128i* aligned = (__m128i*)memory_align( str.cc, 16 );
-    usize to_aligned = (const char*)aligned - str.cc;
-
-    res += internal_string_stream_to_lower_scalar(
-        stream, target, string_new( str.cc, to_aligned ) );
-    usize offset  = to_aligned;
-
-    usize aligned_len = (str.len - to_aligned) / sizeof(__m128i);
-    attr_align(16) char buf[16];
-    for( usize i = 0; i < aligned_len; ++i ) {
-        __m128i loaded = _mm_load_si128( aligned++ );
-
-        __m128i gt = _mm_cmpgt_epi8( loaded, a );
-        __m128i lt = _mm_cmplt_epi8( loaded, z );
-
-        __m128i mask = _mm_and_si128( gt, lt );
-
-        __m128i to_add = _mm_and_si128( mask, diff );
-
-        __m128i add_res = _mm_add_epi8( loaded, to_add );
-
-        _mm_store_si128( (__m128i*)buf, add_res );
-
-        res += stream( target, sizeof(buf), buf );
-        offset += sizeof(buf);
-    }
-
-    String rem;
-    rem.cc  = str.cc + offset;
-    rem.len = str.len - (usize)(rem.cc - str.cc);
-    res += internal_string_stream_to_lower_scalar( stream, target, rem );
-    return res;
-}
-attr_unused
-attr_internal b32 internal_string_find_sse(
-    const String str, const char c, usize* opt_out_pos
-) {
-    if( !str.len ) {
-        return false;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        return internal_string_find_scalar( str, c, opt_out_pos );
-    }
-
-    const char* aligned = (const char*)memory_align( str.cc, 16 );
-
-    usize aligned_rem_len = aligned - str.cc;
-    if( aligned_rem_len ) {
-        return internal_string_find_scalar( str, c, opt_out_pos );
-    }
-
-    usize result = 0;
-    const char* at = str.cc;
-    while( at != aligned ) {
-        if( *at++ == c ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = result;
-            }
-            return true;
-        }
-        result++;
-    }
-
-    __m128i* current   = (__m128i*)aligned;
-    __m128i  wide_char = _mm_set1_epi8( c );
-
-    loop() {
-        __m128i loaded = _mm_load_si128( current );
-        __m128i cmp    = _mm_cmpeq_epi8( loaded, wide_char );
-
-        u16 mask = _mm_movemask_epi8( cmp );
-
-        if( mask ) {
-            u16 offset = 0;
-            if( !(mask & 0xFF) && (mask & (0xFF << 8)) ) {
-                result += 8;
-                offset  = 8;
-            }
-
-            for( u16 i = 0; i < 8; ++i ) {
-                if( ( mask >> (i + offset) ) & 0x1 ) {
-                    break;
-                }
-                result++;
-            }
-
-            if( result >= str.len ) {
-                return false;
-            }
-
-            if( opt_out_pos ) {
-                *opt_out_pos = result;
-            }
-            return true;
-        }
-
-        current++;
-        result += 16;
-        if( result >= str.len ) {
-            return false;
-        }
-    }
-}
-attr_unused
-attr_internal b32 internal_string_find_whitespace_sse(
-    const String str, usize* opt_out_pos
-) {
-    if( !str.len ) {
-        return false;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        return internal_string_find_whitespace_scalar( str, opt_out_pos );
-    }
-
-    const char* aligned = (const char*)memory_align( str.cc, 16 );
-
-    usize aligned_rem_len = aligned - str.cc;
-    if( aligned_rem_len ) {
-        return internal_string_find_whitespace_scalar( str, opt_out_pos );
-    }
-
-    usize result = 0;
-    const char* at = str.cc;
-    while( at != aligned ) {
-        if( char_is_whitespace( *at++ ) ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = result;
-            }
-            return true;
-        }
-        result++;
-    }
-
-    __m128i* current          = (__m128i*)aligned;
-    __m128i  wide_whitespace0 = _mm_set1_epi8( 0x20 );
-    __m128i  wide_whitespace1 = _mm_set1_epi8( 0x09 );
-    __m128i  wide_whitespace2 = _mm_set1_epi8( 0x0D );
-    __m128i  wide_whitespace3 = _mm_set1_epi8( 0x0A );
-
-    loop() {
-        __m128i loaded = _mm_load_si128( current );
-        __m128i cmp0   = _mm_cmpeq_epi8( loaded, wide_whitespace0 );
-        __m128i cmp1   = _mm_cmpeq_epi8( loaded, wide_whitespace1 );
-        __m128i cmp2   = _mm_cmpeq_epi8( loaded, wide_whitespace2 );
-        __m128i cmp3   = _mm_cmpeq_epi8( loaded, wide_whitespace3 );
-
-        u16 mask = _mm_movemask_epi8( cmp0 );
-        mask    |= _mm_movemask_epi8( cmp1 );
-        mask    |= _mm_movemask_epi8( cmp2 );
-        mask    |= _mm_movemask_epi8( cmp3 );
-
-        if( mask ) {
-            u16 offset = 0;
-            if( !(mask & 0xFF) && (mask & (0xFF << 8)) ) {
-                result += 8;
-                offset  = 8;
-            }
-
-            for( u16 i = 0; i < 8; ++i ) {
-                if( ( mask >> (i + offset) ) & 0x1 ) {
-                    break;
-                }
-                result++;
-            }
-
-            if( result >= str.len ) {
-                return false;
-            }
-
-            if( opt_out_pos ) {
-                *opt_out_pos = result;
-            }
-            return true;
-        }
-
-        current++;
-        result += 16;
-        if( result >= str.len ) {
-            return false;
-        }
-    }
-}
-attr_unused
-attr_internal b32 internal_string_find_last_sse(
-    const String str, const char c, usize* opt_out_pos
-) {
-    if( !str.len ) {
-        return false;
-    }
-    if( str.len < CORE_ARCH_SSE_MIN_SEARCH_LEN ) {
-        return internal_string_find_last_scalar( str, c, opt_out_pos );
-    }
-
-    usize result     = str.len - 1;
-    const char* last = str.cc + result;
-
-    const char* aligned = (const char*)memory_align( last, 16 );
-    while( aligned > last ) {
-        aligned -= 16;
-    }
-
-    if( aligned < str.cc ) {
-        return internal_string_find_last_scalar( str, c, opt_out_pos );
-    }
-
-    if( last - aligned ) {
-        String aligned_to_last;
-        aligned_to_last.len = last - aligned;
-        aligned_to_last.cc  = aligned;
-        if( internal_string_find_last_scalar( aligned_to_last, c, opt_out_pos ) ) {
-            return true;
-        }
-    }
-
-    __m128i* current   = (__m128i*)aligned;
-    __m128i  wide_char = _mm_set1_epi8( c );
-    loop() {
-        __m128i loaded = _mm_load_si128( current );
-        __m128i cmp    = _mm_cmpeq_epi8( loaded, wide_char );
-
-        u16 mask = _mm_movemask_epi8( cmp );
-
-        if( mask ) {
-            u16 offset = 0;
-            if( !(mask & 0xFF) && (mask & (0xFF << 8)) ) {
-                usize prev_result = result;
-                result -= 8;
-                if( result > prev_result ) {
-                    return false;
-                }
-                offset  = 8;
-            }
-
-            for( u16 i = 8; i-- > 0; ) {
-                if( ( mask >> (i + offset) ) & 0x1 ) {
-                    break;
-                }
-                if( !result ) {
-                    return false;
-                }
-                result--;
-            }
-
-            if( opt_out_pos ) {
-                *opt_out_pos = result;
-            }
-            return true;
-        }
-
-        current--;
-        if( result < 16 ) {
-            break;
-        }
-        result -= 16;
-        if( !result ) {
-            break;
-        }
-    }
-
-    if( result ) {
-        return internal_string_find_last_scalar( str, c, opt_out_pos );
-    } else {
-        return false;
-    }
-}
-
-#undef CORE_ARCH_SSE_MIN_SEARCH_LEN
-#endif
-
-attr_core_api b32 string_find(
-    const String str, const char c, usize* opt_out_pos
-) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    return internal_string_find_sse( str, c, opt_out_pos );
-#else // no SIMD at all
-    return internal_string_find_scalar( str, c, opt_out_pos );
-#endif
-}
-attr_core_api b32 string_find_last(
-    const String str, const char c, usize* opt_out_pos
-) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    return internal_string_find_last_sse( str, c, opt_out_pos );
-#else // no SIMD at all
-    return internal_string_find_last_scalar( str, c, opt_out_pos );
-#endif
-}
-
-attr_core_api b32 string_find_whitespace( const String str, usize* opt_out_pos ) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    return internal_string_find_whitespace_sse( str, opt_out_pos );
-#else /* no SIMD */
-    return internal_string_find_whitespace_scalar( str, opt_out_pos );
-#endif
-}
-// TODO(alicia): dedicated SIMD?
-attr_core_api b32 string_find_last_whitespace( const String str, usize* opt_out_pos ) {
-    for( usize i = str.len; i-- > 0; ) {
-        if( !char_is_whitespace( str.cc[i] ) ) {
-            if( opt_out_pos ) {
-                *opt_out_pos = i;
-            }
-            return true;
-        }
-    }
-    return false;
-}
-attr_core_api usize string_count( const String str, const char c ) {
-    usize result = 0;
-    String substring = str;
-    while( substring.len ) {
-        usize move = 0;
-        if( string_find( substring, c, &move ) ) {
-            result++;
-            move += 1;
-            if( move > substring.len ) {
-                return result;
-            }
-            substring.cc  += move;
-            substring.len -= move;
+attr_core_api usize string_find_count( String str, char c ) {
+    String substr = str;
+    usize  res    = 0;
+    while( !string_is_empty( substr ) ) {
+        usize idx = 0;
+        if( string_find( substr, c, &idx ) ) {
+            res++;
+            substr = string_advance_by( substr, idx + 1 );
         } else {
-            return result;
+            break;
         }
     }
-    return result;
+    return res;
+}
+attr_core_api b32 string_find_rev( String str, char c, usize* opt_out_index ) {
+    for( usize i = str.len; i-- > 0; ) {
+        if( str.cc[i] == c ) {
+            if( opt_out_index ) {
+                *opt_out_index = i;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+attr_core_api b32 string_find_set( String str, String set, usize* opt_out_index ) {
+    for( usize i = 0; i < str.len; ++i ) {
+        for( usize j = 0; j < set.len; ++j ) {
+            if( str.cc[i] == set.cc[j] ) {
+                if( opt_out_index ) {
+                    *opt_out_index = i;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+attr_core_api b32 string_find_set_rev(
+    String str, String set, usize* opt_out_index
+) {
+    for( usize i = str.len; i-- > 0; ) {
+        for( usize j = 0; j < set.len; ++j ) {
+            if( str.cc[i] == set.cc[j] ) {
+                if( opt_out_index ) {
+                    *opt_out_index = i;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+attr_core_api usize string_find_set_count( String str, String set ) {
+    String substr = str;
+    usize  res    = 0;
+    while( !string_is_empty( substr ) ) {
+        usize idx = 0;
+        if( string_find_set( substr, set, &idx ) ) {
+            res++;
+            substr = string_advance_by( substr, idx + 1 );
+        } else {
+            break;
+        }
+    }
+    return res;
 }
 attr_core_api b32 string_find_phrase(
-    const String str, const String phrase, usize* opt_out_pos
+    String str, String phrase, usize* opt_out_index
 ) {
-    if( phrase.len > str.len ) {
+    if( str.len < phrase.len ) {
         return false;
     }
-
-    String substring = str;
-    usize start = 0;
-
-    while( substring.len ) {
-        if( string_find( substring, phrase.cc[0], &start ) ) {
-            substring = string_advance( substring, start );
-            if( substring.len < phrase.len ) {
-                break;
-            }
-
-            String potential_phrase = substring;
-            potential_phrase.len    = phrase.len;
-
-            if( string_cmp( potential_phrase, phrase ) ) {
-                if( opt_out_pos ) {
-                    *opt_out_pos = potential_phrase.cc - str.cc;
+    String substr = str;
+    while( !string_is_empty( substr ) ) {
+        usize start = 0;
+        if( string_find( substr, phrase.cc[0], &start ) ) {
+            String cmp = substr;
+            cmp.len    = phrase.len;
+            if( string_cmp( cmp, phrase ) ) {
+                if( opt_out_index ) {
+                    *opt_out_index = cmp.cc - str.cc;
                 }
                 return true;
             }
 
-            substring = string_advance( substring, 1 );
+            substr = string_advance( substr );
+        } else {
+            break;
+        }
+
+        if( substr.len < phrase.len ) {
+            break;
+        }
+    }
+    return false;
+}
+attr_core_api b32 string_find_phrase_rev(
+    String str, String phrase, usize* opt_out_index
+) {
+    String substr = str;
+    while( !string_is_empty( substr ) ) {
+        if( substr.len < phrase.len ) {
+            break;
+        }
+        usize start = 0;
+        if( string_find_rev( substr, phrase.cc[0], &start ) ) {
+            String potential = string_advance_by( substr, start );
+            if( potential.len < phrase.len ) {
+                substr = string_truncate( substr, start );
+                continue;
+            }
+            potential.len = phrase.len;
+            if( string_cmp( potential, phrase ) ) {
+                if( opt_out_index ) {
+                    *opt_out_index = potential.cc - str.cc;
+                }
+                return true;
+            }
+            substr = string_truncate( substr, start );
         } else {
             break;
         }
     }
-
     return false;
 }
-attr_core_api b32 string_find_phrase_last(
-    const String str, const String phrase, usize* opt_out_pos
-) {
-    if( phrase.len > str.len ) {
-        return false;
-    }
-
-    String substring = str;
-    usize  start     = 0;
-
-    while( substring.len ) {
-        String potential_phrase;
-        potential_phrase.cc  = 0;
-        potential_phrase.len = 0;
-        if( string_find_last( substring, phrase.cc[0], &start ) ) {
-            potential_phrase.cc  = substring.cc + start;
-            potential_phrase.len = phrase.len;
-
-            usize remaining_len = str.len - start;
-            if( remaining_len < phrase.len ) {
-                substring.len -= remaining_len;
-                if( !substring.len ) {
-                    return false;
-                }
-                substring.len--;
-                continue;
-            }
-
-            substring.len -= start;
-            if( string_cmp( potential_phrase, phrase ) ) {
-                if( opt_out_pos ) {
-                    *opt_out_pos = start;
-                }
-                return true;
-            }
-
-            continue;
+attr_core_api usize string_find_phrase_count( String str, String phrase ) {
+    String substr = str;
+    usize  res    = 0;
+    while( !string_is_empty( substr ) ) {
+        usize idx = 0;
+        if( string_find_phrase( substr, phrase, &idx ) ) {
+            res++;
+            substr = string_advance_by( substr, idx + phrase.len );
+        } else {
+            break;
         }
-
-        break;
     }
-
-    return false;
+    return res;
 }
-// NOTE(alicia): potential optimizations?
-attr_core_api void string_reverse( String str ) {
+attr_core_api String string_trim_leading_whitespace( String str ) {
+    String res = str;
+    for( usize i = 0; i < res.len; ++i ) {
+        if( !ascii_is_whitespace( res.cc[i] ) ) {
+            res = string_advance_by( res, i );
+            return res;
+        }
+    }
+    return res;
+}
+attr_core_api String string_trim_trailing_whitespace( String str ) {
+    String res = str;
+    for( usize i = res.len; i-- > 0; ) {
+        if( !ascii_is_whitespace( res.cc[i] ) ) {
+            res = string_truncate( res, i + 1 );
+            return res;
+        }
+    }
+    return res;
+}
+attr_core_api void string_mut_reverse( String str ) {
     char* begin = str.c;
     char* end   = begin + str.len - 1;
 
@@ -734,64 +261,40 @@ attr_core_api void string_reverse( String str ) {
         }
     }
 }
-attr_core_api String string_trim_leading_whitespace( const String src ) {
-    for( usize i = 0; i < src.len; ++i ) {
-        if( !char_is_whitespace( src.cc[i] ) ) {
-            String res;
-            res.cc  = src.cc  + i;
-            res.len = src.len - i;
-            return res;
-        }
+attr_core_api void string_mut_set( String str, char c ) {
+    memory_set( str.v, rcast( u8, &c ), str.len );
+}
+attr_core_api void string_mut_to_upper( String str ) {
+    for( usize i = 0; i < str.len; ++i ) {
+        str.c[i] = ascii_to_upper( str.c[i] );
     }
-
-    return src;
 }
-attr_core_api String string_trim_trailing_whitespace( const String src ) {
-    for( usize i = src.len; i-- > 0; ) {
-        if( !char_is_whitespace( src.cc[i] ) ) {
-            String res;
-            res.cc  = src.cc;
-            res.len = (i + 1) > src.len ? src.len : (i + 1);
-            return res;
-        }
+attr_core_api void string_mut_to_lower( String str ) {
+    for( usize i = 0; i < str.len; ++i ) {
+        str.c[i] = ascii_to_lower( str.c[i] );
     }
-    return src;
-}
-attr_core_api void string_set( String str, const char c ) {
-    memory_set( str.c, c, str.len );
-}
-attr_core_api void string_to_upper( String str ) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    internal_string_to_upper_sse( str );
-#else
-    internal_string_to_upper_scalar( str );
-#endif
-}
-attr_core_api void string_to_lower( String str ) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    internal_string_to_lower_sse( str );
-#else
-    internal_string_to_lower_scalar( str );
-#endif
 }
 attr_core_api usize string_stream_to_upper(
-    StreamBytesFN* stream, void* target, const String str
+    StreamBytesFN* stream, void* target, String str
 ) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    return internal_string_stream_to_upper_sse( stream, target, str );
-#else
-    return internal_string_stream_to_upper_scalar( stream, target, str );
-#endif
+    usize res = 0;
+    for( usize i = 0; i < str.len; ++i ) {
+        char c = ascii_to_upper( str.cc[i] );
+        res += stream( target, 1, &c );
+    }
+    return res;
 }
 attr_core_api usize string_stream_to_lower(
-    StreamBytesFN* stream, void* target, const String str
+    StreamBytesFN* stream, void* target, String str
 ) {
-#if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-    return internal_string_stream_to_lower_sse( stream, target, str );
-#else
-    return internal_string_stream_to_lower_scalar( stream, target, str );
-#endif
+    usize res = 0;
+    for( usize i = 0; i < str.len; ++i ) {
+        char c = ascii_to_lower( str.cc[i] );
+        res += stream( target, 1, &c );
+    }
+    return res;
 }
+
 attr_always_inline inline
 attr_internal b32 internal_string_read_increment( usize* value, usize max ) {
     usize increment_result = *value + 1;
@@ -801,7 +304,7 @@ attr_internal b32 internal_string_read_increment( usize* value, usize max ) {
     *value = increment_result;
     return true;
 }
-attr_core_api b32 string_parse_int( const String str, i64* out_int ) {
+attr_core_api b32 string_parse_int( String str, i64* out_int ) {
     if( !str.len ) {
         return false;
     }
@@ -818,7 +321,7 @@ attr_core_api b32 string_parse_int( const String str, i64* out_int ) {
     }
 
     do {
-        if( !char_is_number( str.cc[index] ) ) {
+        if( !ascii_is_numeric( str.cc[index] ) ) {
             if( !index ) {
                 return false;
             }
@@ -833,7 +336,7 @@ attr_core_api b32 string_parse_int( const String str, i64* out_int ) {
     return true;
 
 }
-attr_core_api b32 string_parse_uint( const String str, u64* out_uint ) {
+attr_core_api b32 string_parse_uint( String str, u64* out_uint ) {
     if( !str.len ) {
         return false;
     }
@@ -842,7 +345,7 @@ attr_core_api b32 string_parse_uint( const String str, u64* out_uint ) {
     usize index = 0;
 
     do {
-        if( !char_is_number( str.cc[index] ) ) {
+        if( !ascii_is_numeric( str.cc[index] ) ) {
             if( !index ) {
                 return false;
             }
@@ -900,7 +403,7 @@ u64 internal_string_places( u64 i ) {
 
     return 0;
 }
-attr_core_api b32 string_parse_float( const String str, f64* out_float ) {
+attr_core_api b32 string_parse_float( String str, f64* out_float ) {
     // f64 result = 0.0;
     i64 whole_part      = 0;
     u64 fractional_part = 0;
@@ -910,7 +413,7 @@ attr_core_api b32 string_parse_float( const String str, f64* out_float ) {
         string_find( str, '.', &dot_position ) &&
         dot_position + 1 < str.len
     ) {
-        String first = {0}, last = {0};
+        String first = string_empty(), last = string_empty();
         string_split( str, dot_position, &first, &last );
         if( !string_parse_int( first, &whole_part ) ) {
             return false;
@@ -923,8 +426,8 @@ attr_core_api b32 string_parse_float( const String str, f64* out_float ) {
             }
         }
 
-        last.c += zero_count;
-        last.len    -= zero_count;
+        last.c   += zero_count;
+        last.len -= zero_count;
 
         if( last.len ) {
             if( !string_parse_uint( last, &fractional_part ) ) {
@@ -941,7 +444,11 @@ attr_core_api b32 string_parse_float( const String str, f64* out_float ) {
             fractional_part_f64 /= (f64)poweri( 10.0f, pow );
         }
 
-        *out_float += fractional_part_f64;
+        if( whole_part < 0 ) {
+            *out_float -= fractional_part_f64;
+        } else {
+            *out_float += fractional_part_f64;
+        }
 
         return true;
     } else {
@@ -955,146 +462,207 @@ attr_core_api b32 string_parse_float( const String str, f64* out_float ) {
     }
 }
 
-attr_core_api b32 string_buf_new_alloc(
-    const usize size, const char* opt_copy_buffer, StringBuf* out_buf
+attr_core_api b32 string_buf_from_alloc(
+    usize size, struct AllocatorInterface* allocator, StringBuf* out_buf
 ) {
-    StringBuf result;
-    result.c   = nullptr;
-    result.len = 0;
-    result.cap = 0;
-
-    usize allocated_size = size;
-
-    if( opt_copy_buffer ) {
-        allocated_size += string_buf_query_realloc_size();
-    }
-
-    result.cap = allocated_size;
-    result.v   = memory_alloc( allocated_size );
-    if( !result.v ) {
+    // for null-terminator.
+    usize _size = size + 1;
+    void* ptr = allocator->alloc( _size, 0, allocator->ctx );
+    if( !ptr ) {
         return false;
     }
-
-    if( opt_copy_buffer ) {
-        memory_copy( result.v, opt_copy_buffer, size );
-        result.len = size;
-    }
-
-    *out_buf = result;
+    out_buf->cap = _size;
+    out_buf->len = 0;
+    out_buf->v   = ptr;
     return true;
 }
-attr_core_api b32 string_buf_realloc( StringBuf* buf, const usize new_size ) {
-    if( new_size < buf->cap ) {
+attr_core_api b32 string_buf_from_string_alloc(
+    String str, struct AllocatorInterface* allocator, StringBuf* out_buf
+) {
+    if( !string_buf_from_alloc( str.len + 16, allocator, out_buf ) ) {
+        return false;
+    }
+    memory_copy( out_buf->v, str.cc, str.len );
+    out_buf->len = str.len;
+    return true;
+}
+attr_core_api b32 string_buf_grow(
+    StringBuf* buf, usize amount, struct AllocatorInterface* allocator
+) {
+    void* ptr = allocator->realloc(
+        buf->v, buf->cap, buf->cap + amount, 0, allocator->ctx );
+    if( !ptr ) {
+        return false;
+    }
+    buf->v    = ptr;
+    buf->cap += amount;
+    return true;
+}
+attr_core_api void string_buf_free(
+    StringBuf* buf, struct AllocatorInterface* allocator
+) {
+    if( buf ) {
+        allocator->free( buf->v, buf->cap, 0, allocator->ctx );
+        memory_zero( buf, sizeof(*buf) );
+    }
+}
+attr_core_api b32 string_buf_clone(
+    StringBuf* dst, const StringBuf* src, struct AllocatorInterface* allocator
+) {
+    if( dst->cap != src->len + 1 ) {
+        if( dst->v ) {
+            usize diff = (src->len + 1) - dst->cap;
+            if( !string_buf_grow( dst, diff, allocator ) ) {
+                return false;
+            }
+        } else {
+            if( !string_buf_from_alloc( src->len + 1, allocator, dst ) ) {
+                return false;
+            }
+        }
+    }
+
+    memory_copy( dst->v, src->v, src->len );
+    dst->len = src->len;
+    return true;
+}
+attr_core_api b32 string_buf_try_push( StringBuf* buf, char c ) {
+    if( string_buf_is_full( buf ) ) {
+        return false;
+    }
+    buf->c[buf->len++] = c;
+    buf->c[buf->len]   = 0;
+    return true;
+}
+attr_core_api b32 string_buf_push(
+    StringBuf* buf, char c, struct AllocatorInterface* allocator
+) {
+    if( string_buf_try_push( buf, c ) ) {
         return true;
     }
-    void* new_buffer = memory_realloc( buf->v, buf->cap, new_size );
-    if( !new_buffer ) {
+    if( !string_buf_grow( buf, 16, allocator ) ) {
         return false;
     }
-
-    buf->v   = new_buffer;
-    buf->cap = new_size;
+    return string_buf_try_push( buf, c );
+}
+attr_core_api b32 string_buf_try_emplace( StringBuf* buf, char c, usize at ) {
+    if( string_buf_is_full( buf ) ) {
+        return false;
+    }
+    usize move = (buf->len - at) + 1;
+    memory_move( buf->c + at + 1, buf->c + at, move );
+    buf->c[at] = c;
+    buf->len++;
     return true;
 }
-
-#if !defined(CORE_DEFAULT_STRING_REALLOC_SIZE)
-    #define CORE_DEFAULT_STRING_REALLOC_SIZE (16)
-#endif
-
-attr_global usize global_string_buf_realloc_size =
-    CORE_DEFAULT_STRING_REALLOC_SIZE < 16 ? 16 : CORE_DEFAULT_STRING_REALLOC_SIZE;
-attr_core_api usize string_buf_query_realloc_size(void) {
-    return global_string_buf_realloc_size;
-}
-attr_core_api usize string_buf_query_default_realloc_size(void) {
-    return CORE_DEFAULT_STRING_REALLOC_SIZE < 16 ?
-        16 : CORE_DEFAULT_STRING_REALLOC_SIZE;
-}
-attr_core_api void string_buf_set_default_realloc_size( const usize size ) {
-    usize new_size = size;
-    if( new_size < 16 ) {
-        new_size = 16;
-    }
-    interlocked_exchange( (volatile long*)&global_string_buf_realloc_size, new_size );
-}
-attr_core_api void string_buf_free( StringBuf* buf ) {
-    memory_free( buf->v, buf->cap );
-    memory_zero( buf, sizeof(*buf) );
-}
-attr_core_api void string_buf_set(
-    StringBuf* buf, const char c, const usize opt_max
+attr_core_api b32 string_buf_emplace(
+    StringBuf* buf, char c, usize at, struct AllocatorInterface* allocator
 ) {
-    usize max = buf->cap;
-    if( opt_max && opt_max < max ) {
-        max = opt_max;
+    if( string_buf_try_emplace( buf, c, at ) ) {
+        return true;
     }
-
-    memory_set( buf->v, c, max );
-}
-attr_core_api usize string_buf_copy( StringBuf* dst, const String src ) {
-    usize max_copy = src.len;
-    usize rem      = dst->cap - dst->len;
-    max_copy       = max_copy > rem ? rem : max_copy;
-
-    memory_copy( dst->c + dst->len, src.v, max_copy );
-    dst->len += max_copy;
-    return max_copy;
-}
-attr_core_api b32 string_buf_prepend( StringBuf* dst, const String src ) {
-    if( src.len + dst->len > dst->cap ) {
+    if( !string_buf_grow( buf, 16, allocator ) ) {
         return false;
     }
-
-    memory_copy_overlapped( dst->c + src.len, dst->c, dst->len );
-    memory_copy( dst->c, src.c, src.len );
-    dst->len += src.len;
-
+    return string_buf_try_emplace( buf, c, at );
+}
+attr_core_api b32 string_buf_pop( StringBuf* buf, char* opt_out_c ) {
+    if( string_buf_is_empty( buf ) ) {
+        return false;
+    }
+    char c = buf->c[buf->len--];
+    if( opt_out_c ) {
+        *opt_out_c = c;
+    }
     return true;
 }
-attr_core_api b32 string_buf_append( StringBuf* dst, const String src ) {
-    if( dst->len + src.len > dst->cap ) {
+attr_core_api b32 string_buf_try_insert( StringBuf* buf, String insert, usize at ) {
+    if( !buf->cap || ( (buf->len + insert.len) > (buf->cap - 1) ) ) {
         return false;
     }
-
-    memory_copy( dst->c + dst->len, src.v, src.len );
-    dst->len += src.len;
+    usize move = buf->len ? ((buf->len - at) + 1) : (0);
+    memory_move( buf->c + at + insert.len, buf->c + at, move );
+    memory_copy( buf->c + at, insert.v, insert.len );
+    buf->len += insert.len;
     return true;
 }
 attr_core_api b32 string_buf_insert(
-    StringBuf* dst, const String src, const usize index
+    StringBuf* buf, String insert, usize at, struct AllocatorInterface* allocator
 ) {
-    if( (dst->len + src.len) > dst->cap ) {
+    if( string_buf_try_insert( buf, insert, at ) ) {
+        return true;
+    }
+    if( !string_buf_grow( buf, insert.len + 16, allocator ) ) {
         return false;
     }
-    if( !dst->len || index == (dst->len - 1) ) {
-        return string_buf_append( dst, src );
+    return string_buf_try_insert( buf, insert, at );
+}
+attr_core_api void string_buf_remove( StringBuf* buf, usize at ) {
+    if( string_buf_is_empty( buf ) ) {
+        return;
+    }
+    usize move = (buf->len - at) + 1;
+    memory_move( buf->c + at, buf->c + at + 1, move );
+    buf->len--;
+}
+attr_core_api void string_buf_remove_range(
+    StringBuf* buf, usize from_inclusive, usize to_exclusive
+) {
+    // TODO(alicia): something better than panicking.
+    if( to_exclusive < from_inclusive ) {
+        panic();
+    }
+    if( from_inclusive >= buf->len || to_exclusive > buf->len ) {
+        panic();
     }
 
-    usize move_src = index + 1;
-    usize move_dst = move_src + src.len;
-    usize move_len = dst->len - move_src;
-    memory_copy_overlapped( dst->c + move_dst, dst->c + move_src, move_len );
-    memory_copy( dst->c + move_src, src.c, src.len );
-    dst->len += src.len;
+    usize span = to_exclusive - from_inclusive;
 
-    return true;
+    memory_move(
+        buf->c + from_inclusive,
+        buf->c + to_exclusive, (buf->len + 1) - span );
+    buf->len -= span;
 }
-attr_core_api usize string_buf_stream(
-    void* in_dst, usize count, const void* src
+attr_core_api usize string_buf_try_stream(
+    void* target, usize count, const void* bytes
 ) {
-    StringBuf* dst = (StringBuf*)in_dst;
-
+    StringBuf* buf = target;
     usize max_copy = count;
-    usize rem      = dst->cap - dst->len;
-    max_copy       = max_copy > rem ? rem : max_copy;
+    usize rem      = string_buf_remaining( buf );
+    if( !rem ) {
+        return count;
+    }
+    if( max_copy > rem ) {
+        max_copy = rem;
+    }
 
-    memory_copy( dst->c + dst->len, src, max_copy );
-    dst->len += max_copy;
+    memory_copy( buf->c + buf->len, bytes, max_copy );
+    buf->len        += max_copy;
+    buf->c[buf->len] = 0;
+
     return count - max_copy;
 }
-attr_core_api usize string_buf_fmt_text_buffer_va(
-    StringBuf* dst, const usize format_len, const char* format, va_list va
+attr_core_api bsize string_buf_stream(
+    void* target, usize count, const void* bytes
 ) {
-    return fmt_text_va( string_buf_stream, dst, format_len, format, va );
+    StringBufStreamTarget* t = target;
+    String append = string_new( count, bytes );
+    return string_buf_append( t->buf, append, t->allocator );
+}
+attr_core_api usize string_buf_try_fmt_buffer_va(
+    StringBuf* buf, usize format_len, const char* format, va_list va
+) {
+    return fmt_text_va( string_buf_try_stream, buf, format_len, format, va );
+}
+attr_core_api b32 string_buf_fmt_buffer_va(
+    StringBuf* buf, struct AllocatorInterface* allocator,
+    usize format_len, const char* format, va_list va
+) {
+    StringBufStreamTarget target;
+    target.allocator = allocator;
+    target.buf       = buf;
+
+    usize res = fmt_text_va( string_buf_stream, &target, format_len, format, va );
+    return res ? true : false;
 }
 

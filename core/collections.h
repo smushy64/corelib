@@ -20,14 +20,14 @@
 #endif
 
 /// @brief First in, First Out buffer.
-/// @see #GenericBuffer
-typedef struct GenericBuffer Stack;
+/// @see #ItemBuffer
+typedef struct ItemBuffer Stack;
 /// @brief Generic list of items.
-/// @see #GenericBuffer
-typedef struct GenericBuffer List;
+/// @see #ItemBuffer
+typedef struct ItemBuffer List;
 /// @brief First in, Last Out buffer.
 typedef struct Queue {
-    /// @brief Union of fields in common with GenericSlice.
+    /// @brief Union of fields in common with ItemSlice.
     union {
         /// @brief Buffer, stride and length.
         struct {
@@ -39,7 +39,7 @@ typedef struct Queue {
             usize len;
         };
         /// @brief %Queue as a slice.
-        struct GenericSlice slice;
+        struct ItemSlice slice;
     };
     /// @brief Number of items that queue can hold.
     usize cap;
@@ -50,7 +50,7 @@ typedef struct Queue {
 } Queue;
 /// @brief %Hashmap buffer.
 typedef struct Hashmap {
-    /// @brief Union of fields in common with GenericSlice.
+    /// @brief Union of fields in common with ItemSlice.
     union {
         /// @brief Buffer, stride and length.
         struct {
@@ -62,7 +62,7 @@ typedef struct Hashmap {
             usize len;
         };
         /// @brief %Hashmap as a slice.
-        struct GenericSlice slice;
+        struct ItemSlice slice;
     };
     /// @brief Number of items hashmap can hold.
     usize cap;
@@ -394,8 +394,8 @@ attr_header void hashmap_reset( Hashmap* hashmap ) {
 /// @param s String to hash.
 /// @return Hash of string.
 attr_always_inline
-attr_header u64 hashmap_string_to_key( const String s ) {
-    return string_hash( s );
+attr_header u64 hashmap_string_to_key( String s ) {
+    return hash_string_64( s );
 }
 /// @brief Check if hashmap contains key.
 /// @param[in] hashmap Hashmap to check for key.
@@ -455,7 +455,7 @@ attr_core_api b32 hashmap_set( Hashmap* hashmap, u64 key, const void* new_value 
 /// @return True if hashmap has space for new value.
 attr_always_inline
 attr_header b32 hashmap_insert_by_string(
-    Hashmap* hashmap, const String string_key, const void* value
+    Hashmap* hashmap, String string_key, const void* value
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_insert( hashmap, key, value );
@@ -468,7 +468,7 @@ attr_header b32 hashmap_insert_by_string(
 /// @return True if hashmap has space for new value and key is unique.
 attr_always_inline
 attr_header b32 hashmap_insert_checked_by_string(
-    Hashmap* hashmap, const String string_key, const void* value
+    Hashmap* hashmap, String string_key, const void* value
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_insert_checked( hashmap, key, value );
@@ -479,7 +479,7 @@ attr_header b32 hashmap_insert_checked_by_string(
 /// @return True if hashmap contains key.
 attr_always_inline
 attr_header b32 hashmap_contains_key_string(
-    const Hashmap* hashmap, const String string_key
+    const Hashmap* hashmap, String string_key
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_contains_key( hashmap, key );
@@ -491,7 +491,7 @@ attr_header b32 hashmap_contains_key_string(
 /// @return True if hashmap contained key.
 attr_always_inline
 attr_header b32 hashmap_get_ref_by_string(
-    Hashmap* hashmap, const String string_key, void** out_item
+    Hashmap* hashmap, String string_key, void** out_item
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_get_ref( hashmap, key, out_item );
@@ -503,7 +503,7 @@ attr_header b32 hashmap_get_ref_by_string(
 /// @return True if hashmap contained key.
 attr_always_inline
 attr_header b32 hashmap_get_by_string(
-    Hashmap* hashmap, const String string_key, void* out_item
+    Hashmap* hashmap, String string_key, void* out_item
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_get( hashmap, key, out_item );
@@ -515,7 +515,7 @@ attr_header b32 hashmap_get_by_string(
 /// @return True if hashmap contained key.
 attr_always_inline
 attr_header b32 hashmap_set_by_string(
-    Hashmap* hashmap, const String string_key, const void* new_value
+    Hashmap* hashmap, String string_key, const void* new_value
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_set( hashmap, key, new_value );
@@ -527,7 +527,7 @@ attr_header b32 hashmap_set_by_string(
 /// @return True if hashmap contained key value pair being removed.
 attr_always_inline
 attr_header b32 hashmap_remove_by_string(
-    Hashmap* hashmap, const String string_key, void* opt_out_item
+    Hashmap* hashmap, String string_key, void* opt_out_item
 ) {
     u64 key = hashmap_string_to_key( string_key );
     return hashmap_remove( hashmap, key, opt_out_item );

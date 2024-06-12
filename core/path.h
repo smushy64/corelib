@@ -11,247 +11,281 @@
 #include "core/slice.h"
 #include "core/string.h"
 
-/// @brief Slice of a character buffer.
-/// @see #CoreSlice
-typedef struct CoreSlice  Path;
-/// @brief Mutable character buffer.
-/// @see #CoreBuffer
-typedef struct CoreBuffer PathBuf;
+/// @brief UTF-8 Path. Same as String.
+/// @details
+/// Not necessarily null terminated.
+/// @see #ByteSlice
+/// @see #String
+typedef String Path;
+/// @brief UTF-8 Path buffer. Same as StringBuf.
+/// @details
+/// Not necessarily null terminated.
+/// @see #ByteBuffer
+/// @see #StringBuf
+typedef StringBuf PathBuf;
 
-/// @brief Create a new path from character buffer and a length.
-/// @param[in] cc Pointer to character buffer.
-/// @param len Length of character buffer.
-/// @return Path.
-attr_always_inline
-attr_header Path path_new( const char* cc, usize len ) {
-    Path result;
-    result.cc  = cc;
-    result.len = len;
-    return result;
-}
-/// @brief Create a new const Path from string literal.
-/// @param literal Null-terminated string literal.
-/// @return Path
-#define path_text( literal ) string_text( literal )
-/// @brief Create a new path from null-terminated path.
-/// @param opt_len (optional) Length of path (if 0, length is calculated).
-/// @param[in] ascii Pointer to path.
-/// @return Path
-attr_always_inline
-attr_header Path path_from_asciiz( usize opt_len, const char* ascii ) {
-    Path result;
-    result.cc  = ascii;
-    result.len = opt_len ? opt_len : asciiz_len( ascii );
-    return result;
-}
-/// @brief Get pointer to path's buffer.
-/// @param path Path to get pointer of.
-/// @return Pointer to path's buffer.
-attr_always_inline
-attr_header const char* path_str( const Path path ) {
-    return path.cc;
-}
-/// @brief Get length of path.
-/// @param path Path to get length of.
-/// @return Length of path.
-attr_always_inline
-attr_header usize path_len( const Path path ) {
-    return path.len;
-}
+/// @brief Create new path slice.
+/// @param length (usize) Byte length of path.
+/// @param start  (char*) Pointer to start of path.
+/// @return Path slice.
+#define path_new( length, start )  string_new( length, start )
+/// @brief Create empty path slice.
+/// @return Path slice.
+#define path_empty()               string_empty()
+/// @brief Create path from null terminated C string.
+/// @param c_string (const char*) Null-terminated UTF-8 string.
+/// @return Path slice.
+#define path_from_cstr( c_string ) string_from_cstr( c_string )
+/// @brief Create immutable path from string literal.
+/// @param literal (string literal) String.
+/// @return Path slice.
+#define path_text( literal )       string_text( literal )
+/// @brief Check if path is empty.
+/// @note Same as string_is_empty()
+/// @param path (Path) Path slice to check.
+/// @return
+///     - @c true  : @c path is empty.
+///     - @c false : @c path is not empty.
+#define path_is_empty( path )      string_is_empty( path )
 /// @brief Compare two paths for equality.
-/// @see #string_cmp()
-/// @param a, b Paths to compare.
-/// @return True if paths are the same.
-attr_always_inline
-attr_header b32 path_cmp( const Path a, const Path b ) {
-    return string_cmp( a, b );
-}
-/// @brief Check if a path is an absolute path.
-/// @param path Path to check.
-/// @return True if path is absolute.
-attr_core_api b32 path_is_absolute( const Path path );
-/// @brief Check if a path is a relative path.
-/// @param path Path to check.
-/// @return True if path is relative.
-attr_always_inline
-attr_header b32 path_is_relative( const Path path ) {
-    return !path_is_absolute( path );
-}
-/// @brief Check if path points to a file.
-/// @param path Path to check.
-/// @return True if path points to a file.
-attr_core_api b32 path_is_file( const Path path );
-/// @brief Check if path points to a directory.
-/// @param path Path to check.
-/// @return True if path points to a directory.
-attr_core_api b32 path_is_directory( const Path path );
-/// @brief Attempt to get path's parent.
-/// @param path Path to get parent of.
-/// @param[out] out_parent Destination to write parent of path to.
-/// @return True if path had a parent.
-attr_core_api b32 path_parent( const Path path, Path* out_parent );
-/// @brief Get a count of how many ancestors a path has.
-/// @param path Path to get ancestor count of.
-/// @return Number of ancestors that path has.
-attr_header usize path_ancestor_count( const Path path ) {
-    Path inner_path = path;
-    Path parent     = path_new( 0, 0 );
-    usize result    = 0;
-    while( path_parent( inner_path, &parent ) ) {
-        inner_path = parent;
-        result++;
-    }
-    return result;
-}
+/// @note Same as string_cmp()
+/// @param a, b (Path) Paths to compare.
+/// @return
+///     - @c true  : @c a and @c b are equal in length and contents.
+///     - @c false : @c a and @c b are not equal.
+#define path_cmp( a, b )           string_cmp( a, b )
 
-/// @brief Write ancestors of given path to path array.
-/// @param path Path to get ancestors of.
-/// @param max Max number of ancestors in given ancestors array.
-/// @param[out] out_ancestors Array to hold ancestors.
-/// @param[out] out_written Number of ancestors written to ancestors array.
-/// @param[out] out_ancestor_count Number of ancestors that path actually has.
-attr_header void path_ancestors(
-    const Path path, usize max, Path* out_ancestors,
-    usize* out_written, usize* out_ancestor_count
-) {
-    Path inner_path = path;
-    Path parent     = path_new(0, 0);
-    usize count   = 0;
-    usize written = 0;
-
-    while( path_parent( inner_path, &parent ) ) {
-        if( written < max ) {
-            out_ancestors[written++] = parent;
-        }
-        inner_path = parent;
-        count++;
-    }
-
-    *out_written        = written;
-    *out_ancestor_count = count;
-}
-/// @brief Get file name of path.
-/// @param path Path to get file name of.
-/// @param[out] out_file_name Path slice containing just file name (including extension).
-/// @return True if path points to a file.
-/// @note Path might not actually point to a file, this function only checks for trailing path separator.
-/// @see #path_is_file() to check if path points to a real file.
-attr_core_api b32 path_file_name( const Path path, Path* out_file_name );
-/// @brief Get file stem of path.
-/// @param path Path to get file stem of.
-/// @param[out] out_file_stem Path slice containing just file name (excludes extension).
-/// @return True if path points to a file.
-/// @note Path might not actually point to a file, this function only checks for trailing path separator.
-/// @see #path_is_file() to check if path points to a real file.
-attr_core_api b32 path_file_stem( const Path path, Path* out_file_stem );
-/// @brief Get file extension of path.
-/// @param path Path to get file extension of.
-/// @param[out] out_extension Path slice containing file extension with leading dot.
-/// @return True if path points to a file and has an extension.
-attr_core_api b32 path_extension( const Path path, Path* out_extension );
-/// @brief Pop off last chunk of path.
-/// @param path Path to pop chunk off of.
-/// @param[out] out_path Path with last chunk popped.
-/// @param[out] opt_out_chunk (optional) Chunk that was popped off.
-/// @return True if path had a chunk to pop off.
-attr_core_api b32 path_pop( const Path path, Path* out_path, Path* opt_out_chunk );
-/// @brief Convert chunk separators from either back or forward slashes to opposite.
-/// @param[in] path Path to convert separators of.
-/// @param to_forward If true, convert back slashes to forward slashes, if false vice versa.
-attr_core_api void path_convert_separators( Path* path, b32 to_forward );
-/// @brief Stream convert chunk separators from either back or forward slashes to opposite.
-/// @param stream Streaming function.
-/// @param[in] target Target to write result to.
-/// @param path Path to convert separators of.
-/// @param to_forward If true, convert back slashes to forward slashes, if false vice versa.
-/// @return Number of bytes required to complete conversion.
-/// @see #StreamBytesFN
-attr_core_api usize path_stream_convert_separators(
-    StreamBytesFN* stream, void* target, const Path path, b32 to_forward );
-
-/// @brief Create a new path buffer.
-/// @param size Size of buffer.
-/// @param[in] buffer Pointer to start of buffer.
-/// @return Path buffer.
-attr_always_inline
-attr_header PathBuf path_buf_new( const usize size, char* buffer ) {
-    PathBuf result;
-    result.c   = buffer;
-    result.len = 0;
-    result.cap = size;
-    return result;
-}
-/// @brief Create a new path buffer from static array.
-/// @param array Static, local character array.
-/// @return Path buffer.
-#define path_buf_from_array( array )\
-    path_buf_new( static_array_len( (array) ), (array) )
-/// @brief Get pointer to path buffer's buffer.
-/// @param[in] buf Path buffer.
-/// @return Pointer to start of buffer.
-attr_always_inline
-attr_header char* path_buf_str( PathBuf* buf ) {
-    return buf->c;
-}
-/// @brief Get path buffer's length.
-/// @param[in] buf Path buffer.
-/// @return Length of path buffer.
-attr_always_inline
-attr_header usize path_buf_len( const PathBuf* buf ) {
-    return buf->len;
-}
-/// @brief Get path buffer's capacity in bytes.
-/// @param[in] buf Path buffer.
-/// @return Capacity of path buffer in bytes.
-attr_always_inline
-attr_header usize path_buf_cap( const PathBuf* buf ) {
-    return buf->cap;
-}
-/// @brief Check if path buffer is empty.
-/// @param[in] buf Path buffer.
-/// @return True if path buffer is empty.
-attr_always_inline
-attr_header b32 path_buf_is_empty( const PathBuf* buf ) {
-    return buf->len == 0;
-}
-/// @brief Check if path buffer is full.
-/// @param[in] buf Path buffer.
-/// @return True if path buffer is full.
-attr_always_inline
-attr_header b32 path_buf_is_full( const PathBuf* buf ) {
-    return buf->len == buf->cap;
-}
-/// @brief Clear a path buffer.
+/// @brief Count how many path chunks are in path.
+/// @param path Path to get chunk count of.
+/// @return Number of chunks path has.
+attr_core_api usize path_chunk_count( Path path );
+/// @brief Split path by its chunks.
+/// @param      path          Path to split.
+/// @param      chunk_buf_cap Capacity of @c chunk_buf.
+/// @param[out] chunk_buf     Pointer to store chunks. Must be able to hold @c chunk_buf_cap.
+/// @param[out] out_count     Pointer to write number of chunks written to @c chunk_buf.
+/// @return Number of chunks that could not be written to @c chunk_buf.
+attr_core_api usize path_split_chunks(
+    Path path, usize chunk_buf_cap, Path* chunk_buf, usize* out_count );
+/// @brief Check if path looks like an absolute path for current platform.
+/// @note This function does not check if @c path is a real path.
+/// @details
+/// - Windows : A path is absolute if it matches this pattern: [a-zA-Z]:[/\\]
+/// - Posix   : A path is absolute if it starts with '/'
+/// @param path Path to check.
+/// @return
+///     - @c true  : @c path looks like an absolute path.
+///     - @c false : @c path does not look like an absolute path.
+attr_core_api b32 path_is_absolute( Path path );
+/// @brief Check if path looks like a relative path.
+/// @note This function does not check if @c path is a real path.
+/// @details
+/// Currently, just checks if @c path is not absolute.
+/// @param path Path to check.
+/// @return
+///     - @c true  : @c path looks like a relative path.
+///     - @c false : @c path does not look like a relative path.
+/// @see path_is_absolute()
+attr_core_api b32 path_is_relative( Path path );
+/// @brief Get path up the current chunk in path.
+/// @details
+/// For path: '/some/path/to/file'
 ///
-/// Sets length to zero.
-/// @param[in] buf Buffer to clear.
+/// Result:   '/some/path/to'
+/// @param      path       Path to get parent of.
+/// @param[out] out_parent Pointer to write parent to.
+/// @return
+///     - @c true  : @c path has parent path and result written to @c out_parent.
+///     - @c false : @c path has no parent path.
+attr_core_api b32 path_get_parent( Path path, Path* out_parent );
+/// @brief Get file name of path.
+/// @note This function does not check if path actually points
+/// to a file or some other thing (like a directory).
+/// @param      path          Path to get file name of.
+/// @param[out] out_file_name Pointer to write file name to.
+/// @return
+///     - @c true  : @c path has a file name and it was written to @c out_file_name.
+///     - @c false : @c path has no file name. (empty or ends with separator)
+attr_core_api b32 path_get_file_name( Path path, Path* out_file_name );
+/// @brief Get file stem of path. (file name without extension)
+/// @note This function does not check if path actually points
+/// to a file or some other thing (like a directory).
+/// @param      path          Path to get file stem of.
+/// @param[out] out_file_stem Pointer to write file stem to.
+/// @return
+///     - @c true  : @c path has a file stem and it was written to @c out_file_stem.
+///     - @c false : @c path has no file stem. (empty or ends with separator)
+attr_core_api b32 path_get_file_stem( Path path, Path* out_file_stem );
+/// @brief Get file extension from path.
+/// @note This function does not check if path actually points
+/// to a file or some other thing (like a directory).
+/// @param      path          Path to get extension from.
+/// @param[out] out_extension Pointer to write extension to. (includes leading dot)
+/// @return
+///     - @c true  : @c path has an extension and it was written to @c out_extension.
+///     - @c false : @c path has no extension.
+attr_core_api b32 path_get_extension( Path path, Path* out_extension );
+/// @brief Check if path is null terminated.
+/// @details
+/// File system functions allocate space create a null terminated path
+/// if path provided is not null terminated.
+/// Most platforms do not support string slices as paths so this 
+/// function exists to check if allocation is necessary for doing
+/// any file system operations.
+/// @param path Path to check.
+/// @return
+///     - @c true  : @c path is null terminated.
+///     - @c false : @c path is not null terminated.
 attr_always_inline
-attr_header void path_buf_clear( PathBuf* buf ) {
-    buf->len = 0;
-}
-/// @brief Push a path chunk to end of path buffer.
-/// @param[in] path Path buffer to push to.
-/// @param chunk Path chunk to push.
-/// @return True if path buffer had enough space to push chunk.
-attr_core_api b32 path_buf_push( PathBuf* path, const Path chunk );
-/// @brief Pop the last chunk off of path buffer.
-/// @param[in] path Path to pop chunk off of.
-/// @param[out] opt_out_chunk (optional) Pointer to receive popped chunk.
-/// @return True if path had a chunk to pop off.
-attr_always_inline
-attr_header b32 path_buf_pop( PathBuf* path, Path* opt_out_chunk ) {
-    Path new_path;
-    if( !path_pop( path->slice, &new_path, opt_out_chunk ) ) {
+attr_header b32 path_is_null_terminated( Path path ) {
+    if( !path.len ) {
         return false;
     }
-
-    path->len = new_path.len;
-    return true;
+    return !path.c[path.len - 1] || !path.c[path.len];
 }
-/// @brief Set the extension of a path buffer.
-/// @param[in] path Path to modify.
-/// @param ext Extension to set. Accepts extensions with or without leading dot.
-/// @return True if path had enough capacity for new extension.
-attr_core_api b32 path_buf_set_extension( PathBuf* path, const Path ext );
+/// @brief Change all path separators to given separator.
+/// @param path Path to set separators for.
+/// @param sep  Separator to set to. (should be forward or backslash)
+attr_core_api void path_mut_set_separators( Path path, char sep );
+/// @brief Stream path with separators set to given separator.
+/// @param[in] stream Pointer to streaming function.
+/// @param[in] target (optional) Pointer to streaming target.
+/// @param     path   Path to stream.
+/// @param     sep    Separator to stream.
+/// @return Number of bytes that could not be written to stream target.
+attr_core_api usize path_stream_set_separators(
+    StreamBytesFN* stream, void* target, Path path, char sep );
+
+/// @brief Create new path buffer.
+/// @param capacity (usize) Size of path buffer.
+/// @param start    (char*) Pointer to start of path buffer.
+/// @return Path buffer.
+#define path_buf_new( capacity, start ) string_buf_new( capacity, start )
+/// @brief Create empty path buffer.
+/// @return Path buffer.
+#define path_buf_empty()                string_buf_empty()
+/// @brief Initialize a path buffer from the stack.
+/// @details
+/// Defines a stack char buffer with name @c name##_buffer
+/// of given size and a PathBuf from that buffer with given name.
+/// @param name (valid identifier) Name of path buffer.
+/// @param size (usize)            Size of path buffer.
+#define path_buf_create_from_stack( name, size )\
+    string_buf_create_from_stack( name, size )
+/// @brief Create path buffer using allocator.
+/// @param      size      (usize)               Size of path buffer.
+/// @param[in]  allocator (AllocatorInterface*) Interface for allocator to use.
+/// @param[out] out_buf   (PathBuf*)            Pointer to write new buffer to.
+/// @return
+///     - @c true  : Allocated path buffer successfully.
+///     - @c false : Failed to allocate path buffer.
+#define path_buf_from_alloc( size, allocator, out_buf )\
+    string_buf_from_alloc( size, allocator, out_buf )
+/// @brief Reallocate path buffer.
+/// @param[in] buf       (PathBuf*)            Path buffer to grow.
+/// @param     amount    (usize)               Number of bytes to grow buffer by.
+/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
+/// @return
+///     - @c true  : Reallocated buffer successfully.
+///     - @c false : Failed to reallocate buffer.
+#define path_buf_grow( buf, amount, allocator )\
+    string_buf_grow( buf, amount, allocator )
+/// @brief Free path buffer allocated with allocator.
+/// @param[in] buf       (PathBuf*)            Path buffer to free.
+/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
+#define path_buf_free( buf, allocator )\
+    string_buf_free( buf, allocator )
+/// @brief Calculate remaining capacity in path buffer.
+/// @param[in] buf (PathBuf*) Path buffer.
+/// @return Number of bytes remaining. Does not include null terminator.
+#define path_buf_remaining( buf )\
+    string_buf_remaining( buf )
+/// @brief Check if path buffer is empty.
+/// @param[in] buf (PathBuf*) Path buffer to check.
+/// @return
+///     - @c true  : @c buf is empty.
+///     - @c false : @c buf is not empty.
+#define path_buf_is_empty( buf )\
+    string_buf_is_empty( buf )
+/// @brief Check if path buffer still has space.
+/// @note Path buffer always tries to have space for null terminator.
+/// @param[in] buf (PathBuf*) Path to check.
+/// @return
+///     - @c true : @c buf is full.
+#define path_buf_is_full( buf )\
+    string_buf_is_full( buf )
+/// @brief Set path buffer length to zero and zero out memory.
+/// @param[in] buf (PathBuf*) Path to clear.
+#define path_buf_clear( buf )\
+    string_buf_clear( buf )
+
+/// @brief Attempt to push chunk to end of path buffer.
+/// @details
+/// It always uses / as a path separator regardless of platform.
+/// @param[in] buf   Path buffer to push chunk to.
+/// @param     chunk Path chunk to push.
+/// @return
+///     - @c true  : @c buf has enough space for chunk and it was pushed successfully.
+///     - @c false : @c buf does not have enough space for chunk.
+attr_core_api b32 path_buf_try_push( PathBuf* buf, Path chunk );
+/// @brief Push chunk to end of path buffer.
+/// @details
+/// It always uses / as a path separator regardless of platform.
+/// @param[in] buf       Path buffer to push chunk to.
+/// @param     chunk     Path chunk to push.
+/// @param[in] allocator Pointer to allocator.
+/// @return
+///     - @c true  : Pushed chunk successfully. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_core_api b32 path_buf_push(
+    PathBuf* buf, Path chunk, struct AllocatorInterface* allocator );
+/// @brief Remove last chunk from path.
+/// @param[in] buf Path buffer to pop chunk off of.
+/// @return
+///     - @c true  : @c buf had chunk to pop and it was popped off.
+///     - @c false : @c buf has no more chunks to pop.
+attr_core_api b32 path_buf_pop( PathBuf* buf );
+/// @brief Attempt to set path extension.
+/// @details
+/// Does not check if path is a directory, just blindly sets extension.
+///
+/// If path has no extension, appends extension.
+///
+/// If path has an extension, removes that extension and sets new extension.
+///
+/// If extension does not begin with dot, also appends dot before extension.
+/// @param[in] buf       Path buffer to set extension of.
+/// @param     extension Extension to set.
+/// @return
+///     - @c true  : @c buf has enough capacity to set new extension.
+///     - @c false : @c buf does not have capacity to set new extension.
+attr_core_api b32 path_buf_try_set_extension( PathBuf* buf, Path extension );
+/// @brief Set path extension.
+/// @details
+/// Does not check if path is a directory, just blindly sets extension.
+///
+/// If path has no extension, appends extension.
+///
+/// If path has an extension, removes that extension and sets new extension.
+///
+/// If extension does not begin with dot, also appends dot before extension.
+/// @param[in] buf       Path buffer to set extension of.
+/// @param     extension Extension to set.
+/// @param[in] allocator Pointer to allocator.
+/// @return
+///     - @c true  : Set extension. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate path.
+attr_core_api b32 path_buf_set_extension(
+    PathBuf* buf, Path extension, struct AllocatorInterface* allocator );
+
+// TODO(alicia): file_path_is_file, file_path_is_directory
+// /// @brief Check if path points to a file.
+// /// @param path Path to check.
+// /// @return True if path points to a file.
+// attr_core_api b32 path_is_file( const Path path );
+// /// @brief Check if path points to a directory.
+// /// @param path Path to check.
+// /// @return True if path points to a directory.
+// attr_core_api b32 path_is_directory( const Path path );
 
 #endif /* header guard */

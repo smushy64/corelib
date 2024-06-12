@@ -1135,7 +1135,7 @@ attr_core_api usize fmt_text_va(
                         if( !output.cc ) {
                             output.cc = "";
                         }
-                        output.len = asciiz_len( output.cc );
+                        output.len = cstr_len( output.cc );
                         if( args.count && args.count < output.len ) {
                             output.len = args.count;
                         }

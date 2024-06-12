@@ -65,12 +65,12 @@ attr_internal b32 internal_job_dequeue(
     if( !q->len ) {
         return false;
     }
-    read_write_fence();
+    read_write_barrier();
 
-    i32 front = interlocked_increment( &q->front );
-    interlocked_decrement( &q->len );
+    i32 front = atomic_increment32( &q->front );
+    atomic_decrement32( &q->len );
 
-    read_write_fence();
+    read_write_barrier();
     front = (front + 1) % q->max_entries;
 
     *out_entry = q->entries[front];
@@ -86,7 +86,7 @@ attr_internal int internal_job_queue_main( u32 thread_id, void* params ) {
         memory_zero( &entry, sizeof(entry) );
 
         semaphore_wait( &q->sem_wake_up );
-        read_write_fence();
+        read_write_barrier();
 
         if( q->signal_end ) {
             break;
@@ -94,14 +94,14 @@ attr_internal int internal_job_queue_main( u32 thread_id, void* params ) {
 
         if( internal_job_dequeue( q, &entry ) ) {
             entry.main( thread_id, entry.params );
-            read_write_fence();
+            read_write_barrier();
             semaphore_signal( &q->sem_entry_complete );
         }
     }
 
-    read_write_fence();
+    read_write_barrier();
     if( q->max_entries ) {
-        interlocked_decrement( &q->max_entries );
+        atomic_decrement32( &q->max_entries );
     }
     return 0;
 }
@@ -147,7 +147,7 @@ attr_core_api JobQueue* job_queue_create(
     struct InternalThreadArray* array =
         (struct InternalThreadArray*)
         ((u8*)buffer + internal_job_queue_size( max_entry_count ));
-    read_write_fence();
+    read_write_barrier();
 
     for( u32 i = 0; i < thread_count; ++i ) {
         array->threads[i] = thread_create( internal_job_queue_main, q, stack_size );
@@ -178,20 +178,20 @@ attr_core_api void job_queue_destroy( JobQueue* queue ) {
     job_queue_wait( queue );
 
     u32 max_entries = q->max_entries;
-    read_write_fence();
+    read_write_barrier();
 
-    interlocked_increment( &q->signal_end );
-    read_write_fence();
+    atomic_increment32( &q->signal_end );
+    read_write_barrier();
 
     while( q->max_entries ) {
         semaphore_signal( &q->sem_wake_up );
     }
-    read_write_fence();
+    read_write_barrier();
 
     semaphore_destroy( &q->sem_wake_up );
     semaphore_destroy( &q->sem_entry_complete );
 
-    read_write_fence();
+    read_write_barrier();
     usize job_queue_size = internal_job_queue_size( max_entries );
     struct InternalThreadArray* array =
         (struct InternalThreadArray*)((u8*)queue + job_queue_size);
@@ -205,10 +205,10 @@ attr_core_api b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* para
         return false;
     }
 
-    i32 back = interlocked_increment( &q->back );
-    interlocked_increment( &q->len );
+    i32 back = atomic_increment32( &q->back );
+    atomic_increment32( &q->len );
 
-    read_write_fence();
+    read_write_barrier();
     back = back % q->max_entries;
 
     struct JobEntry entry;
@@ -216,7 +216,7 @@ attr_core_api b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* para
     entry.params     = params;
     q->entries[back] = entry;
 
-    read_write_fence();
+    read_write_barrier();
     semaphore_signal( &q->sem_wake_up );
 
     return true;

@@ -9,121 +9,110 @@
 #include "core/memory.h"
 #include "core/sync.h"
 
-attr_internal usize internal_alloc_aligned_size( usize size, usize alignment ) {
-    return size + alignment + 16;
+attr_core_api void* stack_allocator_push(
+    StackAllocator* stack, usize size, usize alignment
+) {
+    usize _size = size;
+    if( alignment ) {
+        _size += alignment + sizeof(void*);
+    }
+    if( stack->at + _size >= stack->size ) {
+        return NULL;
+    }
+    usize offset = 0;
+    if( stack->is_atomic ) {
+        offset = atomic_add_size( (atomic_size*)&stack->at, _size );
+    } else {
+        offset = stack->at;
+        stack->at += _size;
+    }
+
+    read_write_barrier();
+
+    u8* ptr = (u8*)stack->start + offset;
+
+    if( alignment ) {
+        void* aligned = memory_align( ptr + sizeof(void*), alignment );
+        ((void**)aligned)[-1] = ptr;
+        return aligned;
+    } else {
+        return ptr;
+    }
+}
+attr_core_api void stack_allocator_pop(
+    StackAllocator* stack, usize size, usize alignment
+) {
+    isize _size = size;
+    if( alignment ) {
+        _size += alignment + sizeof(void*);
+    }
+    if( stack->is_atomic ) {
+        atomic_add_size( (atomic_size*)&stack->at, -_size );
+    } else {
+        stack->at -= _size;
+    }
+    memory_free( (u8*)stack->start + stack->at, _size );
+}
+attr_core_api void stack_allocator_clear( StackAllocator* stack ) {
+    usize at = 0;
+    if( stack->is_atomic ) {
+        at = atomic_exchange_size( (atomic_size*)&stack->at, 0 );
+    } else {
+        at        = stack->at;
+        stack->at = 0;
+    }
+    memory_zero( stack->start, at );
 }
 
-attr_core_api void* alloc_stack_push( AllocStack* stack, usize size ) {
-    if( (stack->current + size) >= stack->size || !size ) {
-        return NULL;
-    }
-    void* pointer   = stack->buffer + stack->current;
-    stack->current += size;
-    return pointer;
+attr_core_api void* stack_allocator_alloc( usize size, usize alignment, void* ctx ) {
+    StackAllocator* stack = ctx;
+    return stack_allocator_push( stack, size, alignment );
 }
-attr_core_api b32 alloc_stack_push_offset(
-    AllocStack* stack, usize size, usize* out_offset
+attr_core_api void* stack_allocator_realloc(
+    void* memory, usize old_size, usize new_size, usize alignment, void* ctx
 ) {
-    if( (stack->current + size) >= stack->size || !size ) {
-        return false;
-    }
+    // TODO(alicia): make this better. it's no good
+    unused(memory);
+    StackAllocator* stack = ctx;
+    stack_allocator_pop( stack, old_size, alignment );
+    return stack_allocator_push( stack, new_size, alignment );
+}
+attr_core_api void  stack_allocator_free(
+    void* memory, usize size, usize alignment, void* ctx
+) {
+    unused(memory);
+    StackAllocator* stack = ctx;
+    stack_allocator_pop( stack, size, alignment );
+}
 
-    *out_offset     = stack->current;
-    stack->current += size;
-    return true;
-}
-attr_core_api void* alloc_stack_push_atomic( AllocStack* stack, usize size ) {
-    if( (stack->current + size) >= stack->size || !size ) {
-        return NULL;
-    }
-    usize offset = interlocked_add( &stack->current, size );
-    return stack->buffer + offset;
-}
-attr_core_api b32 alloc_stack_push_offset_atomic(
-    AllocStack* stack, usize size, usize* out_offset
+attr_core_api void* ___internal_memory_alloc_(
+    usize size, usize alignment, void* ctx
 ) {
-    if( (stack->current + size) >= stack->size || !size ) {
-        return false;
+    unused( ctx );
+    if( alignment ) {
+        return memory_alloc_aligned( size, alignment );
+    } else {
+        return memory_alloc( size );
     }
-    *out_offset = interlocked_add( &stack->current, size );
-    return true;
 }
-attr_core_api void* alloc_stack_push_aligned(
-    AllocStack* stack, usize size, usize alignment
+attr_core_api void* ___internal_memory_realloc_(
+    void* memory, usize old_size, usize new_size, usize alignment, void* ctx
 ) {
-    if( !size ) {
-        return NULL;
+    unused(ctx);
+    if( alignment ) {
+        return memory_realloc_aligned( memory, old_size, new_size, alignment );
+    } else {
+        return memory_realloc( memory, old_size, new_size );
     }
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    void* ptr = alloc_stack_push( stack, aligned_size );
-    if( !ptr ) {
-        return NULL;
-    }
-    return memory_align( ptr, alignment );
 }
-attr_core_api b32 alloc_stack_push_aligned_offset(
-    AllocStack* stack, usize size, usize alignment, usize* out_offset
+attr_core_api void ___internal_memory_free_(
+    void* memory, usize size, usize alignment, void* ctx
 ) {
-    if( !size ) {
-        return false;
+    unused(ctx);
+    if( alignment ) {
+        memory_free_aligned( memory, size, alignment );
+    } else {
+        memory_free( memory, size );
     }
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    usize offset = 0;
-    if( !alloc_stack_push_offset( stack, aligned_size, &offset ) ) {
-        return false;
-    }
-    *out_offset = (usize)memory_align( offset, alignment );
-    return true;
-}
-attr_core_api void* alloc_stack_push_aligned_atomic(
-    AllocStack* stack, usize size, usize alignment
-) {
-    if( !size ) {
-        return false;
-    }
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    void* ptr = alloc_stack_push_atomic( stack, aligned_size );
-    if( !ptr ) {
-        return NULL;
-    }
-    return memory_align( ptr, alignment );
-}
-attr_core_api b32 alloc_stack_push_aligned_offset_atomic(
-    AllocStack* stack, usize size, usize alignment, usize* out_offset
-) {
-    if( !size ) {
-        return false;
-    }
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    usize offset = 0;
-    if( !alloc_stack_push_offset_atomic( stack, aligned_size, &offset ) ) {
-        return false;
-    }
-    *out_offset = (usize)memory_align( offset, alignment );
-    return true;
-}
-attr_core_api void  alloc_stack_pop( AllocStack* stack, usize size ) {
-    if( size > stack->current ) {
-        return;
-    }
-    stack->current -= size;
-}
-attr_core_api void  alloc_stack_pop_atomic( AllocStack* stack, usize size ) {
-    if( size > stack->current ) {
-        return;
-    }
-    interlocked_sub( &stack->current, size );
-}
-attr_core_api void  alloc_stack_pop_aligned(
-    AllocStack* stack, usize size, usize alignment
-) {
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    alloc_stack_pop( stack, aligned_size );
-}
-attr_core_api void alloc_stack_pop_aligned_atomic(
-    AllocStack* stack, usize size, usize alignment
-) {
-    usize aligned_size = internal_alloc_aligned_size( size, alignment );
-    alloc_stack_pop_atomic( stack, aligned_size );
 }
 

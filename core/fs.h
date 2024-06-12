@@ -214,11 +214,6 @@ attr_core_api b32 fs_directory_create( const Path path );
 /// @param[out] out_count Pointer to receive count.
 /// @return True if path is valid.
 attr_core_api b32 fs_directory_item_count( const Path path, usize* out_count );
-/// @brief Delete a directory at given path.
-/// @param path      Path to directory to delete.
-/// @param recursive If true, attempts to delete every file in directory. If directory is not empty and recursive is false, function fails.
-/// @return True if directory is successfully deleted.
-attr_core_api b32 fs_directory_delete( const Path path, b32 recursive );
 /// @brief Check if directory pointed to by path exists.
 /// @param path Path to directory.
 /// @return True if directory exists.

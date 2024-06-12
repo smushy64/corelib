@@ -64,7 +64,6 @@ b32 platform_file_exists( const Path path );
 Path platform_working_directory(void);
 b32 platform_directory_create( const Path path );
 b32 platform_directory_item_count( const Path path, usize* out_count );
-b32 platform_directory_delete( const Path path, b32 recursive );
 b32 platform_directory_exists( const Path path );
 
 void platform_system_query_info( SystemInfo* out_info );

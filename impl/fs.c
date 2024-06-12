@@ -124,9 +124,6 @@ attr_core_api b32 fs_directory_create( const Path path ) {
 attr_core_api b32 fs_directory_item_count( const Path path, usize* out_count ) {
     return platform_directory_item_count( path, out_count );
 }
-attr_core_api b32 fs_directory_delete( const Path path, b32 recursive ) {
-    return platform_directory_delete( path, recursive );
-}
 attr_core_api b32 fs_directory_exists( const Path path ) {
     return platform_directory_exists( path );
 }

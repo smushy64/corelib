@@ -23,14 +23,14 @@
 /// @param[in] dst Destination buffer, must not overlap with src.
 /// @param[in] src Source buffer, must not overlap with dst.
 /// @param size Number of bytes to copy. Both src and dst must be able to hold this many bytes.
-/// @see #memory_copy_overlapped() for copying between overlapping buffers.
+/// @see #memory_move() for copying between overlapping buffers.
 attr_core_api void memory_copy(
     void* attr_restrict dst, const void* attr_restrict src, usize size );
 /// @brief Copy overlapping memory from source buffer to destination buffer.
 /// @param[in] dst Destination buffer.
 /// @param[in] src Source buffer.
 /// @param size Number of bytes to copy. Both src and dst must be able to hold this many bytes.
-attr_core_api void memory_copy_overlapped( void* dst, const void* src, usize size );
+attr_core_api void memory_move( void* dst, const void* src, usize size );
 /// @brief Set range of bytes in destination buffer to given value.
 /// @param[in] dst Destination buffer.
 /// @param byte Value to set bytes to.

@@ -9,6 +9,16 @@
 #include "core/defines.h"
 #include "core/attributes.h"
 
+#if defined(CORE_COMPILER_MSVC)
+    #include "core/assertions.h" // IWYU pragma: keep
+#endif
+
+#if defined(CORE_CPLUSPLUS)
+    #define struct_literal( identifier ) identifier
+#else
+    #define struct_literal( identifier ) (identifier)
+#endif
+
 attr_header attr_always_inline attr_optimized
 void _unused(int a, ...) { (void)(a); }
 
@@ -104,100 +114,6 @@ void _unused(int a, ...) { (void)(a); }
 /// @param ptr Pointer to value to reinterpret.
 /// @return Value pointed to by ptr reinterpreted as pointer to type.
 #define rcast_ref( type, ptr ) ( (type *)(ptr) )
-
-#if defined(CORE_COMPILER_MSVC)
-    /// @brief Crash the program.
-    #define panic() __debugbreak()
-    /// @brief Suppress unhandled case warning.
-    ///
-    /// Crashes the program if this path is taken.
-    #define unreachable() __assume(0)
-
-    #if defined(CORE_ENABLE_DEBUG_BREAK)
-        /// @brief Break the debugger on this line.
-        /// @note Only generates break if CORE_ENABLE_DEBUG_BREAK is defined.
-        /// @note Enabled in this build.
-        #define debug_break() panic()
-    #else
-        /// @brief Break the debugger on this line.
-        /// @note Only generates break if CORE_ENABLE_DEBUG_BREAK is defined.
-        /// @note Disabled in this build.
-        #define debug_break()
-    #endif
-#else
-    /// @brief Crash the program.
-    #define panic() __builtin_trap()
-    /// @brief Suppress unhandled case warning.
-    ///
-    /// Crashes the program if this path is taken.
-    #define unreachable() __builtin_unreachable()
-
-    #if defined(CORE_ENABLE_DEBUG_BREAK)
-        /// @brief Break the debugger on this line.
-        /// @note Only generates break if CORE_ENABLE_DEBUG_BREAK is defined.
-        /// @note Enabled in this build.
-        #define debug_break() __builtin_debugtrap()
-    #else
-        /// @brief Break the debugger on this line.
-        /// @note Only generates break if CORE_ENABLE_DEBUG_BREAK is defined.
-        /// @note Disabled in this build.
-        #define debug_break()
-    #endif
-#endif
-
-#if !defined( CORE_CPLUSPLUS )
-    /// @brief Assert that condition is true at compile-time.
-    /// @param condition Compile-time condition to test.
-    /// @param message Message to display if condition is not met.
-    #define static_assert( condition, message )\
-        _Static_assert( condition, message )
-#endif
-
-#if defined(CORE_ENABLE_ASSERTIONS)
-    /// @brief Assert that condition is true at run-time.
-    /// @note Only works if CORE_ENABLE_ASSERTIONS is defined.
-    /// @note Enabled in this build.
-    /// @param condition Run-time condition to test.
-    #define assert( condition ) do {\
-        if( !(condition) ) {\
-            panic();\
-        }\
-    } while(0)
-    #if defined(CORE_ENABLE_DEBUG_ASSERTIONS)
-        /// @brief Assert that condition is true at run-time.
-        ///
-        /// Generates debug_break() instead of panic().
-        /// @note Only works if CORE_ENABLE_DEBUG_ASSERTIONS and CORE_ENABLE_ASSERTIONS are defined.
-        /// @note Enabled in this build.
-        /// @param condition Run-time condition to test.
-        #define assert_debug( condition ) do {\
-            if( !(condition) ) {\
-                debug_break();\
-            }\
-        } while(0)
-    #else
-        /// @brief Assert that condition is true at run-time.
-        /// 
-        /// Generates debug_break() instead of panic().
-        /// @note Only works if CORE_ENABLE_DEBUG_ASSERTIONS is defined.
-        /// @note Disabled in this build.
-        /// @param ... Unused.
-        #define assert_debug(...) unused( __VA_ARGS__ )
-    #endif
-#else
-    /// @brief Assert that condition is true at run-time.
-    /// @note Only works if CORE_ENABLE_ASSERTIONS is defined.
-    /// @note Disabled in this build.
-    /// @param ... Unused.
-    #define assert(...) unused(__VA_ARGS__)
-    /// @brief Assert that condition is true at run-time.
-    ///
-    /// Generates debug_break() instead of panic().
-    /// @note Only works if CORE_ENABLE_DEBUG_ASSERTIONS is defined.
-    /// @note Disabled in this build.
-    /// @param ... Unused.
-    #define assert_debug(...) unused(__VA_ARGS__)
-#endif
 
 /// @brief Infinite loop.
 #define loop() for(;;)

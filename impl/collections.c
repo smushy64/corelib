@@ -58,7 +58,7 @@ attr_core_api b32 list_prepend( List* list, usize count, const void* items ) {
         return false;
     }
 
-    memory_copy_overlapped(
+    memory_move(
         (u8*)list->buf + (list->stride * count),
         list->buf,
         list->stride * count );
@@ -74,7 +74,7 @@ attr_core_api b32 list_insert( List* list, usize index, const void* item ) {
     void* src = (void*)((u8*)list->buf + (list->stride * index));
     void* dst = (void*)((u8*)src + list->stride);
     usize move_count = list->len - index;
-    memory_copy_overlapped( dst, src, move_count );
+    memory_move( dst, src, move_count );
 
     memory_copy( src, item, list->stride );
     list->len++;
@@ -164,12 +164,12 @@ attr_core_api b32 hashmap_insert( Hashmap* hashmap, u64 key, const void* value )
     usize copy_count = hashmap->len - index;
     if( copy_count ) {
         usize copy_size  = copy_count * sizeof(u64);
-        memory_copy_overlapped(
+        memory_move(
             hashmap->keys + index + 1, hashmap->keys + index, copy_size );
         hashmap->keys[index] = key;
 
         copy_size = copy_count * hashmap->stride;
-        memory_copy_overlapped(
+        memory_move(
             (u8*)hashmap->buf + ((index + 1) * hashmap->stride),
             (u8*)hashmap->buf + (index * hashmap->stride),
             copy_size );
@@ -226,10 +226,10 @@ attr_core_api b32 hashmap_remove( Hashmap* hashmap, u64 key, void* opt_out_item 
     usize copy_len = hashmap->len - item_index;
 
     void* copy_point = (void*)((u8*)item + hashmap->stride);
-    memory_copy_overlapped( item, copy_point, copy_len * hashmap->stride );
+    memory_move( item, copy_point, copy_len * hashmap->stride );
 
     copy_point = (void*)(key_ptr + 1);
-    memory_copy_overlapped(
+    memory_move(
         key_ptr, copy_point, copy_len * sizeof(key) );
 
     hashmap->len--;

@@ -8,37 +8,114 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
+#include "core/assertions.h"
 #include "core/macros.h"
 #include "core/slice.h"
 #include "core/stream.h"
 
-/// @brief Slice of a character buffer.
-/// @see #CoreSlice
-typedef struct CoreSlice  String;
-/// @brief Mutable character buffer.
-/// @see #CoreBuffer
-typedef struct CoreBuffer StringBuf;
+// forward declaration.
+attr_core_api void memory_set( void* dst, u8 byte, usize size );
+
+// forward declaration
+struct AllocatorInterface;
+
+/// @brief UTF-8 String.
+/// @details
+/// Not necessarily null terminated.
+/// @see #ByteSlice
+typedef struct ByteSlice String;
+/// @brief UTF-8 String Buffer.
+/// @details
+/// Always accounts for null terminator.
+/// @see #ByteBuffer
+typedef struct ByteBuffer StringBuf;
+
+/// @brief Target for string_buf stream.
+typedef struct StringBufStreamTarget {
+    /// @brief Allocator.
+    struct AllocatorInterface* allocator;
+    /// @brief String buffer.
+    StringBuf* buf;
+} StringBufStreamTarget;
+
+/// @brief Set of whitespace characters.
+#define CHARACTER_SET_WHITESPACE 0x20, 0x09, 0x0D, 0x0A
 
 /// @brief Check if ASCII character is whitespace.
 /// @param c Character to check.
-/// @return True if character is whitespace.
+/// @return
+///     - @c true  : @c c is whitespace.
+///     - @c false : @c c is not whitespace.
 attr_always_inline
-attr_header b32 char_is_whitespace( char c ) {
+attr_header b32 ascii_is_whitespace( char c ) {
     return c == 0x20 || c == 0x09 || c == 0x0D || c == 0x0A;
 }
-/// @brief Check if ASCII character is a number.
-/// @param c Character to check
-/// @return True if character is a number.
+/// @brief Check if ASCII character is a path separator.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is a path separator.
+///     - @c false : @c c is not a path separator.
 attr_always_inline
-attr_header b32 char_is_number( char c ) {
+attr_header b32 ascii_is_path_separator( char c ) {
+#if defined(CORE_PLATFORM_WINDOWS)
+    return c == '/' || c == '\\';
+#else
+    return c == '/';
+#endif
+}
+/// @brief Check if ASCII character is numeric.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is numeric.
+///     - @c false : @c c is not numeric.
+attr_always_inline
+attr_header b32 ascii_is_numeric( char c ) {
     return c >= '0' && c <= '9';
+}
+/// @brief Check if ASCII character is alphabetic upper case.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is alphabetic upper case.
+///     - @c false : @c c is not alphabetic upper case.
+attr_always_inline
+attr_header b32 ascii_is_alphabetic_upper( char c ) {
+    return ( c >= 'A' && c <= 'Z' );
+}
+/// @brief Check if ASCII character is alphabetic lower case.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is alphabetic lower case.
+///     - @c false : @c c is not alphabetic lower case.
+attr_always_inline
+attr_header b32 ascii_is_alphabetic_lower( char c ) {
+    return ( c >= 'a' && c <= 'z' );
+}
+/// @brief Check if ASCII character is alphabetic.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is alphabetic.
+///     - @c false : @c c is not alphabetic.
+attr_always_inline
+attr_header b32 ascii_is_alphabetic( char c ) {
+    return
+        ascii_is_alphabetic_lower( c ) ||
+        ascii_is_alphabetic_upper( c );
+}
+/// @brief Check if ASCII character is alphanumeric.
+/// @param c Character to check.
+/// @return
+///     - @c true  : @c c is alphanumeric.
+///     - @c false : @c c is not alphanumeric.
+attr_always_inline
+attr_header b32 ascii_is_alphanumeric( char c ) {
+    return ascii_is_alphabetic( c ) || ascii_is_numeric( c );
 }
 /// @brief Convert ASCII character to upper case.
 /// @param c Character to convert.
 /// @return Converted character, returns the same character if it's not a letter.
 attr_always_inline
-attr_header char char_to_upper( char c ) {
-    if( c >= 'a' && c <= 'z' ) {
+attr_header char ascii_to_upper( char c ) {
+    if( ascii_is_alphabetic_lower( c ) ) {
         return c - ('a' - 'A');
     }
     return c;
@@ -47,621 +124,735 @@ attr_header char char_to_upper( char c ) {
 /// @param c Character to convert.
 /// @return Converted character, returns the same character if it's not a letter.
 attr_always_inline
-attr_header char char_to_lower( const char c ) {
-    if( c >= 'A' && c <= 'Z' ) {
+attr_header char ascii_to_lower( char c ) {
+    if( ascii_is_alphabetic_upper( c ) ) {
         return c + ('a' - 'A');
     }
     return c;
 }
+/// @brief Calculate ascii length of null terminated C string.
+/// @param[in] c_string Pointer to string.
+/// @return Ascii length of string excluding null terminator.
+attr_core_api usize cstr_len( const cstr* c_string );
+/// @brief Calculate UTF-8 length of null terminated C string.
+/// @param[in] c_string Pointer to string.
+/// @return UTF-8 length of string excluding null terminator.
+attr_core_api usize cstr_len_utf8( const cstr* c_string );
 
-/// @brief Calculate length of null-terminated ASCII string.
-/// @param[in] ascii Pointer to string.
-/// @return Length of string excluding null-terminator.
-attr_core_api usize asciiz_len( const char* ascii );
+/// @brief Create 64-bit hash of buffer.
+/// @details
+/// Uses elf hash algorithm.
+/// @param     len Byte length of buffer pointed to by @c buf.
+/// @param[in] buf Buffer to hash.
+/// @return 64-bit hash of buffer.
+attr_core_api hash64 hash_64( usize len, const void* buf );
+/// @brief Create 128-bit hash of buffer.
+/// @details
+/// Uses elf hash algorithm.
+/// @param     len Byte length of buffer pointed to by @c buf.
+/// @param[in] buf Buffer to hash.
+/// @return 128-bit hash of buffer.
+attr_core_api hash128 hash_128( usize len, const void* buf );
 
-/// @brief Hash a text buffer.
-/// @param len Length of text buffer in bytes.
-/// @param[in] text Pointer to text buffer.
-/// @return Hash of text buffer.
-attr_core_api u64 text_buffer_hash( usize len, const char* text );
-/// @brief Hash a string literal.
-/// @param literal ASCII null-terminated string literal.
-/// @return Hash of string literal.
-#define literal_hash( literal )\
-    text_buffer_hash( sizeof(literal) - 1, literal  )
+// TODO(alicia): documentation!
 
-/// @brief Create a new string from character buffer and a length.
-/// @param[in] cc Pointer to character buffer.
-/// @param len Length of character buffer.
-/// @return String.
+#define hash_text_64( literal ) hash_64( sizeof(literal) - 1, literal )
+#define hash_cstr_64( cstr )    hash_64( cstr_len( cstr ), cstr )
+#define hash_string_64( str )   hash_64( (str).len, (str).v )
+
+#define hash_text_128( literal ) hash_128( sizeof(literal) - 1, literal )
+#define hash_cstr_128( cstr )    hash_128( cstr_len( cstr ), cstr )
+#define hash_string_128( str )   hash_128( (str).len, (str).v )
+
+/// @brief Create new string slice.
+/// @param     length (usize) Length of string slice.
+/// @param[in] start  (char*) Pointer to start of slice.
+/// @return String slice.
+#define string_new( length, start ) struct_literal(String){ .len=length, .cc=start }
+/// @brief Create empty string slice.
+/// @return String slice.
+#define string_empty() string_new( 0, 0 )
+/// @brief Create new string slice from null terminated C string.
+/// @param[in] c_string (const cstr*) C string.
+/// @return String slice.
+#define string_from_cstr( c_string ) string_new( cstr_len( c_string ), c_string )
+/// @brief Create new string slice from string literal.
+/// @param literal (const char* literal) String literal.
+/// @return String slice.
+#define string_text( literal ) string_new( sizeof(literal) - 1, literal )
+/// @brief Calculate UTF-8 length of string.
+/// @note This function does not check if string is valid UTF-8!
+/// @param str String to calculate length of.
+/// @return UTF-8 length.
+attr_core_api usize string_len_utf8( String str );
+/// @brief Check if string is empty.
+/// @param str String to check.
+/// @return
+///     - @c true  : @c str is empty.
+///     - @c false : @c str is not empty.
+#define string_is_empty( str ) (str.len == 0)
+/// @brief Index into string. Debug asserts that index is in bounds.
+/// @param str   String to index into.
+/// @param index Index of character.
+/// @return Character at given index.
 attr_always_inline
-attr_header String string_new( const char* cc, usize len ) {
-    String result;
-    result.cc  = cc;
-    result.len = len;
-    return result;
+attr_header char string_index( String str, usize index ) {
+    debug_assert( index < str.len );
+    return str.cc[index];
 }
-#if defined(CORE_CPLUSPLUS)
-    /// @brief Create a new const String from string literal.
-    /// @param literal (const char*) String literal to create new string from.
-    /// @return Read-only String.
-    #define string_text( literal )\
-        String{ .cc=literal, .len=sizeof(literal) - 1 }
-#else
-    /// @brief Create a new const String from string literal.
-    /// @param literal (const char*) String literal to create new string from.
-    /// @return Read-only String.
-    #define string_text( literal )\
-        (struct CoreSlice){ .cc=literal, .len=sizeof(literal) - 1 }
-#endif
-/// @brief Create a new string from null-terminated ASCII string.
-/// @param opt_len (optional) Length of string (if 0, length is calculated).
-/// @param[in] ascii Pointer to string.
-/// @return String
+/// @brief Index into string, using UTF-8 index. Debug asserts that index is in bounds.
+/// @param str   String to index into.
+/// @param index UTF-8 index of codepoint.
+/// @return Codepoint at given index.
+attr_core_api codepoint string_index_utf8( String str, usize index );
+/// @brief Get pointer to first character in string.
+/// @param str String to get pointer from.
+/// @return
+///     - @c NULL : @c str is empty
+///     - Pointer : Pointer to first character in @c str.
 attr_always_inline
-attr_header String string_from_asciiz( usize opt_len, const char* ascii ) {
-    String result;
-    result.cc  = ascii;
-    result.len = opt_len ? opt_len : asciiz_len( ascii );
-    return result;
-}
-/// @brief Get pointer to string's buffer.
-/// @param str String to get pointer of.
-/// @return Pointer to string's buffer.
-attr_always_inline
-attr_header const char* string_str( String str ) {
+attr_header char* string_first( String str ) {
+    if( string_is_empty( str ) ) {
+        return NULL;
+    }
     return str.c;
 }
-/// @brief Get length of string.
-/// @param str String to get length of.
-/// @return ASCII length of string.
+/// @brief Get pointer to last character in string.
+/// @param str String to get pointer from.
+/// @return
+///     - @c NULL    : @c str is empty.
+///     - @c Pointer : Pointer to last character in @c str.
 attr_always_inline
-attr_header usize string_len( String str ) {
-    return str.len;
-}
-/// @brief Get last character in string.
-/// @param str String.
-/// @param[out] out_char Pointer to write to.
-/// @return False if string was empty.
-attr_always_inline
-attr_header b32 string_last( String str, char* out_char ) {
-    if( !str.len ) {
-        return false;
+attr_header char* string_last( String str ) {
+    if( string_is_empty( str ) ) {
+        return NULL;
     }
-    *out_char = str.cc[str.len - 1];
-    return true;
+    return str.c + (str.len - 1);
 }
-/// @brief Get last character in string.
-/// @note Does not bounds check, use only when you know string is NOT empty.
-/// @param str String.
+/// @brief Get first character in string without bounds checking.
+/// @param str String to get character from.
+/// @return First character in string.
+attr_always_inline
+attr_header char string_first_unchecked( String str ) {
+    return *string_first( str );
+}
+/// @brief Get last character in string without bounds checking.
+/// @param str String to get character from.
 /// @return Last character in string.
 attr_always_inline
 attr_header char string_last_unchecked( String str ) {
-    return str.cc[str.len - 1];
+    return *string_last( str );
 }
-/// @brief Check if string contains a null-terminator.
-/// @param str String to check.
-/// @return True if string contains null-terminator.
+/// @brief Compare strings for equality.
+/// @param a, b Strings to compare.
+/// @return
+///     - @c true  : @c a and @c b are equal in length and contents.
+///     - @c false : @c a and @c b are not equal.
+attr_core_api b32 string_cmp( String a, String b );
+/// @brief Compare strings for equality. Compares up to length of shorter string.
+/// @param a, b Strings to compare.
+/// @return
+///     - @c true  : @c a and @c b are equal in contents.
+///     - @c false : @c a and @c b are not equal.
 attr_always_inline
-attr_header b32 string_is_null_terminated( const String str ) {
-    return !str.cc[str.len] || (str.len && !str.cc[str.len - 1]);
+attr_header b32 string_cmp_min( String a, String b ) {
+    String lhs = a;
+    String rhs = b;
+    if( lhs.len < rhs.len ) {
+        rhs.len = lhs.len;
+    } else {
+        lhs.len = rhs.len;
+    }
+    return string_cmp( lhs, rhs );
 }
-/// @brief Hash a string.
-/// @param str String to hash.
-/// @return Hash of string.
-/// @see #text_buffer_hash()
-attr_always_inline
-attr_header u64 string_hash( String str ) {
-    return text_buffer_hash( str.len, str.cc );
-}
-/// @brief Compare two Strings for equality.
-/// @param a,b Strings to compare.
-/// @return True if strings are equal in length and
-/// buffers contain the same text.
-attr_core_api b32 string_cmp( const String a, const String b );
-/// @brief Find first instance of ASCII character in string.
+/// @brief Search for ascii character in string.
+/// @param      str           String to search in.
+/// @param      c             Character to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of character if found.
+/// @return
+///     - @c true  : Character was found. Index written to @c opt_out_index (if not null)
+///     - @c false : Character was not found.
+attr_core_api b32 string_find( String str, char c, usize* opt_out_index );
+/// @brief Tally number of times that given character occurs in string.
+/// @param str String.
+/// @param c   Character to tally.
+/// @return Number of times @c c appears in @c str.
+attr_core_api usize string_find_count( String str, char c );
+/// @brief Search for ascii character in string, searches from the end of string.
+/// @param      str           String to search in.
+/// @param      c             Character to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of character if found.
+/// @return
+///     - @c true  : Character was found. Index written to @c opt_out_index (if not null)
+///     - @c false : Character was not found.
+attr_core_api b32 string_find_rev( String str, char c, usize* opt_out_index );
+/// @brief Search for any character in set in string.
+/// @param      str           String to search in.
+/// @param      set           Set of characters to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of first character in set if any are found.
+/// @return
+///     - @c true  : Any character from set was found. Index written to @c opt_out_index (if not null)
+///     - @c false : No characters from set were found.
+attr_core_api b32 string_find_set( String str, String set, usize* opt_out_index );
+/// @brief Search for any character in set in string, searches from end of string.
+/// @param      str           String to search in.
+/// @param      set           Set of characters to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of first character in set if any are found.
+/// @return
+///     - @c true  : Any character from set was found. Index written to @c opt_out_index (if not null)
+///     - @c false : No characters from set were found.
+attr_core_api b32 string_find_set_rev( String str, String set, usize* opt_out_index );
+/// @brief Tally number of times that any character in set occurs in string.
+/// @param str String.
+/// @param set Set to tally.
+/// @return Number of times any character in @c set appears in @c str.
+attr_core_api usize string_find_set_count( String str, String set );
+/// @brief Search for phrase in string.
 /// @param str String to search in.
-/// @param c Character to search for.
-/// @param[out] opt_out_pos (optional) Position of first match found. Can be NULL.
-/// @return True if character is found in string.
-attr_core_api b32 string_find(
-    const String str, const char c, usize* opt_out_pos );
-/// @brief Find last instance of ASCII character in string.
+/// @param phrase Phrase to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of first character of phrase. (if not null)
+/// @return 
+///     - @c true  : @c phrase was found in @c str.
+///     - @c false : @c phrase was not found.
+attr_core_api b32 string_find_phrase( String str, String phrase, usize* opt_out_index );
+/// @brief Search for phrase in string, searches from end of string.
 /// @param str String to search in.
-/// @param c Character to search for.
-/// @param[out] opt_out_pos (optional) Position of last match found. Can be NULL.
-/// @return True if character is found in string.
-attr_core_api b32 string_find_last(
-    const String str, const char c, usize* opt_out_pos );
-/// @brief Find first whitespace character in string.
-/// @param str String to search in.
-/// @param[out] opt_out_pos (optional) Position of first match found. Can be NULL.
-/// @return True if whitespace was found in string.
-attr_core_api b32 string_find_whitespace( const String str, usize* opt_out_pos );
-/// @brief Find last whitespace character in string.
-/// @param str String to search in.
-/// @param[out] opt_out_pos (optional) Position of last match found. Can be NULL.
-/// @return True if whitespace was found in string.
-attr_core_api b32 string_find_last_whitespace( const String str, usize* opt_out_pos );
-/// @brief Count how many instances of ASCII character appear in string.
-/// @param str String to search in.
-/// @param c Character to search for.
-/// @return Number of times character appears in string.
-attr_core_api usize string_count( const String str, const char c );
-/// @brief Find first instance of phrase in string.
-/// @param str String to search in.
-/// @param phrase String to search for.
-/// @param[out] opt_out_pos (optional) Position of start of first match found. Can be NULL.
-/// @return True if phrase is found in string.
-attr_core_api b32 string_find_phrase(
-    const String str, const String phrase, usize* opt_out_pos );
-/// @brief Find last instance of phrase in string.
-/// @param str String to search in.
-/// @param phrase String to search for.
-/// @param[out] opt_out_pos (optional) Position of start of last match found. Can be NULL.
-/// @return True if phrase is found in string.
-attr_core_api b32 string_find_phrase_last(
-    const String str, const String phrase, usize* opt_out_pos );
-/// @brief Reverse contents of string.
-/// @param str String to reverse.
-attr_core_api void string_reverse( String str );
-/// @brief Create a truncated string from source string.
-/// @note Asserts that max_len <= src.len.
-/// @param src String to create truncated string from.
-/// @param max_len Length of truncated string. 
+/// @param phrase Phrase to search for.
+/// @param[out] opt_out_index (optional) Pointer to write index of first character of phrase. (if not null)
+/// @return 
+///     - @c true  : @c phrase was found in @c str.
+///     - @c false : @c phrase was not found.
+attr_core_api b32 string_find_phrase_rev( String str, String phrase, usize* opt_out_index );
+/// @brief Tally number of times that phrase occurs in string.
+/// @param str    String.
+/// @param phrase Phrase to tally.
+/// @return Number of times @c phrase appears in @c str.
+attr_core_api usize string_find_phrase_count( String str, String phrase );
+/// @brief Truncate length of string.
+/// @details
+/// Returns str if max is greater than length.
+/// @param str String to truncate.
+/// @param max Maximum length of string.
 /// @return Truncated string.
 attr_always_inline
-attr_header String string_truncate( const String src, usize max_len ) {
-    assert( max_len <= src.len );
-    String result = src;
-    result.len = max_len;
-    return result;
+attr_header String string_truncate( String str, usize max ) {
+    String res = str;
+    if( max >= res.len ) {
+        return res;
+    }
+    res.len = max;
+    return res;
 }
-/// @brief Create a string that advances from source string.
-/// @note Asserts that advance_len <= src.len.
-/// @param src String to advance from.
-/// @param advance_len Amount to advance by. 
-/// @return Advanced string.
+/// @brief Subtract from string length.
+/// @details
+/// Returns empty string if amount is >= to length.
+/// @param str    String to trim.
+/// @param amount Number of bytes to trim off the end.
+/// @return Trimmed string.
 attr_always_inline
-attr_header String string_advance( const String src, usize advance_len ) {
-    assert( advance_len <= src.len );
-    String result = src;
-    result.cc  += advance_len;
-    result.len -= advance_len;
-    return result;
+attr_header String string_trim( String str, usize amount ) {
+    return string_truncate( str, amount >= str.len ? 0 : str.len - amount );
 }
-/// @brief Create a substring from source string.
-/// @param src String to create substring from.
-/// @param from_inclusive Index of first character in trim.
-/// @param to_exclusive Index of last character + 1.
-/// @return Substring of source string.
+/// @brief Clip out slice from string.
+/// @warning
+/// Debug asserts that to > from and that they are within bounds of string.
+/// @param str            String to clip from.
+/// @param from_inclusive Start of range, inclusive.
+/// @param to_exclusive   End of range, exclusive.
+/// @return String slice.
 attr_always_inline
-attr_header String string_trim_range(
-    const String src, usize from_inclusive, usize to_exclusive
+attr_header String string_clip(
+    String str, usize from_inclusive, usize to_exclusive
 ) {
-    String result = src;
-    result.cc  += from_inclusive;
-    result.len  = to_exclusive - from_inclusive;
-    return result;
+    debug_assert( to_exclusive >= from_inclusive );
+    debug_assert( from_inclusive < str.len );
+    debug_assert( to_exclusive <= str.len );
+
+    String res = str;
+    res.cc  = res.cc + from_inclusive;
+    res.len = to_exclusive - from_inclusive;
+    return res;
 }
-/// @brief Create a substring from source string by trimming leading whitespace.
-/// @param src String to create substring from.
-/// @return String without leading whitespace.
-attr_core_api String string_trim_leading_whitespace( const String src );
-/// @brief Create a substring from source string by trimming trailing whitespace.
-/// @param src String to create substring from.
-/// @return String without trailing whitespace.
-attr_core_api String string_trim_trailing_whitespace( const String src );
-/// @brief Create a substring from source string by trimming leading and trailing whitespace.
-/// @param src String to create substring from.
-/// @return String without leading or trailing whitespace.
-attr_header String string_trim_whitespace( const String src ) {
-    String res = string_trim_leading_whitespace( src );
-    return string_trim_trailing_whitespace( res );
+/// @brief Advance string slice by one byte.
+/// @param str String to advance.
+/// @return String advanced by one byte.
+attr_always_inline
+attr_header String string_advance( String str ) {
+    if( string_is_empty( str ) ) {
+        return str;
+    }
+    String res = str;
+    res.cc++;
+    res.len--;
+    return res;
 }
-/// @brief Set all characters in string to provided ASCII character.
+/// @brief Advance string slice by multiple bytes.
+/// @details
+/// If @c bytes is >= length, returns empty string.
+/// @param str   String to advance.
+/// @param bytes Bytes to advance by.
+/// @return String advanced by @c bytes.
+attr_always_inline
+attr_header String string_advance_by( String str, usize bytes ) {
+    String res = str;
+    if( bytes >= res.len ) {
+        res.cc  = res.cc + res.len;
+        res.len = 0;
+        return res;
+    }
+    res.cc   = res.cc + bytes;
+    res.len -= bytes;
+    return res;
+}
+/// @brief Trim leading whitespace from string.
+/// @param str String to trim.
+/// @return Trimmed string.
+attr_core_api String string_trim_leading_whitespace( String str );
+/// @brief Trim trailing whitespace from string.
+/// @param str String to trim.
+/// @return Trimmed string.
+attr_core_api String string_trim_trailing_whitespace( String str );
+/// @brief Trim leading and trailing whitespace from string.
+/// @param str String to trim.
+/// @return Trimmed string.
+attr_always_inline
+attr_header String string_trim_surrounding_whitespace( String str ) {
+    return string_trim_leading_whitespace( string_trim_trailing_whitespace( str ) );
+}
+/// @brief Split string at given index.
+/// @details
+/// Debug asserts that @c at is <= source length.
+/// @param      source        String to split from.
+/// @param      at            Index to split at. Character at this index is not included in splits.
+/// @param[out] opt_out_left  (optional) Pointer to write left side of split.
+/// @param[out] opt_out_right (optional) Pointer to write right side of split.
+attr_always_inline
+attr_header void string_split(
+    String source, usize at, String* opt_out_left, String* opt_out_right
+) {
+    debug_assert( at <= source.len );
+    if( opt_out_left ) {
+        *opt_out_left = string_truncate( source, at );
+    }
+    if( opt_out_right ) {
+        *opt_out_right = string_advance_by( source, at + 1 );
+    }
+}
+/// @brief Split string at first instance of given ascii character.
+/// @details
+/// Debug asserts that @c at is <= source length.
+/// @param      source        String to split from.
+/// @param      c             Character to split at. Character at this index is not included in splits.
+/// @param[out] opt_out_left  (optional) Pointer to write left side of split.
+/// @param[out] opt_out_right (optional) Pointer to write right side of split.
+/// @return
+///     - @c true  : @c c was found in @c source.
+///     - @c false : @c c was not found, string was not split.
+attr_always_inline
+attr_header b32 string_split_ascii(
+    String source, char c, String* opt_out_left, String* opt_out_right
+) {
+    usize at = 0;
+    if( string_find( source, c, &at ) ) {
+        string_split( source, at, opt_out_left, opt_out_right );
+        return true;
+    }
+    return false;
+}
+/// @brief Split string at first instance of whitespace character.
+/// @details
+/// Debug asserts that @c at is <= source length.
+/// Trims whitespace from results.
+/// @param      source        String to split from.
+/// @param[out] opt_out_left  (optional) Pointer to write left side of split.
+/// @param[out] opt_out_right (optional) Pointer to write right side of split.
+/// @return
+///     - @c true  : @c c was found in @c source.
+///     - @c false : @c c was not found, string was not split.
+attr_always_inline
+attr_header b32 string_split_whitespace(
+    String source, String* opt_out_left, String* opt_out_right
+) {
+    const char whitespace_set[] = { CHARACTER_SET_WHITESPACE };
+    usize at = 0;
+    if( string_find_set( source, string_new( 4, whitespace_set ), &at ) ) {
+        string_split( source, at, opt_out_left, opt_out_right );
+        if( opt_out_left ) {
+            *opt_out_left = string_trim_surrounding_whitespace( *opt_out_left );
+        }
+        if( opt_out_right ) {
+            *opt_out_right = string_trim_surrounding_whitespace( *opt_out_right );
+        }
+        return true;
+    }
+    return false;
+}
+/// @brief Parse signed integer from source string.
+/// @details Parsing is successful if valid integer is found from start of string.
+/// @param      str     String to parse integer from.
+/// @param[out] out_int Pointer to integer to receive result.
+/// @return
+///     - @c true  : Integer was successfully parsed from string.
+///     - @c false : Failed to parse integer.
+attr_core_api b32 string_parse_int( String str, i64* out_int );
+/// @brief Parse unsigned integer from source string.
+/// @details Parsing is successful if valid integer is found from start of string.
+/// @param      str      String to parse integer from.
+/// @param[out] out_uint Pointer to integer to receive result.
+/// @return
+///     - @c true  : Integer was successfully parsed from string.
+///     - @c false : Failed to parse integer.
+attr_core_api b32 string_parse_uint( String str, u64* out_uint );
+/// @brief Parse float from source string.
+/// @details Parsing is successful if valid float is found from start of string.
+/// @param      str       String to parse float from.
+/// @param[out] out_float Pointer to float to receive result.
+/// @return
+///     - @c true  : Float was successfully parsed from string.
+///     - @c false : Failed to parse float.
+attr_core_api b32 string_parse_float( String str, f64* out_float );
+/// @brief Reverse contents of string.
+/// @note String must be from mutable source (aka not from literal or read-only memory).
+/// @param str String to reverse.
+attr_core_api void string_mut_reverse( String str );
+/// @brief Set all characters in string to given ascii character.
+/// @note String must be from mutable source (aka not from literal or read-only memory).
 /// @param str String to modify.
-/// @param c Character to set.
-attr_core_api void string_set( String str, const char c );
-/// @brief Convert all ASCII lower case characters to upper case.
+/// @param c   Character to set.
+attr_core_api void string_mut_set( String str, char c );
+/// @brief Convert all alphabetic ascii characters in string to upper case.
+/// @note String must be from mutable source (aka not from literal or read-only memory).
 /// @param str String to modify.
-attr_core_api void string_to_upper( String str );
-/// @brief Convert all ASCII lower case characters to upper case.
-///
-/// Streams result to target.
-/// @param stream Stream function.
+attr_core_api void string_mut_to_upper( String str );
+/// @brief Convert all alphabetic ascii characters in string to lower case.
+/// @note String must be from mutable source (aka not from literal or read-only memory).
+/// @param str String to modify.
+attr_core_api void string_mut_to_lower( String str );
+/// @brief Convert all alphabetic ascii characters to upper case.
+/// @param[in] stream Stream function.
 /// @param[in] target Target to stream to.
-/// @param str Source string.
+/// @param     str    Source string.
 /// @return Number of characters that could not fit in stream.
 /// @see #StreamBytesFN
 attr_core_api usize string_stream_to_upper(
-    StreamBytesFN* stream, void* target, const String str );
-/// @brief Convert all ASCII upper case characters to lower case.
-/// @param str String to modify.
-attr_core_api void string_to_lower( String str );
-/// @brief Convert all ASCII upper case characters to lower case.
-///
-/// Streams result to target.
-/// @param stream Stream function.
+    StreamBytesFN* stream, void* target, String str );
+/// @brief Convert all alphabetic ascii characters to lower case.
+/// @param[in] stream Stream function.
 /// @param[in] target Target to stream to.
-/// @param str Source string.
+/// @param     str    Source string.
 /// @return Number of characters that could not fit in stream.
 /// @see #StreamBytesFN
 attr_core_api usize string_stream_to_lower(
-    StreamBytesFN* stream, void* target, const String str );
-/// @brief Split source string into two substrings.
-/// @param src String to split from.
-/// @param index Index to split at. Should be less than src.len.
-/// @param[out] opt_out_first (optional) First substring half of string.
-/// @param[out] opt_out_last (optional) Last substring half of string.
-attr_always_inline
-attr_header void string_split(
-    const String src, usize index, String* opt_out_first, String* opt_out_last
-) {
-    String first = string_new(0, 0);
-    String last  = string_new(0, 0);
+    StreamBytesFN* stream, void* target, String str );
 
-    usize i = index > src.len ? src.len : index;
-
-    first.cc  = src.cc;
-    first.len = i;
-
-    last.cc  = src.cc + i + 1;
-    last.len = src.len - i;
-    if( last.len ) {
-        last.len--;
-    }
-
-    if( opt_out_first ) {
-        *opt_out_first = first;
-    }
-    if( opt_out_last ) {
-        *opt_out_last = last;
-    }
-}
-/// @brief Split source string into two substrings using first instance of character.
-/// @param src String to split from.
-/// @param c Character to split at.
-/// @param[out] opt_out_first (optional) First substring half of string.
-/// @param[out] opt_out_last (optional) Last substring half of string.
-/// @return True if character is found, false if it wasn't.
-attr_always_inline
-attr_header b32 string_split_char(
-    const String src, const char c, String* opt_out_first, String* opt_out_last
-) {
-    usize pos = 0;
-    if( !string_find( src, c, &pos ) ) {
-        return false;
-    }
-
-    string_split( src, pos, opt_out_first, opt_out_last );
-    return true;
-}
-/// @brief Split source string into two substrings using first instance of whitespace.
-/// @param src String to split from.
-/// @param[out] opt_out_first (optional) First substring half of string.
-/// @param[out] opt_out_last (optional) Last substring half of string.
-/// @return True if whitespace is found, false if it wasn't.
-attr_always_inline
-attr_header b32 string_split_whitespace(
-    const String src, String* opt_out_first, String* opt_out_last
-) {
-    usize pos = 0;
-    if( !string_find_whitespace( src, &pos ) ) {
-        return false;
-    }
-
-    string_split( src, pos, opt_out_first, opt_out_last );
-    return true;
-}
-/// @brief Parse signed integer from source string.
-///
-/// Parsing is successful if valid integer is found from start of string.
-/// @param str String to parse integer from.
-/// @param[out] out_int Pointer to integer to receive result.
-/// @return True if string was successfully parsed.
-attr_core_api b32 string_parse_int( const String str, i64* out_int );
-/// @brief Parse unsigned integer from source string.
-///
-/// Parsing is successful if valid integer is found from start of string.
-/// @param str String to parse integer from.
-/// @param[out] out_uint Pointer to integer to receive result.
-/// @return True if string was successfully parsed.
-attr_core_api b32 string_parse_uint( const String str, u64* out_uint );
-/// @brief Parse float from source string.
-///
-/// Parsing is successful if valid float is found from start of string.
-/// @param str String to parse float from.
-/// @param[out] out_float Pointer to float to receive result.
-/// @return True if string was successfully parsed.
-attr_core_api b32 string_parse_float( const String str, f64* out_float );
-
-/// @brief Create a new string buffer.
-/// @param size Size of buffer.
-/// @param[in] buffer Pointer to start of buffer.
+/// @brief Create new string buffer.
+/// @param     capacity (usize) Capacity of string buffer.
+/// @param[in] start    (char*) Pointer to start of string buffer.
 /// @return String buffer.
-attr_always_inline
-attr_header StringBuf string_buf_new( const usize size, char* buffer ) {
-    StringBuf result;
-    result.c   = buffer;
-    result.len = 0;
-    result.cap = size;
-    return result;
-}
-/// @brief Create a new string buffer using default allocator.
-///
-/// @note Buffer should be freed using #memory_free().
-/// @param size Size of buffer.
-/// @param[in] opt_copy_buffer Buffer to copy into string_buf.
-/// @param[out] out_buf String buffer.
-/// @return True if allocation was successful.
-attr_core_api b32 string_buf_new_alloc(
-    const usize size, const char* opt_copy_buffer, StringBuf* out_buf );
-/// @brief Attempt to reallocate string buffer using default allocator.
-///
-/// Does nothing and returns true if new_size is less than buf.cap.
-/// @param[in] buf Pointer to string buffer to reallocate.
-/// @param new_size Desired new size of string buffer.
-/// @return True if reallocation was successful.
-attr_core_api b32 string_buf_realloc( StringBuf* buf, const usize new_size );
-/// @brief Query size of reallocation when string_buf_*_alloc functions are used.
-/// @return Size of reallocations in bytes.
-attr_core_api usize string_buf_query_realloc_size(void);
-/// @brief Query default size of reallocation when string_buf_*_alloc functions are used.
-/// @return Default size of reallocations in bytes.
-attr_core_api usize string_buf_query_default_realloc_size(void);
-/// @brief Set default reallocation size when string_buf_*_alloc functions are used.
-/// @param size New reallocation size, clamped to a minimum of 16 bytes.
-attr_core_api void string_buf_set_default_realloc_size( const usize size );
-/// @brief Free a string_buf's buffer.
-/// @note Use only when buffer is allocated with default system allocator.
-/// @param[in] buf Buffer to free.
-attr_core_api void string_buf_free( StringBuf* buf );
-/// @brief Create a new string buffer from static array.
-/// @param array Static, local character array.
+#define string_buf_new( capacity, start )\
+    struct_literal(StringBuf){ .len=0, .cap=capacity, .c=start }
+/// @brief Create empty string buffer.
 /// @return String buffer.
-#define string_buf_from_array( array )\
-    string_buf_new( static_array_len( (array) ), (array) )
-
-/// @brief Get pointer to string buffer's buffer.
+#define string_buf_empty() string_buf_new( 0, 0 )
+/// @brief Initialize a string buffer from the stack.
+/// @details
+/// Defines a stack char buffer with name @c name##_buffer
+/// of given size and a string_buf from that buffer with given name.
+/// @param name (valid identifier) Name of string buffer.
+/// @param size (usize)            Size of string buffer.
+#define string_buf_create_from_stack( name, size )\
+    char name##_buffer[size];\
+    memory_zero( name##_buffer, size );\
+    StringBuf name = string_buf_new( size, name##_buffer )
+/// @brief Create string buffer with given allocator.
+/// @param      size      Size of allocation.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @param[out] out_buf   Pointer to write new string buffer to.
+/// @return
+///     - @c true  : String buffer successfully allocated.
+///     - @c false : Failed to allocate string buffer.
+attr_core_api b32 string_buf_from_alloc(
+    usize size, struct AllocatorInterface* allocator, StringBuf* out_buf );
+/// @brief Create string buffer with given allocator.
+/// @param      str       String to copy to buffer.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @param[out] out_buf   Pointer to write new string buffer to.
+/// @return
+///     - @c true  : String buffer successfully allocated.
+///     - @c false : Failed to allocate string buffer.
+attr_core_api b32 string_buf_from_string_alloc(
+    String str, struct AllocatorInterface* allocator, StringBuf* out_buf );
+/// @brief Grow string buffer capacity.
+/// @param[in] buf       Pointer to string buffer to grow.
+/// @param     amount    Number of bytes (characters) to grow by.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : String buffer successfully reallocated.
+///     - @c false : Failed to reallocate string buffer.
+attr_core_api b32 string_buf_grow(
+    StringBuf* buf, usize amount, struct AllocatorInterface* allocator );
+/// @brief Free string buffer from allocator.
+/// @param[in] buf       Pointer to string buffer to free.
+/// @param[in] allocator Pointer to allocator interface.
+attr_core_api void string_buf_free(
+    StringBuf* buf, struct AllocatorInterface* allocator );
+/// @brief Calculate remaining space in string buffer.
 /// @param[in] buf String buffer.
-/// @return Pointer to start of buffer.
+/// @return Number of bytes (characters) remaining in string.
 attr_always_inline
-attr_header char* string_buf_str( const StringBuf* buf ) {
-    return buf->c;
-}
-/// @brief Get string buffer's length.
-/// @param[in] buf String buffer.
-/// @return Length of string buffer.
-attr_always_inline
-attr_header usize string_buf_len( const StringBuf* buf ) {
-    return buf->len;
-}
-/// @brief Get string buffer's capacity in bytes.
-/// @param[in] buf String buffer.
-/// @return Capacity of string buffer in bytes.
-attr_always_inline
-attr_header usize string_buf_cap( const StringBuf* buf ) {
-    return buf->cap;
+attr_header usize string_buf_remaining( const StringBuf* buf ) {
+    return buf->cap ? (buf->cap - 1) - buf->len : 0;
 }
 /// @brief Check if string buffer is empty.
-/// @param[in] buf String buffer.
-/// @return True if string buffer is empty.
+/// @param[in] buf Pointer to string buffer.
+/// @return
+///     - @c true  : String buffer is empty.
+///     - @c false : String buffer is not empty.
 attr_always_inline
 attr_header b32 string_buf_is_empty( const StringBuf* buf ) {
     return buf->len == 0;
 }
 /// @brief Check if string buffer is full.
-/// @param[in] buf String buffer.
-/// @return True if string buffer is full.
+/// @note String buffer always tries to have space for null terminator.
+/// @param[in] buf Pointer to string buffer.
+/// @return
+///     - @c true  : String buffer is full.
+///     - @c false : String buffer still has space.
 attr_always_inline
 attr_header b32 string_buf_is_full( const StringBuf* buf ) {
-    return buf->len == buf->cap;
+    return buf->len == (buf->cap - 1);
 }
-/// @brief Clear a string buffer.
-///
-/// Sets length to zero.
-/// @param[in] buf Buffer to clear.
+/// @brief Set string buffer length to zero and zero out memory.
+/// @param[in] buf Pointer to string buffer.
 attr_always_inline
 attr_header void string_buf_clear( StringBuf* buf ) {
+    memory_set( buf->v, 0, buf->len );
     buf->len = 0;
 }
-
-/// @brief Set all characters in buffer to ASCII character, up to max or capacity.
-///
-/// Does not affect buffer's length.
-/// @param[in] buf Buffer to modify.
-/// @param c Character to set buffer to.
-/// @param opt_max (optional) Stops at this value if it's not zero and it's < buf.cap.
-attr_core_api void string_buf_set( StringBuf* buf, const char c, const usize opt_max );
-/// @brief Push new ASCII character to the end of string buffer.
-/// @param[in] buf Pointer to string buffer.
-/// @param c ASCII character to push onto string buffer.
-/// @return True if string buffer had enough capacity to push new character.
+/// @brief Clone string buffer.
+/// @details
+/// Allocates @c src.len + 1 in @c dst buffer.
+/// @param[out] dst       Destination string buffer.
+/// @param[in]  src       Source string buffer.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Allocated @c dst buffer and copied contents of @c src to it.
+///     - @c false : Failed to allocate @c dst buffer.
+attr_core_api b32 string_buf_clone(
+    StringBuf* dst, const StringBuf* src, struct AllocatorInterface* allocator );
+/// @brief Attempt to push character to end of string buffer.
+/// @param[in] buf String buffer to push character to.
+/// @param     c   Character to push.
+/// @return
+///     - @c true  : @c buf had enough space to push character.
+///     - @c false : @c buf is full.
+attr_core_api b32 string_buf_try_push( StringBuf* buf, char c );
+/// @brief Push character to end of string buffer.
+/// @param[in] buf       String buffer to push character to.
+/// @param     c         Character to push.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Pushed new character. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_core_api b32 string_buf_push(
+    StringBuf* buf, char c, struct AllocatorInterface* allocator );
+/// @brief Attempt to emplace a character inside of string buffer.
+/// @param[in] buf String buffer to emplace character in.
+/// @param     c   Character to emplace.
+/// @param     at  Index to emplace character at.
+/// @return
+///     - @c true  : @c buf had enough space to emplace character.
+///     - @c false : @c buf is full.
+attr_core_api b32 string_buf_try_emplace( StringBuf* buf, char c, usize at );
+/// @brief Emplace a character inside of string buffer.
+/// @param[in] buf       String buffer to emplace character in.
+/// @param     c         Character to emplace.
+/// @param     at        Index to emplace character at.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Emplaced character. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_core_api b32 string_buf_emplace(
+    StringBuf* buf, char c, usize at, struct AllocatorInterface* allocator );
+/// @brief Pop character from end of string buffer.
+/// @param[in]  buf       String buffer to pop from.
+/// @param[out] opt_out_c (optional) Pointer to write popped character to.
+/// @return
+///     - @c true  : @c buf had character to pop.
+///     - @c false : @c buf was empty.
+attr_core_api b32 string_buf_pop( StringBuf* buf, char* opt_out_c );
+/// @brief Attempt to insert string in string buffer.
+/// @param[in] buf    String buffer to insert in.
+/// @param     insert String to insert.
+/// @param     at     Index to insert at. Must be 0 to @c buf.len
+/// @return
+///     - @c true  : @c buf had enough capacity to insert string.
+///     - @c false : @c buf did not have enough capacity to insert.
+attr_core_api b32 string_buf_try_insert( StringBuf* buf, String insert, usize at );
+/// @brief Attempt to prepend string in string buffer.
+/// @param[in] buf     String buffer to insert in.
+/// @param     prepend String to prepend.
+/// @return
+///     - @c true  : @c buf had enough capacity to insert string.
+///     - @c false : @c buf did not have enough capacity to insert.
 attr_always_inline
-attr_header b32 string_buf_push( StringBuf* buf, const char c ) {
-    if( buf->len >= buf->cap ) {
-        return false;
-    }
-
-    buf->c[buf->len++] = c;
-    return true;
+attr_header b32 string_buf_try_prepend( StringBuf* buf, String prepend ) {
+    return string_buf_try_insert( buf, prepend, 0 );
 }
-/// @brief Push new ASCII character to the end of string buffer.
-///
-/// Reallocates string buffer using default system allocator.
-/// @note String buffer must be allocated using default system allocator.
-/// @param[in] buf Pointer to string buffer.
-/// @param c ASCII character to push onto string buffer.
-/// @return True if string buffer was successfully pushed to or successfully reallocated.
+/// @brief Attempt to append string in string buffer.
+/// @param[in] buf    String buffer to insert in.
+/// @param     append String to append.
+/// @return
+///     - @c true  : @c buf had enough capacity to insert string.
+///     - @c false : @c buf did not have enough capacity to insert.
 attr_always_inline
-attr_header b32 string_buf_push_alloc( StringBuf* buf, const char c ) {
-    if( string_buf_push( buf, c ) ) {
-        return true;
-    }
-    if( !string_buf_realloc( buf, string_buf_query_realloc_size() ) ) {
-        return false;
-    }
-    string_buf_push( buf, c );
-    return true;
+attr_header b32 string_buf_try_append( StringBuf* buf, String append ) {
+    return string_buf_try_insert( buf, append, buf->len );
 }
-/// @brief Pop last ASCII character from the end of string buffer.
-/// @param[in] buf Pointer to string buffer.
-/// @param[out] opt_out_c (optional) Pointer to ASCII character to receive popped character.
-/// @return True if string buffer still has characters to pop.
-attr_always_inline
-attr_header b32 string_buf_pop( StringBuf* buf, char* opt_out_c ) {
-    if( !buf->len ) {
-        return false;
-    }
-
-    char c = buf->c[--buf->len];
-    if( opt_out_c ) {
-        *opt_out_c = c;
-    }
-
-    return true;
-}
-/// @brief Copy source string to destination string buffer.
-///
-/// Copies from dst len to dst cap or src len, whichever is smaller. 
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @return Number of bytes copied.
-attr_core_api usize string_buf_copy( StringBuf* dst, const String src );
-/// @brief Prepend source string to destination string buffer.
-///
-/// Moves destination buffer up by src.len and copies src.buffer.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @return True if dst has enough capacity for entire src string.
-attr_core_api b32 string_buf_prepend( StringBuf* dst, const String src );
-/// @brief Prepend source string to destination string buffer.
-///
-/// Reallocates dst string if it does not have enough capacity for src string.
-/// Moves destination buffer up by src.len and copies src.buffer.
-/// @note Dst string must be allocated with default system allocator.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @return True if prepend was successful or if reallocation and prepend was successful.
-attr_always_inline
-attr_header b32 string_buf_prepend_alloc( StringBuf* dst, const String src ) {
-    if( string_buf_prepend( dst, src ) ) {
-        return true;
-    }
-
-    if( !string_buf_realloc( dst, string_buf_query_realloc_size() + src.len ) ) {
-        return false;
-    }
-    string_buf_prepend( dst, src );
-    return true;
-}
-/// @brief Append source string to end of destination string buffer.
-///
-/// Copies entire src string to end of dst buffer.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @return True if dst has enough capacity for entire src string.
-attr_core_api b32 string_buf_append( StringBuf* dst, const String src );
-/// @brief Append source string to end of destination string buffer.
-///
-/// Reallocates using default system allocator if dst does not have enough capacity.
-/// Copies entire src string to end of dst buffer.
-/// @note Dst string buffer must be allocated using default system allocator.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @return True if append was successful or if reallocation and append was successful.
-attr_always_inline
-attr_header b32 string_buf_append_alloc( StringBuf* dst, const String src ) {
-    if( string_buf_append( dst, src ) ) {
-        return true;
-    }
-
-    if( !string_buf_realloc( dst, string_buf_query_realloc_size() + src.len ) ) {
-        return false;
-    }
-    string_buf_append( dst, src );
-    return true;
-}
-/// @brief Insert source string into destination string buffer.
-///
-/// Moves dst buffer from index to index + src.len and copies src.buffer to index.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @param index Index to insert at, must be < dst.len.
-/// @return True if dst has enough capacity for entire src string at provided index.
+/// @brief Insert string in string buffer.
+/// @param[in] buf       Pointer to string buffer to insert in.
+/// @param     insert    String to insert.
+/// @param     at        Index to insert at.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
 attr_core_api b32 string_buf_insert(
-    StringBuf* dst, const String src, const usize index );
-/// @brief Insert source string into destination string buffer.
-///
-/// Reallocates using default system allocator if dst does not have enough capacity.
-/// Copies entire src string to end of dst buffer.
-/// @note Dst string buffer must be allocated using default system allocator.
-/// @param[in] dst Destination buffer.
-/// @param src Source string.
-/// @param index Index to insert at, must be < dst.len.
-/// @return True if insert was successful or if reallocation and insert was successful.
+    StringBuf* buf, String insert, usize at, struct AllocatorInterface* allocator );
+/// @brief Prepend string in string buffer.
+/// @param[in] buf       Pointer to string buffer to prepend in.
+/// @param     prepend   String to prepend.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
 attr_always_inline
-attr_header b32 string_buf_insert_alloc(
-    StringBuf* dst, const String src, const usize index
+attr_header b32 string_buf_prepend(
+    StringBuf* buf, String prepend, struct AllocatorInterface* allocator
 ) {
-    if( index > dst->len ) {
-        return false;
-    }
-    if( string_buf_insert( dst, src, index ) ) {
-        return true;
-    }
-
-    if( !string_buf_realloc( dst, string_buf_query_realloc_size() + src.len ) ) {
-        return false;
-    }
-    string_buf_insert( dst, src, index );
-    return true;
+    return string_buf_insert( buf, prepend, 0, allocator );
 }
-/// @brief Stream buffer into string buffer.
-/// @param[in] dst (StringBuf*) Destination buffer.
-/// @param count Number of bytes in src buffer.
-/// @param[in] src Pointer to src buffer.
-/// @return Number of bytes that could not be copied to dst buffer.
-attr_core_api usize string_buf_stream(
-    void* dst, usize count, const void* src );
-/// @brief Write a formatted string to string buffer using text buffer format and variadic list of format arguments.
-/// @param[in] dst Destination buffer.
-/// @param format_len Length of format text (ASCII).
-/// @param[in] format Format text (ASCII).
-/// @param va Variadic list of format arguments.
-/// @return Number of characters that could not be written to buffer.
-attr_core_api usize string_buf_fmt_text_buffer_va(
-    StringBuf* dst, const usize format_len, const char* format, va_list va );
-/// @brief Write a formatted string to string buffer using text buffer format.
-/// @param[in] dst Destination buffer.
-/// @param format_len Length of format text (ASCII).
-/// @param[in] format Format text (ASCII).
-/// @param ... Format arguments.
-/// @return Number of characters that could not be written to buffer.
-attr_header usize string_buf_fmt_text_buffer(
-    StringBuf* dst, const usize format_len, const char* format, ...
+/// @brief Append string in string buffer.
+/// @param[in] buf       Pointer to string buffer to append in.
+/// @param     append    String to append.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline
+attr_header b32 string_buf_append(
+    StringBuf* buf, String append, struct AllocatorInterface* allocator
+) {
+    return string_buf_insert( buf, append, buf->len, allocator );
+}
+/// @brief Remove character from string buffer.
+/// @param[in] buf Buffer to remove character from.
+/// @param     at  Index of character to remove. Must be in bounds.
+attr_core_api void string_buf_remove( StringBuf* buf, usize at );
+/// @brief Remove range of characters from string buffer.
+/// @param[in] buf            Buffer to remove characters from.
+/// @param     from_inclusive Start of range to remove.
+/// @param     to_exclusive   End of range to remove.
+attr_core_api void string_buf_remove_range(
+    StringBuf* buf, usize from_inclusive, usize to_exclusive );
+/// @brief Attempt to write a formatted string to string buffer.
+/// @param[in] buf        Buffer to write to.
+/// @param     format_len Length of format string.
+/// @param     format     Format string.
+/// @param     va         Variadic format arguments.
+/// @return
+///     - Zero   : @c buf had enough capacity to write format string.
+///     - > Zero : Number of characters not written to @c buf.
+attr_core_api usize string_buf_try_fmt_buffer_va(
+    StringBuf* buf, usize format_len, const char* format, va_list va );
+/// @brief Attempt to write a formatted string to string buffer.
+/// @param[in] buf        Buffer to write to.
+/// @param     format_len Length of format string.
+/// @param     format     Format string.
+/// @param     ...        Format arguments.
+/// @return
+///     - Zero   : @c buf had enough capacity to write format string.
+///     - > Zero : Number of characters not written to @c buf.
+attr_always_inline
+attr_header usize string_buf_try_fmt_buffer(
+    StringBuf* buf, usize format_len, const char* format, ...
 ) {
     va_list va;
     va_start( va, format );
-    usize result = string_buf_fmt_text_buffer_va( dst, format_len, format, va );
+    usize res = string_buf_try_fmt_buffer_va( buf, format_len, format, va );
     va_end( va );
-
-    return result;
+    return res;
 }
-/// @brief Write a formatted string to string buffer using string literal format and variadic list of format arguments.
-/// @param[in] dst Destination buffer.
-/// @param format String literal format.
-/// @param va Variadic list of format arguments.
-/// @return Number of characters that could not be written to buffer.
-#define string_buf_fmt_va( dst, format, va )\
-    string_buf_fmt_text_buffer_va( dst, sizeof(format) - 1, format, va )
-/// @brief Write a formatted string to string buffer using string literal format.
-/// @param[in] dst Destination buffer.
-/// @param format String literal format.
-/// @param ... Format arguments.
-/// @return Number of characters that could not be written to buffer.
-#define string_buf_fmt( dst, format, ... )\
-    string_buf_fmt_text_buffer( dst, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief Attempt to write a formatted string to string buffer.
+/// @param[in] buf    (StringBuf*)    Buffer to write to.
+/// @param     format (string literal) Format string literal.
+/// @param     ...    (variadic args)  Format arguments.
+/// @return
+///     - Zero   : @c buf had enough capacity to write format string.
+///     - > Zero : Number of characters not written to @c buf.
+#define string_buf_try_fmt( buf, format, ... )\
+    string_buf_try_fmt_buffer( buf, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief Write formatted string to string buffer.
+/// @param[in] buf        Buffer to write to.
+/// @param[in] allocator  Pointer to allocator interface.
+/// @param     format_len Length of format string.
+/// @param     format     Format string.
+/// @param     va         Variadic format arguments.
+/// @return
+///     - @c true  : Wrote entire format string to @c buf. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_core_api b32 string_buf_fmt_buffer_va(
+    StringBuf* buf, struct AllocatorInterface* allocator,
+    usize format_len, const char* format, va_list va );
+/// @brief Write formatted string to string buffer.
+/// @param[in] buf        Buffer to write to.
+/// @param[in] allocator  Pointer to allocator interface.
+/// @param     format_len Length of format string.
+/// @param     format     Format string.
+/// @param     ...        Format arguments.
+/// @return
+///     - @c true  : Wrote entire format string to @c buf. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline
+attr_header b32 string_buf_fmt_buffer(
+    StringBuf* buf, struct AllocatorInterface* allocator,
+    usize format_len, const char* format, ...
+) {
+    va_list va;
+    va_start( va, format );
+    b32 res = string_buf_fmt_buffer_va(
+        buf, allocator, format_len, format, va );
+    va_end( va );
+    return res;
+}
+/// @brief Write formatted string to string buffer.
+/// @param[in] buf       (StringBuf*)         Buffer to write to.
+/// @param[in] allocator (AllocatorInterface*) Pointer to allocator interface.
+/// @param     format    (string literal)      Format string.
+/// @param     ...       (variadic args)       Format arguments.
+/// @return
+///     - @c true  : Wrote entire format string to @c buf. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+#define string_buf_fmt( buf, allocator, format, ... )\
+    string_buf_fmt_buffer( buf, allocator, \
+        sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief Stream format function for string buffer.
+/// @param[in] string_buf Pointer to string buffer.
+/// @param     count      Number of bytes to stream to buffer.
+/// @param[in] bytes      Pointer to bytes to stream to buffer.
+/// @return
+///     - Zero   : @c buf had enough capacity to write format string.
+///     - > Zero : Number of characters not written to @c buf.
+attr_core_api usize string_buf_try_stream(
+    void* string_buf, usize count, const void* bytes );
+/// @brief Stream format function for string buffer.
+/// @param[in] string_buf Pointer to string buffer.
+/// @param     count      Number of bytes to stream to buffer.
+/// @param[in] bytes      Pointer to bytes to stream to buffer.
+/// @return
+///     - @c true  : Wrote entire format string to @c buf. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_core_api bsize string_buf_stream(
+    void* StringBufStreamTarget, usize count, const void* bytes );
 
 #endif /* header guard */
