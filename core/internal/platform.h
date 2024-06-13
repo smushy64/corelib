@@ -39,9 +39,12 @@ void platform_mutex_unlock( struct Mutex* mutex );
 void platform_sleep( u32 ms );
 
 b32 platform_thread_create(
-    ThreadMainFN* main, void* params, usize stack_size, void** handle );
-void platform_thread_destroy( void* handle );
-b32 platform_thread_exit_code( void* handle, int* out_exit_code );
+    ThreadMainFN* main, void* params,
+    usize stack_size, ThreadHandle* out_handle );
+void platform_thread_destroy( ThreadHandle* handle );
+void platform_thread_free( ThreadHandle* handle );
+b32 platform_thread_join_timed( ThreadHandle* handle, u32 ms, int* opt_out_exit_code );
+b32 platform_thread_exit_code( ThreadHandle* handle, int* out_exit_code );
 
 b32 platform_path_is_file( const Path path );
 b32 platform_path_is_directory( const Path path );
@@ -74,9 +77,9 @@ void platform_library_close( void* lib );
 void* platform_library_load( void* lib, const char* function );
 
 #if defined(CORE_PLATFORM_WINDOWS)
-void* platform_win32_get_stdin(void);
-void* platform_win32_get_stdout(void);
-void* platform_win32_get_stderr(void);
+    void* platform_win32_get_stdin(void);
+    void* platform_win32_get_stdout(void);
+    void* platform_win32_get_stderr(void);
 #endif
 
 #endif /* header guard */

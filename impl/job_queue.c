@@ -27,8 +27,8 @@ struct InternalJobQueue {
     struct JobEntry entries[];
 };
 struct InternalThreadArray {
-    usize   len;
-    Thread* threads[];
+    usize        len;
+    ThreadHandle threads[];
 };
 
 attr_always_inline inline
@@ -37,7 +37,7 @@ attr_internal usize internal_job_queue_size( u32 entry_count ) {
 }
 attr_always_inline inline
 attr_internal usize internal_thread_array_size( u32 len ) {
-    return sizeof(struct InternalThreadArray) + (sizeof(Thread*) * len);
+    return sizeof(struct InternalThreadArray) + (sizeof(ThreadHandle*) * len);
 }
 attr_always_inline inline
 attr_internal usize internal_memory_requirement( u32 thread_count, u32 entry_count ) {
@@ -150,8 +150,10 @@ attr_core_api JobQueue* job_queue_create(
     read_write_barrier();
 
     for( u32 i = 0; i < thread_count; ++i ) {
-        array->threads[i] = thread_create( internal_job_queue_main, q, stack_size );
-        if( !(array->threads[i]) ) {
+        if( !thread_create(
+            internal_job_queue_main, q, stack_size,
+            array->threads + i
+        ) ) {
             break;
         }
         array->len++;
@@ -195,6 +197,10 @@ attr_core_api void job_queue_destroy( JobQueue* queue ) {
     usize job_queue_size = internal_job_queue_size( max_entries );
     struct InternalThreadArray* array =
         (struct InternalThreadArray*)((u8*)queue + job_queue_size);
+
+    for( usize i = 0; i < array->len; ++i ) {
+        thread_free( array->threads + i );
+    }
 
     usize buffer_size = job_queue_size + internal_thread_array_size( array->len );
     memory_zero( queue, buffer_size );

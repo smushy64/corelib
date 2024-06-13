@@ -168,7 +168,7 @@ void platform_sleep( u32 ms ) {
 }
 
 struct Win32Thread {
-    Semaphore*    sem;
+    atomic32*     ready;
     ThreadMainFN* main;
     void*         params;
 };
@@ -176,12 +176,12 @@ attr_global volatile u32 global_thread_id = 1;
 
 attr_internal DWORD internal_win32_thread_proc( void* in ) {
     struct Win32Thread thread = rcast( struct Win32Thread, in );
-    _ReadWriteBarrier();
+    read_write_barrier();
 
-    semaphore_signal( thread.sem );
+    atomic_increment32( thread.ready );
 
     u32 thread_id = atomic_increment32( &global_thread_id );
-    _ReadWriteBarrier();
+    read_write_barrier();
 
     volatile int ret = thread.main( thread_id, thread.params );
 
@@ -189,48 +189,64 @@ attr_internal DWORD internal_win32_thread_proc( void* in ) {
 }
 
 b32 platform_thread_create(
-    ThreadMainFN* main, void* params, usize stack_size, void** handle
+    ThreadMainFN* main, void* params,
+    usize stack_size, ThreadHandle* out_handle
 ) {
-    Semaphore sem;
-    if( !semaphore_create( &sem ) ) {
-        core_error( "win32: failed to create thread ready semaphore!" );
-        return false;
-    }
+    atomic32 ready = 0;
+    struct Win32Thread thread_params;
+    thread_params.ready  = &ready;
+    thread_params.main   = main;
+    thread_params.params = params;
 
-    struct Win32Thread thread;
-    thread.sem    = &sem;
-    thread.main   = main;
-    thread.params = params;
+    read_write_barrier();
 
-    _ReadWriteBarrier();
-
-    DWORD id = 0;
-    HANDLE thread_handle = CreateThread(
-        NULL, stack_size, internal_win32_thread_proc, &thread, 0, &id );
-    if( thread_handle == NULL ) {
+    DWORD  id     = 0;
+    HANDLE handle = CreateThread(
+        NULL, stack_size, internal_win32_thread_proc, &thread_params, 0, &id );
+    if( handle == NULL ) {
         DWORD error_code = GetLastError();
         internal_win32_log_error( error_code );
-        semaphore_destroy( &sem );
         return false;
     }
 
-    _ReadWriteBarrier();
-    semaphore_wait( thread.sem );
+    read_write_barrier();
 
-    _ReadWriteBarrier();
-    semaphore_destroy( thread.sem );
+    while( !ready ) {}
 
-    *handle = thread_handle;
+    read_write_barrier();
+
+    out_handle->opaque = handle;
     return true;
 }
-void platform_thread_destroy( void* handle ) {
-    TerminateThread( handle, 0 );
-    CloseHandle( handle );
+void platform_thread_destroy( ThreadHandle* handle ) {
+    TerminateThread( handle->opaque, -1 );
+    CloseHandle( handle->opaque );
 }
-b32 platform_thread_exit_code( void* handle, int* out_exit_code ) {
-    DWORD result = WaitForSingleObject( handle, 0 );
+void platform_thread_free( ThreadHandle* handle ) {
+    CloseHandle( handle->opaque );
+}
+b32 platform_thread_join_timed(
+    ThreadHandle* handle, u32 ms, int* opt_out_exit_code
+) {
+    DWORD result = WaitForSingleObject( handle->opaque, ms );
+    switch( result ) {
+        case WAIT_OBJECT_0: break;
+        case WAIT_TIMEOUT: {
+            return false;
+        } break;
+        default: {
+
+        } return false;
+    }
+
+    if( opt_out_exit_code ) {
+        platform_thread_exit_code( handle, opt_out_exit_code );
+    }
+    return true;
+}
+b32 platform_thread_exit_code( ThreadHandle* handle, int* out_exit_code ) {
+    DWORD result = WaitForSingleObject( handle->opaque, 0 );
     if( result != WAIT_OBJECT_0 ) {
-        // thread has not yet finished.
         return false;
     }
 

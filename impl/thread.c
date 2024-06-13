@@ -5,28 +5,33 @@
 */
 #include "core/prelude.h"
 #include "core/thread.h"
+#include "core/memory.h"
 
 #include "core/internal/platform.h"
 
 attr_core_api void thread_sleep( u32 ms ) {
     platform_sleep( ms );
 }
-attr_core_api Thread* thread_create(
-    ThreadMainFN* thread_main, void* thread_main_params,
-    usize thread_stack_size
+attr_core_api b32 thread_create(
+    ThreadMainFN* main, void* params,
+    usize stack_size, ThreadHandle* out_handle
 ) {
-    Thread* handle = NULL;
-    if( !platform_thread_create(
-        thread_main, thread_main_params, thread_stack_size, &handle
-    ) ) {
-        return NULL;
-    }
-    return handle;
+    return platform_thread_create( main, params, stack_size, out_handle );
 }
-attr_core_api void thread_destroy( Thread* thread ) {
-    platform_thread_destroy( thread );
+attr_core_api void thread_destroy( ThreadHandle* handle ) {
+    platform_thread_destroy( handle );
+    memory_zero( handle, sizeof(*handle) );
 }
-attr_core_api b32 thread_exit_code( Thread* thread, int* out_exit_code ) {
-    return platform_thread_exit_code( thread, out_exit_code );
+attr_core_api void thread_free( ThreadHandle* handle ) {
+    platform_thread_free( handle );
+    memory_zero( handle, sizeof(*handle) );
+}
+attr_core_api b32 thread_join_timed(
+    ThreadHandle* handle, u32 ms, int* opt_out_exit_code
+) {
+    return platform_thread_join_timed( handle, ms, opt_out_exit_code );
+}
+attr_core_api b32 thread_exit_code( ThreadHandle* handle, int* out_exit_code ) {
+    return platform_thread_exit_code( handle, out_exit_code );
 }
 
