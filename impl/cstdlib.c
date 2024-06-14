@@ -36,6 +36,9 @@ attr_clink attr_export void* memmove( void* str1, const void* str2, usize n ) {
     if( !n ) {
         return str1;
     }
+    if( str1 < str2 ) {
+        return memcpy( str1, str2, n );
+    }
     u8* a = str1;
     const u8* b = str2;
 
