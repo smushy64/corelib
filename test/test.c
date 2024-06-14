@@ -10,6 +10,7 @@
 #include "core/math.h"
 #include "core/memory.h"
 #include "core/alloc.h"
+#include "core/collections.h"
 // IWYU pragma: end_keep
 
 #if defined(CORE_COMPILER_CLANG)
@@ -35,17 +36,147 @@
     }\
 } while(0)
 
-int tests_string(void);
+int string(void);
+int collections(void);
 
 int main( int argc, char** argv ) {
     unused( argc, argv );
 
-    test( tests_string );
+    test( collections );
+    test( string );
 
     return 0;
 }
 
-int tests_string(void) {
+attr_optnone
+int collections(void) {
+    {
+        #define CAPACITY 10
+        AllocatorInterface heap = allocator_interface_from_heap();
+
+        Hashmap map = hashmap_empty();
+        expect( hashmap_from_alloc( sizeof(int), CAPACITY, &map, &heap ), "" );
+
+        int item = 99;
+        expect( hashmap_try_insert( &map, 10, &item ), "" );
+        item = 80;
+        expect( hashmap_try_insert( &map, 6, &item ), "" );
+        item = 70;
+        expect( hashmap_try_insert( &map, 255, &item ), "" );
+
+        expect( hashmap_grow( &map, 2, &heap ), "" );
+
+        int out = 0;
+        expect( hashmap_index( &map, 10, &out ), "" );
+        expect( out == 99, "{i32}", out );
+
+        expect( hashmap_index( &map, 6, &out ), "" );
+        expect( out == 80, "{i32}", out );
+
+        expect( hashmap_index( &map, 255, &out ), "" );
+        expect( out == 70, "{i32}", out );
+
+        expect( hashmap_remove( &map, 6, &out ), "" );
+        expect( out == 80, "{i32}", out );
+
+        expect( hashmap_index( &map, 10, &out ), "" );
+        expect( out == 99, "{i32}", out );
+
+        expect( hashmap_index( &map, 255, &out ), "" );
+        expect( out == 70, "{i32}", out );
+
+        hashmap_free( &map, &heap );
+
+        #undef CAPACITY
+    }
+    {
+        char buf[hashmap_memory_requirement( sizeof(int), 10 )];
+        memory_zero( buf, sizeof(buf) );
+
+        Hashmap map = hashmap_new( sizeof(int), 10, buf );
+
+        int item = 10;
+        expect( hashmap_try_insert_text( &map, "hello, world!", &item ), "" );
+        expect( hashmap_index_text( &map, "hello, world!", &item ), "" );
+        expect( item == 10, "" );
+    }
+    {
+        PackedBool packed[packed_bool_calculate_size( 10 )];
+        memory_zero( packed, sizeof(packed) );
+        expect( packed_bool_bytes_to_bits( static_array_len( packed ) ) == 16, "" );
+        expect( packed_bool_set( packed, 0, true ), "" );
+        expect( packed_bool_set( packed, 1, false ), "" );
+        expect( packed_bool_index( packed, 0 ) == true, "" );
+        expect( packed_bool_index( packed, 1 ) == false, "" );
+        expect( packed_bool_index( packed, 9 ) == false, "" );
+    }
+    {
+        #define CAPACITY 10
+        int buf[CAPACITY];
+        memory_zero( buf, sizeof(buf) );
+
+        Queue queue = queue_new( sizeof(int), CAPACITY, buf );
+        expect( queue_is_empty( &queue ), "" );
+
+        #define enqueue( queue, item )\
+            expect( queue_try_enqueue( queue, item ), "" )
+        #define expect_dequeue( queue, item )\
+            expect( queue_dequeue( queue, item ), "" )
+
+        for( usize i = 0; i < CAPACITY; ++i ) {
+            int item = (int)i + 10;
+            enqueue( &queue, &item );
+        }
+
+        for( usize i = 0; i < 4; ++i ) {
+            int item = 0;
+            expect_dequeue( &queue, &item );
+            expect( item == (int)i + 10, "expected item: {i32} got: {i32}", (int)i + 10, item );
+        }
+
+        #undef CAPACITY
+        #undef enqueue
+        #undef dequeue
+    }
+    {
+        AllocatorInterface heap = allocator_interface_from_heap();
+        Queue queue = queue_empty();
+        queue_from_alloc( sizeof(int), 2, &queue, &heap );
+        int item = 10;
+        queue_try_enqueue( &queue, &item );
+        queue_dequeue( &queue, 0 );
+        queue_try_enqueue( &queue, &item );
+        queue_grow( &queue, queue.cap, &heap );
+
+        item = 99;
+
+        queue_try_enqueue( &queue, &item );
+        queue_try_enqueue( &queue, &item );
+
+        queue_free( &queue, &heap );
+    }
+    {
+        AllocatorInterface heap = allocator_interface_from_heap();
+
+        darray(i32) list = darray_empty(i32);
+
+        expect( darray_from_alloc( 10, &list, &heap ), "failed to alloc list!" );
+        expect( list.cap == 10, "" );
+
+        for( usize i = 0; i < darray_cap( &list ); ++i ) {
+            i32 item = i;
+            expect( darray_try_push( &list, &item ), "");
+        }
+        for( usize i = 0; i < darray_len( &list ); ++i ) {
+            expect( list.buf[i] == (i32)i, "" );
+        }
+
+        darray_free( &list, &heap );
+    }
+    return 0;
+}
+
+int string(void) {
     {
         #define STRING "hello, world!"
         const char* string = STRING;
@@ -62,7 +193,7 @@ int tests_string(void) {
             expect( str.cc[i] == string_index( str, i ), "" );
         }
         expect( *string_first( str ) == 'h', "" );
-        expect( *string_last( str ) == 'd', "" );
+        expect( *string_last( str )  == 'd', "" );
     }
     {
         expect( string_cmp( string_text( "hello" ), string_text( "hello" ) ), "" );

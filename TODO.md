@@ -1,4 +1,8 @@
 # Todo List
+- [ ] collections: queue atomic functions.
+- [ ] collections: allocating functions with alignment.
+- [ ] alloc: Block allocator.
+- [ ] time: complete rewrite.
 - [ ] process.h: API for creating processes and pipes.
 - [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support

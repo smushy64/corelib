@@ -26,6 +26,11 @@ Indicates additions to API, minor bug fixes and other small changes.
 - alloc: Renamed AllocStack to StackAllocator and renamed functions accordingly.
 - alloc: Added AllocatorInterface structure and heap allocator interface.
 - collections: applied changes from slice.h
+- collections: generic_array_ functions.
+- collections: removed List, replaced with darray.
+- collections: rewrote queue.
+- collections: rewrote hashmap.
+- cstdlib: bug: memmove broken when dst is before src.
 - fmt: applied changes from string.h
 - fs: removed fs_directory_delete()
 - job_queue: applied changes from sync.h
@@ -49,6 +54,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - sync: renamed interlocked_* functions to atomic_* and simplified mutex/semaphore api.
 - sync: renamed _fence functions to _barrier
 - test: deleted old tests and replaced with only string tests for now.
+- test: added collections tests
 - thread: rewrote thread_create(), thread_destroy() and thread_exit_code()
 - thread: added thread_free(), thread_join_timed() and thread_join()
 - thread: Thread is now struct ThreadHandle
