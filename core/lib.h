@@ -27,11 +27,11 @@ typedef enum CoreLoggingLevel {
 /// callback needs to use fmt_text_va or print_text_va to format messages.
 /// Messages never include new-line at the end of stream.
 /// To prevent cross-talk between threads, use a mutex.
-/// @param level Level of message. Can be error or warning.
-/// @param len Length of unformatted message.
-/// @param[in] msg Read-only pointer to unformatted message.
-/// @param[in] va Variadic argument list.
-/// @param[in] params User parameters.
+/// @param     level       Level of message. Can be error or warning.
+/// @param     len         Length of unformatted message.
+/// @param[in] msg         Read-only pointer to unformatted message.
+/// @param[in] va          Variadic argument list.
+/// @param[in] user_params User parameters.
 typedef void CoreLoggingCallbackFN(
     CoreLoggingLevel level, usize len, const char* msg,
     va_list va, void* user_params );

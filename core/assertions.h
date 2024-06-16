@@ -53,39 +53,38 @@
     #define debug_break()
 #endif /* CORE_ENABLE_DEBUG_BREAK */
 
-/// @brief Crash program if condition is not met.
-/// @details
-/// This macro function does not return when condition is not met.
-/// @param condition (expression) Condition to check.
-/// @note Currently enabled in this build configuration.
-#define assert( condition ) do {\
-    if( !(condition) ) {\
-        panic();\
-    }\
-} while(0)
-/// @brief Break debugger on the current line if condition is not met.
-/// @param condition (expression) Condition to check.
-/// @note Currently enabled in this build configuration.
-#define debug_assert( condition ) do {\
-    if( !(condition) ) {\
-        debug_break();\
-    }\
-} while(0)
-
-#if !defined(CORE_ENABLE_ASSERTIONS)
-    #undef assert
+#if defined(CORE_ENABLE_ASSERTIONS)
     /// @brief Crash program if condition is not met.
     /// @details
     /// This macro function does not return when condition is not met.
     /// @param condition (expression) Condition to check.
+    /// @note Currently enabled in this build configuration.
+    #define assert( condition ) do {\
+        if( !(condition) ) {\
+            panic();\
+        }\
+    } while(0)
+#else
+    /// @brief Crash program if condition is not met.
+    /// @details
+    /// This macro function does not return when condition is not met.
+    /// @param ... (expression) Condition to check.
     /// @note Currently disabled in this build configuration.
     #define assert(...) 
 #endif
 
-#if !defined(CORE_ENABLE_DEBUG_ASSERTIONS)
-    #undef debug_assert
+#if defined(CORE_ENABLE_DEBUG_ASSERTIONS)
     /// @brief Break debugger on the current line if condition is not met.
     /// @param condition (expression) Condition to check.
+    /// @note Currently enabled in this build configuration.
+    #define debug_assert( condition ) do {\
+        if( !(condition) ) {\
+            debug_break();\
+        }\
+    } while(0)
+#else
+    /// @brief Break debugger on the current line if condition is not met.
+    /// @param ... (expression) Condition to check.
     /// @note Currently disabled in this build configuration.
     #define debug_assert(...) 
 #endif

@@ -31,6 +31,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - collections: rewrote queue.
 - collections: rewrote hashmap.
 - cstdlib: bug: memmove broken when dst is before src.
+- docs: fixed warnings.
 - fmt: applied changes from string.h
 - fs: removed fs_directory_delete()
 - job_queue: applied changes from sync.h

@@ -556,7 +556,7 @@ attr_core_api usize string_stream_to_lower(
 #define string_buf_empty() string_buf_new( 0, 0 )
 /// @brief Initialize a string buffer from the stack.
 /// @details
-/// Defines a stack char buffer with name @c name##_buffer
+/// Defines a stack char buffer with name @c name\#\#_buffer
 /// of given size and a string_buf from that buffer with given name.
 /// @param name (valid identifier) Name of string buffer.
 /// @param size (usize)            Size of string buffer.
@@ -846,9 +846,9 @@ attr_header b32 string_buf_fmt_buffer(
 attr_core_api usize string_buf_try_stream(
     void* string_buf, usize count, const void* bytes );
 /// @brief Stream format function for string buffer.
-/// @param[in] string_buf Pointer to string buffer.
-/// @param     count      Number of bytes to stream to buffer.
-/// @param[in] bytes      Pointer to bytes to stream to buffer.
+/// @param[in] StringBufStreamTarget Pointer to #StringBufStreamTarget.
+/// @param     count                 Number of bytes to stream to buffer.
+/// @param[in] bytes                 Pointer to bytes to stream to buffer.
 /// @return
 ///     - @c true  : Wrote entire format string to @c buf. If allocation was required, it was successful.
 ///     - @c false : Failed to reallocate @c buf.

@@ -37,7 +37,7 @@ struct AllocatorInterface;
 /// - len (usize) Length of dynamic array.
 /// - cap (usize) Maximum number of items that array can hold.
 /// - buf (T*)    Pointer to start of array.
-/// @params T (type) Type of dynamic array items.
+/// @param T (type) Type of dynamic array items.
 #define darray_define( T )\
 typedef struct darray_name(T) {\
     usize len;\
@@ -683,7 +683,7 @@ attr_core_api void queue_clear( Queue* queue );
 #define hashmap_memory_requirement( stride, capacity )\
     (((stride) * (capacity)) + (sizeof(hash64) * (capacity)))
 /// @brief Create a new hashmap from existing buffer.
-/// @param     stride   (u32)   Size of items in hashmap.
+/// @param     _stride  (u32)   Size of items in hashmap.
 /// @param     capacity (u32)   Total number of items hashmap can hold.
 /// @param[in] buffer   (void*) Pointer to start of hashmap buffer. Must be able to hold result of hashmap_memory_requirement().
 /// @return Hashmap.
@@ -696,7 +696,7 @@ attr_core_api void queue_clear( Queue* queue );
 #define hashmap_empty() hashmap_new( 0, 0, 0 )
 /// @brief Create hashmap from allocator.
 /// @param      stride    Size of items in hashmap.
-/// @param      capacity  Total number of items hashmap can hold.
+/// @param      cap       Total number of items hashmap can hold.
 /// @param[out] out_map   Pointer to write hashmap to.
 /// @param[in]  allocator Pointer to allocator interface.
 /// @return
@@ -770,8 +770,8 @@ attr_core_api b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item
 /// @return
 ///     - @c true  : Hashmap had enough capacity to insert new item.
 ///     - @c false : Hashmap is full.
-#define hashmap_try_insert_text( map, literal, item )\
-    hashmap_try_insert( map, hash_text_64( literal ), item )
+#define hashmap_try_insert_text( map, key, item )\
+    hashmap_try_insert( map, hash_text_64( key ), item )
 /// @brief Insert new value in hashmap.
 /// @param[in] map       Hashmap.
 /// @param     key       Key of value.

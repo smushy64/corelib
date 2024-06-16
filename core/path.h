@@ -166,7 +166,7 @@ attr_core_api usize path_stream_set_separators(
 #define path_buf_empty()                string_buf_empty()
 /// @brief Initialize a path buffer from the stack.
 /// @details
-/// Defines a stack char buffer with name @c name##_buffer
+/// Defines a stack char buffer with name @c name\#\#_buffer
 /// of given size and a PathBuf from that buffer with given name.
 /// @param name (valid identifier) Name of path buffer.
 /// @param size (usize)            Size of path buffer.

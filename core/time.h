@@ -65,7 +65,7 @@ typedef struct TimeSplit {
 /// @return Seconds since 00:00:00 UTC January 1, 1970.
 attr_core_api TimePosix time_posix(void);
 /// @brief Get split local time.
-/// @detail
+/// @details
 /// Time is always in the system's current timezone.
 /// @return Split time.
 /// @see #TimeSplit
