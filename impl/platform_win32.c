@@ -25,6 +25,7 @@ EnumDisplayDevicesAFN* in_EnumDisplayDevicesA = NULL;
 #define EnumDisplayDevicesA in_EnumDisplayDevicesA
 
 attr_internal void internal_win32_log_error( DWORD error_code );
+attr_internal TimePosix internal_win32_ft_to_ts( FILETIME ft );
 
 void* platform_win32_get_stdin(void) {
     return GetStdHandle( STD_INPUT_HANDLE );
@@ -53,24 +54,59 @@ void platform_heap_free( void* buffer, const usize size ) {
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-void platform_query_timestamp( TimeStamp* out_timestamp ) {
-    SYSTEMTIME systime;
-    GetLocalTime( &systime );
+attr_internal TimePosix internal_win32_ft_to_ts( FILETIME ft ) {
+    #define WIN32_TICKS_PER_SECOND (10000000)
+    #define WIN32_TO_POSIX_DIFF    (11644473600ULL)
 
-    out_timestamp->year   = (u32)systime.wYear;
-    out_timestamp->month  = (u32)systime.wMonth;
-    out_timestamp->day    = (u32)systime.wDay;
-    out_timestamp->hour   = (u32)systime.wHour;
-    out_timestamp->minute = (u32)systime.wMinute;
-    out_timestamp->second = (u32)systime.wSecond;
+    ULARGE_INTEGER uli;
+    uli.LowPart  = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    time_t res = (time_t)(
+        (uli.QuadPart / WIN32_TICKS_PER_SECOND) - WIN32_TO_POSIX_DIFF );
+
+    #undef WIN32_TICKS_PER_SECOND
+    #undef WIN32_TO_POSIX_DIFF
+    
+    return res;
+}
+TimePosix platform_time_posix(void) {
+    FILETIME ft;
+    memory_zero( &ft, sizeof(ft) );
+    GetSystemTimeAsFileTime( &ft );
+
+    return internal_win32_ft_to_ts( ft );
+}
+TimeSplit platform_time_split(void) {
+    SYSTEMTIME st;
+    memory_zero( &st, sizeof(st) );
+    GetLocalTime( &st );
+
+    TimeSplit split;
+
+    split.year   = st.wYear;
+    split.month  = st.wMonth;
+    split.day    = st.wDay;
+    split.hour   = st.wHour;
+    split.minute = st.wMinute;
+    split.second = st.wSecond;
+
+    return split;
 }
 
-f64 platform_query_milliseconds(void) {
+f64 platform_timer_milliseconds(void) {
     LARGE_INTEGER qpf, qpc;
-    QueryPerformanceFrequency( &qpf );
     QueryPerformanceCounter( &qpc );
+    QueryPerformanceFrequency( &qpf );
 
-    return ((f64)( qpc.QuadPart) / (f64)qpf.QuadPart) * 1000.0;
+    return ((f64)qpc.QuadPart / (f64)qpf.QuadPart) * 1000.0;
+}
+f64 platform_timer_seconds(void) {
+    LARGE_INTEGER qpf, qpc;
+    QueryPerformanceCounter( &qpc );
+    QueryPerformanceFrequency( &qpf );
+
+    return (f64)qpc.QuadPart / (f64)qpf.QuadPart;
 }
 
 void platform_console_write( void* dst, usize len, const char* str ) {

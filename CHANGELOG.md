@@ -41,10 +41,12 @@ Indicates additions to API, minor bug fixes and other small changes.
 - path: applied changes from string.h
 - path: rewrote many functions. path_buf_* functions now use AllocatorInterface.
 - platform: applied changes from thread.h
+- platform: applied changes from time.h
 - platform/win32: applied changes from sync.h
 - platform/win32: applied changes from string.h
 - platform/win32: removed platform_directory_delete()
 - platform/win32: applied changes from thread.h
+- platform/win32: applied changes from time.h
 - slice: renamed CoreSlice/Buffer to ByteSlice/Buffer
 - slice: renamed GenericSlice/Buffer to ItemSlice/Buffer
 - string: applied changes from slice.h
@@ -55,9 +57,11 @@ Indicates additions to API, minor bug fixes and other small changes.
 - sync: renamed _fence functions to _barrier
 - test: deleted old tests and replaced with only string tests for now.
 - test: added collections tests
+- test: added time tests
 - thread: rewrote thread_create(), thread_destroy() and thread_exit_code()
 - thread: added thread_free(), thread_join_timed() and thread_join()
 - thread: Thread is now struct ThreadHandle
+- time: rewrote all functions.
 - types: added 128-bit integers, atomic integers, hash integers, bsize and codepoints.
 - Makefile: bumped version to 0.1.2
 

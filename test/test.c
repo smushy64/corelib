@@ -3,6 +3,7 @@
  * Author:       Alicia Amarilla (smushyaa@gmail.com)
  * File Created: January 30, 2024
 */
+#define CORE_ENABLE_DEBUG_TIMER_BLOCK
 // IWYU pragma: begin_keep
 #include "core/prelude.h"
 #include "core/string.h"
@@ -11,6 +12,7 @@
 #include "core/memory.h"
 #include "core/alloc.h"
 #include "core/collections.h"
+#include "core/time.h"
 // IWYU pragma: end_keep
 
 #if defined(CORE_COMPILER_CLANG)
@@ -38,12 +40,31 @@
 
 int string(void);
 int collections(void);
+int time(void);
 
 int main( int argc, char** argv ) {
     unused( argc, argv );
 
-    test( collections );
-    test( string );
+    debug_timer_block( tests,
+        test( time );
+        test( collections );
+        test( string );
+    , "completed in " );
+
+    return 0;
+}
+
+int time(void) {
+    TimeSplit time = time_split();
+
+    u32 hr12 = 0;
+    b32 am   = time_hour_24_to_12( time.hour, &hr12 );
+
+    println(
+        "{cc} {u32,02}, {u32,04} ({u32,02}){u32,02}:{u32,02}:{u32,02} {cc}",
+        time_month_to_string( time.month, 0 ),
+        time.day, time.year,
+        time.hour, hr12, time.minute, time.second, am ? "AM" : "PM" );
 
     return 0;
 }

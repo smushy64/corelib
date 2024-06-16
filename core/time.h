@@ -9,136 +9,159 @@
 #include "core/types.h"
 #include "core/attributes.h"
 
-/// @brief Time stamp.
-///
-/// Useful for low-resolution time keeping.
-typedef struct CoreTimeStamp {
-    /// @brief Current year.
-    u32 year;
-    /// @brief Current month. Range 1 -> 12.
-    u32 month;
-    /// @brief Current day. Range 1 -> 31.
-    u32 day;
-    /// @brief Current hour. Range 0 -> 23.
-    u32 hour;
-    /// @brief Current minute. Range 0 -> 59.
-    u32 minute;
-    /// @brief Current second. Range 0 -> 59.
-    u32 second;
-} TimeStamp;
+/// @brief Same as time_t.
+typedef usize TimePosix;
+typedef u32   TimeYear;
+typedef u32   TimeMonth;
+typedef u32   TimeDay;
+typedef u32   TimeHour;
+typedef u32   TimeMinute;
+typedef u32   TimeSecond;
 
-/// @brief Query high resolution clock seconds.
-/// @return Seconds.
-attr_core_api f64 time_high_resolution_seconds(void);
-/// @brief Query high resolution clock milliseconds.
-/// @return Milliseconds.
-attr_core_api f64 time_high_resolution_milliseconds(void);
-/// @brief Query time stamp from the system.
-/// @param[out] out_timestamp Pointer to TimeStamp struct.
-attr_core_api void time_query_timestamp( TimeStamp* out_timestamp );
-/// @brief Convert month to string.
-/// @param month Month to convert. Must be in range 1 -> 12.
-/// @param[out] opt_out_len (optional) Pointer to usize to receive string length.
-/// @return UTF-8 null-terminated string.
-attr_always_inline
-attr_header const char* time_month_to_string( u32 month, usize* opt_out_len ) {
-    #define result( str ) {\
-        if( opt_out_len ) {\
-            *opt_out_len = sizeof(str) - 1;\
-        }\
-        return str;\
-    }\
+/// @brief Time split up into year, month, day, hour, minute and second.
+typedef struct TimeSplit {
+    /// @brief Year.
+    TimeYear year;
+    /// @brief Month. Range: 1 to 12.
+    TimeMonth month;
+    /// @brief Day. Range: 1 to 31.
+    TimeDay day;
+    /// @brief Hour. Range 0 to 23.
+    TimeHour hour;
+    /// @brief Minute. Range 0 to 59.
+    TimeMinute minute;
+    /// @brief Seconds. Range 0 to 59.
+    TimeSecond second;
+} TimeSplit;
 
-    switch( month ) {
-        case 1:  result("January");
-        case 2:  result("February");
-        case 3:  result("March");
-        case 4:  result("April");
-        case 5:  result("May");
-        case 6:  result("June");
-        case 7:  result("July");
-        case 8:  result("August");
-        case 9:  result("September");
-        case 10: result("October");
-        case 11: result("November");
-        case 12: result("December");
-        default: result("Invalid");
-    }
-    #undef result
-}
+/// @brief Time split month of January.
+#define TIME_MONTH_JANUARY   (1)
+/// @brief Time split month of February.
+#define TIME_MONTH_FEBRUARY  (2)
+/// @brief Time split month of March.
+#define TIME_MONTH_MARCH     (3)
+/// @brief Time split month of April.
+#define TIME_MONTH_APRIL     (4)
+/// @brief Time split month of May.
+#define TIME_MONTH_MAY       (5)
+/// @brief Time split month of June.
+#define TIME_MONTH_JUNE      (6)
+/// @brief Time split month of July.
+#define TIME_MONTH_JULY      (7)
+/// @brief Time split month of August.
+#define TIME_MONTH_AUGUST    (8)
+/// @brief Time split month of September.
+#define TIME_MONTH_SEPTEMBER (9)
+/// @brief Time split month of October.
+#define TIME_MONTH_OCTOBER   (10)
+/// @brief Time split month of November.
+#define TIME_MONTH_NOVEMBER  (11)
+/// @brief Time split month of December.
+#define TIME_MONTH_DECEMBER  (12)
+
+/// @brief Get POSIX time.
+/// @details
+/// Time is always in UTC.
+/// @return Seconds since 00:00:00 UTC January 1, 1970.
+attr_core_api TimePosix time_posix(void);
+/// @brief Get split local time.
+/// @detail
+/// Time is always in the system's current timezone.
+/// @return Split time.
+/// @see #TimeSplit
+attr_core_api TimeSplit time_split(void);
+
 /// @brief Convert 24 hour to 12 hour.
-/// @param hr24 24 Hour in range 0 -> 23.
-/// @param[out] out_hr12 12 Hour in range 1 -> 12.
-/// @return True if hour is AM, false if it's PM.
-attr_always_inline
-attr_header b32 time_24hr_to_12hr( u32 hr24, u32* out_hr12 ) {
-    u32 hr12  = hr24 % 12;
-    hr12      = hr12 ? hr12 : 12;
-    *out_hr12 = hr12;
+/// @param      hr24     Hour in 24-hour.
+/// @param[out] out_hr12 Hour in 12-hour.
+/// @return
+///     - @c true  : Time is AM.
+///     - @c false : Time is PM.
+attr_core_api b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 );
 
-    return hr24 < 12;
-}
+/// @brief Get high resolution time in milliseconds.
+/// @return Time in milliseconds.
+attr_core_api f64 timer_milliseconds(void);
+/// @brief Get high resolution time in seconds.
+/// @return Time in seconds.
+attr_core_api f64 timer_seconds(void);
 
 #if defined(CORE_ENABLE_DEBUG_TIMER_BLOCK)
-    // IWYU pragma: begin_keep
-    #include "core/stream.h"
-    #include "core/fmt.h"
-    #include "core/fs.h"
-    // IWYU pragma: end_keep
-
-    attr_core_api void ___internal_get_debug_timer_block_stream(
-        StreamBytesFN** out_stream, void** out_params );
-    attr_core_api void ___internal_debug_timer_block_set_stream(
-        StreamBytesFN* stream, void* target );
-
-    /// @brief Time a block of code.
-    /// @details
-    /// Checks how many milliseconds it took to run block of code.
-    /// Prints result to stdout or if streaming function is defined
-    /// with debug_timer_block_set_stream(), outputs result to stream.
-    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
-    /// @param name (valid C-identifier) Name of timer block.
-    /// @param code (block of code) Code to time.
-    #define debug_timer_block( name, code ) do {\
-        f64 ___##name##_timer_block_time_begin = time_high_resolution_milliseconds();\
-        { code }\
-        f64 ___##name##_timer_block_time_end   = time_high_resolution_milliseconds();\
-        f64 ___##name##_timer_block_ms =\
-            ___##name##_timer_block_time_end - ___##name##_timer_block_time_begin;\
-        StreamBytesFN* ___##name##_timer_block_stream = NULL;\
-        void*          ___##name##_timer_block_params = NULL;\
-        ___internal_get_debug_timer_block_stream(\
-            &___##name##_timer_block_stream, &___##name##_timer_block_params );\
-        if( !___##name##_timer_block_stream ) {\
-            ___##name##_timer_block_stream = stream_console;\
-            ___##name##_timer_block_params = stdout_handle();\
-        }\
-        fmt( ___##name##_timer_block_stream,\
-            ___##name##_timer_block_params,\
-            "TIMER BLOCK '" #name "': {f}ms\n", ___##name##_timer_block_ms );\
+    /// @brief Create a debug timer block.
+    /// @param name   (C identifier)     Name of timer block.
+    /// @param code   (C code)           Block of code to execute.
+    /// @param format (string literal)   String formatting for debug message.
+    /// @param ...    (format arguments) Format arguments for debug message.
+    #define debug_timer_block( name, code, format, ... ) do {\
+        f64 debug_timer_block_start = timer_milliseconds();\
+        { code };\
+        f64 debug_timer_block_end = timer_milliseconds();\
+        println(\
+            format "{f,.2}ms",\
+            debug_timer_block_end - debug_timer_block_start,\
+            ##__VA_ARGS__ );\
     } while(0)
-    /// @brief Set streaming function and target for debug timer blocks.
-    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
-    /// @param stream (StreamBytesFN*) Streaming function.
-    /// @param target (void*) Target to stream to.
-    #define debug_timer_block_set_stream( stream, target )\
-        ___internal_debug_timer_block_set_stream( stream, target )
+#else
+    /// @brief Create a debug timer block.
+    /// @param name   (C identifier)                Name of timer block.
+    /// @param code   (C code)                      Block of code to execute.
+    /// @param ...    (format and format arguments) Format arguments for debug message.
+    #define debug_timer_block( name, code, ... )\
+        { code }
+#endif
 
-#else /* CORE_ENABLE_DEBUG_TIMER_BLOCK */
-    /// @brief Time a block of code.
-    /// @details
-    /// Checks how many milliseconds it took to run block of code.
-    /// Prints result to stdout or if streaming function is defined
-    /// with debug_timer_block_set_stream(), outputs result to stream.
-    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
-    /// @param name (valid C-identifier) Name of timer block.
-    /// @param code (block of code) Code to time.
-    #define debug_timer_block( name, code ) code
-    /// @brief Set streaming function and target for debug timer blocks.
-    /// @note Only enabled in builds compiled with CORE_ENABLE_DEBUG_TIMER_BLOCK defined.
-    /// @param stream (StreamBytesFN*) Streaming function.
-    /// @param target (void*) Target to stream to.
-    #define debug_timer_block_set_stream(...) unused( __VA_ARGS__ )
-#endif /* NOT CORE_ENABLE_DEBUG_TIMER_BLOCK */ 
+/// @brief Convert month to short string.
+/// @param      month       Month to convert.
+/// @param[out] opt_out_len (optional) Pointer to write length of string.
+/// @return Month short name read-only string.
+attr_header const cstr* time_month_to_string_short(
+    TimeMonth month, usize* opt_out_len
+) {
+    #define res( literal )\
+        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+
+    switch( month ) {
+        case TIME_MONTH_JANUARY   : res("Jan");
+        case TIME_MONTH_FEBRUARY  : res("Feb");
+        case TIME_MONTH_MARCH     : res("Mar");
+        case TIME_MONTH_APRIL     : res("Apr");
+        case TIME_MONTH_MAY       : res("May");
+        case TIME_MONTH_JUNE      : res("Jun");
+        case TIME_MONTH_JULY      : res("Jul");
+        case TIME_MONTH_AUGUST    : res("Aug");
+        case TIME_MONTH_SEPTEMBER : res("Sep");
+        case TIME_MONTH_OCTOBER   : res("Oct");
+        case TIME_MONTH_NOVEMBER  : res("Nov");
+        case TIME_MONTH_DECEMBER  : res("Dec");
+        default: res("INV");
+    }
+
+    #undef res
+}
+/// @brief Convert month to string.
+/// @param      month       Month to convert.
+/// @param[out] opt_out_len (optional) Pointer to write length of string.
+/// @return Month name read-only string.
+attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
+    #define res( literal )\
+        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+
+    switch( month ) {
+        case TIME_MONTH_JANUARY   : res("Januart");
+        case TIME_MONTH_FEBRUARY  : res("February");
+        case TIME_MONTH_MARCH     : res("March");
+        case TIME_MONTH_APRIL     : res("April");
+        case TIME_MONTH_MAY       : res("May");
+        case TIME_MONTH_JUNE      : res("June");
+        case TIME_MONTH_JULY      : res("July");
+        case TIME_MONTH_AUGUST    : res("August");
+        case TIME_MONTH_SEPTEMBER : res("September");
+        case TIME_MONTH_OCTOBER   : res("October");
+        case TIME_MONTH_NOVEMBER  : res("November");
+        case TIME_MONTH_DECEMBER  : res("December");
+        default: res("INVALID");
+    }
+    #undef res
+}
 
 #endif /* header guard */

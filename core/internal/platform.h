@@ -17,10 +17,12 @@ void* platform_heap_realloc(
     void* old_buffer, const usize old_size, const usize new_size );
 void platform_heap_free( void* buffer, const usize size );
 
-void platform_query_timestamp( TimeStamp* out_timestamp );
-
-f64 platform_query_milliseconds(void);
 void platform_console_write( void* dst, usize len, const char* str );
+
+TimePosix platform_time_posix(void);
+TimeSplit platform_time_split(void);
+f64 platform_timer_milliseconds(void);
+f64 platform_timer_seconds(void);
 
 struct Semaphore;
 struct Mutex;
