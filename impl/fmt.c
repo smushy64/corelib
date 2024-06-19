@@ -9,1335 +9,14 @@
 #include "core/fmt.h"
 #include "core/memory.h"
 #include "core/string.h"
+#include "core/path.h"
 
+#include "core/time.h"
 #include "core/macros.h"
 #include "core/constants.h"
+#include "core/math.h"
 
-#if defined(CORE_ARCH_X86)
-    #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-        #include "core/internal/sse.h" // IWYU pragma: keep
-    #endif
-#endif
-
-typedef enum FMTIdentifier {
-    FMT_IDENT_UNKNOWN,
-    FMT_IDENT_LITERAL_PAREN,
-    FMT_IDENT_BOOL,
-    FMT_IDENT_CHAR,
-    FMT_IDENT_CSTR,
-    FMT_IDENT_FLOAT,
-    FMT_IDENT_FLOAT32,
-    FMT_IDENT_FLOAT64,
-    FMT_IDENT_VECTOR_2,
-    FMT_IDENT_VECTOR_3,
-    FMT_IDENT_VECTOR_4,
-    FMT_IDENT_INT,
-    FMT_IDENT_INT8,
-    FMT_IDENT_INT16,
-    FMT_IDENT_INT32,
-    FMT_IDENT_INT64,
-    FMT_IDENT_INT_VECTOR_2,
-    FMT_IDENT_INT_VECTOR_3,
-    FMT_IDENT_INT_VECTOR_4,
-    FMT_IDENT_UINT,
-    FMT_IDENT_UINT8,
-    FMT_IDENT_UINT16,
-    FMT_IDENT_UINT32,
-    FMT_IDENT_UINT64,
-    FMT_IDENT_UINT_VECTOR_2,
-    FMT_IDENT_UINT_VECTOR_3,
-    FMT_IDENT_UINT_VECTOR_4,
-    FMT_IDENT_STRING_SLICE,
-    FMT_IDENT_PATH_SLICE,
-    FMT_IDENT_NULL,
-} FMTIdentifier;
-typedef enum {
-    FMT_FORMAT_NORMAL = 0,
-    FMT_FORMAT_BINARY = 128,
-    FMT_FORMAT_HEXADECIMAL_LOWER,
-    FMT_FORMAT_HEXADECIMAL_UPPER,
-    FMT_FORMAT_MEMORY,
-} FMTFormat;
-attr_internal FormatInteger ___internal_fmt_format_to_fmt_integer( FMTFormat format ) {
-    switch( format ) {
-        case FMT_FORMAT_NORMAL:            return FORMAT_INTEGER_DECIMAL;
-        case FMT_FORMAT_BINARY:            return FORMAT_INTEGER_BINARY;
-        case FMT_FORMAT_HEXADECIMAL_LOWER: return FORMAT_INTEGER_HEXADECIMAL_LOWER;
-        case FMT_FORMAT_HEXADECIMAL_UPPER: return FORMAT_INTEGER_HEXADECIMAL_UPPER;
-        default: unreachable();
-    }
-}
-typedef enum {
-    FMT_FORMAT_WIDTH_NORMAL,
-    FMT_FORMAT_WIDTH_FULL,
-    FMT_FORMAT_WIDTH_SEPARATOR
-} FMTFormatWidth;
-typedef enum {
-    FMT_FORMAT_CASE_UPPER  = 1,
-    FMT_FORMAT_CASE_NORMAL = 0,
-    FMT_FORMAT_CASE_LOWER  = -1,
-} FMTFormatCase;
-
-struct FMTIdentifierArguments {
-    u32 count; // 0 = no pointer, 1 = pointer, U32_MAX = pointer with count as arg
-    union {
-        FMTFormat format;
-        b32       is_binary;
-    };
-    FMTFormatWidth width;
-    union {
-        u32 precision;
-        u32 repeat_count;
-    };
-    union {
-        b32           zero_padding;
-        FMTFormatCase casing;
-    };
-    i64 padding;
-};
-union FMTInteger {
-    u8  u8;
-    u16 u16;
-    u32 u32;
-    u64 u64;
-    i8  i8;
-    i16 i16;
-    i32 i32;
-    i64 i64;
-};
-
-attr_internal
-usize ___internal_fmt_integer(
-    StreamFormatFN* write, void* target,
-    union FMTInteger integer, FormatInteger format,
-    b32 is_signed, u32 size, FMTFormatWidth width );
-
-attr_internal
-usize ___internal_fmt_float(
-    StreamFormatFN* write, void* target, f64 f,
-    u32 precision, FMTFormatWidth width );
-
-attr_internal b32 ___char_is_number( char c ) {
-    return c >= '0' && c <= '9';
-}
-attr_internal char ___char_to_upper( char c ) {
-    if( c >= 'a' && c <= 'z' ) {
-        return c - ('a' - 'A');
-    }
-    return c;
-}
-attr_internal char ___char_to_lower( char c ) {
-    if( c >= 'A' && c <= 'Z' ) {
-        return c + ('a' - 'A');
-    }
-    return c;
-}
-typedef enum {
-    FMT_STORAGE_BYTES,
-    FMT_STORAGE_KB   ,
-    FMT_STORAGE_MB   ,
-    FMT_STORAGE_GB   ,
-    FMT_STORAGE_TB   ,
-} FMTStorage;
-attr_unused
-attr_internal f64 ___determine_storage( f64 f, FMTStorage* out_storage ) {
-    f64 result = f;
-    *out_storage = FMT_STORAGE_BYTES;
-    if( result >= 1024.0 ) {
-        *out_storage = FMT_STORAGE_KB;
-        result /= 1024.0;
-        if( result >= 1024.0 ) {
-            *out_storage = FMT_STORAGE_MB;
-            result /= 1024.0;
-            if( result >= 1024.0 ) {
-                *out_storage = FMT_STORAGE_GB;
-                result /= 1024.0;
-                if( result >= 1024.0 ) {
-                    *out_storage = FMT_STORAGE_TB;
-                    result /= 1024.0;
-                }
-            }
-        }
-    }
-    return result;
-}
-
-attr_internal b32 ___collect_argument(
-    usize remaining, char* at,
-    usize* out_argument_len
-) {
-    usize argument_len = 0;
-    for( usize i = 0; i < remaining; ++i ) {
-        if( at[i] == ',' || at[i] == '}' ) {
-            *out_argument_len = argument_len;
-            return argument_len;
-        }
-        argument_len++;
-    }
-
-    return false;
-}
-
-#define _advance() do {\
-    *remaining = *remaining - 1;\
-    if( !(*remaining) ) {\
-        *in_at = at;\
-        return 0;\
-    }\
-    at++;\
-} while(0)
-
-#define _advance_by(count) do {\
-    if( count > *remaining ) {\
-        *in_at = at;\
-        return 0;\
-    }\
-    *remaining = *remaining - count;\
-    if( !(*remaining) ) {\
-        *in_at = at;\
-        return 0;\
-    }\
-    at += count;\
-} while(0)
-attr_internal FMTIdentifier ___determine_identifier(
-    usize* remaining, char** in_at
-) {
-    char* at = *in_at;
-
-    #define check_int( type, ptr_size )\
-    _advance();\
-    identifier = FMT_IDENT_##type;\
-    switch( *at ) {\
-        case '8': {\
-            _advance();\
-            identifier = FMT_IDENT_##type##8;\
-        } break;\
-        case '1': {\
-            _advance();\
-            if( *at == '6' ) {\
-                _advance();\
-                identifier = FMT_IDENT_##type##16;\
-            } else {\
-                identifier = FMT_IDENT_UNKNOWN;\
-            }\
-        } break;\
-        case '3': {\
-            _advance();\
-            if( *at == '2' ) {\
-                _advance();\
-                identifier = FMT_IDENT_##type##32;\
-            } else {\
-                identifier = FMT_IDENT_UNKNOWN;\
-            }\
-        } break;\
-        case '6': {\
-            _advance();\
-            if( *at == '4' ) {\
-                _advance();\
-                identifier = FMT_IDENT_##type##64;\
-            } else {\
-                identifier = FMT_IDENT_UNKNOWN;\
-            }\
-        } break;\
-        case 's': {\
-            _advance();\
-            b32 valid = false;\
-            if( *at == 'i' ) {\
-                _advance();\
-                if( *at == 'z' ) {\
-                    _advance();\
-                    if( *at == 'e' ) {\
-                        _advance();\
-                        valid = true;\
-                    }\
-                }\
-            }\
-            if( valid ) {\
-                identifier = FMT_IDENT_##type##ptr_size;\
-            } else {\
-                identifier = FMT_IDENT_UNKNOWN;\
-            }\
-        } break;\
-        case 'v': {\
-            _advance();\
-            switch( *at ) {\
-                case '2': {\
-                    _advance();\
-                    identifier = FMT_IDENT_##type##_VECTOR_2;\
-                } break;\
-                case '3': {\
-                    _advance();\
-                    identifier = FMT_IDENT_##type##_VECTOR_3;\
-                } break;\
-                case '4': {\
-                    _advance();\
-                    identifier = FMT_IDENT_##type##_VECTOR_4;\
-                } break;\
-            }\
-        } break;\
-    }\
-
-
-    FMTIdentifier identifier = FMT_IDENT_UNKNOWN;
-    switch( *at ) {
-        case '{': {
-            _advance();
-            *in_at = at;
-            return identifier = FMT_IDENT_LITERAL_PAREN;
-        } break;
-        case '0': {
-            _advance();
-            identifier = FMT_IDENT_NULL;
-        } break;
-        case 'c': {
-            _advance();
-            identifier = FMT_IDENT_CHAR;
-            if( *at == 'c' ) {
-                _advance();
-                identifier = FMT_IDENT_CSTR;
-            }
-        } break;
-        case 'b': {
-            _advance();
-            identifier = FMT_IDENT_BOOL;
-        } break;
-        case 'f': {
-            _advance();
-            identifier = FMT_IDENT_FLOAT;
-            switch( *at ) {
-                case '3': {
-                    _advance();
-                    if( *at == '2' ) {
-                        _advance();
-                        identifier = FMT_IDENT_FLOAT32;
-                    } else {
-                        identifier = FMT_IDENT_UNKNOWN;
-                    }
-                } break;
-                case '6': {
-                    _advance();
-                    if( *at == '4' ) {
-                        _advance();
-                        identifier = FMT_IDENT_FLOAT64;
-                    } else {
-                        identifier = FMT_IDENT_UNKNOWN;
-                    }
-                } break;
-            }
-        } break;
-        case 'v': {
-            _advance();
-            switch( *at ) {
-                case '2': {
-                    _advance();
-                    identifier = FMT_IDENT_VECTOR_2;
-                } break;
-                case '3': {
-                    _advance();
-                    identifier = FMT_IDENT_VECTOR_3;
-                } break;
-                case '4': {
-                    _advance();
-                    identifier = FMT_IDENT_VECTOR_4;
-                } break;
-                default: {
-                    identifier = FMT_IDENT_UNKNOWN;
-                } break;
-            }
-        } break;
-        case 'i': {
-#if defined(CORE_ARCH_64_BIT)
-            check_int( INT, 64 );
-#else
-            check_int( INT, 32 );
-#endif
-        } break;
-        case 'u': {
-#if defined(CORE_ARCH_64_BIT)
-            check_int( UINT, 64 );
-#else
-            check_int( UINT, 32 );
-#endif
-        } break;
-        case 's': {
-            _advance();
-            identifier = FMT_IDENT_STRING_SLICE;
-        } break;
-        case 'p': {
-            _advance();
-            identifier = FMT_IDENT_PATH_SLICE;
-        } break;
-    }
-
-    if( !(*at == ',' || *at == '}') ) {
-        identifier = FMT_IDENT_UNKNOWN;
-    }
-    *in_at = at;
-    return identifier;
-}
-attr_internal b32 ___process_arguments(
-    usize* remaining, char** in_at,
-    FMTIdentifier identifier,
-    struct FMTIdentifierArguments* out_args
-) {
-    struct FMTIdentifierArguments args;
-    memory_zero( &args, sizeof(args) );
-    char* at = *in_at;
-
-    #define failed()\
-        *in_at = at;\
-        return false
-
-    switch( identifier ) {
-        case FMT_IDENT_FLOAT:
-        case FMT_IDENT_FLOAT32:
-        case FMT_IDENT_FLOAT64:
-        case FMT_IDENT_VECTOR_2:
-        case FMT_IDENT_VECTOR_3:
-        case FMT_IDENT_VECTOR_4: {
-            args.precision = 6;
-        } break;
-        default: break;
-    }
-
-    while( *at == ',' ) {
-        _advance();
-
-        switch( *at ) {
-            // binary
-            case 'b': {
-                switch( identifier ) {
-                    case FMT_IDENT_BOOL: {
-                        args.is_binary = true;
-                    } break;
-                    case FMT_IDENT_CHAR:
-                    case FMT_IDENT_CSTR:
-                    case FMT_IDENT_FLOAT:
-                    case FMT_IDENT_FLOAT32:
-                    case FMT_IDENT_FLOAT64:
-                    case FMT_IDENT_VECTOR_2:
-                    case FMT_IDENT_VECTOR_3:
-                    case FMT_IDENT_VECTOR_4:
-                    case FMT_IDENT_STRING_SLICE: {
-                        failed();
-                    } break;
-                    default: {
-                        args.format = FMT_FORMAT_BINARY;
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // hex upper
-            case 'X': {
-                switch( identifier ) {
-                    case FMT_IDENT_INT:
-                    case FMT_IDENT_INT8:
-                    case FMT_IDENT_INT16:
-                    case FMT_IDENT_INT32:
-                    case FMT_IDENT_INT64:
-                    case FMT_IDENT_INT_VECTOR_2:
-                    case FMT_IDENT_INT_VECTOR_3:
-                    case FMT_IDENT_INT_VECTOR_4:
-                    case FMT_IDENT_UINT:
-                    case FMT_IDENT_UINT8:
-                    case FMT_IDENT_UINT16:
-                    case FMT_IDENT_UINT32:
-                    case FMT_IDENT_UINT64:
-                    case FMT_IDENT_UINT_VECTOR_2:
-                    case FMT_IDENT_UINT_VECTOR_3:
-                    case FMT_IDENT_UINT_VECTOR_4: {
-                        args.format = FMT_FORMAT_HEXADECIMAL_UPPER;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // hex lower
-            case 'x': {
-                switch( identifier ) {
-                    case FMT_IDENT_INT:
-                    case FMT_IDENT_INT8:
-                    case FMT_IDENT_INT16:
-                    case FMT_IDENT_INT32:
-                    case FMT_IDENT_INT64:
-                    case FMT_IDENT_INT_VECTOR_2:
-                    case FMT_IDENT_INT_VECTOR_3:
-                    case FMT_IDENT_INT_VECTOR_4:
-                    case FMT_IDENT_UINT:
-                    case FMT_IDENT_UINT8:
-                    case FMT_IDENT_UINT16:
-                    case FMT_IDENT_UINT32:
-                    case FMT_IDENT_UINT64:
-                    case FMT_IDENT_UINT_VECTOR_2:
-                    case FMT_IDENT_UINT_VECTOR_3:
-                    case FMT_IDENT_UINT_VECTOR_4: {
-                        args.format = FMT_FORMAT_HEXADECIMAL_LOWER;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // full width
-            case 'f': {
-                switch( identifier ) {
-                    case FMT_IDENT_INT:
-                    case FMT_IDENT_INT8:
-                    case FMT_IDENT_INT16:
-                    case FMT_IDENT_INT32:
-                    case FMT_IDENT_INT64:
-                    case FMT_IDENT_INT_VECTOR_2:
-                    case FMT_IDENT_INT_VECTOR_3:
-                    case FMT_IDENT_INT_VECTOR_4:
-                    case FMT_IDENT_UINT:
-                    case FMT_IDENT_UINT8:
-                    case FMT_IDENT_UINT16:
-                    case FMT_IDENT_UINT32:
-                    case FMT_IDENT_UINT64:
-                    case FMT_IDENT_UINT_VECTOR_2:
-                    case FMT_IDENT_UINT_VECTOR_3:
-                    case FMT_IDENT_UINT_VECTOR_4: {
-                        args.width = FMT_FORMAT_WIDTH_FULL;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // with separators
-            case 's': {
-                switch( identifier ) {
-                    case FMT_IDENT_FLOAT:
-                    case FMT_IDENT_FLOAT32:
-                    case FMT_IDENT_FLOAT64:
-                    case FMT_IDENT_VECTOR_2:
-                    case FMT_IDENT_VECTOR_3:
-                    case FMT_IDENT_VECTOR_4:
-                    case FMT_IDENT_INT:
-                    case FMT_IDENT_INT8:
-                    case FMT_IDENT_INT16:
-                    case FMT_IDENT_INT32:
-                    case FMT_IDENT_INT64:
-                    case FMT_IDENT_INT_VECTOR_2:
-                    case FMT_IDENT_INT_VECTOR_3:
-                    case FMT_IDENT_INT_VECTOR_4:
-                    case FMT_IDENT_UINT:
-                    case FMT_IDENT_UINT8:
-                    case FMT_IDENT_UINT16:
-                    case FMT_IDENT_UINT32:
-                    case FMT_IDENT_UINT64:
-                    case FMT_IDENT_UINT_VECTOR_2:
-                    case FMT_IDENT_UINT_VECTOR_3:
-                    case FMT_IDENT_UINT_VECTOR_4: {
-                        args.width = FMT_FORMAT_WIDTH_SEPARATOR;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // upper case
-            case 'u': {
-                switch( identifier ) {
-                    case FMT_IDENT_CHAR:
-                    case FMT_IDENT_CSTR:
-                    case FMT_IDENT_STRING_SLICE: {
-                        args.casing = FMT_FORMAT_CASE_UPPER;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // lower case
-            case 'l': {
-                switch( identifier ) {
-                    case FMT_IDENT_CHAR:
-                    case FMT_IDENT_CSTR:
-                    case FMT_IDENT_STRING_SLICE: {
-                        args.casing = FMT_FORMAT_CASE_LOWER;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-            // repeat count
-            case 'r': {
-                if( identifier != FMT_IDENT_CHAR ) {
-                    failed();
-                }
-                _advance();
-                if( ___char_is_number( *at ) ) {
-                    usize argument_len = 0;
-                    if( ___collect_argument(
-                        *remaining, at, &argument_len
-                    ) ) {
-                        u64 parsed_int = 0;
-                        String at_arg;
-                        at_arg.cc  = at;
-                        at_arg.len = argument_len;
-                        if( !string_parse_uint( at_arg, &parsed_int ) ) {
-                            failed();
-                        }
-                        args.repeat_count = parsed_int;
-                        _advance_by( argument_len );
-                    } else {
-                        failed();
-                    }
-                } else if( *at == '_' ) {
-                    args.repeat_count = U32_MAX;
-                    _advance();
-                } else {
-                    args.repeat_count = 1;
-                }
-                continue;
-            } break;
-            // count
-            case '*': {
-                _advance();
-                if( ___char_is_number( *at ) ) {
-                    usize argument_len = 0;
-                    if( ___collect_argument(
-                        *remaining, at, &argument_len
-                    ) ) {
-                        u64 parsed_int = 0;
-                        String at_arg;
-                        at_arg.cc  = at;
-                        at_arg.len = argument_len;
-                        if( !string_parse_uint( at_arg, &parsed_int ) ) {
-                            failed();
-                        }
-                        args.count = parsed_int;
-                        _advance_by( argument_len );
-                    } else {
-                        failed();
-                    }
-                } else if( *at == '_' ) {
-                    args.count = U32_MAX;
-                    switch( identifier ) {
-                        case FMT_IDENT_STRING_SLICE: {
-                            failed();
-                        } break;
-                        default: break;
-                    }
-                    _advance();
-                } else {
-                    args.count = 1;
-                }
-
-                continue;
-            } break;
-            // memory formatting
-            case 'm': {
-                switch( identifier ) {
-                    case FMT_IDENT_FLOAT:
-                    case FMT_IDENT_UINT:
-                    case FMT_IDENT_UINT8:
-                    case FMT_IDENT_UINT16:
-                    case FMT_IDENT_UINT32:
-                    case FMT_IDENT_UINT64: {
-                        args.format = FMT_FORMAT_MEMORY;
-                    } break;
-                    default: {
-                        failed();
-                    } break;
-                }
-                _advance();
-                continue;
-            } break;
-        }
-
-        // padding
-        usize argument_len = 0;
-        if( ___collect_argument( *remaining, at, &argument_len ) ) {
-            usize dot_position = 0;
-            String argument;
-            memory_zero( &argument, sizeof(argument) );
-            argument.c   = at;
-            argument.len = argument_len;
-
-            if( string_find( argument, '.', &dot_position ) ) {
-                switch( identifier ) {
-                    case FMT_IDENT_FLOAT:
-                    case FMT_IDENT_FLOAT32:
-                    case FMT_IDENT_FLOAT64:
-                    case FMT_IDENT_VECTOR_2:
-                    case FMT_IDENT_VECTOR_3:
-                    case FMT_IDENT_VECTOR_4: break;
-                    default: failed();
-                }
-
-                String left_side, right_side;
-                left_side.cc  = at;
-                left_side.len = dot_position;
-
-                right_side.cc  = at + left_side.len + 1;
-                right_side.len = argument_len - dot_position - 1;
-
-                if( left_side.len ) {
-                    if( !string_parse_int( left_side, &args.padding ) ) {
-                        failed();
-                    }
-                    if( at[0] == '0' ) {
-                        args.zero_padding = true;
-                    }
-                }
-
-                u64 precision = 0;
-                if( !string_parse_uint( right_side, &precision ) ) {
-                    failed();
-                }
-                args.precision = precision;
-            } else {
-                String at_arg;
-                at_arg.cc  = at;
-                at_arg.len = argument_len;
-                if( !string_parse_int( at_arg, &args.padding ) ) {
-                    failed();
-                }
-                switch( identifier ) {
-                    case FMT_IDENT_CHAR:
-                    case FMT_IDENT_CSTR:
-                    case FMT_IDENT_PATH_SLICE:
-                    case FMT_IDENT_STRING_SLICE: break;
-                    default: {
-                        if( at[0] == '0' ) {
-                            args.zero_padding = true;
-                        }
-                    } break;
-                }
-            }
-            _advance_by( argument_len );
-        } else {
-            failed();
-        }
-    }
-
-    if( args.format != FMT_FORMAT_NORMAL && args.zero_padding ) {
-        args.zero_padding = false;
-    }
-
-    if( args.format == FMT_FORMAT_MEMORY && args.count > 1 ) {
-        failed();
-    }
-
-    if( identifier == FMT_IDENT_CHAR ) {
-        if( args.repeat_count && args.count ) {
-            failed();
-        }
-    }
-
-    *out_args = args;
-    *in_at    = at;
-    return true;
-}
-
-#define FMT_INTERMEDIATE_BUFFER_SIZE (128)
-struct FMTIntermediate { char buffer[FMT_INTERMEDIATE_BUFFER_SIZE]; usize len; };
-
-usize ___write_intermediate( void* target, usize len, const void* v ) {
-    char* string = (char*)v;
-    struct FMTIntermediate* intermediate = target;
-
-    usize result = 0;
-    for( usize i = 0; i < len; ++i ) {
-        if( intermediate->len == FMT_INTERMEDIATE_BUFFER_SIZE ) {
-            result++;
-            continue;
-        }
-        intermediate->buffer[intermediate->len++] = string[i];
-    }
-    return result;
-}
-
-attr_core_api usize fmt_text_va(
-    StreamFormatFN* write, void* target,
-    usize format_len, const char* format, va_list va
-) {
-    struct FMTIntermediate intermediate;
-    memory_zero( &intermediate, sizeof(intermediate) );
-
-    #define intermediate_push( character )\
-        assert( intermediate_len + 1 <= FMT_INTERMEDIATE_BUFFER_SIZE );\
-        intermediate_buffer[intermediate_len++] = character
-
-    usize remaining = format_len;
-    char* at = (char*)format;
-
-    usize result = 0;
-
-    #define write_string( len, string )\
-        result += write( target, len, string )
-    #define write_string_literal( literal )\
-        result += write( target, sizeof(literal)-1, literal )
-    #define write_char( character ) do {\
-        char tmp = character;\
-        result += write( target, 1, &tmp );\
-    } while(0)
-    #define write_string_padded( c, len, string )\
-        if( args.padding > 0 ) {\
-            apply_padding( c, args.padding, len );\
-        }\
-        write_string( len, string );\
-        if( args.padding < 0 ) {\
-            apply_padding( c, args.padding, len );\
-        }\
-
-    #define advance() do {\
-        remaining--;\
-        if( !remaining ) {\
-            goto fmt_end;\
-        }\
-        at++;\
-    } while(0)
-    #define advance_by( number ) do {\
-        if( number > remaining ) {\
-            goto fmt_end;\
-        }\
-        remaining -= number;\
-        if( !remaining ) {\
-            goto fmt_end;\
-        }\
-        at += number;\
-    } while(0)
-    #define check_end() do {\
-        if( *at != '}' ) {\
-            goto fmt_end;\
-        }\
-    } while(0)
-    #define apply_padding( pad_char, padding, arglen ) do {\
-        if( padding < 0 ) { padding = -padding; }\
-        isize pad_count = padding - arglen;\
-        for( isize i = 0; i < pad_count; ++i ) {\
-            write_char( pad_char );\
-        }\
-        padding = 0;\
-    } while(0)
-
-    while( remaining ) {
-        usize brace_index = 0;
-        String remaining_slice;
-        memory_zero( &remaining_slice, sizeof(remaining_slice) );
-        remaining_slice.c   = at;
-        remaining_slice.len = remaining;
-        if( !string_find( remaining_slice, '{', &brace_index ) ) {
-            write_string( remaining, at );
-            break;
-        }
-        assert( remaining >= brace_index );
-
-        write_string( brace_index, at );
-
-        at        += brace_index;
-        remaining -= brace_index;
-
-        if( !remaining ) {
-            break;
-        }
-
-        while( *at && *at != '}' ) {
-            intermediate.len = 0;
-
-            advance();
-            FMTIdentifier identifier =
-                ___determine_identifier( &remaining, &at );
-            if( identifier == FMT_IDENT_LITERAL_PAREN ) {
-                write_char( '{' );
-                goto while_break;
-            }
-
-            struct FMTIdentifierArguments args;
-            memory_zero( &args, sizeof(args) );
-            if( !___process_arguments(
-                &remaining, &at, identifier, &args
-            ) ) {
-                goto fmt_end;
-            }
-
-            #define ___write_int( prefix, is_signed, size, arg_type ) do {\
-                prefix##size value    = 0;\
-                prefix##size * values = &value;\
-                if( args.count == U32_MAX ) {\
-                    args.count = va_arg( va, usize );\
-                }\
-                if( args.count ) {\
-                    values = va_arg( va, void* );\
-                } else {\
-                    value = va_arg( va, arg_type );\
-                }\
-                FormatInteger format =\
-                    ___internal_fmt_format_to_fmt_integer( args.format );\
-                char padding_char = args.zero_padding ? '0' : ' ';\
-                if( args.count > 1 ) {\
-                    write_string_literal( "{ " );\
-                }\
-                usize loop_count = args.count ? args.count : 1;\
-                for( usize i = 0; i < loop_count; ++i ) {\
-                    union FMTInteger integer;\
-                    memory_zero( &integer, sizeof(integer) );\
-                    integer.prefix##size = values[i];\
-                    ___internal_fmt_integer(\
-                        ___write_intermediate, &intermediate,\
-                        integer, format,\
-                        is_signed, size, args.width );\
-                    usize padding = args.padding;\
-                    write_string_padded(\
-                        padding_char, intermediate.len, intermediate.buffer );\
-                    args.padding     = padding;\
-                    intermediate.len = 0;\
-                    if( i + 1 < loop_count ) {\
-                        write_string_literal( ", " );\
-                    }\
-                }\
-                if( args.count > 1 ) {\
-                    write_string_literal( " }" );\
-                }\
-            } while(0)
-
-            #define ___write_int_vec( prefix, is_signed, size, component_count ) do {\
-                struct FMT##prefix##size##_##component_count\
-                    { prefix##size v[component_count]; };\
-                struct FMT##prefix##size##_##component_count  value;\
-                memory_zero( &value, sizeof(value) );\
-                struct FMT##prefix##size##_##component_count* value_ptr = &value;\
-                if( args.count ) {\
-                    if( args.count == U32_MAX ) {\
-                        args.count = va_arg( va, int );\
-                    }\
-                    value_ptr = va_arg( va, void* );\
-                } else {\
-                    value = va_arg(\
-                        va, struct FMT##prefix##size##_##component_count );\
-                }\
-                FormatInteger format =\
-                    ___internal_fmt_format_to_fmt_integer( args.format );\
-                char padding_char = args.zero_padding ? '0' : ' ';\
-                if( args.count > 1 ) {\
-                    write_string_literal( "{ " );\
-                }\
-                usize loop_count = args.count ? args.count : 1;\
-                for( usize i = 0; i < loop_count; ++i ) {\
-                    write_string_literal( "{ " );\
-                    union FMTInteger integer;\
-                    memory_zero( &integer, sizeof(integer) );\
-                    for( usize j = 0; j < component_count; ++j ) {\
-                        integer.prefix##size = (value_ptr + i)->v[j];\
-                        ___internal_fmt_integer(\
-                            ___write_intermediate, &intermediate, integer,\
-                            format, is_signed, size, args.width );\
-                        usize padding = args.padding;\
-                        write_string_padded(\
-                            padding_char, intermediate.len, intermediate.buffer );\
-                        args.padding = padding;\
-                        intermediate.len = 0;\
-                        if( j + 1 < component_count ) {\
-                            write_string_literal( ", " );\
-                        }\
-                    }\
-                    write_string_literal( " }" );\
-                    if( i + 1 < loop_count ) {\
-                        write_string_literal( ", " );\
-                    }\
-                }\
-                if( args.count > 1 ) {\
-                    write_string_literal( " }" );\
-                }\
-            } while(0)
-
-            #define ___write_float_vec( component_count ) do {\
-                struct FMTv##component_count { f32 v[component_count]; };\
-                struct FMTv##component_count  value;\
-                memory_zero( &value, sizeof(value) );\
-                struct FMTv##component_count* values = &value;\
-                if( args.count ) {\
-                    if( args.count == U32_MAX ) {\
-                        args.count = va_arg( va, int );\
-                    }\
-                    values = va_arg( va, void* );\
-                } else {\
-                    value = va_arg( va, struct FMTv##component_count );\
-                }\
-                usize loop_count = args.count ? args.count : 1;\
-                char padding_char = args.zero_padding ? '0' : ' ';\
-                if( args.count > 1 ) {\
-                    write_string_literal( "{ " );\
-                }\
-                for( usize i = 0; i < loop_count; ++i ) {\
-                    struct FMTv##component_count current = values[i];\
-                    write_string_literal( "{ " );\
-                    for( usize j = 0; j < component_count; ++j ) {\
-                        ___internal_fmt_float(\
-                            ___write_intermediate,\
-                            &intermediate,\
-                            current.v[j],\
-                            args.precision, args.width );\
-                        usize padding = args.padding;\
-                        write_string_padded(\
-                            padding_char, intermediate.len, intermediate.buffer );\
-                        args.padding = padding;\
-                        intermediate.len = 0;\
-                        if( j + 1 < component_count ) {\
-                            write_string_literal( ", " );\
-                        }\
-                    }\
-                    write_string_literal( " }" );\
-                    if( i + 1 < loop_count ) {\
-                        write_string_literal( ", " );\
-                    }\
-                }\
-                if( args.count > 1 ) {\
-                    write_string_literal( " }" );\
-                }\
-            } while(0)
-
-            switch( identifier ) {
-                case FMT_IDENT_NULL: {
-                    write_char( '\0' );
-                } break;
-                case FMT_IDENT_BOOL: {
-                    b32  local_value = false;
-                    b32* value       = &local_value;
-                    if( args.count ) {
-                        if( args.count == U32_MAX ) {
-                            args.count = va_arg( va, int );
-                        }
-                        value = va_arg( va, void* );
-                    } else {
-                        local_value = va_arg( va, int ) != 0;
-                    }
-
-                    if( args.count > 1 ) {
-                        write_string_literal( "{ " );
-                    }
-
-                    usize loop_count = args.count ? args.count : 1;
-                    for( usize i = 0; i < loop_count; ++i ) {
-                        b32 current = value[i];
-
-                        usize len = args.is_binary ? 1 :
-                            ( current ? sizeof("true"): sizeof("false") ) - 1;
-                        char* string = args.is_binary ?
-                            ( current == true ? "1" : "0" ) :
-                            ( current == true ? "true" : "false" );
-
-                        i64 padding = args.padding;
-                        write_string_padded( ' ', len, string );
-
-                        if( i + 1 < loop_count ) {
-                            write_string_literal( ", " );
-                            args.padding = padding;
-                        }
-                    }
-
-                    if( args.count > 1 ) {
-                        write_string_literal( " }" );
-                    }
-                } break;
-
-                case FMT_IDENT_CHAR: {
-                    char  local_value = 0;
-                    char* value = &local_value;
-                    if( args.count ) {
-                        if( args.count == U32_MAX ) {
-                            args.count = va_arg( va, u32 );
-                        }
-                        value = va_arg( va, void* );
-                    } else {
-                        if( args.repeat_count == U32_MAX ) {
-                            args.repeat_count = va_arg( va, u32 );
-                            if( !args.repeat_count ) {
-                                args.repeat_count = 1;
-                            }
-                        }
-                        local_value = va_arg( va, int );
-                    }
-
-                    if( args.repeat_count ) {
-                        usize len = args.repeat_count + 1;
-                        if( args.padding > 0 ) {
-                            apply_padding( ' ', args.padding, len );
-                        }
-
-                        switch( args.casing ) {
-                            case FMT_FORMAT_CASE_UPPER: {
-                                local_value = ___char_to_upper( local_value );
-                            } break;
-                            case FMT_FORMAT_CASE_LOWER: {
-                                local_value = ___char_to_lower( local_value );
-                            } break;
-                            default: break;
-                        }
-
-                        for( usize i = 0; i < args.repeat_count; ++i ) {
-                            write_char( local_value );
-                        }
-                        if( args.padding < 0 ) {
-                            apply_padding( ' ', args.padding, len );
-                        }
-                    } else {
-                        if( args.count > 1 ) {
-                            write_string_literal( "{ " );
-                        }
-
-                        usize loop_count = args.count ? args.count : 1;
-                        for( usize i = 0; i < loop_count; ++i ) {
-                            char current = value[i];
-                            switch( args.casing ) {
-                                case FMT_FORMAT_CASE_UPPER: {
-                                    current = ___char_to_upper( current );
-                                } break;
-                                case FMT_FORMAT_CASE_LOWER: {
-                                    current = ___char_to_lower( current );
-                                } break;
-                                default: break;
-                            }
-                            i64 padding = args.padding;
-                            write_string_padded( ' ', 1, &current );
-
-                            if( i + 1 < loop_count ) {
-                                write_string_literal( ", " );
-                                args.padding = padding;
-                            }
-                        }
-
-                        if( args.count > 1 ) {
-                            write_string_literal( " }" );
-                        }
-                    }
-                } break;
-
-                case FMT_IDENT_PATH_SLICE:
-                case FMT_IDENT_STRING_SLICE:
-                case FMT_IDENT_CSTR: {
-                    String output;
-                    memory_zero( &output, sizeof(output) );
-
-                    if( identifier == FMT_IDENT_CSTR ) {
-                        if( args.count == U32_MAX ) {
-                            args.count = va_arg( va, int );
-                        }
-                        output.cc = (const char*)va_arg( va, void* );
-                        if( !output.cc ) {
-                            output.cc = "";
-                        }
-                        output.len = cstr_len( output.cc );
-                        if( args.count && args.count < output.len ) {
-                            output.len = args.count;
-                        }
-                    } else {
-                        output = va_arg( va, String );
-
-                        if( args.count ) {
-                            if( args.count < output.len ) {
-                                output.len = args.count;
-                            }
-                        }
-                    }
-
-                    if( !args.casing ) {
-                        write_string_padded( ' ', output.len, output.c );
-                        break;
-                    }
-
-                    if( args.padding < 0 ) {
-                        apply_padding( ' ', args.padding, output.len );
-                    }
-                    switch( args.casing ) {
-                        case FMT_FORMAT_CASE_UPPER: {
-                            string_stream_to_upper( write, target, output );
-                        } break;
-                        case FMT_FORMAT_CASE_LOWER: {
-                            string_stream_to_lower( write, target, output );
-                        } break;
-                        default: break;
-                    }
-                    if( args.padding > 0 ) {
-                        apply_padding( ' ', args.padding, output.len );
-                    }
-                } break;
-
-                case FMT_IDENT_INT8: {
-                    ___write_int( i, true, 8, i32 );
-                } break;
-                case FMT_IDENT_INT16: {
-                    ___write_int( i, true, 16, i32 );
-                } break;
-                case FMT_IDENT_INT32:
-                case FMT_IDENT_INT: {
-                    ___write_int( i, true, 32, i32 );
-                } break;
-                case FMT_IDENT_INT64: {
-                    ___write_int( i, true, 64, i64 );
-                } break;
-
-                case FMT_IDENT_UINT8: {
-                    ___write_int( u, false, 8, u32 );
-                } break;
-                case FMT_IDENT_UINT16: {
-                    ___write_int( u, false, 16, u32 );
-                } break;
-                case FMT_IDENT_UINT32:
-                case FMT_IDENT_UINT: {
-                    ___write_int( u, false, 32, u32 );
-                } break;
-                case FMT_IDENT_UINT64: {
-                    ___write_int( u, false, 64, u64 );
-                } break;
-
-                case FMT_IDENT_INT_VECTOR_2: {
-                    ___write_int_vec( i, true, 32, 2 );
-                } break;
-                case FMT_IDENT_INT_VECTOR_3: {
-                    ___write_int_vec( i, true, 32, 3 );
-                } break;
-                case FMT_IDENT_INT_VECTOR_4: {
-                    ___write_int_vec( i, true, 32, 4 );
-                } break;
-
-                case FMT_IDENT_UINT_VECTOR_2: {
-                    ___write_int_vec( u, false, 32, 2 );
-                } break;
-                case FMT_IDENT_UINT_VECTOR_3: {
-                    ___write_int_vec( u, false, 32, 3 );
-                } break;
-                case FMT_IDENT_UINT_VECTOR_4: {
-                    ___write_int_vec( u, false, 32, 4 );
-                } break;
-
-                case FMT_IDENT_FLOAT64:
-                case FMT_IDENT_FLOAT32:
-                case FMT_IDENT_FLOAT: {
-                    f64   value  = 0.0;
-                    void* values = &value;
-                    usize stride = sizeof(f32);
-                    if( identifier == FMT_IDENT_FLOAT64 ) {
-                        stride = sizeof(f64);
-                    }
-
-                    FMTStorage storage = 0;
-
-                    if( args.count ) {
-                        if( args.count == U32_MAX ) {
-                            args.count = va_arg( va, int );
-                        }
-                        values = va_arg( va, void* );
-                    } else {
-                        value = va_arg( va, f64 );
-
-                        if( args.format == FMT_FORMAT_MEMORY ) {
-                            value = ___determine_storage( value, &storage );
-                        }
-                    }
-
-                    if( args.count > 1 ) {
-                        write_string_literal( "{ " );
-                    }
-
-                    usize loop_count = args.count ? args.count : 1;
-                    char padding_char = args.zero_padding ? '0' : ' ';
-
-                    for( usize i = 0; i < loop_count; ++i ) {
-                        void* ptr = ((u8*)values + ( i * stride ));
-                        f64 current;
-                        if( identifier == FMT_IDENT_FLOAT64 ) {
-                            current = *(f64*)ptr;
-                        } else {
-                            if( args.count ) {
-                                current = *(f32*)ptr;
-                            } else {
-                                current = *(f64*)ptr;
-                            }
-                        }
-
-                        ___internal_fmt_float(
-                            ___write_intermediate,
-                            &intermediate, current, args.precision, args.width );
-                        usize padding = args.padding;
-
-                        if( args.format == FMT_FORMAT_MEMORY ) {
-                            usize unit_len = sizeof( " B" ) - 1;
-                            char* unit     = " B";
-                            switch( storage ) {
-                                case FMT_STORAGE_BYTES: break;
-                                case FMT_STORAGE_KB: {
-                                    unit_len = sizeof( " KB" ) - 1;
-                                    unit     = " KB";
-                                } break;
-                                case FMT_STORAGE_MB: {
-                                    unit_len = sizeof( " MB" ) - 1;
-                                    unit     = " MB";
-                                } break;
-                                case FMT_STORAGE_GB: {
-                                    unit_len = sizeof( " GB" ) - 1;
-                                    unit     = " GB";
-                                } break;
-                                case FMT_STORAGE_TB: {
-                                    unit_len = sizeof( " TB" ) - 1;
-                                    unit     = " TB";
-                                } break;
-                            }
-                            ___write_intermediate( &intermediate, unit_len, unit );
-                        }
-
-                        write_string_padded(
-                            padding_char, intermediate.len, intermediate.buffer );
-                        args.padding = padding;
-                        intermediate.len = 0;
-
-                        if( i + 1 < loop_count ) {
-                            write_string_literal( ", " );
-                        }
-                    }
-
-                    if( args.count > 1 ) {
-                        write_string_literal( " }" );
-                    }
-                } break;
-
-                case FMT_IDENT_VECTOR_2: {
-                    ___write_float_vec( 2 );
-                } break;
-                case FMT_IDENT_VECTOR_3: {
-                    ___write_float_vec( 3 );
-                } break;
-                case FMT_IDENT_VECTOR_4: {
-                    ___write_float_vec( 4 );
-                } break;
-
-                default: panic();
-            }
-
-            // if there is no closing brace,
-            // format string is invalid and formatting should
-            // be aborted.
-            check_end();
-        }
-        // skip over closing brace.
-        advance();
-    while_break:
-        continue;
-    }
-fmt_end:
-
-    return result;
-}
-
-attr_global char FMT_DIGITS_BINARY[2] = { '0', '1' };
+attr_global char FMT_DIGITS_BINARY[2]   = { '0', '1' };
 attr_global char FMT_DIGITS_DECIMAL[10] = {
     '0', '1', '2',
     '3', '4', '5',
@@ -1360,331 +39,1566 @@ attr_global char FMT_DIGITS_HEXADECIMAL_LOWER[16] = {
     'c', 'd', 'e',
     'f'
 };
-#define FMT_BASE_BINARY      (2)
-#define FMT_BASE_DECIMAL     (10)
-#define FMT_BASE_HEXADECIMAL (16)
+#define BASE_BINARY      (2)
+#define BASE_DECIMAL     (10)
+#define BASE_HEXADECIMAL (16)
+#define NUMBER_FORMAT_BUFFER_SIZE (128)
 
-#define ___fmt_push( character ) do {\
-    if( !buffer || (len + 1 >= capacity) ) {\
-        result++;\
-    } else {\
-        buffer[len++] = character;\
-    }\
-} while(0)
+union FmtValue {
+    const void*  ptr;
+    TimeSplit    ts;
+    b32          b32;
+    int          i;
+    unsigned int u;
+    u8           u8;
+    u16          u16;
+    u32          u32;
+    u64          u64;
+    i8           i8;
+    i16          i16;
+    i32          i32;
+    i64          i64;
+    isize        isize;
+    usize        usize;
+    String       s;
+    Path         p;
+    const char*  cc;
+    vec2         v2;
+    vec3         v3;
+    vec4         v4;
+    c_utf32       c;
+    f32           f;
+    f32         f32;
+    f64         f64;
+};
 
-attr_internal
-b32 ___is_nan64( f64 x ) {
-    u64 bitpattern = rcast( u64, &x );
+enum FmtIntWidth {
+    FMT_INT_WIDTH_NORMAL,
+    FMT_INT_WIDTH_SEPARATE,
+    FMT_INT_WIDTH_FULL,
+};
 
-    u64 exp = bitpattern & F64_EXPONENT_MASK;
-    u64 man = bitpattern & F64_MANTISSA_MASK;
-
-    return exp == F64_EXPONENT_MASK && man != 0;
-}
-attr_internal
-usize ___internal_fmt_float(
-    StreamFormatFN* write, void* target, f64 f,
-    u32 precision, FMTFormatWidth width
+attr_internal usize stream_repeat(
+    StreamBytesFN* stream, void* target, u32 n, char c
 ) {
-    // TODO(alicia): try to implement Grisu3 or some equivalent algorithm
-    unused(width);
-    #define FMT_FLOAT_MAX_PRECISION (12)
-    u32 precision_left = precision;
-    if( precision_left > FMT_FLOAT_MAX_PRECISION ) {
-        precision_left = FMT_FLOAT_MAX_PRECISION;
+    usize res = 0;
+    for( u32 i = 0; i < n; ++i ) {
+        res += stream( target, 1, &c );
+    }
+    return res;
+}
+attr_internal usize stream_padded(
+    StreamBytesFN* stream, void* target,
+    int padding, char padding_c, usize len, const char* message
+) {
+    b32 right_pad = padding < 0;
+    u32 upadding  = absolute( padding );
+    if( len > upadding ) {
+        upadding = 0;
+    } else {
+        upadding -= len;
     }
 
-    #define FMT_FLOAT_BUFFER_SIZE (128)
-    usize index = FMT_FLOAT_BUFFER_SIZE - precision_left;
-    char  buffer[FMT_FLOAT_BUFFER_SIZE];
-    memory_zero( buffer, FMT_FLOAT_BUFFER_SIZE );
+    usize res = 0;
 
-    usize precision_index = index;
-
-    #define ___float_push( c )\
-        assert( index );\
-        buffer[--index] = c
-    #define ___float_push_fractional( c )\
-        buffer[precision_index++] = c
-
-    #define ___float_write()\
-        write( target, FMT_FLOAT_BUFFER_SIZE - index, buffer + index )
-
-    if( ___is_nan64( f ) ) {
-        return write( target, sizeof("NaN") - 1, "NaN" );
-    } else if( f == F64_POS_INFINITY ) {
-        return write( target, sizeof("INF") - 1, "INF" );
-    } else if( f == F64_NEG_INFINITY ) {
-        return write( target, sizeof("-INF") - 1, "-INF" );
+    if( right_pad ) {
+        res += stream( target, len, message );
+        res += stream_repeat( stream, target, upadding, padding_c );
+    } else {
+        res += stream_repeat( stream, target, upadding, padding_c );
+        res += stream( target, len, message );
     }
 
-    f64 f_abs = f;
-    if( f < 0 ) {
-        f_abs = -f;
+    return res;
+}
+
+attr_core_api usize stream_fmt_bool(
+    StreamBytesFN* stream, void* target,
+    int padding, u32 count, const b32* booleans,
+    struct BoolFormatArguments* args
+) {
+    if( !count ) {
+        return 0;
     }
 
-    u64   base   = 10;
-    char* digits = FMT_DIGITS_DECIMAL;
+    usize res = 0;
+    if( count > 1 ) {
+        res += stream( target, 2, "{ " );
+    }
 
-    u64 whole_part = (u64)f_abs;
-    f64 fractional = f_abs - (f64)whole_part;
+    for( u32 i = 0; i < count; ++i ) {
+        String message = args->binary ?
+            ( booleans[i] ? string_text( "1" ) : string_text( "0" ) ) :
+            ( booleans[i] ? string_text( "true" ) : string_text( "false" ) );
 
-    if( precision_left ) {
-        fractional *= 10.0;
-        u64 fractional_digit = (u64)fractional;
-        while( precision_left ) {
-            usize digit_index = fractional_digit % base;
-            ___float_push_fractional( digits[digit_index] );
-            fractional *= 10.0;
-            fractional_digit = (u64)fractional;
-            precision_left--;
+        res += stream_padded(
+            stream, target, padding, ' ', message.len, message.cc );
+
+        if( i + 1 != count ) {
+            res += stream( target, 2, ", " );
         }
-        ___float_push( '.' );
     }
 
-    usize whole_parts_written = 0;
-    if( !whole_part ) {
-        ___float_push( digits[0] );
-    } else while( whole_part ) {
-        usize digit_index = whole_part % base;
-        if( width == FMT_FORMAT_WIDTH_SEPARATOR ) {
-            if( whole_parts_written && !(whole_parts_written % 3) ) {
-                ___float_push( ',' );
+    if( count > 1 ) {
+        res += stream( target, 2, " }" );
+    }
+
+    return res;
+}
+attr_core_api usize stream_fmt_char(
+    StreamBytesFN* stream, void* target,
+    int pad, u32 count, const char* characters,
+    struct CharFormatArguments* args
+) {
+    if( !count ) {
+        return 0;
+    }
+    usize res = 0;
+
+    if( count > 1 ) {
+        res += stream( target, 2, "{ " );
+    }
+
+    // TODO(alicia): handle utf8 properly!
+    for( u32 i = 0; i < count; ++i ) {
+        char c = characters[i];
+        switch( args->casing ) {
+            case FMT_CASING_AS_IS: break;
+            case FMT_CASING_UPPER: {
+                c = ascii_to_upper( c );
+            } break;
+            case FMT_CASING_LOWER: {
+                c = ascii_to_lower( c );
+            } break;
+        }
+
+        if( args->repeat ) {
+            b32 right_pad = pad < 0;
+            u32 upadding  = absolute( pad );
+            if( args->repeat > upadding ) {
+                upadding = 0;
+            } else {
+                upadding -= args->repeat;
+            }
+
+            if( right_pad ) {
+                res += stream_repeat( stream, target, args->repeat, c );
+                res += stream_repeat( stream, target, upadding, ' ' );
+            } else {
+                res += stream_repeat( stream, target, upadding, ' ' );
+                res += stream_repeat( stream, target, args->repeat, c );
+            }
+        } else {
+            res += stream_padded(
+                stream, target, pad, ' ', 1, &c );
+        }
+        if( i + 1 != count ) {
+            res += stream( target, 2, ", " );
+        }
+    }
+
+    if( count > 1 ) {
+        res += stream( target, 2, " }" );
+    }
+
+    return res;
+}
+attr_core_api usize stream_fmt_string(
+    StreamBytesFN* stream, void* target,
+    int pad, usize string_len, const char* string,
+    struct StringFormatArguments* args
+) {
+    if( !string_len ) {
+        return 0;
+    }
+    usize res = 0;
+
+    if( args->replace_separators ) {
+        b32 right_pad = pad < 0;
+        u32 upadding  = absolute( pad );
+        char separator =
+#if defined(CORE_PLATFORM_WINDOWS)
+            '\\';
+#else
+            '/';
+#endif
+
+        if( string_len > upadding ) {
+            upadding = 0;
+        } else {
+            upadding -= string_len;
+        }
+
+        if( !right_pad ) {
+            res += stream_repeat( stream, target, upadding, ' ' );
+        }
+
+        String substr = string_new( string_len, string );
+
+        while( substr.len ) {
+            usize sep = 0;
+            b32   found =
+#if defined(CORE_PLATFORM_WINDOWS)
+                string_find( substr, '/', &sep );
+#else
+                string_find( substr, '\\', &sep );
+#endif
+            if( found ) {
+                String chunk = substr;
+                chunk.len    = sep;
+
+                // TODO(alicia): handle utf8 to_upper to_lower!
+                switch( args->casing ) {
+                    case FMT_CASING_AS_IS: {
+                        res += stream( target, chunk.len, chunk.cc );
+                    } break;
+                    case FMT_CASING_UPPER: {
+                        res += string_stream_to_upper( stream, target, chunk );
+                    } break;
+                    case FMT_CASING_LOWER: {
+                        res += string_stream_to_lower( stream, target, chunk );
+                    } break;
+                }
+                res += stream( target, 1, &separator );
+
+                substr = string_advance_by( substr, chunk.len + 1 );
+            } else {
+                switch( args->casing ) {
+                    case FMT_CASING_AS_IS: {
+                        res += stream( target, substr.len, substr.cc );
+                    } break;
+                    case FMT_CASING_UPPER: {
+                        res += string_stream_to_upper( stream, target, substr );
+                    } break;
+                    case FMT_CASING_LOWER: {
+                        res += string_stream_to_lower( stream, target, substr );
+                    } break;
+                }
+                break;
             }
         }
-        ___float_push( digits[digit_index] );
-        whole_part /= base;
 
-        whole_parts_written++;
-    }
-
-    if( f < 0 ) {
-        ___float_push( '-' );
-    }
-
-    return ___float_write();
-}
-
-attr_internal
-usize ___internal_fmt_integer(
-    StreamFormatFN* write, void* target,
-    union FMTInteger integer, FormatInteger format,
-    b32 is_signed, u32 size, FMTFormatWidth width
-) {
-    #define FMT_INTEGER_BUFFER_SIZE (64 + 2 + 10) // 2 is 0x/0b and 10 is separators
-    usize index     = FMT_INTEGER_BUFFER_SIZE;
-    char buffer[FMT_INTEGER_BUFFER_SIZE];
-    memory_zero( buffer, FMT_INTEGER_BUFFER_SIZE );
-    #define ___integer_push( c )\
-        assert( index );\
-        buffer[--index] = c
-
-    #define ___integer_write()\
-        write( target, FMT_INTEGER_BUFFER_SIZE - index, buffer + index )
-        
-    if( !integer.u64 ) {
-        ___integer_push( '0' );
-        switch( format ) {
-            case FORMAT_INTEGER_BINARY: {
-                ___integer_push( 'b' );
-                ___integer_push( '0' );
+        if( right_pad ) {
+            res += stream_repeat( stream, target, upadding, ' ' );
+        }
+    } else {
+        switch( args->casing ) {
+            case FMT_CASING_AS_IS: {
+                res += stream_padded(
+                    stream, target, pad, ' ', string_len, string );
             } break;
-
-            case FORMAT_INTEGER_DECIMAL: break;
-
-            case FORMAT_INTEGER_HEXADECIMAL_LOWER:
-            case FORMAT_INTEGER_HEXADECIMAL_UPPER: {
-                ___integer_push( 'x' );
-                ___integer_push( '0' );
+            case FMT_CASING_UPPER: {
+                b32 right_pad = pad < 0;
+                u32 upadding  = absolute( pad );
+                if( string_len > upadding ) {
+                    upadding = 0;
+                } else {
+                    upadding -= string_len;
+                }
+                String str    = string_new( string_len, string );
+                if( right_pad ) {
+                    res += string_stream_to_upper( stream, target, str );
+                    res += stream_repeat( stream, target, upadding, ' ' );
+                } else {
+                    res += stream_repeat( stream, target, upadding, ' ' );
+                    res += string_stream_to_upper( stream, target, str );
+                }
+            } break;
+            case FMT_CASING_LOWER: {
+                b32 right_pad = pad < 0;
+                u32 upadding  = absolute( pad );
+                if( string_len > upadding ) {
+                    upadding = 0;
+                } else {
+                    upadding -= string_len;
+                }
+                String str    = string_new( string_len, string );
+                if( right_pad ) {
+                    res += string_stream_to_lower( stream, target, str );
+                    res += stream_repeat( stream, target, upadding, ' ' );
+                } else {
+                    res += stream_repeat( stream, target, upadding, ' ' );
+                    res += string_stream_to_lower( stream, target, str );
+                }
             } break;
         }
-        return ___integer_write();
     }
 
-    u64   base   = FMT_BASE_DECIMAL;
-    char* digits = FMT_DIGITS_DECIMAL;
-
-    char  separator = 0;
-    usize separator_frequency = 0;
-    switch( format ) {
-        case FORMAT_INTEGER_BINARY: {
-            base   = FMT_BASE_BINARY;
-            digits = FMT_DIGITS_BINARY;
-            separator_frequency = 8;
-            separator = '\'';
-        } break;
-        case FORMAT_INTEGER_DECIMAL: {
-            separator_frequency = 3;
-            separator = ',';
-        } break;
-        case FORMAT_INTEGER_HEXADECIMAL_LOWER:
-        case FORMAT_INTEGER_HEXADECIMAL_UPPER: {
-            base   = FMT_BASE_HEXADECIMAL;
-            digits = format == FORMAT_INTEGER_HEXADECIMAL_LOWER ?
-                FMT_DIGITS_HEXADECIMAL_LOWER :
-                FMT_DIGITS_HEXADECIMAL_UPPER;
-            separator_frequency = 4;
-            separator = '\'';
-        } break;
-    }
-
-    #define ___fmt_integer( size ) do {\
-        u##size value = 0;\
-        if( is_signed && integer.i##size < 0 ) {\
-            if( format == FORMAT_INTEGER_DECIMAL ) {\
-                value = -integer.i##size;\
-            } else {\
-                value = *(u##size*)&integer.i##size;\
-            }\
-        } else {\
-            value = integer.u##size;\
-        }\
-        usize write_count = 0;\
-        usize max_digit_count = size;\
-        if(\
-            format == FORMAT_INTEGER_HEXADECIMAL_LOWER ||\
-            format == FORMAT_INTEGER_HEXADECIMAL_UPPER\
-        ) {\
-            max_digit_count /= 4;\
-        }\
-        loop() {\
-            u##size digit_index = value % base;\
-            if(\
-                width == FMT_FORMAT_WIDTH_SEPARATOR &&\
-                (!(write_count % separator_frequency) && write_count )\
-            ) {\
-                ___integer_push( separator );\
-            }\
-            ___integer_push( digits[digit_index] );\
-            write_count++;\
-            value /= base;\
-            if(\
-                width == FMT_FORMAT_WIDTH_NORMAL ||\
-                ( width == FMT_FORMAT_WIDTH_SEPARATOR &&\
-                format == FORMAT_INTEGER_DECIMAL )\
-            ) {\
-                if( !value ) {\
-                    break;\
-                }\
-            } else if(\
-                width == FMT_FORMAT_WIDTH_FULL ||\
-                width == FMT_FORMAT_WIDTH_SEPARATOR\
-            ) {\
-                if( write_count == max_digit_count ) {\
-                    if( buffer[index] == separator ) {\
-                        index++;\
-                    }\
-                    break;\
-                }\
-            }\
-        }\
-        if( is_signed && integer.i##size < 0 ) {\
-            if( format == FORMAT_INTEGER_DECIMAL ) {\
-                ___integer_push( '-' );\
-            }\
-        }\
-    } while(0)
-
-    switch( size ) {
-        case 8: {
-            ___fmt_integer( 8 );
-        } break;
-        case 16: {
-            ___fmt_integer( 16 );
-        } break;
+    return res;
+}
+attr_internal f64 internal_float_index(
+    int bitdepth, const void* floats, usize index
+) {
+    f64 res = 0.0;
+    switch( bitdepth ) {
         case 32: {
-            ___fmt_integer( 32 );
+            res = *((f32*)floats + index);
         } break;
         case 64: {
-            ___fmt_integer( 64 );
+            res = *((f64*)floats + index);
         } break;
-        default: panic();
+        default: unreachable();
+    }
+    return res;
+}
+attr_internal void internal_float_fmt(
+    f64 value, b32 separate, int precision, StringBuf* buf );
+attr_internal void internal_memory_fmt(
+    f64 value, int precision, b32 kibi, StringBuf* buf );
+attr_core_api usize stream_fmt_float(
+    StreamBytesFN* stream, void* target,
+    int pad, u32 count, const void* floats,
+    struct FloatFormatArguments* args
+) {
+    if( !count ) {
+        return 0;
+    }
+    usize res = 0;
+
+    if( count > 1 ) {
+        res += stream( target, 2, "{ " );
     }
 
-    switch( format ) {
-        case FORMAT_INTEGER_BINARY: {
-            ___integer_push( 'b' );
-            ___integer_push( '0' );
+    char _buf[NUMBER_FORMAT_BUFFER_SIZE];
+    memory_zero( _buf, sizeof(_buf) );
+
+    StringBuf buf = string_buf_new( sizeof(_buf), _buf );
+
+    int precision = args->precision;
+    if( precision < 0 ) {
+        precision = 0;
+    } else if( precision > FMT_FLOAT_MAX_PRECISION ) {
+        precision = FMT_FLOAT_MAX_PRECISION;
+    }
+
+    int bitdepth   = bitfield_check( args->flags, FMT_FLOAT_F64 ) ? 64 : 32;
+    char padding_c = bitfield_check( args->flags, FMT_FLOAT_ZERO_PAD ) ? '0' : ' ';
+    b32 memory     = bitfield_check( args->flags, FMT_FLOAT_MEMORY ) != 0;
+
+    b32 kibi             = bitfield_check( args->flags, FMT_FLOAT_MEMORY_KIBI );
+    u32 normalized_count = count;
+    int vector_counter   = 0;
+    int max_counter      = 0;
+
+    b32 seperate = bitfield_check( args->flags, FMT_FLOAT_SEPARATE );
+
+    switch( args->flags & FMT_FLOAT_VECTOR_MASK ) {
+        case FMT_FLOAT_VECTOR2: {
+            normalized_count *= 2;
+            max_counter       = 2;
+            memory = false;
+            kibi   = false;
         } break;
-        case FORMAT_INTEGER_DECIMAL: break;
-        case FORMAT_INTEGER_HEXADECIMAL_LOWER:
-        case FORMAT_INTEGER_HEXADECIMAL_UPPER: {
-            ___integer_push( 'x' );
-            ___integer_push( '0' );
+        case FMT_FLOAT_VECTOR3: {
+            normalized_count *= 3;
+            max_counter       = 3;
+            memory = false;
+            kibi   = false;
+        } break;
+        case FMT_FLOAT_VECTOR4: {
+            normalized_count *= 4;
+            max_counter       = 4;
+            memory = false;
+            kibi   = false;
+        } break;
+        default: {
+            vector_counter = -1;
         } break;
     }
-   
-    return ___integer_write();
+
+    for( u32 i = 0; i < normalized_count; ++i ) {
+        if( vector_counter >= 0 ) {
+            if( !vector_counter ) {
+                res += stream( target, 2, "{ " );
+            }
+        }
+        f64 value = internal_float_index( bitdepth, floats, i );
+
+        if( memory ) {
+            internal_memory_fmt( value, precision, kibi, &buf );
+        } else {
+            internal_float_fmt( value, seperate, precision, &buf );
+        }
+
+        res += stream_padded(
+            stream, target, pad, padding_c, buf.len, buf.cc );
+
+        if( vector_counter >= 0 ) {
+            vector_counter++;
+            if( vector_counter >= max_counter ) {
+                res += stream( target, 2, " }" );
+                vector_counter = 0;
+            }
+        }
+
+        if( i + 1 < normalized_count ) {
+            res += stream( target, 2, ", " );
+        }
+        string_buf_clear( &buf );
+    }
+
+    if( count > 1 ) {
+        res += stream( target, 2, " }" );
+    }
+    return res;
+}
+attr_internal u64 internal_int_index(
+    b32 is_signed, int bitdepth, const void* integers, usize index
+) {
+    if( is_signed ) {
+        i64 res = 0;
+        switch( bitdepth ) {
+            case 8: {
+                res = *((i8*)integers + index);
+            } break;
+            case 16: {
+                res = *((i16*)integers + index);
+            } break;
+            case 32: {
+                res = *((i32*)integers + index);
+            } break;
+            case 64: {
+                res = *((i64*)integers + index);
+            } break;
+        }
+        return rcast( u64, &res );
+    } else {
+        switch( bitdepth ) {
+            case 8: {
+                return *((u8*)integers + index);
+            } break;
+            case 16: {
+                return *((u16*)integers + index);
+            } break;
+            case 32: {
+                return *((u32*)integers + index);
+            } break;
+            case 64: {
+                return *((u64*)integers + index);
+            } break;
+        }
+    }
+    unreachable();
+}
+attr_internal void internal_int_fmt(
+    u64 value, b32 is_signed, int bitdepth, int base,
+    enum FmtIntWidth width, StringBuf* buf );
+attr_core_api usize stream_fmt_int(
+    StreamBytesFN* stream, void* target,
+    int pad, u32 count, const void* integers,
+    struct IntFormatArguments* args
+) {
+    if( !count ) {
+        return 0;
+    }
+    usize res = 0;
+
+    if( count > 1 ) {
+        res += stream( target, 2, "{ " );
+    }
+
+    char _buf[NUMBER_FORMAT_BUFFER_SIZE];
+    memory_zero( _buf, sizeof(_buf) );
+
+    StringBuf buf = string_buf_new( sizeof(_buf), _buf );
+
+    int bitdepth = 8;
+    switch( args->flags & FMT_INT_BITDEPTH_MASK ) {
+        case FMT_INT_BITDEPTH_16: {
+            bitdepth = 16;
+        } break;
+        case FMT_INT_BITDEPTH_32: {
+            bitdepth = 32;
+        } break;
+        case FMT_INT_BITDEPTH_64: {
+            bitdepth = 64;
+        } break;
+        case FMT_INT_BITDEPTH_PTR: {
+            bitdepth = sizeof(usize) * 8;
+        } break;
+        default: break;
+    }
+    char padding_c = ' ';
+    if( bitfield_check( args->flags, FMT_INT_ZERO_PAD ) ) {
+        if( !bitfield_check( args->flags, FMT_INT_SEPARATE ) ) {
+            switch( args->flags & FMT_INT_BASE_MASK ) {
+                case 0: {
+                    padding_c = '0';
+                } break;
+                default: break;
+            }
+        }
+    }
+    b32 memory = bitfield_check( args->flags, FMT_INT_MEMORY );
+
+    b32 kibi             = bitfield_check( args->flags, FMT_INT_MEMORY_KIBI );
+    u32 normalized_count = count;
+    int vector_counter   = 0;
+    int max_counter      = 0;
+    b32 is_signed        = bitfield_check( args->flags, FMT_INT_SIGNED );
+
+    enum FmtIntWidth width = FMT_INT_WIDTH_NORMAL;
+    if( bitfield_check( args->flags, FMT_INT_SEPARATE ) ) {
+        width = FMT_INT_WIDTH_SEPARATE;
+    } else if( bitfield_check( args->flags, FMT_INT_FULL_WIDTH ) ) {
+        width = FMT_INT_WIDTH_FULL;
+    }
+    int base = args->flags & FMT_INT_BASE_MASK;
+
+    switch( args->flags & FMT_INT_VECTOR_MASK ) {
+        case FMT_INT_VECTOR2: {
+            normalized_count *= 2;
+            max_counter       = 2;
+            memory = false;
+            kibi   = false;
+        } break;
+        case FMT_INT_VECTOR3: {
+            normalized_count *= 3;
+            max_counter       = 3;
+            memory = false;
+            kibi   = false;
+        } break;
+        case FMT_INT_VECTOR4: {
+            normalized_count *= 4;
+            max_counter       = 4;
+            memory = false;
+            kibi   = false;
+        } break;
+        default: {
+            vector_counter = -1;
+        } break;
+    }
+
+    for( u32 i = 0; i < normalized_count; ++i ) {
+        if( vector_counter >= 0 ) {
+            if( !vector_counter ) {
+                res += stream( target, 2, "{ " );
+            }
+        }
+        u64 value = internal_int_index( is_signed, bitdepth, integers, i );
+
+        if( memory ) {
+            internal_memory_fmt( (f64)value, 2, kibi, &buf );
+        } else {
+            internal_int_fmt(
+                value, is_signed, bitdepth,
+                base, width, &buf );
+        }
+
+        res += stream_padded(
+            stream, target, pad, padding_c, buf.len, buf.cc );
+
+        if( vector_counter >= 0 ) {
+            vector_counter++;
+            if( vector_counter >= max_counter ) {
+                res += stream( target, 2, " }" );
+                vector_counter = 0;
+            }
+        }
+
+        if( i + 1 < normalized_count ) {
+            res += stream( target, 2, ", " );
+        }
+        string_buf_clear( &buf );
+    }
+
+    if( count > 1 ) {
+        res += stream( target, 2, " }" );
+    }
+    return res;
+
+}
+attr_core_api usize stream_fmt_args(
+    StreamBytesFN* stream, void* target, FormatArguments* args
+) {
+    switch( args->type ) {
+        case FT_BOOL: {
+            return stream_fmt_bool(
+                stream, target, args->padding,
+                args->count, args->data, &args->bool );
+        } break;
+        case FT_CHAR: {
+            return stream_fmt_char(
+                stream, target, args->padding,
+                args->count, args->data, &args->character );
+        } break;
+        case FT_STRING: {
+            return stream_fmt_string(
+                stream, target, args->padding,
+                args->count, args->data, &args->string );
+        } break;
+        case FT_FLOAT: {
+            return stream_fmt_float(
+                stream, target, args->padding,
+                args->count, args->data, &args->floating );
+        } break;
+        case FT_INT: {
+            return stream_fmt_int(
+                stream, target, args->padding,
+                args->count, args->data, &args->integer );
+        } break;
+        case FT_TIME: {
+            return stream_fmt_time(
+                stream, target, args->data,
+                args->padding, args->time.fmt_len,
+                args->time.fmt );
+        } break;
+    }
+    unreachable();
+}
+attr_internal b32 internal_fmt_parse_args(
+    String text, FormatArguments* args, union FmtValue* out_val, va_list* va );
+attr_core_api usize stream_fmt_va(
+    StreamBytesFN* stream, void* target,
+    usize format_len, const char* format_cc, va_list va
+) {
+    String format = string_new( format_len, format_cc );
+
+    usize res = 0;
+    FormatArguments args;
+    union FmtValue  val;
+    memory_zero( &args, sizeof(args) );
+    memory_zero( &val, sizeof(val) );
+    while( !string_is_empty( format ) ) {
+        usize open = 0;
+        if( string_find( format, '{', &open ) ) {
+            String args_text = string_advance_by( format, open );
+
+            if( args_text.len >= 2 ) {
+                if( args_text.cc[1] == '{' ) {
+                    char c = '{';
+                    res   += stream( target, 1, &c );
+                    format = string_advance_by( format, 2 );
+                    continue;
+                }
+            }
+
+            res   += stream( target, args_text.cc - format.cc, format.cc );
+            format = string_advance_by( format, args_text.cc - format.cc );
+
+            usize close = 0;
+            if( !string_find( args_text, '}', &close ) ) {
+                res += stream( target, args_text.len, args_text.cc );
+                break;
+            }
+
+            args_text.len = close;
+            args_text     = string_advance( args_text );
+            format        = string_advance_by( format, close + 1 );
+
+            if( internal_fmt_parse_args( args_text, &args, &val, &va ) ) {
+                if( !args.data ) {
+                    args.data = &val;
+                }
+                res += stream_fmt_args( stream, target, &args );
+                memory_zero( &args, sizeof(args) );
+                memory_zero( &val, sizeof(val) );
+            }
+        } else {
+            res += stream( target, format.len, format.cc );
+            break;
+        }
+    }
+    return res;
 }
 
-attr_core_api usize fmt_i8(
-    StreamFormatFN* write, void* target, i8 integer, FormatInteger format
-) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .i8 = integer },
-        format, true, 8, FMT_FORMAT_WIDTH_NORMAL );
+attr_internal u32 internal_int_max_digits( int bitdepth, int base ) {
+    switch( base ) {
+        case FMT_INT_BINARY: {
+            return bitdepth;
+        } break;
+        case FMT_INT_HEX_LOWER:
+        case FMT_INT_HEX_UPPER: {
+            return bitdepth / 4;
+        } break;
+        case 0: {
+            switch( bitdepth ) {
+                case 8:  return 3;
+                case 16: return 5;
+                case 32: return 10;
+                case 64: return 20;
+            }
+        } break;
+    }
+    unreachable();
 }
-attr_core_api usize fmt_u8(
-    StreamFormatFN* write, void* target, u8 integer, FormatInteger format
+attr_internal void internal_int_0(
+    enum FmtIntWidth width, int bitdepth, int base, StringBuf* buf
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .u8 = integer },
-        format, false, 8, FMT_FORMAT_WIDTH_NORMAL );
+    switch( base ) {
+        case FMT_INT_BINARY: {
+            string_buf_try_push( buf, '0' );
+            string_buf_try_push( buf, 'b' );
+            switch( width ) {
+                case FMT_INT_WIDTH_NORMAL: {
+                    string_buf_try_push( buf, '0' );
+                } break;
+                case FMT_INT_WIDTH_SEPARATE: {
+                    for( int i = 0; i < bitdepth; ++i ) {
+                        string_buf_try_push( buf, '0' );
+                        if( i && !((i + 1) % 8) && (i + 1) != bitdepth ) {
+                            string_buf_try_push( buf, '\'' );
+                        }
+                    }
+                } break;
+                case FMT_INT_WIDTH_FULL: {
+                    for( int i = 0; i < bitdepth; ++i ) {
+                        string_buf_try_push( buf, '0' );
+                    }
+                } break;
+            }
+        } break;
+        case FMT_INT_HEX_LOWER:
+        case FMT_INT_HEX_UPPER: {
+            string_buf_try_push( buf, '0' );
+            string_buf_try_push( buf, 'x' );
+            switch( width ) {
+                case FMT_INT_WIDTH_NORMAL: {
+                    string_buf_try_push( buf, '0' );
+                } break;
+                case FMT_INT_WIDTH_SEPARATE: {
+                    int max = bitdepth / 4;
+                    for( int i = 0; i < max; ++i ) {
+                        string_buf_try_push( buf, '0' );
+                        if( i && !((i + 1) % 4) && (i + 1) != max ) {
+                            string_buf_try_push( buf, '\'' );
+                        }
+                    }
+                } break;
+                case FMT_INT_WIDTH_FULL: {
+                    int max = bitdepth / 4;
+                    for( int i = 0; i < max; ++i ) {
+                        string_buf_try_push( buf, '0' );
+                    }
+                } break;
+            }
+        } break;
+        case 0: {
+            switch( width ) {
+                case FMT_INT_WIDTH_NORMAL: {
+                    string_buf_try_push( buf, '0' );
+                } break;
+                case FMT_INT_WIDTH_SEPARATE: {
+                    string_buf_try_push( buf, '0' );
+                } break;
+                case FMT_INT_WIDTH_FULL: {
+                    u32 max = internal_int_max_digits( bitdepth, base );
+                    for( u32 i = 0; i < max; ++i ) {
+                        string_buf_try_push( buf, '0' );
+                    }
+                } break;
+            }
+        } break;
+        default: unreachable();
+    }
 }
-attr_core_api usize fmt_i16(
-    StreamFormatFN* write, void* target, i16 integer, FormatInteger format
+attr_internal void internal_int_fmt(
+    u64 value, b32 is_signed, int bitdepth, int base,
+    enum FmtIntWidth width, StringBuf* in_buf
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .i16 = integer },
-        format, true, 16, FMT_FORMAT_WIDTH_NORMAL );
+    if( !value ) {
+        internal_int_0( width, bitdepth, base, in_buf );
+        return;
+    }
+
+    b32 neg = false;
+    u64 abs = value;
+
+    u32   max_digit_count = internal_int_max_digits( bitdepth, base );
+    char* digits          = NULL;
+    u64   base_num        = 0;
+    char  sep             = 0;
+    u32   sep_at          = 0;
+    switch( base ) {
+        // base 10
+        case 0: {
+            if( is_signed ) {
+                i64 signed_value = rcast( i64, &value );
+                if( signed_value < 0 ) {
+                    neg = true;
+                    abs = absolute( signed_value );
+                }
+            }
+            base_num = 10;
+            digits   = FMT_DIGITS_DECIMAL;
+            sep      = ',';
+            sep_at   = 3;
+        } break;
+        case FMT_INT_BINARY: {
+            base_num = 2;
+            digits   = FMT_DIGITS_BINARY;
+            sep      = '\'';
+            sep_at   = 8;
+
+            string_buf_try_append( in_buf, string_text( "0b" ) );
+        } break;
+        case FMT_INT_HEX_UPPER:
+        case FMT_INT_HEX_LOWER: {
+            base_num = 16;
+            digits   = (base == FMT_INT_HEX_UPPER) ?
+                FMT_DIGITS_HEXADECIMAL_UPPER : FMT_DIGITS_HEXADECIMAL_LOWER;
+            sep      = '\'';
+            sep_at   = 4;
+
+            string_buf_try_append( in_buf, string_text( "0x" ) );
+        } break;
+        default: unreachable();
+    }
+
+    if( neg ) {
+        string_buf_try_push( in_buf, '-' );
+    }
+    u32 rev_start = in_buf->len;
+
+    for( u32 i = 0; i < max_digit_count; ++i ) {
+        char digit = digits[abs % base_num];
+
+        string_buf_try_push( in_buf, digit );
+
+        abs /= base_num;
+        switch( width ) {
+            case FMT_INT_WIDTH_NORMAL: {
+                if( !abs ) {
+                    goto internal_int_fmt_end;
+                }
+            } break;
+            case FMT_INT_WIDTH_SEPARATE: {
+                if( !base && !abs ) {
+                    goto internal_int_fmt_end;
+                }
+                if( i && !((i + 1) % sep_at) && (i + 1) != max_digit_count ) {
+                    string_buf_try_push( in_buf, sep );
+                }
+            } break;
+            case FMT_INT_WIDTH_FULL: break;
+        }
+    }
+
+internal_int_fmt_end:
+
+    string_mut_reverse( string_advance_by( in_buf->slice, rev_start ) );
 }
-attr_core_api usize fmt_u16(
-    StreamFormatFN* write, void* target, u16 integer, FormatInteger format
+attr_internal void internal_float_fmt(
+    f64 value, b32 seperate, int precision, StringBuf* buf 
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .u16 = integer },
-        format, false, 16, FMT_FORMAT_WIDTH_NORMAL );
+    // TODO(alicia): Grisu3
+    if( is_nan64( value ) ) {
+        string_buf_try_append( buf, string_text( "NaN" ) );
+        return;
+    } else if( value == F64_POS_INFINITY ) {
+        string_buf_try_append( buf, string_text( "INF" ) );
+        return;
+    } else if( value == F64_NEG_INFINITY ) {
+        string_buf_try_append( buf, string_text( "-INF" ) );
+        return;
+    }
+
+    i64 whole = (i64)value;
+    f64 fract = absolute( value ) - (f64)absolute(whole);
+
+    internal_int_fmt(
+        rcast( u64, &whole ),
+        true,
+        64,
+        0, // BASE_DECIMAL
+        seperate ? FMT_INT_WIDTH_SEPARATE : FMT_INT_WIDTH_NORMAL,
+        buf );
+    if( fract <= 0.0000001 ) {
+        if( precision ) {
+            string_buf_try_push( buf, '.' );
+            for( int i = 0; i < precision; ++i ) {
+                string_buf_try_push( buf, '0' );
+            }
+        }
+        return;
+    }
+
+    if( !precision ) {
+        return;
+    }
+
+    string_buf_try_push( buf, '.' );
+    for( int i = 0; i < precision; ++i ) {
+        fract *= 10.0;
+        u64  idx   = (u64)fract % 10;
+        char digit = FMT_DIGITS_DECIMAL[idx];
+        string_buf_try_push( buf, digit );
+    }
 }
-attr_core_api usize fmt_i32(
-    StreamFormatFN* write, void* target, i32 integer, FormatInteger format
+attr_internal void internal_memory_fmt(
+    f64 value, int precision, b32 kibi, StringBuf* buf
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .i32 = integer },
-        format, true, 32, FMT_FORMAT_WIDTH_NORMAL );
+    #define BYTES 0
+    #define KB    1
+    #define MB    2
+    #define GB    3
+    #define TB    4
+    f64 f       = value;
+    int storage = BYTES;
+    f64 comp    = kibi ? 1024.0 : 1000.0;
+
+    if( f >= comp ) {
+        storage = KB;
+        f /= comp;
+        if( f >= comp ) {
+            storage = MB;
+            f /= comp;
+            if( f >= comp ) {
+                storage = GB;
+                f /= comp;
+                if( f >= comp ) {
+                    storage = TB;
+                    f /= comp;
+                }
+            }
+        }
+    }
+
+    internal_float_fmt( f, true, precision, buf );
+    String storage_text = string_text( " B" );
+    switch( storage ) {
+        case KB: {
+            storage_text = kibi ? string_text( " KiB" ) : string_text( " KB" );
+        } break;
+        case MB: {
+            storage_text = kibi ? string_text( " MiB" ) : string_text( " MB" );
+        } break;
+        case GB: {
+            storage_text = kibi ? string_text( " GiB" ) : string_text( " GB" );
+        } break;
+        case TB: {
+            storage_text = kibi ? string_text( " TiB" ) : string_text( " TB" );
+        } break;
+        default: break;
+    }
+    string_buf_try_append( buf, storage_text );
+
+    #undef BYTES
+    #undef KB   
+    #undef MB   
+    #undef GB   
+    #undef TB   
 }
-attr_core_api usize fmt_u32(
-    StreamFormatFN* write, void* target, u32 integer, FormatInteger format
+
+#undef NUMBER_FORMAT_BUFFER_SIZE
+#undef BASE_BINARY     
+#undef BASE_DECIMAL    
+#undef BASE_HEXADECIMAL
+
+attr_internal b32 internal_fmt_parse_format_type(
+    String spec, FormatArguments* out_args
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .u32 = integer },
-        format, false, 32, FMT_FORMAT_WIDTH_NORMAL );
+    if( string_is_empty( spec ) ) {
+        return false;
+    }
+    switch( spec.cc[0] ) {
+        case 'b': {
+            if( spec.len > 1 ) {
+                return false;
+            }
+            out_args->type = FT_BOOL;
+        } return true;
+        case 'c': {
+            switch( spec.len ) {
+                case 1: {
+                    out_args->type = FT_CHAR;
+                } return true;
+                case 2: {
+                    if( !string_cmp( spec, string_text( "cc" ) ) ) {
+                        return false;
+                    }
+                    out_args->type = FT_STRING;
+                } return true;
+                default: break;
+            }
+        } break;
+        case 'f': {
+            switch( spec.len ) {
+                case 1: {
+                    out_args->type = FT_FLOAT;
+                } return true;
+                case 3: {
+                    if( string_cmp( spec, string_text( "f32" ) ) ) {
+                        out_args->type = FT_FLOAT;
+                    } else if( string_cmp( spec, string_text( "f64" ) ) ) {
+                        out_args->floating.flags |= FMT_FLOAT_F64;
+                        out_args->type            = FT_FLOAT;
+                    } else {
+                        return false;
+                    }
+                } return true;
+                default: break;
+            }
+        } break;
+        case 'v': {
+            switch( spec.len ) {
+                case 2: {
+                    switch( spec.cc[1] ) {
+                        case '2': {
+                            out_args->floating.flags |= FMT_FLOAT_VECTOR2;
+                            out_args->type            = FT_FLOAT;
+                        } break;
+                        case '3': {
+                            out_args->floating.flags |= FMT_FLOAT_VECTOR3;
+                            out_args->type            = FT_FLOAT;
+                        } break;
+                        case '4': {
+                            out_args->floating.flags |= FMT_FLOAT_VECTOR4;
+                            out_args->type            = FT_FLOAT;
+                        } break;
+                        default: return false;
+                    }
+                } return true;
+                default: break;
+            }
+        } break;
+        case 'i':
+            out_args->integer.flags |= FMT_INT_SIGNED;
+        case 'u': {
+            switch( spec.len ) {
+                case 1: {
+                    out_args->integer.flags |= FMT_INT_BITDEPTH_32;
+                    out_args->type           = FT_INT;
+                } return true;
+                case 2: {
+                    if( spec.cc[1] != '8' ) {
+                        return false;
+                    }
+                    out_args->integer.flags |= FMT_INT_BITDEPTH_8;
+                    out_args->type           = FT_INT;
+                } return true;
+                case 3: {
+                    String bitdepth = string_advance( spec );
+                    if( string_cmp( bitdepth, string_text( "32" ) ) ) {
+                        out_args->integer.flags |= FMT_INT_BITDEPTH_32;
+                        out_args->type           = FT_INT;
+                    } else if( string_cmp( bitdepth, string_text( "64" ) ) ) {
+                        out_args->integer.flags |= FMT_INT_BITDEPTH_64;
+                        out_args->type           = FT_INT;
+                    } else if( string_cmp( bitdepth, string_text( "16" ) ) ) {
+                        out_args->integer.flags |= FMT_INT_BITDEPTH_16;
+                        out_args->type           = FT_INT;
+                    } else {
+                        return false;
+                    }
+                } return true;
+                case 5: {
+                    if( !string_cmp(
+                        string_advance( spec ), string_text( "size" )
+                    ) ) {
+                        return false;
+                    }
+
+                    out_args->integer.flags |= FMT_INT_BITDEPTH_PTR;
+                    out_args->type           = FT_INT;
+                } return true;
+                default: return false;
+            }
+        } break;
+        case 's': {
+            if( spec.len > 1 ) {
+                return false;
+            }
+            out_args->type = FT_STRING;
+        } return true;
+        case 'p': {
+            if( spec.len > 1 ) {
+                return false;
+            }
+            out_args->type = FT_STRING;
+        } return true;
+        case 't': {
+            if( spec.len > 1 ) {
+                return false;
+            }
+            out_args->type = FT_TIME;
+        } return true;
+    }
+    return false;
 }
-attr_core_api usize fmt_i64(
-    StreamFormatFN* write, void* target, i64 integer, FormatInteger format
+attr_internal b32 internal_fmt_parse_args(
+    String text, FormatArguments* args, union FmtValue* out_val, va_list* va
 ) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .i64 = integer },
-        format, true, 64, FMT_FORMAT_WIDTH_NORMAL );
-}
-attr_core_api usize fmt_u64(
-    StreamFormatFN* write, void* target, u64 integer, FormatInteger format
-) {
-    return ___internal_fmt_integer(
-        write, target, (union FMTInteger){ .u64 = integer },
-        format, false, 64, FMT_FORMAT_WIDTH_NORMAL );
-}
-attr_core_api usize fmt_float(
-    StreamFormatFN* write, void* target, f64 f, u32 precision
-) {
-    return ___internal_fmt_float(
-        write, target, f, precision, FMT_FORMAT_WIDTH_NORMAL );
-}
-attr_core_api usize fmt_bool(
-    StreamFormatFN* write, void* target, b32 b, b32 binary
-) {
-    usize len = b ?
-        ( binary ? 1 : sizeof("true") - 1 ) : ( binary ? 1 : sizeof("false") - 1 );
-    char* cstr = b ? ( binary ? "1" : "true" ) : ( binary ? "0" : "false" );
-    return write( target, len, cstr );
+
+    #define skip()\
+        goto internal_fmt_parse_args_skip
+
+    String rem  = text;
+    String spec = string_empty(); {
+        usize  comma = 0;
+        if( string_find( rem, ',', &comma ) ) {
+            spec     = rem;
+            spec.len = comma;
+        } else {
+            spec = rem;
+        }
+    }
+
+    if( !internal_fmt_parse_format_type( spec, args ) ) {
+        return false;
+    }
+
+    rem = string_advance_by( rem, spec.len + 1 );
+
+    b32 pointer         = false;
+    b32 count_by_value  = false;
+    b32 repeat_by_value = false;
+
+    // initialize arguments
+    switch( args->type ) {
+        case FT_CHAR: {
+            args->character.repeat = 1;
+        } break;
+        case FT_STRING: {
+            if( spec.cc[0] == 'c' ) {
+                pointer = true;
+            }
+        } break;
+        case FT_BOOL:
+        case FT_FLOAT: {
+            args->floating.precision = 6;
+        } break;
+        case FT_INT:
+        case FT_TIME: break;
+    }
+
+    while( !string_is_empty( rem ) ) {
+        String arg = rem;
+        usize comma = 0;
+        if( string_find( rem, ',', &comma ) ) {
+            arg.len = comma;
+        }
+
+        if( string_is_empty( arg ) ) {
+            return false;
+        }
+
+        // pass by pointer
+        switch( args->type ) {
+            case FT_INT: case FT_FLOAT: case FT_STRING: case FT_CHAR:
+            case FT_BOOL: {
+                if( arg.cc[0] == '*' ) {
+                    pointer = true;
+                    String arg_num = string_advance( arg );
+
+                    if( arg_num.len ) {
+                        if( arg_num.cc[0] == '_' && arg_num.len == 1 ) {
+                            count_by_value = true;
+                        } else {
+                            u64 count = 0;
+                            if( !string_parse_uint( arg_num, &count ) ) {
+                                return false;
+                            }
+
+                            args->count = count;
+                        }
+                    } else {
+                        args->count = 1;
+                    }
+
+                    skip();
+                }
+            } break;
+            case FT_TIME:
+                break;
+        }
+
+        // string and char arguments
+        switch( args->type ) {
+            case FT_CHAR:
+            case FT_STRING: {
+                if( string_cmp( arg, string_text( "u" ) ) ) {
+                    if( args->type == FT_CHAR ) {
+                        args->character.casing = FMT_CASING_UPPER;
+                    } else {
+                        args->string.casing = FMT_CASING_UPPER;
+                    }
+                    skip();
+                } else if( string_cmp( arg, string_text( "l" ) ) ) {
+                    if( args->type == FT_CHAR ) {
+                        args->character.casing = FMT_CASING_LOWER;
+                    } else {
+                        args->string.casing = FMT_CASING_LOWER;
+                    }
+                    skip();
+                }
+            } break;
+            case FT_BOOL: case FT_FLOAT: case FT_INT: case FT_TIME:
+                break;
+        }
+
+        // padding
+        switch( args->type ) {
+            case FT_INT: case FT_BOOL: case FT_CHAR: case FT_STRING:
+            case FT_TIME: {
+                if( arg.cc[0] == '-' || ascii_is_numeric( arg.cc[0] ) ) {
+                    i64 padding = 0;
+                    if( !string_parse_int( arg, &padding ) ) {
+                        return false;
+                    }
+
+                    args->padding = padding;
+
+                    b32 start_zero = (arg.cc[0] == '0');
+                    if( args->type == FT_INT && start_zero ) {
+                        args->integer.flags |= FMT_INT_ZERO_PAD;
+                    }
+                    skip();
+                }
+            } break;
+            case FT_FLOAT: 
+                break;
+        }
+
+        // padding and precision for float
+        switch( args->type ) {
+            case FT_FLOAT: {
+                if(
+                    arg.cc[0] == '-' ||
+                    arg.cc[0] == '.' ||
+                    ascii_is_numeric( arg.cc[0] )
+                ) {
+                    String prec = arg;
+                    if( arg.cc[0] != '.' ) {
+                        i64 padding = 0;
+                        if( !string_parse_int( arg, &padding ) ) {
+                            return false;
+                        }
+                        args->padding = padding;
+
+                        b32 start_zero = (arg.cc[0] == '0');
+                        args->floating.flags |= start_zero ? FMT_FLOAT_ZERO_PAD : 0;
+
+                        usize dot_pos = 0;
+                        if( string_find( prec, '.', &dot_pos ) ) {
+                            prec = string_advance_by( prec, dot_pos );
+                        }
+                    }
+
+                    if( prec.len ) {
+                        prec = string_advance( prec );
+                        u64 precision = 0;
+                        if( !string_parse_uint( prec, &precision ) ) {
+                            return false;
+                        }
+                        args->floating.precision = clamp( precision, 0, 6 );
+                    }
+
+                    skip();
+                }
+            } break;
+            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_INT: case FT_TIME:
+                break;
+        }
+
+        // int and float
+        switch( args->type ) {
+            case FT_FLOAT:
+            case FT_INT: {
+                switch( arg.cc[0] ) {
+                    case 'm': {
+                        b32 mem = false;
+                        b32 mib = false;
+                        switch( arg.len ) {
+                            case 1: {
+                                mem = true;
+                            } break;
+                            case 3: {
+                                if( string_cmp( arg, string_text( "mib" ) ) ) {
+                                    mem = true;
+                                    mib = true;
+                                }
+                            } break;
+                        }
+                        if( mem ) {
+                            if( args->type == FT_INT ) {
+                                args->integer.flags |= FMT_INT_MEMORY;
+                                args->integer.flags |=
+                                    mib ? FMT_INT_MEMORY_KIBI : 0;
+                            } else {
+                                args->floating.flags |= FMT_FLOAT_MEMORY;
+                                args->floating.flags |=
+                                    mib ? FMT_FLOAT_MEMORY_KIBI : 0;
+                            }
+                            skip();
+                        }
+                    } break;
+                    case 's': {
+                        if( arg.len == 1 ) {
+                            if( args->type == FT_INT ) {
+                                args->integer.flags &= ~FMT_INT_FULL_WIDTH;
+                                args->integer.flags |= FMT_INT_SEPARATE;
+                            } else {
+                                args->floating.flags |= FMT_FLOAT_SEPARATE;
+                            }
+                            skip();
+                        }
+                    } break;
+                    default: break;
+                }
+            } break;
+            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_TIME:
+                break;
+        }
+
+        // int arguments only.
+        switch( args->type ) {
+            case FT_INT: {
+                switch( arg.cc[0] ) {
+                    case 'x': {
+                        if( arg.len == 2 ) {
+                            switch( arg.cc[1] ) {
+                                case 'u': {
+                                    args->integer.flags &=
+                                        ~(FMT_INT_BINARY | FMT_INT_HEX_LOWER);
+                                    args->integer.flags |=
+                                        FMT_INT_HEX_UPPER;
+                                    skip();
+                                } break;
+                                case 'l': {
+                                    args->integer.flags &=
+                                        ~(FMT_INT_BINARY | FMT_INT_HEX_UPPER);
+                                    args->integer.flags |=
+                                        FMT_INT_HEX_LOWER;
+                                    skip();
+                                } break;
+                                default: break;
+                            }
+                        }
+                    } break;
+                    case 'b': {
+                        if( arg.len == 1 ) {
+                            args->integer.flags &=
+                                ~(FMT_INT_HEX_UPPER | FMT_INT_HEX_LOWER);
+                            args->integer.flags |= FMT_INT_BINARY;
+                            skip();
+                        }
+                    } break;
+                    case 'f': {
+                        if( arg.len == 1 ) {
+                            args->integer.flags &= ~FMT_INT_SEPARATE;
+                            args->integer.flags |= FMT_INT_FULL_WIDTH;
+                            skip();
+                        }
+                    } break;
+                    default: break;
+                }
+            } break;
+            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_TIME:
+                break;
+        }
+
+        // time arguments only.
+        switch( args->type ) {
+            case FT_TIME: {
+                if( !args->time.fmt ) {
+                    if( string_cmp( arg, string_text( "*" ) ) ) {
+                        pointer = true;
+                        skip();
+                    } else {
+                        String inline_fmt = arg;
+                        if( inline_fmt.len > 2 ) {
+                            if(
+                                inline_fmt.cc[0] == '\'' &&
+                                inline_fmt.cc[inline_fmt.len - 1] == '\''
+                            ) {
+                                inline_fmt =
+                                    string_advance( string_trim( inline_fmt, 1 ) );
+                                args->time.fmt_len = inline_fmt.len;
+                                args->time.fmt     = inline_fmt.cc;
+                                skip();
+                            }
+                        }
+                    }
+                }
+            } break;
+            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_INT:
+                break;
+        }
+
+        // boolean arguments only.
+        switch( args->type ) {
+            case FT_BOOL: {
+                if( string_cmp( arg, string_text( "b" ) ) ) {
+                    args->bool.binary = true;
+                    skip();
+                }
+            } break;
+            case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_INT: case FT_TIME:
+                break;
+        }
+
+        // path arguments only.
+        switch( args->type ) {
+            case FT_STRING: {
+                if( spec.cc[0] == 'p' ) {
+                    if( string_cmp( arg, string_text( "p" ) ) ) {
+                        args->string.replace_separators = true;
+                        skip();
+                    }
+                }
+            } break;
+            case FT_CHAR: case FT_FLOAT: case FT_INT: case FT_TIME: case FT_BOOL:
+                break;
+        }
+
+        // char arguments only.
+        switch( args->type ) {
+            case FT_CHAR: {
+                if( arg.cc[0] == 'r' ) {
+                    String arg_num = string_advance( arg );
+                    b32 parse_int  = false;
+                    switch( arg_num.len ) {
+                        case 0: {
+                            args->character.repeat = 2;
+                        } break;
+                        case 1: {
+                            if( arg_num.cc[0] == '_' ) {
+                                repeat_by_value = true;
+                            } else {
+                                parse_int = true;
+                            }
+                        } break;
+                        default: {
+                            parse_int = true;
+                        } break;
+                    }
+                    if( parse_int ) {
+                        u64 repeat = 0;
+                        if( !string_parse_uint( arg_num, &repeat ) ) {
+                            return false;
+                        }
+                        args->character.repeat = repeat;
+                    }
+
+                    skip();
+                }
+            } break;
+            case FT_BOOL: case FT_STRING: case FT_FLOAT: case FT_INT: case FT_TIME:
+                break;
+        }
+
+        // argument is unrecognized.
+        return false;
+
+internal_fmt_parse_args_skip:
+        rem = string_advance_by( rem, arg.len + 1 );
+    }
+
+    if( count_by_value ) {
+        if( !repeat_by_value ) {
+            args->count = va_arg( *va, u32 );
+        }
+    }
+
+    if( pointer && args->type != FT_TIME ) {
+        args->data = va_arg( *va, const void* );
+        if( args->type == FT_STRING ) {
+            usize strlen = cstr_len( (const cstr*)args->data );
+            if( !args->count || args->count > strlen ) {
+                args->count = strlen;
+            }
+        }
+    } else {
+        if( args->type != FT_STRING ) {
+            args->count = 1;
+        }
+        switch( args->type ) {
+            case FT_BOOL: {
+                out_val->b32 = va_arg( *va, b32 );
+            } break;
+            case FT_CHAR: {
+                if( repeat_by_value ) {
+                    args->character.repeat = va_arg( *va, u32 );
+                }
+                out_val->c  = va_arg( *va, c_utf32 );
+            } break;
+            case FT_STRING: {
+                String str = va_arg( *va, String );
+                if( args->count ) {
+                    if( args->count > str.len ) {
+                        args->count = str.len;
+                    }
+                } else {
+                    args->count = str.len;
+                }
+                args->data  = str.cc;
+            } break;
+            case FT_FLOAT: {
+                switch( args->floating.flags & FMT_FLOAT_VECTOR_MASK ) {
+                    case FMT_FLOAT_VECTOR2: {
+                        out_val->v2 = va_arg( *va, vec2 );
+                    } break;
+                    case FMT_FLOAT_VECTOR3: {
+                        out_val->v3 = va_arg( *va, vec3 );
+                    } break;
+                    case FMT_FLOAT_VECTOR4: {
+                        out_val->v4 = va_arg( *va, vec4 );
+                    } break;
+                    case 0: {
+                        if( bitfield_check( args->floating.flags, FMT_FLOAT_F64 ) ) {
+                            out_val->f64 = va_arg( *va, f64 );
+                        } else {
+                            out_val->f32 = va_arg( *va, f64 );
+                        }
+                    } break;
+                }
+            } break;
+            case FT_INT: {
+                switch( args->integer.flags & FMT_INT_VECTOR_MASK ) {
+                    case FMT_INT_VECTOR2: {
+                        out_val->v2 = va_arg( *va, vec2 );
+                    } break;
+                    case FMT_INT_VECTOR3: {
+                        out_val->v3 = va_arg( *va, vec3 );
+                    } break;
+                    case FMT_INT_VECTOR4: {
+                        out_val->v4 = va_arg( *va, vec4 );
+                    } break;
+                    default: {
+                        switch( args->integer.flags & FMT_INT_BITDEPTH_MASK ) {
+#if !defined(CORE_ARCH_64_BIT)
+                            case FMT_INT_BITDEPTH_PTR:
+#endif
+                            case FMT_INT_BITDEPTH_32: {
+                                out_val->u32 = va_arg( *va, u32 );
+                            } break;
+                            case FMT_INT_BITDEPTH_16: {
+                                if( args->integer.flags & FMT_INT_SIGNED ) {
+                                    out_val->i16 = va_arg( *va, i32 );
+                                } else {
+                                    out_val->u16 = va_arg( *va, u32 );
+                                }
+                            } break;
+                            case FMT_INT_BITDEPTH_8: {
+                                if( args->integer.flags & FMT_INT_SIGNED ) {
+                                    out_val->i8 = va_arg( *va, i32 );
+                                } else {
+                                    out_val->u8 = va_arg( *va, u32 );
+                                }
+                            } break;
+#if defined(CORE_ARCH_64_BIT)
+                            case FMT_INT_BITDEPTH_PTR:
+#endif
+                            case FMT_INT_BITDEPTH_64: {
+                                out_val->u64 = va_arg( *va, u64 );
+                            } break;
+                        }
+                    } break;
+                }
+            } break;
+            case FT_TIME: {
+                if( pointer ) {
+                    args->time.fmt     = va_arg( *va, char* );
+                    args->time.fmt_len = cstr_len( args->time.fmt );
+                }
+                out_val->ts = va_arg( *va, TimeSplit );
+            } break;
+        }
+    }
+
+    return true;
+
+    #undef skip
 }
 

@@ -2,8 +2,8 @@
 #define CORE_FMT_H
 /**
  * @file   fmt.h
- * @see FMT.md
  * @brief  String formatting.
+ * @see FORMAT.md
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 14, 2024
 */
@@ -11,183 +11,269 @@
 #include "core/attributes.h"
 #include "core/stream.h"
 
-/// @brief Supported integer formats.
-typedef enum FormatInteger {
-    /// @brief Format integer in decimal.
-    FORMAT_INTEGER_DECIMAL,
-    /// @brief Format integer in binary.
-    FORMAT_INTEGER_BINARY,
-    /// @brief Format integer in upper case hexadecimal.
-    FORMAT_INTEGER_HEXADECIMAL_LOWER,
-    /// @brief Format integer in lower case hexadecimal.
-    FORMAT_INTEGER_HEXADECIMAL_UPPER,
-} FormatInteger;
+// forward declaration
+struct TimeSplit;
+attr_core_api usize stream_fmt_time(
+    StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
+    int padding, usize opt_format_len, const char* opt_format );
 
-/// @brief Function prototype for stream formatting functions.
-/// @see #StreamBytesFN
-typedef StreamBytesFN StreamFormatFN;
+/// @brief String and char formatting case.
+typedef enum FormatCasing {
+    /// @brief Do not convert characters.
+    FMT_CASING_AS_IS,
+    /// @brief Convert alphabetic characters to upper-case.
+    FMT_CASING_UPPER,
+    /// @brief Convert alphabetic characters to lower-case.
+    FMT_CASING_LOWER,
+} FormatCasing;
+/// @brief Flags for float formatting.
+typedef enum FormatFloatFlags {
+    /// @brief Format float as if it is an amount of memory.
+    FMT_FLOAT_MEMORY      = 0b00000001,
+    /// @brief Same as #FMT_FLOAT_MEMORY, format in kibibytes instead.
+    FMT_FLOAT_MEMORY_KIBI = 0b00000010,
+    /// @brief Include commas in string.
+    FMT_FLOAT_SEPARATE    = 0b00000100,
+    /// @brief Pad left side of number with zeroes.
+    FMT_FLOAT_ZERO_PAD    = 0b00001000,
+    /// @brief Floats are part of a vector2.
+    FMT_FLOAT_VECTOR2     = 0b00010000,
+    /// @brief Floats are part of a vector3.
+    FMT_FLOAT_VECTOR3     = 0b00100000,
+    /// @brief Floats are part of a vector4.
+    FMT_FLOAT_VECTOR4     = 0b00110000,
+    /// @brief Floats are 64-bit. (doubles)
+    FMT_FLOAT_F64         = 0b01000000,
+} FormatFloatFlags;
+/// @brief Mask for extracting which type of vector float is.
+#define FMT_FLOAT_VECTOR_MASK\
+    (FMT_FLOAT_VECTOR2 | FMT_FLOAT_VECTOR3 | FMT_FLOAT_VECTOR4)
+/// @brief Maximum allowed float precision.
+#define FMT_FLOAT_MAX_PRECISION (6)
+/// Flags for integer formatting.
+typedef enum FormatIntFlags {
+    /// @brief Format integer as if it is an amount of memory.
+    FMT_INT_MEMORY       = 0b00000001,
+    /// @brief Same as #FMT_INT_MEMORY, format in kibibytes instead.
+    FMT_INT_MEMORY_KIBI  = 0b00000010,
+    /// @brief Include commas or ticks in string.
+    FMT_INT_SEPARATE     = 0b00000100,
+    /// @brief Pad left side of number with zeroes.
+    FMT_INT_ZERO_PAD     = 0b00001000,
+    /// @brief Integers are part of a vector2.
+    FMT_INT_VECTOR2      = 0b00010000,
+    /// @brief Integers are part of a vector3.
+    FMT_INT_VECTOR3      = 0b00100000,
+    /// @brief Integers are part of a vector4.
+    FMT_INT_VECTOR4      = 0b00110000,
+    /// @brief Write in upper-case hexadecimal.
+    FMT_INT_HEX_UPPER    = 0b01000000,
+    /// @brief Write in lower-case hexadecimal.
+    FMT_INT_HEX_LOWER    = 0b10000000,
+    /// @brief Write in binary.
+    FMT_INT_BINARY       = 0b11000000,
+    /// @brief Write all digits of integer.
+    FMT_INT_FULL_WIDTH   = 0b00000001 << 8,
+    /// @brief Integers are 8-bit.
+    FMT_INT_BITDEPTH_8   = 0b00000010 << 8,
+    /// @brief Integers are 16-bit.
+    FMT_INT_BITDEPTH_16  = 0b00000100 << 8,
+    /// @brief Integers are 32-bit.
+    FMT_INT_BITDEPTH_32  = 0b00001000 << 8,
+    /// @brief Integers are 64-bit.
+    FMT_INT_BITDEPTH_64  = 0b00001100 << 8,
+    /// @brief Integers are pointer sized.
+    FMT_INT_BITDEPTH_PTR = 0b00010000 << 8,
+    /// @brief Integers are signed.
+    FMT_INT_SIGNED       = 0b00100000 << 8,
+} FormatIntFlags;
+/// @brief Mask for extracting integer vector flags.
+#define FMT_INT_VECTOR_MASK (FMT_INT_VECTOR2 | FMT_INT_VECTOR3 | FMT_INT_VECTOR4)
+/// @brief Mask for extracting integer number base flags.
+#define FMT_INT_BASE_MASK (FMT_INT_HEX_UPPER | FMT_INT_HEX_LOWER | FMT_INT_BINARY)
+/// @brief Mask for extracting integer bitdepth flags.
+#define FMT_INT_BITDEPTH_MASK\
+    (FMT_INT_BITDEPTH_8 | FMT_INT_BITDEPTH_16 |\
+        FMT_INT_BITDEPTH_32 | FMT_INT_BITDEPTH_64 | FMT_INT_BITDEPTH_PTR)
+/// @brief Types that formatter can handle.
+typedef enum FormatType {
+    /// @brief Type to format is boolean.
+    FT_BOOL,
+    /// @brief Type to format is character.
+    FT_CHAR,
+    /// @brief Type to format is string.
+    FT_STRING,
+    /// @brief Type to format is float.
+    FT_FLOAT,
+    /// @brief Type to format is integer.
+    FT_INT,
+    /// @brief Type to format is time split.
+    FT_TIME,
+} FormatType;
+/// @brief Arguments for formatter.
+typedef struct FormatArguments {
+    /// @brief Type of data to format.
+    enum FormatType type;
+    /// @brief Number of items to format.
+    u32             count;
+    /// @brief Pointer to start of data to format buffer.
+    const void*     data;
+    /// @brief Number of padding characters to include in formatted string.
+    int             padding;
+    /// @brief Anonymous union of format arguments.
+    union {
+        /// @brief Boolean format arguments.
+        struct BoolFormatArguments {
+            /// @brief If boolean should be formatted as binary.
+            b32 binary;
+        } bool;
+        /// @brief Character format arguments.
+        struct CharFormatArguments {
+            /// @brief How many times to repeat character.
+            u32 repeat;
+            /// @brief What casing should character be printed in.
+            enum FormatCasing casing;
+        } character;
+        /// @brief String format arguments.
+        struct StringFormatArguments {
+            /// @brief If string is path,
+            /// should separators be replaced with system default?
+            b32 replace_separators;
+            /// @brief What casing should string be printed in.
+            enum FormatCasing casing;
+        } string;
+        /// @brief Float format arguments.
+        struct FloatFormatArguments {
+            /// @brief How much precision to print with.
+            int precision;
+            /// @brief Float formatting flags.
+            enum FormatFloatFlags flags;
+        } floating;
+        /// @brief Integer format arguments.
+        struct IntFormatArguments {
+            /// @brief Integer formatting flags.
+            enum FormatIntFlags flags;
+        } integer;
+        /// @brief Time format arguments.
+        struct TimeFormatArguments {
+            /// @brief Size of format string.
+            usize fmt_len;
+            /// @brief Pointer to time format string.
+            const char* fmt;
+        } time;
+    };
+} FormatArguments;
 
-/// @brief Stream a formatted string to a target using variadic arguments list.
-/// @note Format string must have a length.
-/// @param stream Streaming function.
-/// @param[in] target Target for streaming function.
-/// @param format_len Length of format string.
-/// @param[in] format Format string.
-/// @param va Variadic arguments.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_text_va(
-    StreamFormatFN* stream, void* target,
+/// @brief Stream boolean formatted string.
+/// @param[in] stream   Pointer to streaming function.
+/// @param[in] target   Pointer to streaming function parameters.
+/// @param     padding  Padding for format string.
+/// @param     count    Number of booleans in @c booleans.
+/// @param[in] booleans Pointer to start of boolean array.
+/// @param[in] args     Boolean format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_bool(
+    StreamBytesFN* stream, void* target,
+    int padding, u32 count, const b32* booleans,
+    struct BoolFormatArguments* args );
+/// @brief Stream character formatted string.
+/// @param[in] stream     Pointer to streaming function.
+/// @param[in] target     Pointer to streaming function parameters.
+/// @param     padding    Padding for format string.
+/// @param     count      Number of booleans in @c characters.
+/// @param[in] characters Pointer to start of character array.
+/// @param[in] args       Character format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_char(
+    StreamBytesFN* stream, void* target,
+    int padding, u32 count, const char* characters,
+    struct CharFormatArguments* args );
+/// @brief Stream string formatted string.
+/// @param[in] stream     Pointer to streaming function.
+/// @param[in] target     Pointer to streaming function parameters.
+/// @param     padding    Padding for format string.
+/// @param     string_len Length of string to format.
+/// @param[in] string     Pointer to start of string.
+/// @param[in] args       String format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_string(
+    StreamBytesFN* stream, void* target,
+    int padding, usize string_len, const char* string,
+    struct StringFormatArguments* args );
+/// @brief Stream float formatted string.
+/// @param[in] stream  Pointer to streaming function.
+/// @param[in] target  Pointer to streaming function parameters.
+/// @param     padding Padding for format string.
+/// @param     count   Number of floats to format.
+/// @param[in] floats  Pointer to start of float array.
+/// @param[in] args    Float format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_float(
+    StreamBytesFN* stream, void* target,
+    int padding, u32 count, const void* floats,
+    struct FloatFormatArguments* args );
+/// @brief Stream integer formatted string.
+/// @param[in] stream   Pointer to streaming function.
+/// @param[in] target   Pointer to streaming function parameters.
+/// @param     padding  Padding for format string.
+/// @param     count    Number of integers to format.
+/// @param[in] integers Pointer to start of integer array.
+/// @param[in] args     Integer format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_int(
+    StreamBytesFN* stream, void* target,
+    int padding, u32 count, const void* integers,
+    struct IntFormatArguments* args );
+/// @brief Stream formatted string from args.
+/// @param[in] stream   Pointer to streaming function.
+/// @param[in] target   Pointer to streaming function parameters.
+/// @param[in] args     Format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_args(
+    StreamBytesFN* stream, void* target, FormatArguments* args );
+/// @brief Stream formatted string.
+/// @param[in] stream     Pointer to streaming function.
+/// @param[in] target     Pointer to streaming function parameters.
+/// @param     format_len Length of format string.
+/// @param[in] format     Pointer to start of format string.
+/// @param     va         Variadic format arguments.
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_va(
+    StreamBytesFN* stream, void* target,
     usize format_len, const char* format, va_list va );
-
-/// @brief Stream a formatted string to a target.
-/// @note Format string must have a length.
-/// @param stream Streaming function.
-/// @param[in] target Target for streaming function.
-/// @param format_len Length of format string.
-/// @param[in] format Format string.
-/// @param ... Format arguments.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
+/// @brief Stream formatted string.
+/// @param[in] stream     Pointer to streaming function.
+/// @param[in] target     Pointer to streaming function parameters.
+/// @param     format_len Length of format string.
+/// @param[in] format     Pointer to start of format string.
+/// @param     ...        Format arguments.
+/// @return Number of characters that could not be streamed to target.
 attr_always_inline
-attr_header usize fmt_text(
-    StreamFormatFN* stream, void* target,
+attr_header usize stream_fmt(
+    StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ...
 ) {
     va_list va;
     va_start( va, format );
-    usize result = fmt_text_va( stream, target, format_len, format, va );
+    usize res = stream_fmt_va( stream, target, format_len, format, va );
     va_end( va );
-    return result;
+    return res;
 }
-
-/// @brief Stream a formatted string to a target using variadic arguments list.
-/// @param stream Streaming function.
-/// @param[in] target Target for streaming function.
-/// @param format Format string literal.
-/// @param va Variadic arguments.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-#define fmt_va( stream, target, format, va )\
-    fmt_text_va( stream, target, sizeof(format) - 1, format, va )
-
-/// @brief Stream a formatted string to a target using variadic arguments list.
-/// @param stream Streaming function.
-/// @param[in] target Target for streaming function.
-/// @param format Format string literal.
-/// @param ... Format arguments.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-#define fmt( stream, target, format, ... )\
-    fmt_text( stream, target, sizeof(format) - 1, format, ##__VA_ARGS__ )
-
-/// @brief Format a signed 8-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_i8(
-    StreamFormatFN* stream, void* target, i8 integer, FormatInteger format );
-/// @brief Format an unsigned 8-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_u8(
-    StreamFormatFN* stream, void* target, u8 integer, FormatInteger format );
-/// @brief Format a signed 16-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_i16(
-    StreamFormatFN* stream, void* target, i16 integer, FormatInteger format );
-/// @brief Format an unsigned 16-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_u16(
-    StreamFormatFN* stream, void* target, u16 integer, FormatInteger format );
-/// @brief Format a signed 32-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_i32(
-    StreamFormatFN* stream, void* target, i32 integer, FormatInteger format );
-/// @brief Format an unsigned 32-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_u32(
-    StreamFormatFN* stream, void* target, u32 integer, FormatInteger format );
-/// @brief Format a signed 64-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_i64(
-    StreamFormatFN* stream, void* target, i64 integer, FormatInteger format );
-/// @brief Format an unsigned 64-bit integer.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param integer Integer to format.
-/// @param format Formatting style.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_u64(
-    StreamFormatFN* stream, void* target, u64 integer, FormatInteger format );
-/// @brief Format a floating point number.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param f Float to format.
-/// @param precision How many decimal places to stream, can be zero.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_float(
-    StreamFormatFN* stream, void* target, f64 f, u32 precision );
-/// @brief Format a boolean.
-/// @param stream Streaming function.
-/// @param target Target for streaming function.
-/// @param b Boolean to format.
-/// @param binary If true, formatted as 0/1 otherwise formatted as true/false.
-/// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-attr_core_api usize fmt_bool(
-    StreamFormatFN* stream, void* target, b32 b, b32 binary );
-
-#if defined(CORE_ARCH_64_BIT)
-    /// @brief Format an unsigned pointer sized integer.
-    /// @param stream Streaming function.
-    /// @param target Target for streaming function.
-    /// @param integer Integer to format.
-    /// @param format Formatting style.
-    /// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-    #define fmt_usize fmt_u64
-    /// @brief Format a signed pointer sized integer.
-    /// @param stream Streaming function.
-    /// @param target Target for streaming function.
-    /// @param integer Integer to format.
-    /// @param format Formatting style.
-    /// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-    #define fmt_isize fmt_i64
-#else
-    /// @brief Format an unsigned pointer sized integer.
-    /// @param stream Streaming function.
-    /// @param target Target for streaming function.
-    /// @param integer Integer to format.
-    /// @param format Formatting style.
-    /// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-    #define fmt_usize fmt_u32
-    /// @brief Format a signed pointer sized integer.
-    /// @param stream Streaming function.
-    /// @param target Target for streaming function.
-    /// @param integer Integer to format.
-    /// @param format Formatting style.
-    /// @return Zero if stream was successful, otherwise number of bytes required in stream target.
-    #define fmt_isize fmt_i32
-#endif
+/// @brief Stream formatted string.
+/// @param[in] stream (StreamBytesFN*) Pointer to streaming function.
+/// @param[in] target (void*)          Pointer to streaming function parameters.
+/// @param[in] format (string literal) Format string literal.
+/// @param     va     (va_list)        Variadic format arguments.
+/// @return (usize) Number of characters that could not be streamed to target.
+#define stream_fmt_text_va( stream, target, format, va )\
+    stream_fmt_va( stream, target, sizeof(format) - 1, format, va )
+/// @brief Stream formatted string.
+/// @param[in] stream (StreamBytesFN*) Pointer to streaming function.
+/// @param[in] target (void*)          Pointer to streaming function parameters.
+/// @param[in] format (string literal) Format string literal.
+/// @param     ...    (args)           Format arguments.
+/// @return (usize) Number of characters that could not be streamed to target.
+#define stream_fmt_text( stream, target, format, ... )\
+    stream_fmt( stream, target, sizeof(format) - 1, format, ##__VA_ARGS__ )
 
 #endif /* header guard */

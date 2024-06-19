@@ -138,7 +138,7 @@ attr_core_api usize fs_file_stream(
 attr_core_api b32 fs_file_write_fmt_text_va(
     FileHandle* file, usize format_len, const char* format, va_list va
 ) {
-    return !fmt_text_va( fs_file_stream, file, format_len, format, va );
+    return !stream_fmt_va( fs_file_stream, file, format_len, format, va );
 }
 
 #if defined(CORE_PLATFORM_WINDOWS)

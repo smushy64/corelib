@@ -8,15 +8,22 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
+#include "core/stream.h"
 
 /// @brief Same as time_t.
 typedef usize TimePosix;
-typedef u32   TimeYear;
-typedef u32   TimeMonth;
-typedef u32   TimeDay;
-typedef u32   TimeHour;
-typedef u32   TimeMinute;
-typedef u32   TimeSecond;
+/// @brief Unsigned int representing a year.
+typedef u32 TimeYear;
+/// @brief Unsigned int representing a month (1-12).
+typedef u32 TimeMonth;
+/// @brief Unsigned int representing a day of the month (1-31).
+typedef u32 TimeDay;
+/// @brief Unsigned int representing an hour (0-23).
+typedef u32 TimeHour;
+/// @brief Unsigned int representing a minute (0-59).
+typedef u32 TimeMinute;
+/// @brief Unsigned int representing a second (0-59).
+typedef u32 TimeSecond;
 
 /// @brief Time split up into year, month, day, hour, minute and second.
 typedef struct TimeSplit {
@@ -59,6 +66,28 @@ typedef struct TimeSplit {
 /// @brief Time split month of December.
 #define TIME_MONTH_DECEMBER  (12)
 
+/// @brief Sunday.
+#define TIME_DAY_WEEK_SUNDAY    (0)
+/// @brief Monday.
+#define TIME_DAY_WEEK_MONDAY    (1)
+/// @brief Tuesday.
+#define TIME_DAY_WEEK_TUESDAY   (2)
+/// @brief Wednesday.
+#define TIME_DAY_WEEK_WEDNESDAY (3)
+/// @brief Thursday.
+#define TIME_DAY_WEEK_THURSDAY  (4)
+/// @brief Friday.
+#define TIME_DAY_WEEK_FRIDAY    (5)
+/// @brief Saturday.
+#define TIME_DAY_WEEK_SATURDAY  (6)
+
+/// @brief Number of seconds in a day.
+#define TIME_SECONDS_IN_DAY       (86400ull)
+/// @brief Number of seconds in a year.
+#define TIME_SECONDS_IN_YEAR      (TIME_SECONDS_IN_DAY * 365ull)
+/// @brief Number of seconds in a leap year.
+#define TIME_SECONDS_IN_LEAP_YEAR (TIME_SECONDS_IN_DAY * 366ull)
+
 /// @brief Get POSIX time.
 /// @details
 /// Time is always in UTC.
@@ -70,7 +99,18 @@ attr_core_api TimePosix time_posix(void);
 /// @return Split time.
 /// @see #TimeSplit
 attr_core_api TimeSplit time_split(void);
-
+/// @brief Stream formatted time split.
+/// @param[in] stream     Pointer to streaming function.
+/// @param[in] target     Pointer to streaming target.
+/// @param[in] ts         Pointer to time split.
+/// @param     padding    Padding to add to formatted string.
+/// @param     format_len (optional) Length of time format string.
+/// @param[in] format     (optional) Pointer to start of format string.
+/// @see FORMAT_TIME.md
+/// @return Number of characters that could not be streamed to target.
+attr_core_api usize stream_fmt_time(
+    StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
+    int padding, usize opt_format_len, const char* opt_format );
 /// @brief Convert 24 hour to 12 hour.
 /// @param      hr24     Hour in 24-hour.
 /// @param[out] out_hr12 Hour in 12-hour.
@@ -78,6 +118,24 @@ attr_core_api TimeSplit time_split(void);
 ///     - @c true  : Time is AM.
 ///     - @c false : Time is PM.
 attr_core_api b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 );
+/// @brief Convert day of the month to day of the week.
+/// @param year      Year.
+/// @param month     Month (1-12).
+/// @param day_month Day of the month (1-31).
+/// @return Day of the week (0-6 with 0=Sunday).
+attr_core_api u32 time_day_month_to_day_week( u32 year, u32 month, u32 day_month );
+/// @brief Convert day of month to day of year.
+/// @param year      Year.
+/// @param month     Month (1-12).
+/// @param day_month Day of the month (1-31).
+/// @return Day of the year.
+attr_core_api u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month );
+/// @brief Check if year is leap year.
+/// @param year Year.
+/// @return
+///     - @c true  : @c year is a leap year.
+///     - @c false : @c year is not a leap year.
+attr_core_api b32 time_year_is_leap( u32 year );
 
 /// @brief Get high resolution time in milliseconds.
 /// @return Time in milliseconds.
@@ -159,6 +217,25 @@ attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_le
         case TIME_MONTH_OCTOBER   : res("October");
         case TIME_MONTH_NOVEMBER  : res("November");
         case TIME_MONTH_DECEMBER  : res("December");
+        default: res("INVALID");
+    }
+    #undef res
+}
+/// @brief Convert day of the week to string.
+/// @param      day_week    Day of the week to convert (0-6, 0 == Sunday).
+/// @param[out] opt_out_len (optional) Pointer to write length of string.
+/// @return Day name read-only string.
+attr_header const char* time_day_week_to_string( u32 day_week, usize* opt_out_len ) {
+    #define res( literal )\
+        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+    switch( day_week ) {
+        case TIME_DAY_WEEK_SUNDAY    : res("Sunday");
+        case TIME_DAY_WEEK_MONDAY    : res("Monday");
+        case TIME_DAY_WEEK_TUESDAY   : res("Tuesday");
+        case TIME_DAY_WEEK_WEDNESDAY : res("Wednesday");
+        case TIME_DAY_WEEK_THURSDAY  : res("Thursday");
+        case TIME_DAY_WEEK_FRIDAY    : res("Friday");
+        case TIME_DAY_WEEK_SATURDAY  : res("Saturday");
         default: res("INVALID");
     }
     #undef res

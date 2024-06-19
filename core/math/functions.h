@@ -17,7 +17,9 @@
 
 /// @brief Check if float is NaN.
 /// @param x Float to check.
-/// @return True if x is NaN.
+/// @return
+///     - @c true  : @c x is NaN.
+///     - @c false : @c x is not NaN.
 attr_always_inline
 attr_header b32 is_nan( f32 x ) {
     u32 bitpattern = *(u32*)&x;
@@ -26,6 +28,20 @@ attr_header b32 is_nan( f32 x ) {
     u32 man = bitpattern & F32_MANTISSA_MASK;
 
     return exp == F32_EXPONENT_MASK && man != 0;
+}
+/// @brief Check if float is NaN.
+/// @param x Float to check.
+/// @return
+///     - @c true  : @c x is NaN.
+///     - @c false : @c x is not NaN.
+attr_always_inline
+attr_header b32 is_nan64( f64 x ) {
+    u64 bitpattern = *(u64*)&x;
+
+    u64 exp = bitpattern & F64_EXPONENT_MASK;
+    u64 man = bitpattern & F64_MANTISSA_MASK;
+
+    return exp == F64_EXPONENT_MASK && man != 0;
 }
 
 /// @brief Calculate square root.

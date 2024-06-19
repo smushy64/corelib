@@ -652,7 +652,7 @@ attr_core_api bsize string_buf_stream(
 attr_core_api usize string_buf_try_fmt_buffer_va(
     StringBuf* buf, usize format_len, const char* format, va_list va
 ) {
-    return fmt_text_va( string_buf_try_stream, buf, format_len, format, va );
+    return stream_fmt_va( string_buf_try_stream, buf, format_len, format, va );
 }
 attr_core_api b32 string_buf_fmt_buffer_va(
     StringBuf* buf, struct AllocatorInterface* allocator,
@@ -662,7 +662,7 @@ attr_core_api b32 string_buf_fmt_buffer_va(
     target.allocator = allocator;
     target.buf       = buf;
 
-    usize res = fmt_text_va( string_buf_stream, &target, format_len, format, va );
+    usize res = stream_fmt_va( string_buf_stream, &target, format_len, format, va );
     return res ? true : false;
 }
 

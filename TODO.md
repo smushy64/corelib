@@ -2,7 +2,6 @@
 - [ ] collections: queue atomic functions.
 - [ ] collections: allocating functions with alignment.
 - [ ] alloc: Block allocator.
-- [ ] time: complete rewrite.
 - [ ] process.h: API for creating processes and pipes.
 - [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
@@ -18,16 +17,17 @@
 - [ ] math: generics/function overloads(C++)
 - [ ] math: RGB <-> HEX conversions
 - [ ] docs:math: vec2/3/4 quat and mat2/3/4 C++ wrappers documentation
-- [ ] fmt: rewrite
-- [ ] fmt: time formatting
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
-- [ ] fmt: Path formatting argument
-    - / to change all slashes to forward
-    - \ to change all slashes to back
 ## unlikely
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] time: complete rewrite.
+- [x] fmt: rewrite
+- [x] fmt: time formatting
+- [x] fmt: Path formatting argument
+    - / to change all slashes to forward
+    - \ to change all slashes to back
 - [x] lib:log: fix logging new line
 - [x] lib:log: remove color formatting
 - [x] math: endian conversions

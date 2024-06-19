@@ -33,38 +33,23 @@
 
 #define expect( condition, message, ... ) do {\
     if( !(condition) ) {\
-        println( CONSOLE_COLOR_RED __FILE__ ":{i}: condition '" #condition "' failed! " message CONSOLE_COLOR_RESET, __LINE__, ##__VA_ARGS__ );\
+        println( CONSOLE_COLOR_RED __FILE__\
+            ":{i}: condition '" #condition "' failed! "\
+            message CONSOLE_COLOR_RESET, __LINE__, ##__VA_ARGS__ );\
         return -1;\
     }\
 } while(0)
 
 int string(void);
 int collections(void);
-int time(void);
 
 int main( int argc, char** argv ) {
     unused( argc, argv );
 
     debug_timer_block( tests,
-        test( time );
         test( collections );
         test( string );
     , "completed in " );
-
-    return 0;
-}
-
-int time(void) {
-    TimeSplit time = time_split();
-
-    u32 hr12 = 0;
-    b32 am   = time_hour_24_to_12( time.hour, &hr12 );
-
-    println(
-        "{cc} {u32,02}, {u32,04} ({u32,02}){u32,02}:{u32,02}:{u32,02} {cc}",
-        time_month_to_string( time.month, 0 ),
-        time.day, time.year,
-        time.hour, hr12, time.minute, time.second, am ? "AM" : "PM" );
 
     return 0;
 }

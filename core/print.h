@@ -85,7 +85,7 @@ typedef const char ConsoleColor;
 /// @see #fmt_text_va()
 attr_always_inline
 attr_header void print_text_va( usize format_len, const char* format, va_list va ) {
-    fmt_text_va( stream_console, stdout_handle(), format_len, format, va );
+    stream_fmt_va( stream_console, stdout_handle(), format_len, format, va );
 }
 /// @brief Print formatted text to stdout.
 /// @param format_len Length of format string, exclusing null-terminator.
@@ -107,8 +107,13 @@ attr_header void print_text( usize format_len, const char* format, ... ) {
 /// @see #va_list
 /// @see #fmt_text_va()
 attr_always_inline
-attr_header void print_err_text_va( usize format_len, const char* format, va_list va ) {
-    fmt_text_va( stream_console, stderr_handle(), format_len, format, va );
+attr_header void print_err_text_va(
+    usize format_len, const char* format, va_list va
+) {
+    stream_fmt_va(
+        stream_console,
+        stderr_handle(),
+        format_len, format, va );
 }
 /// @brief Print formatted text to stderr.
 /// @param format_len Length of format string, exclusing null-terminator.

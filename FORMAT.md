@@ -1,46 +1,53 @@
 String Formatting
 =================
 
-Corelib does not use the C standard library's format specifiers and instead defines its own specifiers.
+Corelib does not use the C standard library's format specifiers.
 
 Format specifiers follow this prototype:
 
+<tt>{specifier,arguments}</tt>
+
+Example:
+
 ```cpp
-
-{specifier,arguments}
-
-ex:
-
-println( "{u32,X,4}", 10 ) -> " 0xA"
-
+println( "'{u32,xu,4}'", 10 );
 ```
 
-Data is always assumed to be passed in by value unless the * argument is used.
+Output:
 
-When two arguments are conflicting, the last provided argument will take precedence.
+```sh
+' 0xA'
+```
 
-@note Arguments in [ ] indicate that they describe a C literal, not the actual argument.
-@note ex: [+int] means positive integer.
+Arguments are case-insensitive.
 
-## Parenthesis
+Data is always assumed to be passed in by value, unless otherwise stated.
 
-```{{```
+When an argument is invalid, format specifier is printed.
+
+When two arguments are conflicting, the last argument takes precedence.
+
+@note Arguments written in italics describe
+a string literal, not the name of an argument.
+Example: <i>+int</i> means a positive integer.
+
+Escape Braces
+-------------
+
+```
+{{
+```
 
 ### Description
 
-Write a literal open parenthesis.
+Write a literal open curly brace.
 
-## Null Terminator
+### Arguments
 
-```
-{0}
-```
+This specifier takes no arguments.
 
-### Description
-
-Write a literal null character.
-
-## Boolean
+Boolean
+-------
 
 ```
 {b}
@@ -48,19 +55,26 @@ Write a literal null character.
 
 ### Description
 
-Write a <tt>#b32</tt>, true if non-zero, false if zero.
+Write a <tt>#b32</tt>.
+
+@note Value is read in as an <tt>int</tt>. <tt>b8</tt>, <tt>b16</tt> and <tt>b32</tt> get promoted to <tt>int</tt>. <tt>b64</tt> and <tt>bsize</tt> should be cast to <tt>int</tt>.
+
+Non-zero is interpreted as ```true```.
+
+Zero is interpreted as ```false```.
 
 ### Arguments
 
-| Argument                   | Description                                                                                                             |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| <tt>*[+int, optional]</tt> | Indicates that value is passed in by pointer. Integer indicates how many values to write (if pointer is an array).      |
-| <tt>*_</tt>                | Indicates that value is passed in by pointer. Number of items to print is passed in before pointer and must be an #i32. |
-| <tt>[+int]</tt>            | Left side padding.                                                                                                      |
-| <tt>[-int]</tt>            | Right side padding.                                                                                                     |
-| <tt>b</tt>                 | Write boolean as binary 1 or 0 instead of true or false.                                                                |
+| Argument                         | Description                                                                                                                      |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| <tt>\*<i>+int, optional</i></tt> | Indicates that value is passed in as a pointer. If integer is provided, specifies how many booleans to print from pointer.       |
+| <tt>*_</tt>                      | Indicates that value is passed in as a pointer. Number of booleans to print is passed in before pointer. Max number is #I32_MAX. |
+| <tt><i>+int</i></tt>             | Left side padding.                                                                                                               |
+| <tt><i>-int</i></tt>             | Right side padding.                                                                                                              |
+| <tt>b</tt>                       | Write boolean as binary <tt>1</tt> or <tt>0</tt> instead of <tt>true</tt> or <tt>false</tt>.                                     |
 
-## Character
+UTF-8 Character
+---------------
 
 ```
 {c}
@@ -70,20 +84,25 @@ Write a <tt>#b32</tt>, true if non-zero, false if zero.
 
 Write a <tt>char</tt>.
 
+@note
+- When passed by value, value is read in as an <tt>int</tt>. <tt>char</tt> gets promoted to <tt>int</tt>.
+- When read by pointer, value is read in as a <tt>char*</tt>.
+
 ### Arguments
 
-| Argument                   | Description                                                                                                                 |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| <tt>*[+int, optional]</tt> | Indicates that value is passed in by pointer. Integer indicates how many values to write (if pointer is an array).          |
-| <tt>*_</tt>                | Indicates that value is passed in by pointer. Number of items to print is passed in before pointer and must be an #i32.     |
-| <tt>r[+int, optional]</tt> | Repeat character. If no integer is provided, repeats once.                                                                  |
-| <tt>r_</tt>                | Repeat character. Number of times to repeat is passed in before character and must be an #i32. Cannot be used with * or *_. |
-| <tt>[+int]</tt>            | Left side padding.                                                                                                          |
-| <tt>[-int]</tt>            | Right side padding.                                                                                                         |
-| <tt>u</tt>                 | Convert character to upper-case if it is lower-case.                                                                        |
-| <tt>l</tt>                 | Convert character to lower-case if it is upper-case.                                                                        |
+| Argument                         | Description                                                                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| <tt>\*<i>+int, optional</i></tt> | Indicates that value is passed in as a pointer. If integer is provided, specifies how many characters to print from pointer.           |
+| <tt>\*_</tt>                     | Indicates that value is passed in as a pointer. Number of characters to print is passed in before pointer. Max number is #I32_MAX.     |
+| <tt>r<i>+int, optional</i></tt>  | Repeat character. If no integer is provided, prints character twice.                                                                   |
+| <tt>r_</tt>                      | Repeat character. Number of times to print is provided as an argument before character. Max number is #I32_MAX. Cannot be used with *_ |
+| <tt><i>+int</i></tt>             | Left side padding.                                                                                                                     |
+| <tt><i>-int</i></tt>             | Right side padding.                                                                                                                    |
+| <tt>u</tt>                       | Character is printed as upper-case if it's an alphabetic character.                                                                    |
+| <tt>l</tt>                       | Character is printed as lower-case if it's an alphabetic character.                                                                    |
 
-## Null-terminated String
+Null Terminated UTF-8 String
+----------------------------
 
 ```
 {cc}
@@ -91,20 +110,23 @@ Write a <tt>char</tt>.
 
 ### Description
 
-Write a <tt>const char*</tt> string.
+Write a null terminated string.
+
+@note Value is read in as a <tt>const char\*</tt>.
 
 ### Arguments
 
-| Argument                   | Description                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| <tt>*[+int]</tt>           | Only print up to given number of characters or null-terminator.                 |
-| <tt>*_</tt>                | Same as above except provided as an argument before string and must be an #i32. |
-| <tt>[+int]</tt>            | Left side padding.                                                              |
-| <tt>[-int]</tt>            | Right side padding.                                                             |
-| <tt>u</tt>                 | Convert string to upper-case.                                                   |
-| <tt>l</tt>                 | Convert string to lower-case.                                                   |
+| Argument               | Description                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| <tt>\*<i>+int</i></tt> | Indicate maximum number of characters to print. If max is > string length, prints up to string length. |
+| <tt>\*_</tt>           | Indicates that maximum number of characters to print is passed in before string. Max is #I32_MAX       |
+| <tt><i>+int</i></tt>   | Left side padding.                                                                                     |
+| <tt><i>-int</i></tt>   | Right side padding.                                                                                    |
+| <tt>u</tt>             | Characters are printed as upper-case.                                                                  |
+| <tt>l</tt>             | Characters are printed as lower-case.                                                                  |
 
-## Float
+Floating Point Number
+---------------------
 
 ```
 {f} {f32} {f64}
@@ -112,21 +134,28 @@ Write a <tt>const char*</tt> string.
 
 ### Description
 
-Write an <tt>#f64</tt> (f32 gets promoted to f64 in varargs).
+Write an <tt>f64</tt>.
+
+@note
+- When passed by value, value is read in as an <tt>f64</tt>. <tt>f32</tt> gets promoted to <tt>f64</tt>.
+- When passed by pointer, value is read in as a pointer to specified type. <tt>{f}</tt> always assumes <tt>f32</tt>.
 
 ### Arguments
 
-| Argument                   | Description                                                                                                             |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| <tt>*[+int, optional]</tt> | Indicates that value is passed in by pointer. Integer indicates how many values to write (if pointer is an array).      |
-| <tt>*_</tt>                | Indicates that value is passed in by pointer. Number of items to print is passed in before pointer and must be an #i32. |
-| <tt>[+int]</tt>            | Left side padding.                                                                                                      |
-| <tt>[-int]</tt>            | Right side padding.                                                                                                     |
-| <tt>0[+int]</tt>           | Left side padding, pad with zeroes instead of spaces.                                                                   |
-| <tt>s</tt>                 | Separate every 3 whole number digits by a comma.                                                                        |
-| <tt>m</tt>                 | Memory formatting. Assumes value is in bytes, converts to most convenient unit (ex: 1280.0f -> "1.25 KB")               |
+| Argument                                      | Description                                                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| <tt>\*<i>+int, optional</i></tt>              | Indicates that value is passed in as a pointer. If integer is provided, specifies how many floats to print from pointer. |
+| <tt>\*_</tt>                                  | Indicates that value is passed in as a pointer. Number of floats to print is passed in before float. Max is #I32_MAX     |
+| <tt><i>+int</i></tt>                          | Left side padding with spaces.                                                                                           |
+| <tt><i>-int</i></tt>                          | Right side padding with spaces.                                                                                          |
+| <tt>0<i>+int</i></tt>                         | Left side padding with zeroes.                                                                                           |
+| <tt><i>padding, optional</i>.<i>+int</i></tt> | Precision to print fractional part at. Default = 6.                                                                      |
+| <tt>s</tt>                                    | Separate every 3 whole number digits by a comma.                                                                         |
+| <tt>m</tt>                                    | Assume number represents bytes. Formats as bytes, kilobytes, megabytes or terabytes as appropriate.                      |
+| <tt>mib</tt>                                  | Assume number represents bytes. Formats as bytes, kibibytes, mebibytes or tebibytes as appropriate.                      |
 
-## Vector
+Vector
+------
 
 ```
 {v2} {v3} {v4}
@@ -134,49 +163,56 @@ Write an <tt>#f64</tt> (f32 gets promoted to f64 in varargs).
 
 ### Description
 
-Write either a <tt>#Vector2</tt> <tt>#Vector3</tt> or <tt>#Vector4</tt>.
+Write a <tt>#Vector2</tt>, <tt>#Vector3</tt> or <tt>#Vector4</tt>.
+
+@note Value is read as specified type.
 
 ### Arguments
 
-| Argument                   | Description                                                                                                             |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| <tt>*[+int, optional]</tt> | Indicates that value is passed in by pointer. Integer indicates how many values to write (if pointer is an array).      |
-| <tt>*_</tt>                | Indicates that value is passed in by pointer. Number of items to print is passed in before pointer and must be an #i32. |
-| <tt>[+int]</tt>            | Left side padding.                                                                                                      |
-| <tt>[-int]</tt>            | Right side padding.                                                                                                     |
-| <tt>0[+int]</tt>           | Left side padding, pad with zeroes instead of spaces.                                                                   |
-| <tt>s</tt>                 | Separate every 3 whole number digits by a comma.                                                                        |
+| Argument                                      | Description                                                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| <tt>\*<i>+int, optional</i></tt>              | Indicates that value is passed in as a pointer. If integer is provided, specifies how many floats to print from pointer. |
+| <tt>\*_</tt>                                  | Indicates that value is passed in as a pointer. Number of floats to print is passed in before float. Max is #I32_MAX     |
+| <tt><i>+int</i></tt>                          | Left side padding with spaces.                                                                                           |
+| <tt><i>-int</i></tt>                          | Right side padding with spaces.                                                                                          |
+| <tt>0<i>+int</i></tt>                         | Left side padding with zeroes.                                                                                           |
+| <tt><i>padding, optional</i>.<i>+int</i></tt> | Precision to print fractional part at. Default = 6.                                                                      |
+| <tt>s</tt>                                    | Separate every 3 whole number digits by a comma.                                                                         |
 
-## Integer
+Integer
+-------
 
 ```
-Signed:   {i} {i8} {i16} {i32} {i64} {isize}
-Unsigned: {u} {u8} {u16} {u32} {u64} {usize}
+{i} {i8} {i16} {i32} {i64} {isize}
+{u} {u8} {u16} {u32} {u64} {usize}
 ```
 
 ### Description
 
-Write <tt>#i8</tt>, <tt>#i16</tt>, <tt>#i32</tt>, <tt>#i64</tt>, <tt>#isize</tt>, 
-<tt>#u8</tt>, <tt>#u16</tt>, <tt>#u32</tt>, <tt>#u64</tt> or <tt>#usize</tt>.
+Write an integer.
 
-Specifier with no size after it is assumed to be a 32-bit integer.
+@note
+Value is read in as <tt>int</tt> if bit-depth is < 32.
+Otherwise read in as specified type.
+<tt>{i}</tt> and <tt>{u}</tt> are assumed to be 32-bit.
 
 ### Arguments
 
-| Argument                   | Description                                                                                                             |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| <tt>*[+int, optional]</tt> | Indicates that value is passed in by pointer. Integer indicates how many values to write (if pointer is an array).      |
-| <tt>*_</tt>                | Indicates that value is passed in by pointer. Number of items to print is passed in before pointer and must be an #i32. |
-| <tt>[+int]</tt>            | Left side padding.                                                                                                      |
-| <tt>[-int]</tt>            | Right side padding.                                                                                                     |
-| <tt>0[+int]</tt>           | Left side padding, pad with zeroes instead of spaces.                                                                   |
-| <tt>x</tt>                 | Lower-case hexadecimal.                                                                                                 |
-| <tt>X</tt>                 | Upper-case hexadecimal.                                                                                                 |
-| <tt>b</tt>                 | Binary formatting.                                                                                                      |
-| <tt>f</tt>                 | Write to full integer width (hex and binary only).                                                                      |
-| <tt>s</tt>                 | Binary: Separate every 8 digits by a tick. Decimal: every 3 digits by a comma. Hex: every 4 digits by a tick.           |
+| Argument                          | Description                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| <tt>\*<i>+int, optional</i></tt>  | Indicates that value is passed in as a pointer. If integer is provided, specifies how many integers to print from pointer. |
+| <tt>\*_</tt>                      | Indicates that value is passed in as a pointer. Number of integers to print is passed in before integer. Max is #I32_MAX   |
+| <tt><i>+int</i></tt>              | Left side padding with spaces.                                                                                             |
+| <tt><i>-int</i></tt>              | Right side padding with spaces.                                                                                            |
+| <tt>0<i>+int</i></tt>             | Left side padding with zeroes.                                                                                             |
+| <tt>s</tt>                        | Write comma every 3 digits for decimal, tick every 2 digits for hex and every 8 digits for binary.                         |
+| <tt>xu</tt>                       | Write as upper-case hexadecimal.                                                                                           |
+| <tt>xl</tt>                       | Write as lower-case hexadecimal.                                                                                           |
+| <tt>b</tt>                        | Write as binary.                                                                                                           |
+| <tt>f</tt>                        | Write up to full integer width.                                                                                            |
 
-## String
+UTF-8 String
+------------
 
 ```
 {s}
@@ -186,17 +222,21 @@ Specifier with no size after it is assumed to be a 32-bit integer.
 
 Write a <tt>#String</tt>.
 
+@note Value is read in as <tt>#String</tt>.
+
 ### Arguments
 
-| Argument                   | Description                                                     |
-| -------------------------- | --------------------------------------------------------------- |
-| <tt>*[+int]</tt>           | Only print up to given number of characters or null-terminator. |
-| <tt>[+int]</tt>            | Left side padding.                                              |
-| <tt>[-int]</tt>            | Right side padding.                                             |
-| <tt>u</tt>                 | Convert string to upper-case.                                   |
-| <tt>l</tt>                 | Convert string to lower-case.                                   |
+| Argument               | Description                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| <tt>\*<i>+int</i></tt> | Indicate maximum number of characters to print. If max is > string length, prints up to string length. |
+| <tt>\*_</tt>           | Indicates that maximum number of characters to print is passed in before string. Max is #I32_MAX       |
+| <tt><i>+int</i></tt>   | Left side padding.                                                                                     |
+| <tt><i>-int</i></tt>   | Right side padding.                                                                                    |
+| <tt>u</tt>             | Characters are printed as upper-case.                                                                  |
+| <tt>l</tt>             | Characters are printed as lower-case.                                                                  |
 
-## Path
+UTF-8 Path
+----------
 
 ```
 {p}
@@ -206,11 +246,43 @@ Write a <tt>#String</tt>.
 
 Write a <tt>#Path</tt>.
 
+Only writes up to valid max path (4096 characters).
+
+@note Value is read in as <tt>#Path</tt>.
+
 ### Arguments
 
-| Argument                   | Description                                                     |
-| -------------------------- | --------------------------------------------------------------- |
-| <tt>*[+int]</tt>           | Only print up to given number of characters or null-terminator. |
-| <tt>[+int]</tt>            | Left side padding.                                              |
-| <tt>[-int]</tt>            | Right side padding.                                             |
+| Argument               | Description                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| <tt>\*<i>+int</i></tt> | Indicate maximum number of characters to print. If max is > string length, prints up to string length. |
+| <tt>\*_</tt>           | Indicates that maximum number of characters to print is passed in before string. Max is #I32_MAX       |
+| <tt><i>+int</i></tt>   | Left side padding.                                                                                     |
+| <tt><i>-int</i></tt>   | Right side padding.                                                                                    |
+| <tt>u</tt>             | Characters are printed as upper-case.                                                                  |
+| <tt>l</tt>             | Characters are printed as lower-case.                                                                  |
+| <tt>p</tt>             | Replace path separators with system separator.                                                         |
+
+Time Split
+----------
+
+```
+{t}
+```
+
+### Description
+
+Write a <tt>#TimeSplit</tt>.
+
+When no time formatting is provided, uses default time formatting.
+
+@note Value is read in as <tt>#TimeSplit</tt>.
+
+### Arguments
+
+| Argument                          | Description                                                                              |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| <tt>'<i>time formatting</i>'</tt> | See [time formatting](./FORMAT_TIME.md).                                                 |
+| <tt>\*</tt>                       | Indicates that time formatting is provided as a <tt>const char\*</tt> before time split. |
+| <tt><i>+int</i></tt>              | Left side padding.                                                                       |
+| <tt><i>-int</i></tt>              | Right side padding.                                                                      |
 

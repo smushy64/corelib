@@ -33,6 +33,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 - cstdlib: bug: memmove broken when dst is before src.
 - docs: fixed warnings.
 - fmt: applied changes from string.h
+- fmt: rewrote API
+- fmt: added path and time specifiers
 - fs: removed fs_directory_delete()
 - job_queue: applied changes from sync.h
 - job_queue: applied changes from thread.h
@@ -63,6 +65,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 - thread: added thread_free(), thread_join_timed() and thread_join()
 - thread: Thread is now struct ThreadHandle
 - time: rewrote all functions.
+- time: streaming formatting implemented.
 - types: added 128-bit integers, atomic integers, hash integers, bsize and codepoints.
 - Makefile: bumped version to 0.1.2
 
