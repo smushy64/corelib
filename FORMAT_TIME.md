@@ -38,7 +38,7 @@ Use double open bracket ([[) to write bracket literal.
 Example, assuming the current day of the week is Monday:
 
 ```cpp
-"[d][[ Message ]"
+"[dd][[ Message ]"
 ```
 
 Output:
