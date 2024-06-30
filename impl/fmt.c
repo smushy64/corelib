@@ -10,6 +10,7 @@
 #include "core/memory.h"
 #include "core/string.h"
 #include "core/path.h"
+#include "core/print.h"
 
 #include "core/time.h"
 #include "core/macros.h"
@@ -648,6 +649,16 @@ attr_core_api usize stream_fmt_args(
 }
 attr_internal b32 internal_fmt_parse_args(
     String text, FormatArguments* args, union FmtValue* out_val, va_list* va );
+attr_core_api usize stream_fmt(
+    StreamBytesFN* stream, void* target,
+    usize format_len, const char* format, ...
+) {
+    va_list va;
+    va_start( va, format );
+    usize res = stream_fmt_va( stream, target, format_len, format, va );
+    va_end( va );
+    return res;
+}
 attr_core_api usize stream_fmt_va(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format_cc, va_list va
@@ -1154,7 +1165,9 @@ attr_internal b32 internal_fmt_parse_args(
                 pointer = true;
             }
         } break;
-        case FT_BOOL:
+        case FT_BOOL: {
+            args->bool.binary = false;
+        } break;
         case FT_FLOAT: {
             args->floating.precision = 6;
         } break;

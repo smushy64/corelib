@@ -115,8 +115,9 @@ typedef i16 c_utf16;
 typedef i32 c_utf32;
 /// @brief UTF-8 Codepoint.
 typedef struct {
+    /// @brief UTF-8 codepoints.
     u8 cp[4];
-} codepoint;
+} rune32;
 
 #if !defined(TRUE)
     #define TRUE (1)
@@ -161,6 +162,8 @@ typedef struct {
     #define va_end   __builtin_va_end
     /// @brief Pull argument from variadic argument list.
     #define va_arg   __builtin_va_arg
+    /// @brief Copy variadic arguments list.
+    #define va_copy  __builtin_va_copy
 
 #endif
 

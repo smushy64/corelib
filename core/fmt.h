@@ -248,17 +248,9 @@ attr_core_api usize stream_fmt_va(
 /// @param[in] format     Pointer to start of format string.
 /// @param     ...        Format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_always_inline
-attr_header usize stream_fmt(
+attr_core_api usize stream_fmt(
     StreamBytesFN* stream, void* target,
-    usize format_len, const char* format, ...
-) {
-    va_list va;
-    va_start( va, format );
-    usize res = stream_fmt_va( stream, target, format_len, format, va );
-    va_end( va );
-    return res;
-}
+    usize format_len, const char* format, ... );
 /// @brief Stream formatted string.
 /// @param[in] stream (StreamBytesFN*) Pointer to streaming function.
 /// @param[in] target (void*)          Pointer to streaming function parameters.

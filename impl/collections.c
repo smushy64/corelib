@@ -225,7 +225,10 @@ attr_core_api b32 queue_grow(
 ) {
     // TODO(alicia): do this in place >:(
     Queue new_queue = queue_empty();
-    if( !queue_from_alloc( queue->stride, queue->cap + amount, &new_queue, allocator ) ) {
+    if( !queue_from_alloc(
+        queue->stride, queue->cap + amount,
+        &new_queue, allocator
+    ) ) {
         return false;
     }
 

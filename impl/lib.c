@@ -6,9 +6,6 @@
 #include "core/defines.h"
 #include "core/prelude.h"
 #include "core/lib.h"
-#include "core/sync.h"
-#include "core/print.h"
-#include "core/fmt.h"
 
 #if !defined(CORE_LIB_VERSION_MAJOR)
     #define CORE_LIB_VERSION_MAJOR 0

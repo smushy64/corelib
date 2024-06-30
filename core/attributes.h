@@ -104,6 +104,9 @@
 /// @brief Attribute for displaying warning if return is not used.
 #define attr_no_discard _Check_return_
 
+/// @brief Attribute for functions that do not return.
+#define attr_no_return __declspec( noreturn )
+
 #else /* MSVC */
 
 /// @brief Attribute for forcing optimizations for function.
@@ -128,6 +131,9 @@
 
 /// @brief Attribute for displaying warning if return is not used.
 #define attr_no_discard __attribute__((__warn_unused_result__))
+
+/// @brief Attribute for functions that do not return.
+#define attr_no_return _Noreturn
 
 #endif /* GCC || CLANG */
 

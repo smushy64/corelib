@@ -48,7 +48,7 @@ attr_core_api hash64 hash_64( usize len, const void* buf ) {
 attr_core_api hash128 hash_128( usize len, const void* buf ) {
     // TODO(alicia): 
     unused( len, buf );
-    panic();
+    unimplemented();
 }
 
 attr_core_api usize string_len_utf8( String str ) {
@@ -60,10 +60,10 @@ attr_core_api usize string_len_utf8( String str ) {
     }
     return res;
 }
-attr_core_api codepoint string_index_utf8( String str, usize index ) {
+attr_core_api rune32 string_index_utf8( String str, usize index ) {
     // TODO(alicia): 
     unused(str, index);
-    unreachable();
+    unimplemented();
 }
 attr_core_api b32 string_cmp( String a, String b ) {
     if( a.len != b.len ) {
@@ -608,13 +608,14 @@ attr_core_api void string_buf_remove( StringBuf* buf, usize at ) {
 attr_core_api void string_buf_remove_range(
     StringBuf* buf, usize from_inclusive, usize to_exclusive
 ) {
-    // TODO(alicia): something better than panicking.
-    if( to_exclusive < from_inclusive ) {
-        panic();
-    }
-    if( from_inclusive >= buf->len || to_exclusive > buf->len ) {
-        panic();
-    }
+    debug_assert(
+        to_exclusive < from_inclusive,
+        "invalid range provided! {usize} -> {usize}",
+        from_inclusive, to_exclusive );
+    debug_assert(
+        from_inclusive >= buf->len || to_exclusive > buf->len,
+        "range is out of bounds of string! len: {usize} {usize} -> {usize}",
+        buf->len, from_inclusive, to_exclusive );
 
     usize span = to_exclusive - from_inclusive;
 

@@ -12,12 +12,11 @@
 #include "core/macros.h"
 #include "core/slice.h"
 #include "core/stream.h"
+#include "core/utf8.h" // IWYU pragma: export
 
 // forward declaration.
-attr_core_api void memory_set( void* dst, u8 byte, usize size );
-
-// forward declaration
 struct AllocatorInterface;
+attr_core_api void memory_set( void* dst, u8 byte, usize size );
 
 /// @brief UTF-8 String.
 /// @details
@@ -204,7 +203,7 @@ attr_header char string_index( String str, usize index ) {
 /// @param str   String to index into.
 /// @param index UTF-8 index of codepoint.
 /// @return Codepoint at given index.
-attr_core_api codepoint string_index_utf8( String str, usize index );
+attr_core_api rune32 string_index_utf8( String str, usize index );
 /// @brief Get pointer to first character in string.
 /// @param str String to get pointer from.
 /// @return
