@@ -22,6 +22,31 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- path: removed file functions.
+- string: added utf functions.
+- string: rewrote string_is_empty macro.
+- platform_dllmain: removed in favor of platform_sharedmain and platform_staticmain.
+- platform: applied changes from fs.
+- platform/win32: applied changes from fs.
+- fs: rewrote all file functions.
+- fs: added anonymous pipes.
+- print: now uses pipes.
+- print: renamed CONSOLE_COLOR_* to ANSI_COLOR_*
+- print: removed str_* in favor of color_text macro.
+- Makefile: sources are no longer generated, they need to be added manually.
+- impl/string: rewrote cstr_len again.
+- impl/string: added cstr_cmp.
+- assertions: rewrote macros to allow debug message printing before crashing.
+- attributes: added attr_no_return.
+- fmt: made stream_fmt a library function so it can be used as a function pointer.
+- fmt: bugfix: boolean arguments now properly initialized.
+- impl/lib: removed unused includes.
+- impl/string: applied assertions changes.
+- types: renamed codepoint to rune32.
+- types: added va_copy macro.
+- string: added memory_set forward declaration.
+- system: feature flags are now an enum.
+
 - alloc: Implemented heap and stack functions.
 - alloc: Renamed AllocStack to StackAllocator and renamed functions accordingly.
 - alloc: Added AllocatorInterface structure and heap allocator interface.

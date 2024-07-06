@@ -278,14 +278,4 @@ attr_core_api b32 path_buf_try_set_extension( PathBuf* buf, Path extension );
 attr_core_api b32 path_buf_set_extension(
     PathBuf* buf, Path extension, struct AllocatorInterface* allocator );
 
-// TODO(alicia): file_path_is_file, file_path_is_directory
-// /// @brief Check if path points to a file.
-// /// @param path Path to check.
-// /// @return True if path points to a file.
-// attr_core_api b32 path_is_file( const Path path );
-// /// @brief Check if path points to a directory.
-// /// @param path Path to check.
-// /// @return True if path points to a directory.
-// attr_core_api b32 path_is_directory( const Path path );
-
 #endif /* header guard */

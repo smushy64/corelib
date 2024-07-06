@@ -12,7 +12,6 @@
 #include "core/macros.h"
 #include "core/slice.h"
 #include "core/stream.h"
-#include "core/utf8.h" // IWYU pragma: export
 
 // forward declaration.
 struct AllocatorInterface;
@@ -50,6 +49,8 @@ attr_header b32 ascii_is_whitespace( char c ) {
     return c == 0x20 || c == 0x09 || c == 0x0D || c == 0x0A;
 }
 /// @brief Check if ASCII character is a path separator.
+/// @details
+/// Checks for current platform's path separator only.
 /// @param c Character to check.
 /// @return
 ///     - @c true  : @c c is a path separator.
@@ -129,6 +130,36 @@ attr_header char ascii_to_lower( char c ) {
     }
     return c;
 }
+/// @brief Convert UTF-8 to rune32.
+/// @param c (c_utf8) UTF-8 codepoint.
+/// @return rune32.
+#define utf8_to_rune( c )\
+    struct_literal(rune32){ .cp={ c, 0, 0, 0 } }
+/// @brief Convert UTF-16 to rune32.
+/// @param c (c_utf16) UTF-16 codepoint.
+/// @return rune32.
+#define utf16_to_rune( c )\
+    struct_literal(rune32){ .cp={\
+        (c & 0x00FF),\
+        (c & 0xFF00) >> 8,\
+        0,\
+        0,\
+    } }
+/// @brief Convert UTF-32 to rune32.
+/// @param c (c_utf32) UTF-32 codepoint.
+/// @return rune32.
+#define utf32_to_rune( c )\
+    struct_literal(rune32){ .cp={\
+        (c & 0x000000FF),\
+        (c & 0x0000FF00) >> 8,\
+        (c & 0x00FF0000) >> 16,\
+        (c & 0xFF000000) >> 24,\
+    } }
+/// @brief Convert rune32 to UTF-32.
+/// @param r (rune32*) Pointer to rune.
+/// @return c_utf32.
+#define rune_to_utf32( r ) *(c_utf32*)(r)
+
 /// @brief Calculate ascii length of null terminated C string.
 /// @param[in] c_string Pointer to string.
 /// @return Ascii length of string excluding null terminator.
@@ -137,6 +168,12 @@ attr_core_api usize cstr_len( const cstr* c_string );
 /// @param[in] c_string Pointer to string.
 /// @return UTF-8 length of string excluding null terminator.
 attr_core_api usize cstr_len_utf8( const cstr* c_string );
+/// @brief Compare two null terminated C strings.
+/// @param[in] a, b Pointers to strings to compare. Cannot be null.
+/// @return
+///     - @c true  : @c a and @c b match in contents and length.
+///     - @c false : @c a and @c b do not match in contents or length.
+attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b );
 
 /// @brief Create 64-bit hash of buffer.
 /// @details
@@ -189,7 +226,7 @@ attr_core_api usize string_len_utf8( String str );
 /// @return
 ///     - @c true  : @c str is empty.
 ///     - @c false : @c str is not empty.
-#define string_is_empty( str ) (str.len == 0)
+#define string_is_empty( str ) ((str).len == 0)
 /// @brief Index into string. Debug asserts that index is in bounds.
 /// @param str   String to index into.
 /// @param index Index of character.

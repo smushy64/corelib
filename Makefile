@@ -153,7 +153,6 @@ all: $(TARGET) clean_build_junk
 	@echo "Make: "$(TARGET_NAME)" compiled successfully!"
 
 clean_build_junk: $(TARGET)
-	@rm $(SOURCES_FILE)
 
 test: $(TEST_TARGET)
 	@echo "Make: running tests . . ."
@@ -183,8 +182,7 @@ ifeq ($(COMPILER),msvc)
 	STD_VERSION := -std:c11
 endif
 
-SOURCES      := $(call recurse,impl,*.c)
-SOURCES_FILE := $(OUTPUT_OBJ_PATH)/temp.c
+SOURCES := $(call recurse,impl,*.c)
 
 CFLAGS        :=
 CPPFLAGS      := CORE_ENABLE_EXPORT 
@@ -220,7 +218,6 @@ TEST_CPPFLAGS := $(subst CORE_ENABLE_EXPORT,,$(CPPFLAGS))
 INCLUDEFLAGS  := -I.
 ifeq ($(COMPILER),msvc)
 	# TODO(alicia): finish msvc flags!
-	SOURCES_FILE := $(subst /,\\,$(SOURCES_FILE))
 	INCLUDEFLAGS += -external:W0 -external:env:INCLUDE
 
 	CFLAGS += -nologo
@@ -277,11 +274,11 @@ else
 
 	TEST_CPPFLAGS := $(addprefix -D,$(TEST_CPPFLAGS))
 	DEF           := $(addprefix -D,$(CPPFLAGS))
-	CPPFLAGS      := $(DEF) -DCORE_COMMAND_LINE=\""$(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(COUT) $(INCLUDEFLAGS) $(CFLAGS) $(DEF)"\"
+	CPPFLAGS      := $(DEF) -DCORE_COMMAND_LINE=\""$(COMPILER_PATH) $(STD_VERSION) $(COUT) $(INCLUDEFLAGS) $(CFLAGS) $(DEF)"\"
 endif
 
-DISPLAY_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(DEF) $(LDFLAGS)
-COMMAND_LINE         := $(COMPILER_PATH) $(STD_VERSION) $(SOURCES_FILE) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+DISPLAY_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION) $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(DEF) $(LDFLAGS)
+COMMAND_LINE         := $(COMPILER_PATH) $(STD_VERSION) -xc impl/sources.h $(OUTPUT_FILE) $(INCLUDEFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 TEST_FILTER_CFLAGS   := -fPIC
 TEST_FILTER_LDFLAGS  := -shared -nostdlib
@@ -292,7 +289,7 @@ TEST_COMMAND_LINE := $(COMPILER_PATH) $(STD_VERSION)\
 	$(filter-out $(TEST_FILTER_LDFLAGS),$(LDFLAGS))\
 	-L./build -l$(subst lib,,$(TARGET_NAME))
 
-$(TARGET): print_info $(OUTPUT_OBJ_PATH) $(SOURCES_FILE)
+$(TARGET): print_info $(OUTPUT_OBJ_PATH)
 	@echo "Make: "$(DISPLAY_COMMAND_LINE)
 	$(COMMAND_LINE)
 
@@ -303,12 +300,6 @@ $(TEST_TARGET): $(TARGET)
 $(OUTPUT_OBJ_PATH): 
 	@echo "Make: creating output path '$(OUTPUT_PATH)' . . ."
 	@mkdir $(OUTPUT_OBJ_PATH) -p
-
-$(SOURCES_FILE): $(OUTPUT_OBJ_PATH) $(SOURCES)
-	@echo "Make: generating sources file . . ."
-	@echo "/* Generated on: "$(shell date)" */" > $(SOURCES_FILE)
-	@echo "" >> $(SOURCES_FILE)
-	for i in $(SOURCES); do echo "#include \""$$i"\"" >> $(SOURCES_FILE); done
 
 build_win32_x86:
 	@$(MAKE) TARGET_PLATFORM="win32" TARGET_ARCH="x86_64" RELEASE=1 OPTIMIZED=1 CORE_ENABLE_SSE_INSTRUCTIONS=1

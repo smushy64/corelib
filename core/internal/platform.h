@@ -48,6 +48,39 @@ void platform_thread_free( ThreadHandle* handle );
 b32 platform_thread_join_timed( ThreadHandle* handle, u32 ms, int* opt_out_exit_code );
 b32 platform_thread_exit_code( ThreadHandle* handle, int* out_exit_code );
 
+b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd );
+void platform_fd_close( FD* fd );
+usize platform_fd_query_size( FD* fd );
+void platform_fd_truncate( FD* fd );
+usize platform_fd_seek( FD* fd, FileSeek type, isize seek );
+b32 platform_fd_write(
+    FD* fd, usize bytes, const void* buf, usize* opt_out_write );
+b32 platform_fd_read(
+    FD* fd, usize buf_size, void* buf, usize* opt_out_read );
+b32 platform_file_copy( Path dst, Path src, b32 create_dst );
+b32 platform_file_move( Path dst, Path src, b32 create_dst );
+b32 platform_file_remove( Path path );
+b32 platform_file_exists( Path path );
+
+b32 platform_directory_create( Path path );
+b32 platform_directory_remove( Path path, b32 recursive );
+b32 platform_directory_exists( Path path );
+b32 platform_directory_is_empty( Path path, b32* out_found );
+
+DirectoryWalk* platform_directory_walk_begin(
+    Path path, struct AllocatorInterface* allocator );
+b32 platform_directory_walk_next(
+    DirectoryWalk* walk, Path* out_path, b32* opt_out_is_directory );
+void platform_directory_walk_end(
+    DirectoryWalk* walk, struct AllocatorInterface* allocator );
+
+b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write );
+
+PipeRead*  platform_stdin(void);
+PipeWrite* platform_stdout(void);
+PipeWrite* platform_stderr(void);
+
+#if 0
 b32 platform_path_is_file( const Path path );
 b32 platform_path_is_directory( const Path path );
 
@@ -71,6 +104,13 @@ b32 platform_directory_create( const Path path );
 b32 platform_directory_item_count( const Path path, usize* out_count );
 b32 platform_directory_exists( const Path path );
 
+#if defined(CORE_PLATFORM_WINDOWS)
+    void* platform_win32_get_stdin(void);
+    void* platform_win32_get_stdout(void);
+    void* platform_win32_get_stderr(void);
+#endif
+#endif
+
 void platform_system_query_info( SystemInfo* out_info );
 
 void* platform_library_open( const char* name );
@@ -78,10 +118,5 @@ void* platform_library_get( const char* name );
 void platform_library_close( void* lib );
 void* platform_library_load( void* lib, const char* function );
 
-#if defined(CORE_PLATFORM_WINDOWS)
-    void* platform_win32_get_stdin(void);
-    void* platform_win32_get_stdout(void);
-    void* platform_win32_get_stderr(void);
-#endif
 
 #endif /* header guard */

@@ -5,11 +5,9 @@
 - [ ] process.h: API for creating processes and pipes.
 - [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
-- [ ] platform:win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
-- [ ] fs: traverse directory.
 - [ ] fs: memory mapped file?
 - [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)
@@ -18,10 +16,16 @@
 - [ ] math: RGB <-> HEX conversions
 - [ ] docs:math: vec2/3/4 quat and mat2/3/4 C++ wrappers documentation
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
+## Bugs
+- [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
 ## unlikely
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] platform: win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
+- [x] fs: traverse directory.
+- [x] fs: recursive directory remove
+- [x] fs: directory query item count and directory is empty
 - [x] time: complete rewrite.
 - [x] fmt: rewrite
 - [x] fmt: time formatting

@@ -9,263 +9,427 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/path.h"
+#include "core/macros.h" // IWYU pragma: export
 
-/// @brief Opaque file handle.
-typedef void FileHandle;
+// forward declarations
+struct AllocatorInterface;
+
+/// @brief Maximum allowed path name.
+#define CORE_MAX_PATH_NAME (kibibytes(4))
+/// @brief Maximum allowed pipe name.
+#define CORE_MAX_PIPE_NAME (128)
+
+/// @brief Opaque file descriptor.
+typedef struct FD {
+#if defined(CORE_PLATFORM_POSIX)
+    int opaque;
+#else
+    void* opaque;
+#endif
+} FD;
+/// @brief Opaque directory walk structure.
+/// @details Defined in platform code.
+struct DirectoryWalk;
+/// @brief Opaque directory walk structure.
+/// @details Defined in platform code.
+typedef struct DirectoryWalk DirectoryWalk;
+/// @brief Pipe used exclusively for reading.
+typedef struct PipeRead {
+    /// @brief Pipe file descriptor.
+    FD fd;
+} PipeRead;
+/// @brief Pipe used exclusively for writing.
+typedef struct PipeWrite {
+    /// @brief Pipe file descriptor.
+    FD fd;
+} PipeWrite;
 /// @brief Flags for opening a file.
-typedef u32 FileOpenFlags;
-
-/// @brief Open file for reading.
-///
-/// @note Fails if file does not already exist
-/// unless #FILE_OPEN_FLAG_CREATE is specified.
-#define FILE_OPEN_FLAG_READ (1 << 0)
-/// @brief Open file for writing.
-#define FILE_OPEN_FLAG_WRITE (1 << 1)
-/// @brief Allow other threads/processes to read file.
-#define FILE_OPEN_FLAG_SHARE_ACCESS_READ (1 << 2)
-/// @brief Allow other threads/processes to write to file.
-#define FILE_OPEN_FLAG_SHARE_ACCESS_WRITE (1 << 3)
-/// @brief Create file if it does not already exist.
-///
-/// If the file already exists, truncates file.
-#define FILE_OPEN_FLAG_CREATE (1 << 4)
-/// @brief Open an existing file and delete its contents.
-///
-/// Fails if file does not already exist.
-#define FILE_OPEN_FLAG_TRUNCATE (1 << 5)
-/// @brief Moves offset to end of file.
-///
-/// Fails if #FILE_OPEN_FLAG_WRITE is not specified.
-#define FILE_OPEN_FLAG_APPEND (1 << 6)
-/// @brief File is created as a temporary file.
-///
-/// On some file systems, opening a file as a temporary can
-/// potentially avoid actually writing to disk if written bytes
-/// do not exceed file cache, improving performance.
-#define FILE_OPEN_FLAG_TEMP (1 << 7)
-
-/// @brief Open a file.
-/// @param path  Path to file.
-/// @param flags Flags for opening file.
-/// @return Handle to file, NULL if failed.
-attr_core_api FileHandle* fs_file_open( const Path path, FileOpenFlags flags );
-/// @brief Close a file.
-/// @param[in] file File handle to close.
-attr_core_api void fs_file_close( FileHandle* file );
-/// @brief Query size of file.
-/// @param[in] file File handle to query size.
-/// @return Size of file.
-attr_core_api usize fs_file_query_size( FileHandle* file );
-/// @brief Set the size of a file to the current offset.
-/// @param[in] file File to truncate.
-attr_core_api void fs_file_truncate( FileHandle* file );
-/// @brief Set the size of a file.
-///
-/// If size is smaller than current offset, offset is moved to end of file.
-/// @param[in] file File to set size of.
-/// @param size Size to set to, can be bigger or smaller than current file size.
-attr_core_api void fs_file_set_size( FileHandle* file, usize size );
-/// @brief Query offset of file pointer.
-/// @param[in] file File handle to query offset.
-/// @return Offset of file pointer.
-attr_core_api usize fs_file_query_offset( FileHandle* file );
-/// @brief Set offset of file pointer.
-/// @param[in] file   File to set offset.
-/// @param     offset Offset from start of file.
-attr_core_api void fs_file_set_offset( FileHandle* file, usize offset );
-/// @brief Set offset relative to current offset.
-/// @param[in] file   File to set offset.
-/// @param     offset Offset relative to current offset.
-/// @return False if negative offset goes outside bounds of file.
-attr_core_api b32 fs_file_set_offset_relative( FileHandle* file, isize offset );
-/// @brief Write data to file.
-///
-/// Offset is moved by len bytes.
-/// @param[in] file File to write to.
-/// @param     len  Number of bytes to write.
-/// @param[in] buf  Pointer to data to write.
-/// @return True if write was successful.
-attr_core_api b32 fs_file_write( FileHandle* file, usize len, const void* buf );
-/// @brief Write data to file.
-///
-/// Offset does not move.
-/// @param[in] file File to write to.
-/// @param     len  Number of bytes to write.
-/// @param[in] buf  Pointer to data to write.
-/// @return True if write was successful.
-attr_always_inline
-attr_header b32 fs_file_write_no_offset(
-    FileHandle* file, usize len, const void* buf
-) {
-    usize current = fs_file_query_offset( file );
-    if( !fs_file_write( file, len, buf ) ) {
-        return false;
-    }
-    fs_file_set_offset( file, current );
-    return true;
+typedef enum FileOpenFlags {
+    /// @brief Open a file for reading.
+    FOPEN_READ             = (1 << 0),
+    /// @brief Open a file for writing.
+    FOPEN_WRITE            = (1 << 1),
+    /// @brief Open a file for reading and writing.
+    FOPEN_READ_WRITE       = (FOPEN_READ | FOPEN_WRITE),
+    /// @brief Share read access for file. Required for multi-threaded reading.
+    FOPEN_SHARE_READ       = (1 << 2),
+    /// @brief Share write access for file. Required for multi-threaded writing.
+    FOPEN_SHARE_WRITE      = (1 << 3),
+    /// @brief Share read and write access for file.
+    /// Required for multi-threaded read/write.
+    FOPEN_SHARE_READ_WRITE = (FOPEN_SHARE_READ | FOPEN_SHARE_WRITE),
+    /// @brief Create file if it doesn't exist.
+    FOPEN_CREATE           = (1 << 4),
+    /// @brief Clear file when opened. File must exist.
+    /// @details
+    /// Cannot combine with #FOPEN_CREATE.
+    /// #FOPEN_WRITE is required.
+    FOPEN_TRUNCATE         = (1 << 5),
+    /// @brief Seek to end of file when opened. File must exist.
+    /// @details
+    /// Cannot combine with #FOPEN_TRUNCATE or #FOPEN_CREATE.
+    /// #FOPEN_WRITE is required.
+    FOPEN_APPEND           = (1 << 6),
+    /// @brief Create temporary file. File must not exist.
+    /// @details
+    /// Cannot combine with #FOPEN_CREATE, #FOPEN_TRUNCATE or #FOPEN_APPEND.
+    FOPEN_TEMP             = (1 << 7),
+} FileOpenFlags;
+/// @brief File seek types.
+typedef enum FileSeek {
+    /// @brief Seek from current file offset.
+    FSEEK_CURRENT,
+    /// @brief Seek from start of file.
+    FSEEK_SET,
+    /// @brief Seek from end of file.
+    FSEEK_END,
+} FileSeek;
+/// @brief Open file descriptor.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param      path   Path to file. Must be null-terminated and less than #CORE_MAX_PATH_NAME.
+/// @param      flags  Flags for opening file.
+/// @param[out] out_fd Pointer to write file descriptor to.
+/// @return
+///     - @c true  : File was opened successfully.
+///     - @c false : Failed to open file.
+attr_core_api b32 fd_open( Path path, FileOpenFlags flags, FD* out_fd );
+/// @brief Close file descriptor.
+/// @param[in] fd File descriptor to close.
+attr_core_api void fd_close( FD* fd );
+/// @brief Query size of file by file descriptor.
+/// @param[in] fd File descriptor.
+/// @return Size of file in bytes.
+attr_core_api usize fd_query_size( FD* fd );
+/// @brief Truncate file size to current file offset.
+/// @param[in] fd File descriptor.
+attr_core_api void fd_truncate( FD* fd );
+/// @brief Seek to offset in file.
+/// @param[in] fd   File descriptor.
+/// @param     type Type of seek to perform.
+/// @param     seek Bytes to seek by.
+/// @return Offset after seek.
+attr_core_api usize fd_seek( FD* fd, FileSeek type, isize seek );
+/// @brief Query current file offset.
+/// @param[in] fd File descriptor.
+/// @return Current offset (from start of file).
+attr_header usize fd_query_offset( FD* fd ) {
+    return fd_seek( fd, FSEEK_CURRENT, 0 );
 }
-/// @brief Write formatted text to file.
-/// @param[in] file File to write to.
-/// @param format_len Length of format string.
-/// @param format Format string.
-/// @param va Variadic list of format arguments.
-/// @return True if write was successful, false if error encountered.
-attr_core_api b32 fs_file_write_fmt_text_va(
-    FileHandle* file, usize format_len, const char* format, va_list va );
-/// @brief Write formatted text to file.
-/// @param[in] file File to write to.
-/// @param format_len Length of format string.
-/// @param format Format string.
-/// @param ... Format arguments.
-/// @return True if write was successful, false if error encountered.
-attr_header b32 fs_file_write_fmt_text(
-    FileHandle* file, usize format_len, const char* format, ...
+/// @brief Write bytes to file.
+/// @param[in]  fd            File descriptor.
+/// @param      bytes         Number of bytes in @c buf.
+/// @param[in]  buf           Pointer to start of buffer to write.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written to file.
+/// @return
+///     - @c true  : Wrote to file successfully.
+///     - @c false : Failed to write to file.
+attr_core_api b32 fd_write(
+    FD* fd, usize bytes, const void* buf, usize* opt_out_write );
+/// @brief Read bytes from file.
+/// @param[in]  fd           File descriptor.
+/// @param      buf_size     Number of bytes in @c buf.
+/// @param[in]  buf          Pointer to start of buffer to read to.
+/// @param[out] opt_out_read (optional) Pointer to write bytes read from file.
+/// @return
+///     - @c true  : Read from file successfully.
+///     - @c false : Failed to read from file.
+attr_core_api b32 fd_read(
+    FD* fd, usize buf_size, void* buf, usize* opt_out_read );
+/// @brief Write formatted string to file.
+/// @param[in]  fd            File descriptor.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written to file.
+/// @param      format_len    Length of format string.
+/// @param[in]  format        Pointer to start of format string.
+/// @param      va            Variadic format arguments.
+/// @return
+///     - @c true  : Wrote entire formatted string to file successfully.
+///     - @c false : Failed to write to file.
+attr_core_api b32 fd_write_fmt_va(
+    FD* fd, usize* opt_out_write, usize format_len, const char* format, va_list va );
+/// @brief Write formatted string to file.
+/// @param[in]  fd            File descriptor.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written to file.
+/// @param      format_len    Length of format string.
+/// @param[in]  format        Pointer to start of format string.
+/// @param      ...           Format arguments.
+/// @return
+///     - @c true  : Wrote entire formatted string to file successfully.
+///     - @c false : Failed to write to file.
+attr_always_inline
+attr_header b32 fd_write_fmt(
+    FD* fd, usize* opt_out_write,
+    usize format_len, const char* format, ...
 ) {
     va_list va;
     va_start( va, format );
-    b32 result = fs_file_write_fmt_text_va( file, format_len, format, va );
+    b32 res = fd_write_fmt_va( fd, opt_out_write, format_len, format, va );
     va_end( va );
-    return result;
+    return res;
 }
 /// @brief Write formatted string to file.
-/// @param[in] file (FileHandle*) File to write to.
-/// @param format (string literal) Format string.
-/// @param ... Format arguments.
-/// @return True if write was successful, false if error encountered.
-#define fs_file_write_fmt( file, format, ... )\
-    fs_file_write_fmt_text( file, sizeof(format) - 1, format, ##__VA_ARGS__ )
-/// @brief File stream bytes function.
-/// @param[in] target (FileHandle*) Target file to write to.
-/// @param len Length of buffer to write.
-/// @param[in] buf Buffer to write.
+/// @param[in]  fd            (FD*)            File descriptor.
+/// @param[out] opt_out_write (usize*)         (optional) Pointer to write bytes written to file.
+/// @param[in]  format        (string literal) Format string literal.
+/// @param      va            (va_list)        Variadic format arguments.
 /// @return
-/// - @c 0 If write was successful
-/// - @c 1 If encountered an error while writing.
-attr_core_api usize fs_file_stream(
-    void* target, usize len, const void* buf );
-/// @brief Read data from file.
-///
-/// Offset is moved by len bytes.
-/// @param[in]  file File to read from.
-/// @param      len  Number of bytes to read.
-/// @param[out] buf  Pointer to data to read into.
-/// @return True if read was successful.
-attr_core_api b32 fs_file_read( FileHandle* file, usize len, void* buf );
-/// @brief Read data from file.
-///
-/// Offset is not moved.
-/// @param[in]  file File to read from.
-/// @param      len  Number of bytes to read.
-/// @param[out] buf  Pointer to data to read into.
-/// @return True if read was successful.
-attr_always_inline
-attr_header b32 fs_file_read_no_offset( FileHandle* file, usize len, void* buf ) {
-    usize current = fs_file_query_offset( file );
-    if( !fs_file_read( file, len, buf ) ) {
-        return false;
-    }
-    fs_file_set_offset( file, current );
-    return true;
-}
-/// @brief Copy contents of src file to dst file.
-/// @param[in] dst               Destination file.
-/// @param[in] src               Source file.
-/// @param     size              Number of bytes to copy.
-/// @param     intermediate_size Size of intermediate buffer.
-/// @param[in] intermediate      Intermediate buffer.
-/// @return True if successful.
-attr_core_api b32 fs_file_copy_memory(
-    FileHandle* dst, FileHandle* src, usize size,
-    usize intermediate_size, void* intermediate );
-/// @brief Copy file to destination path.
-/// @param dst                Destination path.
-/// @param src                Path to file to copy.
-/// @param fail_if_dst_exists If true, checks if dst exists and if it does, function fails.
-/// @return True if successful.
-attr_core_api b32 fs_file_copy(
-    const Path dst, const Path src, b32 fail_if_dst_exists );
-/// @brief Move file to destination path.
-/// @param dst                Destination path.
-/// @param src                Path to file to move.
-/// @param fail_if_dst_exists If true, checks if dst exists and if so, fails.
-/// @return True if successful.
-attr_core_api b32 fs_file_move(
-    const Path dst, const Path src, b32 fail_if_dst_exists );
-/// @brief Delete a file by its path.
-/// @param path Path to file to delete.
-/// @return True if file was deleted successfully.
-attr_core_api b32 fs_file_delete( const Path path );
-/// @brief Check if file pointed to by path exists.
-/// @param path Path to check.
-/// @return True if file exists at given path.
-attr_core_api b32 fs_file_exists( const Path path );
-/// @brief Get the current working directory.
-/// @return Working directory path (readonly).
-attr_core_api Path fs_working_directory(void);
+///     - @c true  : Wrote entire formatted string to file successfully.
+///     - @c false : Failed to write to file.
+#define fd_write_text_va( fd, opt_out_write, format, va )\
+    fd_write_fmt_va( fd, opt_out_write, sizeof(format) - 1, format, va )
+/// @brief Write formatted string to file.
+/// @param[in]  fd            (FD*)            File descriptor.
+/// @param[out] opt_out_write (usize*)         (optional) Pointer to write bytes written to file.
+/// @param[in]  format        (string literal) Format string literal.
+/// @param      ...           (args)           Format arguments.
+/// @return
+///     - @c true  : Wrote entire formatted string to file successfully.
+///     - @c false : Failed to write to file.
+#define fd_write_text( fd, opt_out_write, format, ... )\
+    fd_write_fmt( fd, opt_out_write, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief File streaming function.
+/// @param[in] struct_FD (FD*) File to stream to. Must have write access.
+/// @param     count     Number of bytes to write.
+/// @param[in] buf       Pointer to start of buffer to write.
+/// @return Number of bytes not written to file.
+attr_core_api usize fd_stream_write( void* struct_FD, usize count, const void* buf );
+/// @brief Copy contents of source file to destination file.
+/// @note
+/// Allocates wide path buffer on Windows if @c dst or @c src
+/// is longer than 260 characters.
+/// @param dst        Path to destination file. Must be null terminated.
+/// @param src        Path to source file. Must be null terminated.
+/// @param create_dst Fail if destination already exists.
+/// @return
+///     - @c true  : Successfully copied source contents to destination.
+///     - @c false : Failed to copy.
+///     - @c false : If @c create_dst, @c dst already exists.
+attr_core_api b32 file_copy( Path dst, Path src, b32 create_dst );
+/// @brief Move contents of source file to destination file.
+/// @note
+/// Allocates wide path buffer on Windows if @c dst or @c src
+/// is longer than 260 characters.
+/// @param dst        Path to destination file. Must be null terminated.
+/// @param src        Path to source file. Must be null terminated.
+/// @param create_dst Fail if destination already exists.
+/// @return
+///     - @c true  : Successfully moved source to destination.
+///     - @c false : Failed to move.
+///     - @c false : If @c create_dst, @c dst already exists.
+attr_core_api b32 file_move( Path dst, Path src, b32 create_dst );
+/// @brief Remove file at path.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param path Path of file to remove. Must be null terminated.
+/// @return
+///     - @c true  : Removed file successfully.
+///     - @c false : Failed to remove file.
+attr_core_api b32 file_remove( Path path );
+/// @brief Check if path points to an existing file.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param path Path of file to check. Must be null terminated.
+/// @return
+///     - @c true  : File at given path exists.
+///     - @c false : File does not exists or path does not point to a file.
+attr_core_api b32 file_exists( Path path );
+
 /// @brief Create a directory at given path.
+/// @details
+/// If directory already exists, returns true.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param path Path of new directory.
+/// @return
+///     - @c true  : Successfully created directory.
+///     - @c false : Failed to create directory.
+attr_core_api b32 directory_create( Path path );
+/// @brief Remove directory from file system.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param path      Path of directory to remove.
+/// @param recursive Remove all files and directories in @c path.
+/// @return
+///     - @c true  : Successfully removed directory.
+///     - @c false : Failed to remove directory.
+///     - @c false : @c recursive is false and directory is not empty.
+attr_core_api b32 directory_remove( Path path, b32 recursive );
+/// @brief Check if directory exists.
+/// @note
+/// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
+/// @param path Path of directory to check for.
+/// @return
+///     - @c true  : Directory exists.
+///     - @c false : Directory does not exist or path does not point to a directory.
+attr_core_api b32 directory_exists( Path path );
+/// @brief Query how many items are in a directory.
+/// @details
+/// When @c recursive is set, function allocates memory from the heap to
+/// collect subdirectories' items.
+/// @note
+/// If recursive:
 ///
-/// Function succeeds even if directory already exists.
-/// @param path Path to create directory at.
-/// @return True if directory is successfully created.
-attr_core_api b32 fs_directory_create( const Path path );
-/// @brief Get count of how many items are in directory.
-/// @param      path      Path of directory.
-/// @param[out] out_count Pointer to receive count.
-/// @return True if path is valid.
-attr_core_api b32 fs_directory_item_count( const Path path, usize* out_count );
-/// @brief Check if directory pointed to by path exists.
-/// @param path Path to directory.
-/// @return True if directory exists.
-attr_core_api b32 fs_directory_exists( const Path path );
+/// - true  : Counts only non-directory items in directory/subdirectories.
+/// - false : Counts any items in directory.
+/// @param     path      Path of directory to query.
+/// @param     recursive If true, counts items in subdirectories as well.
+/// @param[in] allocator (optional) Allocator to use. If null, uses heap.
+/// @return Number of items in directory.
+attr_core_api usize directory_query_item_count(
+    Path path, b32 recursive, struct AllocatorInterface* allocator );
+/// @brief Check if directory is empty.
+/// @note
+/// Allocates wide path buffer on Windows.
+/// @param      path      Path of directory to check.
+/// @param[out] out_found Pointer to write if directory to check was found or not.
+/// @return
+///     - @c true  : Directory is empty.
+///     - @c false : Directory is not empty.
+attr_core_api b32 directory_is_empty( Path path, b32* out_found );
+/// @brief Begin directory walk.
+/// @param     path      Path of directory to walk. Must be null-terminated.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - NULL    : Could not allocate directory walk.
+///     - Pointer : Directory walk structure.
+attr_core_api DirectoryWalk* directory_walk_begin(
+    Path path, struct AllocatorInterface* allocator );
+/// @brief Get next item in directory.
+/// @param[in]  walk                 Directory walk structure.
+/// @param[out] out_path             Pointer to write path to. Does not include directory.
+/// @param[out] opt_out_is_directory (optional) Pointer to write if path is a directory.
+/// @return
+///     - @c true  : Path written to @c out_path.
+///     - @c false : There are no more items in directory.
+attr_core_api b32 directory_walk_next(
+    DirectoryWalk* walk, Path* out_path, b32* opt_out_is_directory );
+/// @brief End directory walk.
+/// @param[in] walk      Pointer to directory walk structure.
+/// @param[in] allocator Pointer to allocator interface.
+attr_core_api void directory_walk_end(
+    DirectoryWalk* walk, struct AllocatorInterface* allocator );
 
-#if defined(CORE_DOXYGEN)
+/// @brief Get standard in pipe.
+/// @return Standard in pipe.
+attr_core_api PipeRead*  pipe_stdin(void);
+/// @brief Get standard out pipe.
+/// @return Standard out pipe.
+attr_core_api PipeWrite* pipe_stdout(void);
+/// @brief Get standard error pipe.
+/// @return Standard error pipe.
+attr_core_api PipeWrite* pipe_stderr(void);
 
-/// @brief Stdin handle.
-/// @return Stdin handle.
-#define stdin_handle()  
-/// @brief Stdout handle.
-/// @return Stdout handle.
-#define stdout_handle() 
-/// @brief Stderr handle.
-/// @return Stderr handle.
-#define stderr_handle() 
+/// @brief Get void read pipe.
+/// @details
+/// Useful for when a pipe that doesn't lead anywhere is necessary.
+/// @return Read pipe.
+attr_core_api PipeRead  pipe_read_void(void);
+/// @brief Get void write pipe.
+/// @details
+/// Useful for when a pipe that doesn't lead anywhere is necessary.
+/// @return Write pipe.
+attr_core_api PipeWrite pipe_write_void(void);
 
-#else
-
-#if defined(CORE_PLATFORM_WINDOWS)
-
-// NOTE(alicia): on Windows, stdin, stdout and stderr are not
-// POSIX file descriptors, rather they are unique handles to a console
-// so we need an actual function to retrieve the handles at run-time.
-
-/// @brief Stdin handle.
-/// @return Stdin handle.
-attr_core_api void* stdin_handle(void);
-/// @brief Stdout handle.
-/// @return Stdout handle.
-attr_core_api void* stdout_handle(void);
-/// @brief Stderr handle.
-/// @return Stderr handle.
-attr_core_api void* stderr_handle(void);
-
-#else /* Platform Win32 */
-
-// NOTE(alicia): for POSIX compliant platforms, we can just
-// use the default file descriptors.
-
-/// @brief Stdin handle.
-/// @return Stdin handle.
-#define stdin_handle()  ((void*)0)
-/// @brief Stdout handle.
-/// @return Stdout handle.
-#define stdout_handle() ((void*)1)
-/// @brief Stderr handle.
-/// @return Stderr handle.
-#define stderr_handle() ((void*)2)
-
-#endif /* Platform POSIX */
-
-#endif /* Doxygen */
+/// @brief Open read and write pipes.
+/// @param[out] out_read Pointer to write read pipe.
+/// @param[out] out_write Pointer to write write pipe.
+/// @return
+///     - @c true  : Opened pipes successfully.
+///     - @c false : Failed to open pipes.
+attr_core_api b32 pipe_open( PipeRead* out_read, PipeWrite* out_write );
+/// @brief Close a pipe.
+/// @param[in] pipe Pointer to pipe to close.
+#define pipe_close( pipe ) fd_close( &(pipe)->fd )
+/// @brief Write to pipe.
+/// @param[in]  pipe          Pipe to write to.
+/// @param      bytes         Bytes to write to pipe.
+/// @param[in]  buf           Pointer to start of buffer to write.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written.
+/// @return
+///     - @c true  : Wrote to pipe successfully.
+///     - @c false : Failed to write to pipe.
+attr_always_inline
+attr_header b32 pipe_write(
+    PipeWrite* pipe, usize bytes, const void* buf, usize* opt_out_write
+) {
+    return fd_write( &pipe->fd, bytes, buf, opt_out_write );
+}
+/// @brief Read from pipe.
+/// @param[in]  pipe         Pipe to read from.
+/// @param      bytes        Bytes to read.
+/// @param[in]  buf          Pointer to start of buffer to read into.
+/// @param[out] opt_out_read (optional) Pointer to write bytes read.
+/// @return
+///     - @c true  : Read from pipe successfully.
+///     - @c false : Failed to read from pipe.
+attr_always_inline
+attr_header b32 pipe_read(
+    PipeRead* pipe, usize bytes, void* buf, usize* opt_out_read
+) {
+    return fd_read( &pipe->fd, bytes, buf, opt_out_read );
+}
+/// @brief Write formatted string to pipe.
+/// @param[in]  pipe          Pipe to write to.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written.
+/// @param      format_len    Length of format string.
+/// @param[in]  format        Pointer to start of format string.
+/// @param      va            Variadic format arguments.
+/// @return
+///     - @c true  : Wrote to pipe successfully.
+///     - @c false : Failed to write to pipe.
+attr_always_inline
+attr_header b32 pipe_write_fmt_va(
+    PipeWrite* pipe, usize* opt_out_write,
+    usize format_len, const char* format, va_list va
+) {
+    return fd_write_fmt_va( &pipe->fd, opt_out_write, format_len, format, va );
+}
+/// @brief Write formatted string to pipe.
+/// @param[in]  pipe          Pipe to write to.
+/// @param[out] opt_out_write (optional) Pointer to write bytes written.
+/// @param      format_len    Length of format string.
+/// @param[in]  format        Pointer to start of format string.
+/// @param      ...           Format arguments.
+/// @return
+///     - @c true  : Wrote to pipe successfully.
+///     - @c false : Failed to write to pipe.
+attr_always_inline
+attr_header b32 pipe_write_fmt(
+    PipeWrite* pipe, usize* opt_out_write,
+    usize format_len, const char* format, ...
+) {
+    va_list va;
+    va_start( va, format );
+    b32 res = fd_write_fmt_va( &pipe->fd, opt_out_write, format_len, format, va );
+    va_end( va );
+    return res;
+}
+/// @brief Write formatted string to pipe.
+/// @param[in]  pipe          (PipeWrite*)     Pipe to write to.
+/// @param[out] opt_out_write (usize*)         (optional) Pointer to write bytes written.
+/// @param      format        (string literal) Format string literal.
+/// @param      va            (va_list)        Variadic format arguments.
+/// @return
+///     - @c true  : Wrote to pipe successfully.
+///     - @c false : Failed to write to pipe.
+#define pipe_write_text_va( pipe, opt_out_write, format, va )\
+    pipe_write_fmt_va( pipe, opt_out_write, sizeof(format) - 1, format, va )
+/// @brief Write formatted string to pipe.
+/// @param[in]  pipe          (PipeWrite*)     Pipe to write to.
+/// @param[out] opt_out_write (usize*)         (optional) Pointer to write bytes written.
+/// @param      format        (string literal) Format string literal.
+/// @param      ...           (args)           Format arguments.
+/// @return
+///     - @c true  : Wrote to pipe successfully.
+///     - @c false : Failed to write to pipe.
+#define pipe_write_text( pipe, opt_out_write, format, ... )\
+    pipe_write_fmt( pipe, opt_out_write, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @brief Pipe streaming function.
+/// @param[in] struct_PipeWrite Pointer to #PipeWrite.
+/// @param     count            Number of bytes to stream to pipe.
+/// @param[in] buf              Pointer to start of buffer to write to pipe.
+/// @return Number of bytes that couldn't be streamed to pipe.
+attr_core_api usize pipe_stream_write(
+    void* struct_PipeWrite, usize count, const void* buf );
 
 #endif /* header guard */

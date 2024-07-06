@@ -25,12 +25,27 @@ attr_core_api usize cstr_len( const cstr* c_string ) {
     if( !c_string ) {
         return 0;
     }
-    const cstr* end = c_string;
-    while( *(++end) ) {}
-    return end - c_string;
+    usize res = 0;
+    const char* at = c_string;
+    while( *at++ ) {
+        res++;
+    }
+    return res;
 }
 attr_core_api usize cstr_len_utf8( const cstr* c_string ) {
     return string_len_utf8( string_from_cstr( c_string ) );
+}
+attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b ) {
+    loop() {
+        if( *a != *b ) {
+            return false;
+        }
+        if( !*a && !*b ) {
+            return true;
+        }
+        a++;
+        b++;
+    }
 }
 attr_core_api hash64 hash_64( usize len, const void* buf ) {
     const u8* u = (const u8*)buf;
