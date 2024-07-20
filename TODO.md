@@ -3,7 +3,6 @@
 - [ ] collections: allocating functions with alignment.
 - [ ] alloc: Block allocator.
 - [ ] process.h: API for creating processes and pipes.
-- [ ] Makefile: no longer check for compiler when generating docs.
 - [ ] platform: linux support
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
@@ -22,6 +21,7 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] build: test flag --open for opening docs in browser
 - [x] platform: win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
 - [x] fs: traverse directory.
 - [x] fs: recursive directory remove

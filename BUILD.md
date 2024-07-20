@@ -5,7 +5,6 @@ Build from Source
 
 ### General
 
-- GNU Make
 - clang or gcc
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
@@ -13,6 +12,7 @@ Build from Source
 
 - [MinGW](https://www.mingw-w64.org/)
 - [Visual Studio](https://visualstudio.microsoft.com/) (for MSVC compiler and MASM, optional)
+- [Latest Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
 
 ## Dependencies
 
@@ -24,32 +24,37 @@ Build from Source
 
 1) cd into root directory
 
-2) to compile for current platform and architecture:
+2) compile cbuild.c with desired compiler:
 ```console
-make
+clang cbuild.c -o cbuild
 ```
 
-By default, library will be in ./build/
-
-to compile using another compiler:
+3) compile project for current platform and architecture:
 ```console
-make COMPILER=compiler
+./cbuild build
 ```
-**compiler** being either clang, gcc or msvc
 
-@note if compiling with msvc, you need to run vcvarsall.bat before running make to have cl and masm in PATH.
+By default, result will be in ./build
+
+to compile using a compiler different from the one used to compile cbuild:
+```console
+./cbuild build --compiler=gcc
+```
+**compiler** being either clang, gcc, cc(for default compiler, usually gcc) or msvc on windows.
+
+@note if compiling with msvc, you need to run vcvarsall.bat before running cbuild to have cl and masm in PATH.
 
 to compile and run tests:
 ```console
-make test
+./cbuild test
 ```
 to generate documentation:
 ```console
-make docs
+./cbuild docs
 ```
 
-additional build instructions can be obtained with:
+additional build flags can be obtained with:
 ```console
-make help
+./cbuild help
 ```
 

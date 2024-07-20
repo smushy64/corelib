@@ -22,6 +22,13 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- test.c: removed old tests again.
+- cbuild: first version written, only supports windows mingw clang currently.
+- README.md: removed GNU Make requirement.
+- BUILD.md: now shows instructions for using cbuild.
+- gitignore: added cbuild.exe
+- Doxygen_default: made sure to ignore cbuild header.
+- Makefile: removed in favor of using cbuild (build system library written by me :) )
 - path: removed file functions.
 - string: added utf functions.
 - string: rewrote string_is_empty macro.
@@ -46,7 +53,6 @@ Indicates additions to API, minor bug fixes and other small changes.
 - types: added va_copy macro.
 - string: added memory_set forward declaration.
 - system: feature flags are now an enum.
-
 - alloc: Implemented heap and stack functions.
 - alloc: Renamed AllocStack to StackAllocator and renamed functions accordingly.
 - alloc: Added AllocatorInterface structure and heap allocator interface.
