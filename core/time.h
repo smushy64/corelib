@@ -176,7 +176,7 @@ attr_header const cstr* time_month_to_string_short(
     TimeMonth month, usize* opt_out_len
 ) {
     #define res( literal )\
-        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+        if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
 
     switch( month ) {
         case TIME_MONTH_JANUARY   : res("Jan");
@@ -202,10 +202,10 @@ attr_header const cstr* time_month_to_string_short(
 /// @return Month name read-only string.
 attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
     #define res( literal )\
-        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+        if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
 
     switch( month ) {
-        case TIME_MONTH_JANUARY   : res("Januart");
+        case TIME_MONTH_JANUARY   : res("January");
         case TIME_MONTH_FEBRUARY  : res("February");
         case TIME_MONTH_MARCH     : res("March");
         case TIME_MONTH_APRIL     : res("April");
@@ -227,7 +227,7 @@ attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_le
 /// @return Day name read-only string.
 attr_header const char* time_day_week_to_string( u32 day_week, usize* opt_out_len ) {
     #define res( literal )\
-        if( opt_out_len ) *opt_out_len = sizeof(literal) - 1; return literal
+        if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
     switch( day_week ) {
         case TIME_DAY_WEEK_SUNDAY    : res("Sunday");
         case TIME_DAY_WEEK_MONDAY    : res("Monday");

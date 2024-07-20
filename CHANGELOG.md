@@ -23,7 +23,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 -----
 
 - test.c: removed old tests again.
-- cbuild: first version written, only supports windows mingw clang currently.
+- cbuild: first version written, only supports windows mingw clang and gcc currently.
 - README.md: removed GNU Make requirement.
 - BUILD.md: now shows instructions for using cbuild.
 - gitignore: added cbuild.exe

@@ -809,7 +809,6 @@ attr_core_api usize string_buf_try_fmt_buffer_va(
 /// @return
 ///     - Zero   : @c buf had enough capacity to write format string.
 ///     - > Zero : Number of characters not written to @c buf.
-attr_always_inline
 attr_header usize string_buf_try_fmt_buffer(
     StringBuf* buf, usize format_len, const char* format, ...
 ) {

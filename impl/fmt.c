@@ -1064,8 +1064,10 @@ attr_internal b32 internal_fmt_parse_format_type(
             }
         } break;
         case 'i':
-            out_args->integer.flags |= FMT_INT_SIGNED;
         case 'u': {
+            if( spec.cc[0] == 'i' ) {
+                out_args->integer.flags |= FMT_INT_SIGNED;
+            }
             switch( spec.len ) {
                 case 1: {
                     out_args->integer.flags |= FMT_INT_BITDEPTH_32;
@@ -1294,7 +1296,7 @@ attr_internal b32 internal_fmt_parse_args(
                         if( !string_parse_uint( prec, &precision ) ) {
                             return false;
                         }
-                        args->floating.precision = clamp( precision, 0, 6 );
+                        args->floating.precision = clamp( (int)precision, 0, 6 );
                     }
 
                     skip();
