@@ -25,8 +25,8 @@ typedef usize StreamBytesFN( void* target, usize count, const void* bytes );
 /// @param[in] bytes String to stream, does not need to be null-terminated.
 /// @return Always zero.
 /// @see core/fmt.h
-/// @see #stdout_handle()
-/// @see #stderr_handle()
+/// @see #pipe_stdout()
+/// @see #pipe_stderr()
 attr_core_api usize stream_console(
     void* console_handle, usize count, const void* bytes );
 

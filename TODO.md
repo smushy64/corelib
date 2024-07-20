@@ -13,8 +13,8 @@
 - [ ] math: saturating,wrapping,checked add/sub/mul/div
 - [ ] math: generics/function overloads(C++)
 - [ ] math: RGB <-> HEX conversions
-- [ ] docs:math: vec2/3/4 quat and mat2/3/4 C++ wrappers documentation
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
+- [ ] cpp: move all C++ wrappers to their own headers
 ## Bugs
 - [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
 ## unlikely

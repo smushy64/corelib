@@ -100,12 +100,12 @@ attr_core_api TimePosix time_posix(void);
 /// @see #TimeSplit
 attr_core_api TimeSplit time_split(void);
 /// @brief Stream formatted time split.
-/// @param[in] stream     Pointer to streaming function.
-/// @param[in] target     Pointer to streaming target.
-/// @param[in] ts         Pointer to time split.
-/// @param     padding    Padding to add to formatted string.
-/// @param     format_len (optional) Length of time format string.
-/// @param[in] format     (optional) Pointer to start of format string.
+/// @param[in] stream         Pointer to streaming function.
+/// @param[in] target         Pointer to streaming target.
+/// @param[in] ts             Pointer to time split.
+/// @param     padding        Padding to add to formatted string.
+/// @param     opt_format_len (optional) Length of time format string.
+/// @param[in] opt_format     (optional) Pointer to start of format string.
 /// @see FORMAT_TIME.md
 /// @return Number of characters that could not be streamed to target.
 attr_core_api usize stream_fmt_time(

@@ -236,7 +236,7 @@
 ///
 /// Default = disabled.
 ///
-/// @see #debug_break()
+/// @see #insert_debug_break()
 /// @see #debug_assert()
 /// @note Defined by compiler.
 #define CORE_ENABLE_DEBUG_BREAK
