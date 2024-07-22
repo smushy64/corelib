@@ -13,7 +13,6 @@ It's a cross-platform library that provides math types & functions
 
 ## Limitations
 - currently only win32 is supported.
-- msvc support currently requires use of C standard library but not the runtime library.
 - wasm support is planned but not yet implemented.
 
 ## Links
