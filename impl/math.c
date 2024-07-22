@@ -295,7 +295,7 @@ attr_core_api void sine_cosine( f32 x, f32* out_sine, f32* out_cosine ) {
 attr_core_api f32 arc_sine( f32 x ) {
     // NOTE(alicia): don't ask me how i figured this out
     // i don't even know
-    f32 sign_of_x = signum( x );
+    f32 sign_of_x = (((x) > 0.0f) - ((x) < 0.0f));
     f32 x_abs = x * sign_of_x;
     f32 x_sqr = x_abs * x_abs;
 

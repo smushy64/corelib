@@ -5,7 +5,7 @@ Build from Source
 
 ### General
 
-- clang or gcc
+- clang, gcc or msvc (Windows only)
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
 ### Windows

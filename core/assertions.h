@@ -29,7 +29,7 @@
     /// @brief Unconditionally crash.
     /// @details
     /// This macro function does not return.
-    #define insert_panic() *(int*)0 = 0
+    #define insert_panic() *(int*)0 = 0; __assume(0)
     /// @brief Suppress unhandled case warning. Crashes if path is reachable.
     /// @details
     /// This macro function does not return when path is reached.

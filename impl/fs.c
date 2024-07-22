@@ -13,10 +13,18 @@
 #include "core/alloc.h"
 
 volatile b32 global_void_pipes_created = false;
-attr_global FD  global_void_pipes[2];
+attr_global FD global_void_pipes[2];
 
+#if defined( CORE_COMPILER_MSVC )
+attr_global AllocatorInterface global_fs_heap_allocator = {
+    .alloc=___internal_memory_alloc_,
+    .realloc=___internal_memory_realloc_,
+    .free=___internal_memory_free_, .ctx=NULL
+};
+#else
 attr_global AllocatorInterface global_fs_heap_allocator =
     allocator_interface_from_heap();
+#endif
 
 attr_internal b32 check_path( Path path ) {
     if( path.len >= CORE_MAX_PATH_NAME ) {

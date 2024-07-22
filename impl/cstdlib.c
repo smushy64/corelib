@@ -11,8 +11,10 @@
 
 #if defined(CORE_COMPILER_MSVC)
     #pragma function(memcpy)
+#else
+attr_clink attr_export
 #endif
-attr_clink attr_export void* memcpy(
+void* memcpy(
     void* attr_restrict dst, const void* attr_restrict src, usize size
 ) {
     for( usize i = 0; i < size; ++i ) {
@@ -22,8 +24,10 @@ attr_clink attr_export void* memcpy(
 }
 #if defined(CORE_COMPILER_MSVC)
     #pragma function(memset)
+#else
+attr_clink attr_export
 #endif
-attr_clink attr_export void* memset( void* dst, int val, usize size ) {
+void* memset( void* dst, int val, usize size ) {
     for( usize i = 0; i < size; ++i ) {
         *((i8*)dst + i) = val;
     }
@@ -31,8 +35,10 @@ attr_clink attr_export void* memset( void* dst, int val, usize size ) {
 }
 #if defined(CORE_COMPILER_MSVC)
     #pragma function(memmove)
+#else
+attr_clink attr_export
 #endif
-attr_clink attr_export void* memmove( void* str1, const void* str2, usize n ) {
+void* memmove( void* str1, const void* str2, usize n ) {
     if( !n ) {
         return str1;
     }

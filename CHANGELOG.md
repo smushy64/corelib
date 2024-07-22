@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- msvc: applied required changes to implementation.
+- msvc: added required flags to compile project with msvc.
 - test.c: removed old tests again.
 - cbuild: first version written, only supports windows mingw clang and gcc currently.
 - README.md: removed GNU Make requirement.

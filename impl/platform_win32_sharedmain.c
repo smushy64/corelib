@@ -16,7 +16,13 @@
 attr_clink b32 win32_init(void);
 attr_clink void win32_deinit(void);
 
-BOOL WINAPI DllMainCRTStartup(
+BOOL WINAPI
+#if defined( CORE_COMPILER_MSVC )
+_DllMainCRTStartup
+#else
+DllMainCRTStartup
+#endif
+(
     HINSTANCE const instance,
     DWORD     const reason,
     LPVOID    const reserved

@@ -54,12 +54,12 @@
     /// @brief Compiler is MSVC.
     #define CORE_COMPILER_MSVC
 
-    // NOTE(alicia): for stringify_macro
-    #include "core/macros.h"
+    #define ___MSVC_STRINGIFY(x) #x
+    #define ___MSVC_STRINGIFY_MACRO(x) ___MSVC_STRINGIFY(x)
 
     #undef CORE_COMPILER_VERSION
     /// @brief String literal describing version of compiler in use.
-    #define CORE_COMPILER_VERSION "MSVC " stringify_macro( _MSC_VER ) " "
+    #define CORE_COMPILER_VERSION "MSVC " ___MSVC_STRINGIFY_MACRO( _MSC_VER ) " "
 #endif
 
 #if !defined(CORE_COMPILER_GCC) && !defined(CORE_COMPILER_CLANG) && !defined(CORE_COMPILER_MSVC)

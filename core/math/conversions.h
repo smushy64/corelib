@@ -61,7 +61,7 @@ attr_header f32 normalize_u32( u32 x ) {
 /// @return Normalized value.
 attr_always_inline
 attr_header f32 normalize_i32( i32 x ) {
-    return x < 0 ? -( (f32)x / (f32)I32_MIN ) : (f32)x / (f32)I32_MAX;
+    return x < 0.0f ? -( (f32)x / (f32)I32_MIN ) : (f32)x / (f32)I32_MAX;
 }
 /// @brief Normalize x to 0 -> 1 range.
 /// @param x Value to normalize.

@@ -98,7 +98,7 @@ attr_core_api void mutex_destroy( Mutex* mut );
     /// @param      addend Value to add to atom.
     /// @return Previous value of @c atom.
     #define atomic_add32( atom, addend )\
-        _InterlockedAdd( (atom), (addend) )
+        _InterlockedExchangeAdd( (atom), (addend) )
     /// @brief Atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to exchange.
     /// @param      exch Value to exchange atom with.
@@ -117,7 +117,7 @@ attr_core_api void mutex_destroy( Mutex* mut );
     /// @param      addend Value to add to atom.
     /// @return Previous value of @c atom.
     #define atomic_add64( atom, addend )\
-        _InterlockedAdd64( (atom), (addend) )
+        _InterlockedExchangeAdd64( (atom), (addend) )
     /// @brief Atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to exchange.
     /// @param      exch Value to exchange atom with.

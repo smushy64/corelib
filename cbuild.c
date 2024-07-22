@@ -264,6 +264,7 @@ b32 mode_build( struct BuildArguments* args ) {
         return false;
     }
 
+    dstring* target_obj_path = NULL;
     switch( args->compiler ) {
         case BC_CC:
         case BC_CLANG:
@@ -321,7 +322,6 @@ b32 mode_build( struct BuildArguments* args ) {
             }
         } break;
         case BC_MSVC: {
-            // TODO(alicia): MSVC build
             push( "-std:c11" );
             push( "-nologo" );
             push( "-Tc" );
@@ -329,10 +329,41 @@ b32 mode_build( struct BuildArguments* args ) {
             if( args->static_build ) {
                 push( "-Fo:" );
             } else {
-                push( "-dll" );
                 push( "-Fe:" );
             }
             push( target_path );
+            target_obj_path = dstring_fmt( "%s/obj/", args->output_dir.cc );
+            if( !target_obj_path ) {
+                cb_error( "failed to allocate target obj path name!" );
+                dstring_free( target_path );
+                command_builder_free( &builder );
+                return false;
+            }
+            push( "-Fo:" );
+            push( target_obj_path );
+
+            push( "-W2" );
+            push( "-external:W0" );
+            push( "-external:env:INCLUDE" );
+            push( "-wd4201" );
+            push( "-wd4141" );
+            push( "-wd4311" );
+            push( "-Gm-" );
+            push( "-GR-" );
+            push( "-GS-" );
+            push( "-Gs9999999" );
+            push( "-Zc:preprocessor" );
+            push( "-EHa-" );
+
+            if( args->enable_optimizations ) {
+                push( "-O2" );
+                push( "-fp:fast" );
+            } else {
+                push( "-Od" );
+                push( "-Z7" );
+            }
+            push( "-Oi" );
+
         } break;
     }
     #define def( name, ... ) push( "-D" name __VA_ARGS__ )
@@ -374,6 +405,28 @@ b32 mode_build( struct BuildArguments* args ) {
 #endif
     }
 
+    if( args->compiler == BC_MSVC ) {
+        def( "INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED" );
+        push( "-link" );
+        if( !args->static_build ) {
+            push( "-dll" );
+        }
+        push( "-stack:0x100000,0x100000" );
+        push( "kernel32.lib" );
+        push( "-subsystem:windows" );
+        push( "-INCREMENTAL:NO" );
+
+        if( args->release_build ) {
+            push( "-opt:ref" );
+        } else {
+            push( "-debug:full" );
+        }
+
+        if( !args->enable_stdlib ) {
+            push( "-nodefaultlib" );
+        }
+    }
+
     #undef push
     #undef def
     Command cmd = command_builder_cmd( &builder ); {
@@ -385,6 +438,9 @@ b32 mode_build( struct BuildArguments* args ) {
     }
 
     if( args->dry_build ) {
+        if( target_obj_path ) {
+            dstring_free( target_obj_path );
+        }
         dstring_free( target_path );
         command_builder_free( &builder );
         return true;
@@ -396,6 +452,20 @@ b32 mode_build( struct BuildArguments* args ) {
                 cb_error( 
                     "failed to create directory at path '%.*s'!",
                     (int)args->output_dir.len, args->output_dir.cc );
+                if( target_obj_path ) {
+                    dstring_free( target_obj_path );
+                }
+                dstring_free( target_path );
+                command_builder_free( &builder );
+                return false;
+            }
+        }
+    }
+    if( args->compiler == BC_MSVC ) {
+        if( !path_exists( target_obj_path ) ) {
+            if( !dir_create( target_obj_path ) ) {
+                cb_error( "failed to create directory at path '%s'!", target_obj_path );
+                dstring_free( target_obj_path );
                 dstring_free( target_path );
                 command_builder_free( &builder );
                 return false;
@@ -414,6 +484,9 @@ b32 mode_build( struct BuildArguments* args ) {
         } else {
             cb_error( "compiler %s not found in path!", compiler_name.cc );
         }
+        if( target_obj_path ) {
+            dstring_free( target_obj_path );
+        }
         dstring_free( target_path );
         command_builder_free( &builder );
         return false;
@@ -422,6 +495,9 @@ b32 mode_build( struct BuildArguments* args ) {
     PID pid = process_exec( cmd, false, NULL, NULL, NULL, NULL );
     dstring_free( target_path );
     command_builder_free( &builder );
+    if( target_obj_path ) {
+        dstring_free( target_obj_path );
+    }
 
     int res = process_wait( pid );
     if( res == 0 ) {
@@ -496,8 +572,15 @@ b32 mode_test( struct TestArguments* args ) {
 #endif
         } break;
         case BC_MSVC: {
-            // TODO(alicia): MSVC tests
             push( "-std:c11" );
+            push( "-nologo" );
+            push( "./test/test.c" );
+            push( "-Fe:" );
+            push( test_output );
+            push( "-Fo./build/obj/" );
+            push( "-Od" );
+            push( "-Oi" );
+            push( "-Z7" );
         } break;
     }
     push( "-I." );
@@ -517,6 +600,13 @@ b32 mode_test( struct TestArguments* args ) {
 #elif defined( ARCH_ARM )
         def( "CORE_ENABLE_NEON_INSTRUCTIONS" );
 #endif
+    }
+
+    if( args->compiler == BC_MSVC ) {
+        push( "-link" );
+        push( "-INCREMENTAL:NO" );
+        push( "-stack:0x100000,0x100000" );
+        push( "./build/libcore-test.lib" );
     }
 
     #undef push
@@ -1401,6 +1491,6 @@ string build_native_arch(void) {
 #endif
 }
 
-
+#undef println
 #define CBUILD_IMPLEMENTATION
 #include "cbuild.h"

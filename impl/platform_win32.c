@@ -20,6 +20,10 @@
 #include <windows.h>
 #include <intrin.h>
 
+#if defined(CORE_COMPILER_MSVC)
+    int _fltused;
+#endif
+
 typedef BOOL EnumDisplayDevicesAFN(
     LPCSTR lpDevice, DWORD iDevNum,
     PDISPLAY_DEVICEA lpDisplayDevice, DWORD dwFlags );
