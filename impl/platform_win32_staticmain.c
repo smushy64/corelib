@@ -12,7 +12,7 @@ extern int main( int argc, char** argv );
 
 #include <windows.h>
 
-extern void win32_init(void);
+extern b32 win32_init(void);
 extern void win32_deinit(void);
 
 attr_clink LPSTR* WINAPI CommandLineToArgvA( LPSTR lpCmdLine, int* numargs );
