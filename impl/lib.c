@@ -9,17 +9,17 @@
 
 #if !defined(CORE_LIB_VERSION_MAJOR)
     #define CORE_LIB_VERSION_MAJOR 0
-    pragma_warning( "CORE_LIB_VERSION_MAJOR is undefined!" )
+    pragma_warn( "CORE_LIB_VERSION_MAJOR is undefined!" )
 #endif
 
 #if !defined(CORE_LIB_VERSION_MINOR)
     #define CORE_LIB_VERSION_MINOR 0
-    pragma_warning( "CORE_LIB_VERSION_MINOR is undefined!" )
+    pragma_warn( "CORE_LIB_VERSION_MINOR is undefined!" )
 #endif
 
 #if !defined(CORE_LIB_VERSION_PATCH)
     #define CORE_LIB_VERSION_PATCH 0
-    pragma_warning( "CORE_LIB_VERSION_PATCH is undefined!" )
+    pragma_warn( "CORE_LIB_VERSION_PATCH is undefined!" )
 #endif
 
 attr_global u32 const global_lib_version =
