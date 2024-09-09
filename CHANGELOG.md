@@ -22,6 +22,10 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- lib: now uses externally defined command line string to return command line.
+- lib: removed version string and compilation description.
+- cbuild: added function to generate command line string.
+- defines: removed CORE_COMMAND_LINE, now cbuild generates a file with verbatim command line used to compile corelib.
 - msvc: applied required changes to implementation.
 - msvc: added required flags to compile project with msvc.
 - test.c: removed old tests again.

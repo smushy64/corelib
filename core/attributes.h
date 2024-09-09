@@ -43,16 +43,15 @@
     #define attr_import attr_clink
 #endif
 
-#if defined(CORE_ENABLE_STATIC_BUILD)
-    /// @brief Attribute for Core functions.
-    #define attr_core_api attr_clink
-#else
-    #if defined(CORE_ENABLE_EXPORT)
-        /// @brief Attribute for Core functions.
-        #define attr_core_api attr_export
+#if !defined(attr_core_api)
+    #if defined(CORE_ENABLE_STATIC_BUILD)
+        #define attr_core_api attr_clink
     #else
-        /// @brief Attribute for Core functions.
-        #define attr_core_api attr_import
+        #if defined(CORE_ENABLE_EXPORT)
+            #define attr_core_api attr_export
+        #else
+            #define attr_core_api attr_import
+        #endif
     #endif
 #endif
 

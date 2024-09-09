@@ -26,90 +26,18 @@ attr_global u32 const global_lib_version =
     core_create_version(
         CORE_LIB_VERSION_MAJOR, CORE_LIB_VERSION_MINOR, CORE_LIB_VERSION_PATCH );
 
-#define CORE_LIB_VERSION_STRING stringify_macro(CORE_LIB_VERSION_MAJOR) "." stringify_macro(CORE_LIB_VERSION_MINOR) "." stringify_macro(CORE_LIB_VERSION_PATCH)
-
 attr_core_api u32 core_version(void) {
     return global_lib_version;
 }
-attr_core_api const char* core_version_string( usize* opt_out_len ) {
-    if( opt_out_len ) {
-        *opt_out_len = sizeof( CORE_LIB_VERSION_STRING ) - 1;
-    }
-    return CORE_LIB_VERSION_STRING;
-}
 
-attr_global const char global_build_description[] =
-#if defined(CORE_STATIC_BUILD)
-    "Statically compiled. "
-#else
-    "Dynamic library. "
-#endif
-    "Compiled with "
-    CORE_COMPILER_VERSION
-    "targetting "
+extern const char external_core_command_line[];
+extern usize      external_core_command_line_len;
 
-#if defined(CORE_PLATFORM_WINDOWS)
-    "win32 "
-#elif defined(CORE_PLATFORM_LINUX)
-    "linux "
-#elif defined(CORE_PLATFORM_ANDROID)
-    "android "
-#elif defined(CORE_PLATFORM_IOS)
-    "iOS "
-#elif defined(CORE_PLATFORM_MACOS)
-    "macOS "
-#else
-    "unknown platform "
-#endif
-#if defined(CORE_ARCH_X86)
-    "x86"
-    #if defined(CORE_ARCH_64_BIT)
-        "-64"
-    #else
-        ""
-    #endif
-    #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
-        " with SSE instructions. "
-    #elif defined(CORE_ENABLE_AVX_INSTRUCTIONS)
-        " with AVX instructions. "
-    #else
-        ". "
-    #endif /* no x86 simd */
-#elif defined(CORE_ARCH_ARM)
-    "Arm "
-    #if defined(CORE_ARCH_64_BIT)
-        "32-bit "
-    #else
-        "64-bit "
-    #endif
-    #if defined(CORE_ARCH_LITTLE_ENDIAN)
-        "little endian"
-    #else
-        "big endian"
-    #endif
-    #if defined(CORE_ENABLE_NEON_INSTRUCTIONS)
-        " with NEON instructions. "
-    #else
-        " . "
-    #endif
-#else
-    "unknown architecture. "
-#endif
-    "Compiled on " __DATE__ "."
-;
-
-attr_core_api const char* core_build_description( usize* opt_out_len ) {
-    if( opt_out_len ) {
-        *opt_out_len = sizeof( global_build_description ) - 1;
-    }
-    return global_build_description;
-}
-attr_global const char global_command_line[] = CORE_COMMAND_LINE;
 attr_core_api const char* core_command_line( usize* opt_out_len ) {
     if( opt_out_len ) {
-        *opt_out_len = sizeof(global_command_line) - 1;
+        *opt_out_len = external_core_command_line_len;
     }
-    return global_command_line;
+    return external_core_command_line;
 }
 
 attr_global enum CoreLoggingLevel global_logging_level = CORE_LOGGING_LEVEL_NONE;

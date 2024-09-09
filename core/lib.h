@@ -46,14 +46,6 @@ typedef void CoreLoggingCallbackFN(
 /// in core/macros.h to extract major, minor and patch version numbers.
 /// @return Version integer.
 attr_core_api u32 core_version(void);
-/// @brief Get version of core lib as a string.
-/// @param[out] opt_out_len (optional) Length of version string.
-/// @return Version string.
-attr_core_api const char* core_version_string( usize* opt_out_len );
-/// @brief Get string that describes how library was built.
-/// @param[out] opt_out_len (optional) Length of description string.
-/// @return Null-terminated UTF-8 description string.
-attr_core_api const char* core_build_description( usize* opt_out_len );
 /// @brief Get string that describes command line used to build library.
 /// @param[out] opt_out_len (optional) Length of command line string.
 /// @return Null-terminated UTF-8 command line string.

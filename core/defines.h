@@ -191,10 +191,6 @@
 /// If defined, compiling in C++, otherwise C.
 #define CORE_CPLUSPLUS
 
-/// @brief String literal describing command line arguments used with compiler.
-/// @note Defined by compiler.
-#define CORE_COMPILER_COMMAND_LINE
-
 /// @brief Useful for suppressing erroneous warnings and errors from clangd.
 #define CORE_CLANGD
 

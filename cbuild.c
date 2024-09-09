@@ -129,6 +129,8 @@ void parsed_arguments_init( Mode mode, ParsedArguments* out_args );
 void print_parsed_arguments( ParsedArguments* args );
 b32  parse_arguments( int argc, char** argv, ParsedArguments* out_args );
 
+b32 generate_command_line( Command* cmd );
+
 b32 mode_help( Mode mode );
 b32 mode_build( struct BuildArguments* args );
 b32 mode_test( struct TestArguments* args );
@@ -270,14 +272,15 @@ b32 mode_build( struct BuildArguments* args ) {
         case BC_CLANG:
         case BC_GCC: {
             push( "-std=c11" );
+            push( "--include./generated/core_command_line.c");
             push( "-xc" );
             push( "./impl/sources.h" );
             if( args->static_build ) {
                 push( "-c" );
             } else {
                 push( "-shared" );
-                push( "-o" );
             }
+            push( "-o" );
             push( target_path );
             push( "-Wall" );
             push( "-Wextra" );
@@ -324,23 +327,25 @@ b32 mode_build( struct BuildArguments* args ) {
         case BC_MSVC: {
             push( "-std:c11" );
             push( "-nologo" );
+            push( "-FIgenerated/core_command_line.c");
             push( "-Tc" );
             push( "./impl/sources.h" );
             if( args->static_build ) {
+                push( "-c" );
                 push( "-Fo:" );
             } else {
+                target_obj_path = dstring_fmt( "%s/obj/", args->output_dir.cc );
+                if( !target_obj_path ) {
+                    cb_error( "failed to allocate target obj path name!" );
+                    dstring_free( target_path );
+                    command_builder_free( &builder );
+                    return false;
+                }
+                push( "-Fo:" );
+                push( target_obj_path );
                 push( "-Fe:" );
             }
             push( target_path );
-            target_obj_path = dstring_fmt( "%s/obj/", args->output_dir.cc );
-            if( !target_obj_path ) {
-                cb_error( "failed to allocate target obj path name!" );
-                dstring_free( target_path );
-                command_builder_free( &builder );
-                return false;
-            }
-            push( "-Fo:" );
-            push( target_obj_path );
 
             push( "-W2" );
             push( "-external:W0" );
@@ -373,7 +378,6 @@ b32 mode_build( struct BuildArguments* args ) {
     def( "CORE_LIB_VERSION_MAJOR=", macro_value_to_string(CORE_LIB_VERSION_MAJOR) );
     def( "CORE_LIB_VERSION_MINOR=", macro_value_to_string(CORE_LIB_VERSION_MINOR) );
     def( "CORE_LIB_VERSION_PATCH=", macro_value_to_string(CORE_LIB_VERSION_PATCH) );
-    def( "CORE_COMMAND_LINE=\\\"\\\"" );
 
     if( args->static_build ) {
         def( "CORE_ENABLE_STATIC_BUILD" );
@@ -429,15 +433,24 @@ b32 mode_build( struct BuildArguments* args ) {
 
     #undef push
     #undef def
-    Command cmd = command_builder_cmd( &builder ); {
+    Command cmd = command_builder_cmd( &builder );
+
+    if( !generate_command_line( &cmd ) ) {
+        if( target_obj_path ) {
+            dstring_free( target_obj_path );
+        }
+        dstring_free( target_path );
+        command_builder_free( &builder );
+        return false;
+    }
+
+    if( args->dry_build ) {
         dstring* command_flat = command_flatten_dstring( &cmd );
         if( command_flat ) {
             cb_info( "%s", command_flat );
             dstring_free( command_flat );
         }
-    }
 
-    if( args->dry_build ) {
         if( target_obj_path ) {
             dstring_free( target_obj_path );
         }
@@ -462,7 +475,7 @@ b32 mode_build( struct BuildArguments* args ) {
         }
     }
     if( args->compiler == BC_MSVC ) {
-        if( !path_exists( target_obj_path ) ) {
+        if( target_obj_path && !path_exists( target_obj_path ) ) {
             if( !dir_create( target_obj_path ) ) {
                 cb_error( "failed to create directory at path '%s'!", target_obj_path );
                 dstring_free( target_obj_path );
@@ -669,7 +682,6 @@ b32 mode_docs( struct DocsArguments* args ) {
     write( "CORE_LIB_VERSION_MAJOR=%i ", CORE_LIB_VERSION_MAJOR );
     write( "CORE_LIB_VERSION_MINOR=%i ", CORE_LIB_VERSION_MINOR );
     write( "CORE_LIB_VERSION_PATCH=%i ", CORE_LIB_VERSION_PATCH );
-    write( "CORE_COMMAND_LINE=\"\" " );
     if( args->release_build ) {
         write( "CORE_ENABLE_DEBUG_BREAK " );
         if( args->enable_assertions ) {
@@ -881,7 +893,6 @@ b32 mode_lsp( struct LspArguments* args ) {
     write( &core_fd, "-DCORE_LIB_VERSION_MAJOR=%i\n", CORE_LIB_VERSION_MAJOR );
     write( &core_fd, "-DCORE_LIB_VERSION_MINOR=%i\n", CORE_LIB_VERSION_MINOR );
     write( &core_fd, "-DCORE_LIB_VERSION_PATCH=%i\n", CORE_LIB_VERSION_PATCH );
-    write( &core_fd, "-DCORE_COMMAND_LINE=\"\"\n" );
     write( &core_fd, "-Wall\n" );
     write( &core_fd, "-Wextra\n" );
     write( &core_fd, "-Werror=vla\n" );
@@ -1489,6 +1500,71 @@ string build_native_arch(void) {
         return string_text( "unknown32" );
     #endif
 #endif
+}
+
+b32 generate_command_line( Command* cmd ) {
+    if( !path_exists( "generated" ) ) {
+        if( !dir_create( "generated" ) ) {
+            cb_error( "failed to create 'generated' directory!" );
+            return false;
+        }
+    }
+
+    const char* core_command_line_path = "generated/core_command_line.c";
+    const char* core_command_line_path_temp = "generated/core_command_line_temp.c";
+
+    FD core_command_line;
+    if( !fd_open(
+        core_command_line_path_temp,
+        FOPEN_CREATE | FOPEN_WRITE, &core_command_line
+    ) ) {
+        cb_error( "failed to create generated core_command_line!" );
+        return false;
+    }
+
+    dstring* flat = command_flatten_dstring( cmd );
+    if( !flat ) {
+        cb_error(
+            "failed to generate command line! "
+            "failed to allocate flat command buffer!");
+        fd_close( &core_command_line );
+        return false;
+    }
+
+    #define write( format, args... ) do {\
+        if( !fd_write_fmt( &core_command_line, format, ##args ) ) {\
+            cb_error( "failed to write to core_command_line!");\
+            dstring_free(flat);\
+            fd_close(&core_command_line);\
+            file_remove( core_command_line_path_temp );\
+            return false;\
+        }\
+    } while(0)
+
+    write( "// generated file\n" );
+    write( "#include \"core/types.h\"\n");
+    write( "const char external_core_command_line[] = \"%s\";\n", flat );
+    write( "usize external_core_command_line_len = sizeof(external_core_command_line);\n");
+    write( "\n" );
+
+    fd_close( &core_command_line );
+    if( path_exists( core_command_line_path ) ) {
+        if( !file_remove(core_command_line_path ) ) {
+            cb_error( "failed to remove old core_command_line!" );
+            dstring_free( flat );
+            return false;
+        }
+    }
+    if( !file_move( core_command_line_path, core_command_line_path_temp ) ) {
+        cb_error( "failed to rename temp core command line!");
+        dstring_free( flat );
+        return false;
+    }
+
+    cb_info( "generated core_command_line at %s!", core_command_line_path );
+    #undef write
+    dstring_free( flat );
+    return true;
 }
 
 #undef println

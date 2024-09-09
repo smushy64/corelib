@@ -76,6 +76,9 @@ struct DirectoryWalk {
 };
 
 b32 win32_init(void) {
+    SetConsoleOutputCP( CP_UTF8 );
+    SetConsoleCP( CP_UTF8 );
+
     DWORD cwd_cap   = GetCurrentDirectoryW( 0, 0 );
     DWORD drive_cap = GetEnvironmentVariableW( L"HOMEDRIVE", 0, 0 );
     DWORD hpath_cap = GetEnvironmentVariableW( L"HOMEPATH", 0, 0 );

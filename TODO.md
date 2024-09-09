@@ -17,6 +17,7 @@
 - [ ] cpp: move all C++ wrappers to their own headers
 ## Bugs
 - [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
+- [ ] console: win32: SetConsoleOutputCP( CP_UTF8 ) for UTF-8 support.
 ## unlikely
 - [ ] finish writing C tests
 - [ ] write C++ tests
