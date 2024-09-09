@@ -16,7 +16,7 @@ attr_core_api void* stack_allocator_push(
     if( alignment ) {
         _size += alignment + sizeof(void*);
     }
-    if( stack->at + _size >= stack->size ) {
+    if( stack->at + _size > stack->size ) {
         return NULL;
     }
     usize offset = 0;
