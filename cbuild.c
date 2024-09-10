@@ -625,15 +625,7 @@ b32 mode_test( struct TestArguments* args ) {
 
     #undef push
     #undef def
-    cb_info( "Test build command:" );
-    Command cmd = command_builder_cmd( &builder ); {
-        dstring* command_flat = command_flatten_dstring( &cmd );
-        if( command_flat ) {
-            cb_info( "%s", command_flat );
-            dstring_free( command_flat );
-        }
-    }
-
+    Command cmd = command_builder_cmd( &builder );
     PID pid = process_exec( cmd, false, NULL, NULL, NULL, NULL );
     command_builder_free( &builder );
 

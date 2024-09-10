@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- fmt: bug: string * argument was incorrectly parsed.
+- cbuild: removed test command print, running a command already prints command.
 - lib: now uses externally defined command line string to return command line.
 - lib: removed version string and compilation description.
 - cbuild: added function to generate command line string.

@@ -1506,7 +1506,7 @@ internal_fmt_parse_args_skip:
         }
     }
 
-    if( pointer && args->type != FT_TIME ) {
+    if( pointer && args->type != FT_TIME && args->type != FT_STRING ) {
         args->data = va_arg( *va, const void* );
         if( args->type == FT_STRING ) {
             usize strlen = cstr_len( (const cstr*)args->data );
