@@ -675,6 +675,9 @@ attr_core_api usize stream_fmt_va(
         if( string_find( format, '{', &open ) ) {
             String args_text = string_advance_by( format, open );
 
+            res   += stream( target, args_text.cc - format.cc, format.cc );
+            format = string_advance_by( format, args_text.cc - format.cc );
+
             if( args_text.len >= 2 ) {
                 if( args_text.cc[1] == '{' ) {
                     char c = '{';
@@ -683,9 +686,6 @@ attr_core_api usize stream_fmt_va(
                     continue;
                 }
             }
-
-            res   += stream( target, args_text.cc - format.cc, format.cc );
-            format = string_advance_by( format, args_text.cc - format.cc );
 
             usize close = 0;
             if( !string_find( args_text, '}', &close ) ) {
@@ -1193,7 +1193,9 @@ attr_internal b32 internal_fmt_parse_args(
             case FT_INT: case FT_FLOAT: case FT_STRING: case FT_CHAR:
             case FT_BOOL: {
                 if( arg.cc[0] == '*' ) {
-                    pointer = true;
+                    if( !(args->type == FT_STRING && spec.cc[0] == 's') ) {
+                        pointer = true;
+                    }
                     String arg_num = string_advance( arg );
 
                     if( arg_num.len ) {
@@ -1217,7 +1219,6 @@ attr_internal b32 internal_fmt_parse_args(
             case FT_TIME:
                 break;
         }
-
         // string and char arguments
         switch( args->type ) {
             case FT_CHAR:
@@ -1273,7 +1274,7 @@ attr_internal b32 internal_fmt_parse_args(
                     arg.cc[0] == '.' ||
                     ascii_is_numeric( arg.cc[0] )
                 ) {
-                    String prec = arg;
+                    String prec = string_empty();
                     if( arg.cc[0] != '.' ) {
                         i64 padding = 0;
                         if( !string_parse_int( arg, &padding ) ) {
@@ -1283,15 +1284,14 @@ attr_internal b32 internal_fmt_parse_args(
 
                         b32 start_zero = (arg.cc[0] == '0');
                         args->floating.flags |= start_zero ? FMT_FLOAT_ZERO_PAD : 0;
+                    }
 
-                        usize dot_pos = 0;
-                        if( string_find( prec, '.', &dot_pos ) ) {
-                            prec = string_advance_by( prec, dot_pos );
-                        }
+                    usize dot_pos = 0;
+                    if( string_find( arg, '.', &dot_pos ) ) {
+                        prec = string_advance_by( arg, dot_pos + 1 );
                     }
 
                     if( prec.len ) {
-                        prec = string_advance( prec );
                         u64 precision = 0;
                         if( !string_parse_uint( prec, &precision ) ) {
                             return false;
@@ -1506,7 +1506,7 @@ internal_fmt_parse_args_skip:
         }
     }
 
-    if( pointer && args->type != FT_TIME && args->type != FT_STRING ) {
+    if( pointer && args->type != FT_TIME ) {
         args->data = va_arg( *va, const void* );
         if( args->type == FT_STRING ) {
             usize strlen = cstr_len( (const cstr*)args->data );
@@ -1530,14 +1530,12 @@ internal_fmt_parse_args_skip:
             } break;
             case FT_STRING: {
                 String str = va_arg( *va, String );
-                if( args->count ) {
-                    if( args->count > str.len ) {
-                        args->count = str.len;
-                    }
-                } else {
+
+                if( args->count <= 0 || args->count > str.len ) {
                     args->count = str.len;
                 }
-                args->data  = str.cc;
+
+                args->data = str.cc;
             } break;
             case FT_FLOAT: {
                 switch( args->floating.flags & FMT_FLOAT_VECTOR_MASK ) {

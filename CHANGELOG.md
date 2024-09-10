@@ -22,6 +22,9 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- fmt: bug: escaping { did not work at all.
+- fmt: bug: string max would break formatter and it wouldn't output anything.
+- fmt: bug: float positive padding without precision specified would overwrite precision with 0.
 - fmt: bug: string * argument was incorrectly parsed.
 - cbuild: removed test command print, running a command already prints command.
 - lib: now uses externally defined command line string to return command line.
