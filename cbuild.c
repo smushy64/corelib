@@ -292,8 +292,8 @@ b32 mode_build( struct BuildArguments* args ) {
             }
 
 #if defined( PLATFORM_WINDOWS )
+            push( "-fuse-ld=lld" );
             if( !args->static_build ) {
-                push( "-fuse-ld=lld" );
                 push( "-Wl,/stack:0x100000" );
                 push( "-lkernel32" );
             }
@@ -302,8 +302,9 @@ b32 mode_build( struct BuildArguments* args ) {
                 push( "-g" );
 
 #if defined( PLATFORM_WINDOWS )
+                push( "-gcodeview" );
+
                 if( !args->static_build ) {
-                    push( "-gcodeview" );
                     push( "-Wl,/debug" );
                 }
 #endif
@@ -435,15 +436,6 @@ b32 mode_build( struct BuildArguments* args ) {
     #undef def
     Command cmd = command_builder_cmd( &builder );
 
-    if( !generate_command_line( &cmd ) ) {
-        if( target_obj_path ) {
-            dstring_free( target_obj_path );
-        }
-        dstring_free( target_path );
-        command_builder_free( &builder );
-        return false;
-    }
-
     if( args->dry_build ) {
         dstring* command_flat = command_flatten_dstring( &cmd );
         if( command_flat ) {
@@ -457,6 +449,15 @@ b32 mode_build( struct BuildArguments* args ) {
         dstring_free( target_path );
         command_builder_free( &builder );
         return true;
+    }
+
+    if( !generate_command_line( &cmd ) ) {
+        if( target_obj_path ) {
+            dstring_free( target_obj_path );
+        }
+        dstring_free( target_path );
+        command_builder_free( &builder );
+        return false;
     }
 
     if( args->output_dir.len ) {
