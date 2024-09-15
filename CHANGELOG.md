@@ -22,6 +22,12 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- platform_posix: added file and implemented console write functions.
+- sources: removed stream.c and added platform_posix.c
+- fmt: cast va_list pointer (required on posix it seems, requires more testing).
+- stream: removed stream_console().
+- platform: removed unused functions. win32: removed implementation of unused platform_console_write()
+- cbuild: posix: added posix flags.
 - fmt: bug: escaping { did not work at all.
 - fmt: bug: string max would break formatter and it wouldn't output anything.
 - fmt: bug: float positive padding without precision specified would overwrite precision with 0.

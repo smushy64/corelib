@@ -279,6 +279,9 @@ b32 mode_build( struct BuildArguments* args ) {
                 push( "-c" );
             } else {
                 push( "-shared" );
+#if defined(PLATFORM_POSIX)
+                push( "-fPIC" );
+#endif
             }
             push( "-o" );
             push( target_path );
@@ -386,9 +389,13 @@ b32 mode_build( struct BuildArguments* args ) {
         def( "CORE_ENABLE_EXPORT" );
     }
 
+#if defined(PLATFORM_POSIX)
+    def( "CORE_ENABLE_STDLIB" );
+#else
     if( args->enable_stdlib ) {
         def( "CORE_ENABLE_STDLIB" );
     }
+#endif
     if( args->enable_logging ) {
         def( "CORE_ENABLE_LOGGING" );
     }
@@ -572,6 +579,9 @@ b32 mode_test( struct TestArguments* args ) {
             push( test_output );
             push( "-L./build" );
             push( "-lcore-test" );
+#if defined(PLATFORM_POSIX)
+            push( "-Wl,-R./build");
+#endif
             push( "-Wall" );
             push( "-Wextra" );
             push( "-Werror=vla" );
@@ -1076,9 +1086,9 @@ b32 parse_arguments( int argc, char** argv, ParsedArguments* out_args ) {
         
         switch( out_args->mode ) {
             case MODE_HELP:
-            case MODE_TEST:
             case MODE_LSP:
             case MODE_CLEAN: break;
+            case MODE_TEST:
             case MODE_BUILD:
             case MODE_DOCS: {
                 if( string_cmp( arg, string_text( "--static" ) ) ) {

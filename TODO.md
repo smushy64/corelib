@@ -7,6 +7,7 @@
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
+    - page protections, shared memory, allocate pages for example.
 - [ ] fs: memory mapped file?
 - [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)

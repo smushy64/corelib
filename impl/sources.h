@@ -21,7 +21,6 @@
 #include "impl/path.c"
 #include "impl/rand.c"
 #include "impl/sort.c"
-#include "impl/stream.c"
 #include "impl/string.c"
 #include "impl/sync.c"
 #include "impl/system.c"
@@ -30,6 +29,9 @@
 
 #if defined(CORE_PLATFORM_WINDOWS)
     #include "impl/platform_win32.c"
+#endif
+#if defined(CORE_PLATFORM_POSIX)
+    #include "impl/platform_posix.c"
 #endif
 #if defined(CORE_ENABLE_STATIC_BUILD)
     // pragma_error( "static build option is unimplemented!" );

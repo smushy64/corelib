@@ -697,7 +697,7 @@ attr_core_api usize stream_fmt_va(
             args_text     = string_advance( args_text );
             format        = string_advance_by( format, close + 1 );
 
-            if( internal_fmt_parse_args( args_text, &args, &val, &va ) ) {
+            if( internal_fmt_parse_args( args_text, &args, &val, (va_list*)&va ) ) {
                 if( !args.data ) {
                     args.data = &val;
                 }

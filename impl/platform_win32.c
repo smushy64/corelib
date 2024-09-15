@@ -189,19 +189,6 @@ f64 platform_timer_seconds(void) {
     return (f64)qpc.QuadPart / (f64)global_win32.qpf.QuadPart;
 }
 
-void platform_console_write( void* dst, usize len, const char* str ) {
-    DWORD chars_to_write = len;
-    DWORD chars_written;
-    WriteConsoleA(
-        dst, str, chars_to_write, &chars_written, NULL );
-    if( len > U32_MAX ) {
-        chars_to_write = len - U32_MAX;
-        WriteConsoleA(
-            dst, str + U32_MAX,
-            chars_to_write, &chars_written, NULL );
-    }
-}
-
 struct Win32Semaphore {
     HANDLE handle;
 };

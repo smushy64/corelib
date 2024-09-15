@@ -17,8 +17,6 @@ void* platform_heap_realloc(
     void* old_buffer, const usize old_size, const usize new_size );
 void platform_heap_free( void* buffer, const usize size );
 
-void platform_console_write( void* dst, usize len, const char* str );
-
 TimePosix platform_time_posix(void);
 TimeSplit platform_time_split(void);
 f64 platform_timer_milliseconds(void);
@@ -79,37 +77,6 @@ b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write );
 PipeRead*  platform_stdin(void);
 PipeWrite* platform_stdout(void);
 PipeWrite* platform_stderr(void);
-
-#if 0
-b32 platform_path_is_file( const Path path );
-b32 platform_path_is_directory( const Path path );
-
-FileHandle* platform_file_open( const Path path, FileOpenFlags flags );
-void platform_file_close( FileHandle* file );
-usize platform_file_query_size( FileHandle* file );
-void platform_file_truncate( FileHandle* file );
-usize platform_file_query_offset( FileHandle* file );
-void platform_file_set_offset( FileHandle* file, usize offset );
-void platform_file_set_offset_relative( FileHandle* file, isize offset );
-b32 platform_file_write( FileHandle* file, usize len, const void* buf );
-b32 platform_file_read( FileHandle* file, usize len, void* buf );
-b32 platform_file_copy(
-    const Path dst, const Path src, b32 fail_if_dst_exists );
-b32 platform_file_move(
-    const Path dst, const Path src, b32 fail_if_dst_exists );
-b32 platform_file_delete( const Path path );
-b32 platform_file_exists( const Path path );
-Path platform_working_directory(void);
-b32 platform_directory_create( const Path path );
-b32 platform_directory_item_count( const Path path, usize* out_count );
-b32 platform_directory_exists( const Path path );
-
-#if defined(CORE_PLATFORM_WINDOWS)
-    void* platform_win32_get_stdin(void);
-    void* platform_win32_get_stdout(void);
-    void* platform_win32_get_stderr(void);
-#endif
-#endif
 
 void platform_system_query_info( SystemInfo* out_info );
 
