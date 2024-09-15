@@ -2321,7 +2321,7 @@ does_not_return() void cbuild_rebuild(
         "\033[1;00m\n" );
     exit(0);
 #else
-    process_exec( global_command_line, false, 0, 0, 0 );
+    process_exec( global_command_line, false, 0, 0, 0, 0 );
     exit(0);
 #endif
 }
@@ -5033,7 +5033,7 @@ PID process_exec(
     wchar_t* wide_cwd = NULL;
     if( opt_cwd ) {
         wide_cwd = win32_local_path_canon( string_from_cstr( opt_cwd ) );
-        cb_info( "cd '%S'", cmd_line );
+        cb_info( "cd '%S'", wide_cwd );
     }
 
     cb_info( "%S", cmd_line );
