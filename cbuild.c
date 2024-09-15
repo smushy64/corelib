@@ -920,16 +920,16 @@ b32 mode_lsp( struct LspArguments* args ) {
     }
     cb_info( "wrote new ./impl/compile_flags.txt" );
 
-    if( path_exists( "./tests/compile_flags.txt" ) ) {
+    if( path_exists( "./test/compile_flags.txt" ) ) {
         if( file_remove( "./test/compile_flags.txt" ) ) {
-            cb_info( "removed old ./tests/compile_flags.txt" );
-            if( file_copy( "./tests/compile_flags.txt", "./core/compile_flags.txt" ) ) {
-                cb_info( "wrote new ./tests/compile_flags.txt" );
+            cb_info( "removed old ./test/compile_flags.txt" );
+            if( file_copy( "./test/compile_flags.txt", "./core/compile_flags.txt" ) ) {
+                cb_info( "wrote new ./test/compile_flags.txt" );
             }
         }
     } else {
-        if( file_copy( "./tests/compile_flags.txt", "./core/compile_flags.txt" ) ) {
-            cb_info( "wrote new ./tests/compile_flags.txt" );
+        if( file_copy( "./test/compile_flags.txt", "./core/compile_flags.txt" ) ) {
+            cb_info( "wrote new ./test/compile_flags.txt" );
         }
     }
     #undef write
