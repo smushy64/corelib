@@ -50,6 +50,10 @@ attr_core_api b32 thread_create(
 /// Stop thread execution and free thread handle.
 /// @param[in] handle Handle of thread to destroy.
 attr_core_api void thread_destroy( ThreadHandle* handle );
+/// @brief Get id of the current thread.
+/// @details Main thread returns zero.
+/// @return Id of the current thread.
+attr_core_api u32 thread_query_id(void);
 /// @brief Free a thread handle.
 /// @details
 /// Thread does not stop execution when this function is called.

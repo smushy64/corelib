@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- platform_win32: implemented thread_query_id()
+- thread: implemented thread_query_id()
 - platform_posix: added file and implemented console write functions.
 - sources: removed stream.c and added platform_posix.c
 - fmt: cast va_list pointer (required on posix it seems, requires more testing).

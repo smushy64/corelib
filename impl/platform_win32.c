@@ -63,6 +63,8 @@ attr_global struct Win32Global {
 
     LARGE_INTEGER qpf;
 
+    DWORD tls_index;
+
     char cpu_name_buf[255];
 } global_win32;
 
@@ -103,6 +105,10 @@ b32 win32_init(void) {
     global_win32.err.fd.opaque = GetStdHandle( STD_ERROR_HANDLE );
 
     global_win32.cpu_name.c = global_win32.cpu_name_buf;
+    global_win32.thread_id  = 1;
+
+    global_win32.tls_index = TlsAlloc();
+    TlsSetValue(global_win32.tls_index, 0);
 
     QueryPerformanceFrequency( &global_win32.qpf );
 
@@ -115,6 +121,8 @@ void win32_deinit(void) {
             global_win32.user32 = NULL;
         }
     }
+
+    TlsFree(global_win32.tls_index);
 
     memory_zero( &global_win32, sizeof( global_win32 ) );
 }
@@ -282,12 +290,19 @@ attr_internal DWORD internal_win32_thread_proc( void* in ) {
 
     atomic_increment32( thread.ready );
 
-    u32 thread_id = atomic_increment32( &global_win32.thread_id );
+    usize thread_id = atomic_increment32( &global_win32.thread_id );
+
+    TlsSetValue( global_win32.tls_index, (void*)thread_id );
+
     read_write_barrier();
 
     volatile int ret = thread.main( thread_id, thread.params );
 
     ExitThread( ret );
+}
+u32 platform_thread_query_id(void) {
+    usize value = (usize)TlsGetValue( global_win32.tls_index );
+    return value;
 }
 
 b32 platform_thread_create(

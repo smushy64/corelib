@@ -22,6 +22,9 @@ attr_core_api void thread_destroy( ThreadHandle* handle ) {
     platform_thread_destroy( handle );
     memory_zero( handle, sizeof(*handle) );
 }
+attr_core_api u32 thread_query_id(void) {
+    return platform_thread_query_id();
+}
 attr_core_api void thread_free( ThreadHandle* handle ) {
     platform_thread_free( handle );
     memory_zero( handle, sizeof(*handle) );

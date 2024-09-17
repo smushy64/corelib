@@ -42,6 +42,7 @@ b32 platform_thread_create(
     ThreadMainFN* main, void* params,
     usize stack_size, ThreadHandle* out_handle );
 void platform_thread_destroy( ThreadHandle* handle );
+u32 platform_thread_query_id(void);
 void platform_thread_free( ThreadHandle* handle );
 b32 platform_thread_join_timed( ThreadHandle* handle, u32 ms, int* opt_out_exit_code );
 b32 platform_thread_exit_code( ThreadHandle* handle, int* out_exit_code );
