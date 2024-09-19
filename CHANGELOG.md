@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- alloc: added name field in AllocatorInterface.
 - platform_win32: implemented thread_query_id()
 - thread: implemented thread_query_id()
 - platform_posix: added file and implemented console write functions.

@@ -9,6 +9,7 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/macros.h"
+#include "core/slice.h"
 
 /// @brief Function prototype for allocator alloc function.
 /// @details
@@ -74,6 +75,9 @@ typedef struct AllocatorInterface {
     /// @details
     /// Some allocators (such as heap allocator) don't require a context.
     void*               ctx;
+
+    /// @brief String identifying this allocator.
+    struct ByteSlice name;
 } AllocatorInterface;
 /// @brief Create a new allocator interface.
 /// @param[in] _alloc   (AllocatorAllocFN*)   Function for allocating memory.
