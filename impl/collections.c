@@ -87,13 +87,13 @@ attr_core_api b32 generic_array_push(
     usize stride, usize* len, usize* cap, void** buf,
     const void* item, struct AllocatorInterface* allocator
 ) {
-    if( generic_array_try_push( stride, len, *cap, buf, item ) ) {
+    if( generic_array_try_push( stride, len, *cap, *buf, item ) ) {
         return true;
     }
     if( !generic_array_grow( stride, cap, buf, *cap, allocator ) ) {
         return false;
     }
-    return generic_array_try_push( stride, len, *cap, buf, item );
+    return generic_array_try_push( stride, len, *cap, *buf, item );
 }
 attr_core_api b32 generic_array_emplace(
     usize stride, usize* len, usize* cap, void** buf,
