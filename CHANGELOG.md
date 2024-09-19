@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- collections: bug: generic_array_push passing void** to generic_array_try_push instead of void*
 - alloc: added name field in AllocatorInterface.
 - platform_win32: implemented thread_query_id()
 - thread: implemented thread_query_id()
