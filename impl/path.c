@@ -145,7 +145,7 @@ attr_core_api b32 path_get_extension( Path path, Path* out_extension ) {
         return false;
     }
     usize dot = 0;
-    if( string_find( path, '.', &dot ) ) {
+    if( string_find_rev( path, '.', &dot ) ) {
         if( !dot ) {
             return false;
         }
