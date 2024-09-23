@@ -243,21 +243,26 @@ attr_core_api usize string_find_phrase_count( String str, String phrase ) {
 }
 attr_core_api String string_trim_leading_whitespace( String str ) {
     String res = str;
-    for( usize i = 0; i < res.len; ++i ) {
-        if( !ascii_is_whitespace( res.cc[i] ) ) {
-            res = string_advance_by( res, i );
-            return res;
+    while( !string_is_empty( res ) ) {
+        if( ascii_is_whitespace( res.cc[0] ) ) {
+            res = string_advance( res );
+            continue;
         }
+
+        return res;
     }
     return res;
 }
 attr_core_api String string_trim_trailing_whitespace( String str ) {
     String res = str;
-    for( usize i = res.len; i-- > 0; ) {
-        if( !ascii_is_whitespace( res.cc[i] ) ) {
-            res = string_truncate( res, i + 1 );
-            return res;
+    while( !string_is_empty( res ) ) {
+        char last = *string_last( res );
+        if( ascii_is_whitespace( last ) ) {
+            res = string_trim( res, 1 );
+            continue;
         }
+
+        return res;
     }
     return res;
 }
