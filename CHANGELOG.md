@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- string: removed hashing functions, moved to hash.h/.c
+- hash: created header and source for hashing algorithms, implemented murmur2 and cityhash
 - string: bug: string_trim_* functions wouldn't return empty string when input string is all whitespace.
 - path: bug: path_get_extension was searching from start of string rather than from the end.
 - collections: bug: generic_array_push passing void** to generic_array_try_push instead of void*

@@ -175,31 +175,6 @@ attr_core_api usize cstr_len_utf8( const cstr* c_string );
 ///     - @c false : @c a and @c b do not match in contents or length.
 attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b );
 
-/// @brief Create 64-bit hash of buffer.
-/// @details
-/// Uses elf hash algorithm.
-/// @param     len Byte length of buffer pointed to by @c buf.
-/// @param[in] buf Buffer to hash.
-/// @return 64-bit hash of buffer.
-attr_core_api hash64 hash_64( usize len, const void* buf );
-/// @brief Create 128-bit hash of buffer.
-/// @details
-/// Uses elf hash algorithm.
-/// @param     len Byte length of buffer pointed to by @c buf.
-/// @param[in] buf Buffer to hash.
-/// @return 128-bit hash of buffer.
-attr_core_api hash128 hash_128( usize len, const void* buf );
-
-// TODO(alicia): documentation!
-
-#define hash_text_64( literal ) hash_64( sizeof(literal) - 1, literal )
-#define hash_cstr_64( cstr )    hash_64( cstr_len( cstr ), cstr )
-#define hash_string_64( str )   hash_64( (str).len, (str).v )
-
-#define hash_text_128( literal ) hash_128( sizeof(literal) - 1, literal )
-#define hash_cstr_128( cstr )    hash_128( cstr_len( cstr ), cstr )
-#define hash_string_128( str )   hash_128( (str).len, (str).v )
-
 /// @brief Create new string slice.
 /// @param     length (usize) Length of string slice.
 /// @param[in] start  (char*) Pointer to start of slice.
@@ -216,6 +191,21 @@ attr_core_api hash128 hash_128( usize len, const void* buf );
 /// @param literal (const char* literal) String literal.
 /// @return String slice.
 #define string_text( literal ) string_new( sizeof(literal) - 1, literal )
+/// @brief Hash string using ELF hash algorithm.
+/// @note Requires core/hash.h
+/// @param str (String) String to hash.
+/// @return 64-bit hash of @c str.
+#define string_hash_elf_64( str ) hash_elf_64( (str).len, (str).v )
+/// @brief Hash string using MurmurHash2 algorithm.
+/// @note Requires core/hash.h
+/// @param str (String) String to hash.
+/// @return 64-bit hash of @c str.
+#define string_hash_murmur2_64( str ) hash_murmur2_64( (str).len, (str).v )
+/// @brief Hash string using Cityhash algorithm.
+/// @note Requires core/hash.h
+/// @param str (String) String to hash.
+/// @return 64-bit hash of @c str.
+#define string_hash_city_64( str ) hash_city_64( (str).len, (str).v )
 /// @brief Calculate UTF-8 length of string.
 /// @note This function does not check if string is valid UTF-8!
 /// @param str String to calculate length of.
@@ -358,7 +348,8 @@ attr_core_api b32 string_find_phrase( String str, String phrase, usize* opt_out_
 /// @return 
 ///     - @c true  : @c phrase was found in @c str.
 ///     - @c false : @c phrase was not found.
-attr_core_api b32 string_find_phrase_rev( String str, String phrase, usize* opt_out_index );
+attr_core_api b32 string_find_phrase_rev(
+    String str, String phrase, usize* opt_out_index );
 /// @brief Tally number of times that phrase occurs in string.
 /// @param str    String.
 /// @param phrase Phrase to tally.

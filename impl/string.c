@@ -47,24 +47,6 @@ attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b ) {
         b++;
     }
 }
-attr_core_api hash64 hash_64( usize len, const void* buf ) {
-    const u8* u = (const u8*)buf;
-    hash64 x = 0, result = 0;
-    for( usize i = 0; i < len; ++i ) {
-        result = (result << 4) + u[i];
-        x = result & 0xF000000000000000;
-        if( x ) {
-            result ^= x >> 24;
-        }
-        result &= ~x;
-    }
-    return result;
-}
-attr_core_api hash128 hash_128( usize len, const void* buf ) {
-    // TODO(alicia): 
-    unused( len, buf );
-    unimplemented();
-}
 
 attr_core_api usize string_len_utf8( String str ) {
     usize res = 0;

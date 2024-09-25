@@ -26,6 +26,7 @@
 #include "impl/system.c"
 #include "impl/thread.c"
 #include "impl/time.c"
+#include "impl/hash.c"
 
 #if defined(CORE_PLATFORM_WINDOWS)
     #include "impl/platform_win32.c"
