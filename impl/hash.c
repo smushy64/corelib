@@ -172,7 +172,7 @@ attr_internal u64 internal_hash_len_16_1( u64 u, u64 v, u64 mul ) {
     b *= mul;
     return b;
 }
-attr_internal hash64 internal_hash_len_0_to_16( usize len, const void* s ) {
+attr_internal hash64 internal_hash_len_0_to_16( usize len, const char* s ) {
     if( len >= 8 ) {
         u64 mul = K2 + len * 2;
         u64 a = internal_hash_fetch_64( s ) + K2;
@@ -198,7 +198,7 @@ attr_internal hash64 internal_hash_len_0_to_16( usize len, const void* s ) {
 
     return K2;
 }
-attr_internal hash64 internal_hash_len_17_to_32( usize len, const void* s ) {
+attr_internal hash64 internal_hash_len_17_to_32( usize len, const char* s ) {
     u64 mul = K2 + len * 2;
     u64 a   = internal_hash_fetch_64( s ) * K1;
     u64 b   = internal_hash_fetch_64( s + 8 );
@@ -208,7 +208,7 @@ attr_internal hash64 internal_hash_len_17_to_32( usize len, const void* s ) {
         internal_hash_rotate( a + b, 43 ) + internal_hash_rotate( c, 30 ) + d,
         a + internal_hash_rotate( b + K2, 18 ) + c, mul );
 }
-attr_internal hash64 internal_hash_len_33_to_64( usize len, const void* s ) {
+attr_internal hash64 internal_hash_len_33_to_64( usize len, const char* s ) {
     u64 mul = K2 + len * 2;
     u64 a   = internal_hash_fetch_64( s ) * K2;
     u64 b   = internal_hash_fetch_64( s + 8 );
@@ -229,7 +229,8 @@ attr_internal hash64 internal_hash_len_33_to_64( usize len, const void* s ) {
     b       = internal_hash_shift_mix( ( z + a ) * mul + d + h ) * mul;
     return b + x;
 }
-attr_core_api hash64 hash_city_64( usize len, const void* buf ) {
+attr_core_api hash64 hash_city_64( usize len, const void* _buf ) {
+    const char* buf = _buf;
     if( len <= 32 ) {
         if( len <= 16 ) {
             return internal_hash_len_0_to_16( len, buf );
