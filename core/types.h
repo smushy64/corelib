@@ -53,18 +53,18 @@ typedef signed int   i32;
     typedef i32 isize;
 #endif
 
-/// @brief 128-bit integer.
-typedef struct {
-    /// @brief High bits of 128-bit integer.
-    u64 hi;
-    /// @brief Low bits of 128-bit integer.
-    u64 lo;
-} integer128;
+#if !defined(CORE_INT128_H)
+    #include "core/int128.h"
+#endif
+
+#if !defined(__cplusplus)
+    typedef struct Integer128C Integer128;
+#endif
 
 /// @brief Signed 128-bit integer.
-typedef integer128 i128;
+typedef Integer128 i128;
 /// @brief Unsigned 128-bit integer.
-typedef integer128 u128;
+typedef Integer128 u128;
 
 #if defined(CORE_PLATFORM_WINDOWS)
     /// @brief Signed 32-bit integer for atomic operations.

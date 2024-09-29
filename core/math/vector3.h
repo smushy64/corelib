@@ -69,10 +69,6 @@ struct Vector3 {
 #if !defined(CORE_CPLUSPLUS)
     /// @brief 3 Component 32-bit Floating Point Vector.
     typedef struct Vector3 vec3;
-    /// @brief RGB 32-bit Floating Point.
-    typedef struct Vector3 rgb;
-    /// @brief HSL Color.
-    typedef struct Vector3 hsl;
 #endif
 
 /// @brief 3 Component 32-bit Signed Integer Vector.
@@ -560,163 +556,20 @@ attr_header b32 iv3_cmp( struct IVector3 a, struct IVector3 b ) {
         a.z == b.z;
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Vector3 : public ::Vector3 {
-    Vector3() : ::Vector3{ .v= {0.0f, 0.0f, 0.0f} } {}
-    Vector3( f32 x, f32 y, f32 z ) : ::Vector3{ .v={ x, y, z } } {}
-    Vector3( f32 s ) : Vector3( s, s, s ) {}
-    Vector3( ::Vector3 v ) : Vector3( v.x, v.y, v.z ) {}
-
-    attr_always_inline
-    attr_header f32 operator[]( usize index ) const {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header f32& operator[]( usize index ) {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header void operator+=( const Vector3 rhs ) {
-        *this = v3_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( Vector3 rhs ) {
-        *this = v3_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = v3_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = v3_div( *this, rhs );
-    }
-    attr_always_inline
-    attr_header Vector3 operator-() const {
-        return v3_neg( *this );
-    }
-}; /* struct CoreMathInternal::Vector3 */
-
-struct IVector3 : public ::IVector3 {
-    IVector3() : ::IVector3{ .v= {0, 0, 0} } {}
-    IVector3( i32 x, i32 y, i32 z ) : ::IVector3{ .v={ x, y, z } } {}
-    IVector3( i32 s ) : IVector3( s, s, s ) {}
-    IVector3( ::IVector3 v ) : IVector3( v.x, v.y, v.z ) {}
-
-    attr_always_inline
-    attr_header i32 operator[]( usize index ) const {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header i32& operator[]( usize index ) {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header void operator+=( const IVector3 rhs ) {
-        *this = iv3_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( const IVector3 rhs ) {
-        *this = iv3_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( i32 rhs ) {
-        *this = iv3_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( i32 rhs ) {
-        *this = iv3_div( *this, rhs );
-    }
-    attr_always_inline
-    attr_header IVector3 operator-() const {
-        return iv3_neg( *this );
-    }
-}; /* struct CoreMathInternal::IVector3 */
-
-}; /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Vector3 vec3;
-typedef CoreMathInternal::Vector3 rgb;
-typedef CoreMathInternal::Vector3 hsl;
-typedef CoreMathInternal::IVector3 ivec3;
-
-attr_always_inline
-attr_header vec3 operator+( const vec3 lhs, const vec3 rhs ) {
-    return v3_add( lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator-( const vec3 lhs, const vec3 rhs ) {
-    return v3_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator*( const vec3 lhs, f32 rhs ) {
-    return v3_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator*( f32 lhs, const vec3 rhs ) {
-    return v3_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header vec3 operator/( const vec3 lhs, f32 rhs ) {
-    return v3_div( lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator-( const vec3 x ) {
-    return v3_neg( x );
-}
-attr_always_inline
-attr_header b32 operator==( const vec3 a, const vec3 b ) {
-    return v3_cmp( a, b );
-}
-attr_always_inline
-attr_header b32 operator!=( const vec3 a, const vec3 b ) {
-    return !(a == b);
-}
-
-attr_always_inline
-attr_header ivec3 operator+( const ivec3 lhs, const ivec3 rhs ) {
-    return iv3_add( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec3 operator-( const ivec3 lhs, const ivec3 rhs ) {
-    return iv3_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec3 operator*( const ivec3 lhs, i32 rhs ) {
-    return iv3_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec3 operator*( i32 lhs, const ivec3 rhs ) {
-    return iv3_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header ivec3 operator/( const ivec3 lhs, i32 rhs ) {
-    return iv3_div( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec3 operator-( const ivec3 x ) {
-    return iv3_neg( x );
-}
-attr_always_inline
-attr_header b32 operator==( const ivec3 a, const ivec3 b ) {
-    return iv3_cmp( a, b );
-}
-attr_always_inline
-attr_header b32 operator!=( const ivec3 a, const ivec3 b ) {
-    return !(a == b);
-}
-
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
 #endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_VECTOR3_HPP)
+        #include "core/cpp/math/vector3.hpp"
+    #endif
+    typedef Vector3CPP  vec3;
+    typedef IVector3CPP ivec3;
+#endif
+
+typedef vec3 rgb;
+typedef vec3 hsl;
 
 #endif /* header guard */

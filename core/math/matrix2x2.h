@@ -174,79 +174,16 @@ attr_header f32 m2_determinant( struct Matrix2x2 m ) {
     return ( m.v[0] * m.v[3] ) - ( m.v[2] * m.v[1] );
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Matrix2x2 : public ::Matrix2x2 {
-    Matrix2x2() : ::Matrix2x2{ .v= {0.0f, 0.0f, 0.0f, 0.0f} } {}
-    Matrix2x2( f32 m00, f32 m01, f32 m10, f32 m11 ) :
-        ::Matrix2x2{ .v={ m00, m01, m10, m11 } } {}
-    Matrix2x2( ::Matrix2x2 m ) : Matrix2x2( m.v[0], m.v[1], m.v[2], m.v[3] ) {}
-
-    attr_always_inline
-    attr_header vec2 operator[]( usize index ) const {
-        return c[index];
-    }
-    attr_always_inline
-    attr_header vec2& operator[]( usize index ) {
-        return *(vec2*)( c + index );
-    }
-    attr_always_inline
-    attr_header void operator+=( Matrix2x2 rhs ) {
-        *this = m2_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( Matrix2x2 rhs ) {
-        *this = m2_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = m2_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = m2_div( *this, rhs );
-    }
-
-}; /* struct Matrix2x2 */
-
-} /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Matrix2x2 mat2;
-
-attr_always_inline
-attr_header mat2 operator+( mat2 lhs, mat2 rhs ) {
-    return m2_add( lhs, rhs );
-}
-attr_always_inline
-attr_header mat2 operator-( mat2 lhs, mat2 rhs ) {
-    return m2_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header mat2 operator*( mat2 lhs, f32 rhs ) {
-    return m2_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header mat2 operator*( f32 lhs, mat2 rhs ) {
-    return m2_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header mat2 operator*( mat2 lhs, mat2 rhs ) {
-    return m2_mul_m2( lhs, rhs );
-}
-attr_always_inline
-attr_header mat2 operator/( mat2 lhs, f32 rhs ) {
-    return m2_div( lhs, rhs );
-}
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
+#endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_MATRIX2X2_HPP)
+        #include "core/cpp/math/matrix2x2.hpp"
+    #endif
+    typedef Matrix2x2CPP mat2;
 #endif
 
 #endif /* header guard */

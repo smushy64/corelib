@@ -22,7 +22,7 @@ attr_header f32 lerpf( f32 a, f32 b, f32 t ) {
 /// @param v Value within range a -> b.
 /// @return t value of v.
 attr_always_inline
-attr_header f32 inv_lerp( f32 a, f32 b, f32 v ) {
+attr_header f32 inv_lerpf( f32 a, f32 b, f32 v ) {
     return ( v - a ) / ( b - a );
 }
 /// @brief Remap value from range in_min -> in_max to range out_min -> out_max.
@@ -34,7 +34,7 @@ attr_always_inline
 attr_header f32 remap(
     f32 in_min, f32 in_max, f32 out_min, f32 out_max, f32 v
 ) {
-    f32 t = inv_lerp( in_min, in_max, v );
+    f32 t = inv_lerpf( in_min, in_max, v );
     return lerpf( out_min, out_max, t );
 }
 /// @brief Smooth step interpolation.
@@ -54,5 +54,11 @@ attr_header f32 smoother_stepf( f32 a, f32 b, f32 t ) {
     return ( b - a ) *
         ( ( t * ( t * 6.0f - 15.0f ) + 10.0f ) * t * t * t ) + a;
 }
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_INTERPOLATION_HPP)
+        #include "core/cpp/math/interpolation.hpp"
+    #endif
+#endif
 
 #endif /* header guard */

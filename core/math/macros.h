@@ -6,7 +6,11 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   March 01, 2024
 */
+#include "core/defines.h" // IWYU pragma: keep
 
+#if defined(CORE_CPLUSPLUS)
+    #include "core/cpp/math/macros.hpp"
+#else
 /// @brief Get the sign of a number.
 /// @param x (any signed number) Number to get sign of.
 /// @return 1 if positive, -1 if negative.
@@ -40,5 +44,6 @@
 /// @param a, b (f32) Floats to compare for equality.
 /// @return True if a and b are equal.
 #define fcmp( a, b ) (absolute((a) - (b)) <= F32_EPSILON)
+#endif /* C implementation */
 
 #endif /* header guard */

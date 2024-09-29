@@ -77,7 +77,10 @@ typedef struct ParsedArguments {
             b32           dry_build;
         } build;
         struct TestArguments {
-            string        __placeholder_0;
+            union {
+                string __placeholder_0;
+                b32    cpp;
+            };
             BuildCompiler compiler;
             BuildTarget   target;
             b32           release_build;
@@ -548,7 +551,25 @@ b32 mode_test( struct TestArguments* args ) {
         return false;
     }
 
-    string compiler = build_compiler_name( args->compiler );
+    string compiler;
+    if( args->cpp ) {
+        switch( args->compiler ) {
+            case BC_CC: {
+                compiler = string_text( "c++" );
+            } break;
+            case BC_CLANG: {
+                compiler = string_text( "clang++" );
+            } break;
+            case BC_GCC: {
+                compiler = string_text( "g++" );
+            } break;
+            case BC_MSVC: {
+                compiler = string_text( "cl" );
+            } break;
+        }
+    } else {
+        compiler = build_compiler_name( args->compiler );
+    }
 
     #define push( arg ) do {\
         if( !command_builder_push( &builder, arg ) ) {\
@@ -573,8 +594,13 @@ b32 mode_test( struct TestArguments* args ) {
         case BC_CC:
         case BC_CLANG:
         case BC_GCC: {
-            push( "-std=c11" );
-            push( "./test/test.c" );
+            if( args->cpp ) {
+                push( "-std=c++20" );
+                push( "./test/test.cpp" );
+            } else {
+                push( "-std=c11" );
+                push( "./test/test.c" );
+            }
             push( "-o" );
             push( test_output );
             push( "-L./build" );
@@ -596,9 +622,14 @@ b32 mode_test( struct TestArguments* args ) {
 #endif
         } break;
         case BC_MSVC: {
-            push( "-std:c11" );
             push( "-nologo" );
-            push( "./test/test.c" );
+            if( args->cpp ) {
+                push( "-std:c++20" );
+                push( "./test/test.cpp" );
+            } else {
+                push( "-std:c11" );
+                push( "./test/test.c" );
+            }
             push( "-Fe:" );
             push( test_output );
             push( "-Fo./build/obj/" );
@@ -991,7 +1022,12 @@ b32 parse_arguments( int argc, char** argv, ParsedArguments* out_args ) {
                     continue;
                 }
             } break;
-            case MODE_TEST:
+            case MODE_TEST: {
+                if( string_cmp( arg, string_text("--cpp"))) {
+                    out_args->test.cpp = true;
+                    continue;
+                }
+            } break;
             case MODE_LSP:
             case MODE_HELP: break;
             case MODE_BUILD:
@@ -1145,7 +1181,9 @@ void print_parsed_arguments( ParsedArguments* args ) {
         case MODE_DOCS: {
             cb_info( "\topen browser:      %s", args->docs.open ? "true" : "false" );
         } break;
-        case MODE_TEST:
+        case MODE_TEST: {
+            cb_info( "\tcpp:               %s", args->test.cpp ? "true" : "false" );
+        } break;
         case MODE_LSP: break;
     }
 
@@ -1294,6 +1332,18 @@ b32 mode_help( Mode mode ) {
         } break;
         case MODE_TEST: {
             println( "USAGE:    ./cbuild test [args,opt]\n" );
+            println( "  --cpp                       Test C++ headers instead of C library. (default = false)");
+            println( "  --compiler=<str:compiler>   Set compiler to build with. (default = %s)", build_compiler_to_string( DEFAULT_COMPILER ).cc );
+            println( "                                 valid: clang, gcc, msvc, cc" );
+            println( "  --target=<str:target>       Set target platform. (default = native)" );
+            println( "                                 valid: native" );
+            println( "  --release                   Enable release mode. (default = false)" );
+            println( "  --optimized                 Enable optimizations turned on. (default = false)" );
+            println( "  --enable-logging            Enable logging from library. (default = false)" );
+            println( "  --enable-assertions         Enable assertions from library. (default = false)" );
+        } break;
+        case MODE_DOCS: {
+            println( "USAGE:    ./cbuild docs [args,opt]\n" );
             println( "  --open                      Open documentation in browser. (if available)" );
             println( "  --compiler=<str:compiler>   Generate documentation for compiler. (default = %s)", build_compiler_to_string( DEFAULT_COMPILER ).cc );
             println( "                                 valid: clang, gcc, msvc, cc" );
@@ -1307,17 +1357,6 @@ b32 mode_help( Mode mode ) {
             println( "  --enable-simd               Generate documentation with simd functions enabled. (default = false)" );
             println( "  --enable-simd-256           Generate documentation with simd 256 functions enabled. (default = false)" );
             println( "  --static                    Generate documentation for static version of library. (default = false)" );
-        } break;
-        case MODE_DOCS: {
-            println( "USAGE:    ./cbuild docs [args,opt]\n" );
-            println( "  --compiler=<str:compiler>   Set compiler to build with. (default = %s)", build_compiler_to_string( DEFAULT_COMPILER ).cc );
-            println( "                                 valid: clang, gcc, msvc, cc" );
-            println( "  --target=<str:target>       Set target platform. (default = native)" );
-            println( "                                 valid: native" );
-            println( "  --release                   Enable release mode. (default = false)" );
-            println( "  --optimized                 Enable optimizations turned on. (default = false)" );
-            println( "  --enable-logging            Enable logging from library. (default = false)" );
-            println( "  --enable-assertions         Enable assertions from library. (default = false)" );
         } break;
         case MODE_LSP: {
             println( "USAGE:    ./cbuild lsp [args,opt]\n" );

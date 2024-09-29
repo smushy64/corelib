@@ -279,122 +279,17 @@ attr_header b32 q_cmp( struct Quaternion a, struct Quaternion b ) {
     return q_sqrmag( q_sub( a, b ) ) < F32_EPSILON;
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Quaternion : public ::Quaternion {
-    Quaternion() : ::Quaternion{ .v={ 0.0f, 0.0f, 0.0f, 0.0f } } {}
-    Quaternion( f32 w, f32 x, f32 y, f32 z ) : ::Quaternion{ .v={ w, x, y, z } } {}
-    Quaternion( ::Quaternion q ) : Quaternion( q.w, q.x, q.y, q.z ) {}
-
-    attr_always_inline
-    attr_header f32 operator[]( usize index ) const {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header f32& operator[]( usize index ) {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header void operator+=( const Quaternion rhs ) {
-        *this = q_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( Quaternion rhs ) {
-        *this = q_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = q_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = q_div( *this, rhs );
-    }
-    attr_always_inline
-    attr_header Quaternion operator-() const {
-        return q_neg( *this );
-    }
-}; /* struct CoreMathInternal::Quaternion */
-
-// NOTE(alicia): AngleAxis C++ struct is so that inner vector3
-// still contains all of its operator overloads in C++
-
-struct AngleAxis {
-    f32 angle;
-    union {
-        struct { f32 x, y, z; };
-        vec3 axis;
-    };
-
-    AngleAxis() : angle(0.0f), axis( 0.0f ) {}
-    AngleAxis( f32 angle, vec3 axis ) : angle(angle), axis(axis) {}
-    AngleAxis( f32 angle, f32 x, f32 y, f32 z ) : angle(angle), axis(x, y, z) {}
-    AngleAxis( ::AngleAxis_ aa ) : angle(aa.angle), axis(aa.axis) {}
-
-    attr_always_inline
-    attr_header operator ::AngleAxis_() {
-        ::AngleAxis_ result;
-        result.angle = this->angle;
-        result.axis  = this->axis;
-        return result;
-    }
-}; /* struct CoreMathInternal::AngleAxis */
-
-} /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Quaternion quat;
-typedef CoreMathInternal::AngleAxis AngleAxis;
-
-attr_always_inline
-attr_header quat operator+( const quat lhs, const quat rhs ) {
-    return q_add( lhs, rhs );
-}
-attr_always_inline
-attr_header quat operator-( const quat lhs, const quat rhs ) {
-    return q_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header quat operator*( const quat lhs, f32 rhs ) {
-    return q_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header quat operator*( const quat lhs, const quat rhs ) {
-    return q_mul_q( lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator*( const quat lhs, const vec3 rhs ) {
-    return q_mul_v3( lhs, rhs );
-}
-attr_always_inline
-attr_header quat operator*( f32 lhs, const quat rhs ) {
-    return q_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header quat operator/( const quat lhs, f32 rhs ) {
-    return q_div( lhs, rhs );
-}
-attr_always_inline
-attr_header quat operator-( const quat x ) {
-    return q_neg( x );
-}
-attr_always_inline
-attr_header b32 operator==( const quat a, const quat b ) {
-    return q_cmp( a, b );
-}
-attr_always_inline
-attr_header b32 operator!=( const quat a, const quat b ) {
-    return !(a == b);
-}
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
+#endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_QUATERNION_HPP)
+        #include "core/cpp/math/quaternion.hpp"
+    #endif
+    typedef QuaternionCPP quat;
+    typedef AngleAxisCPP  AngleAxis;
 #endif
 
 #endif /* header guard */

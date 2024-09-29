@@ -167,5 +167,35 @@ attr_header u64 u64_endian_swap( u64 x ) {
         ( (x & 0x000000000000FF00) << 40ull ) |
         ( (x & 0x00000000000000FF) << 56ull );
 }
+/// @brief Swap endianness of 16-bit integer.
+/// @param x Integer to swap endianness of.
+/// @return Integer with swapped endianness.
+attr_always_inline
+attr_header i16 i16_endian_swap( i16 x ) {
+    u16 result = u16_endian_swap( *(u16*)&x );
+    return *(i16*)&result;
+}
+/// @brief Swap endianness of 32-bit integer.
+/// @param x Integer to swap endianness of.
+/// @return Integer with swapped endianness.
+attr_always_inline
+attr_header i32 i32_endian_swap( i32 x ) {
+    u32 result = u32_endian_swap( *(u32*)&x );
+    return *(i32*)&result;
+}
+/// @brief Swap endianness of 64-bit integer.
+/// @param x Integer to swap endianness of.
+/// @return Integer with swapped endianness.
+attr_always_inline
+attr_header i64 i64_endian_swap( i64 x ) {
+    u64 result = u64_endian_swap( *(u64*)&x );
+    return *(i64*)&result;
+}
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_CONVERSIONS_HPP)
+        #include "core/cpp/math/conversions.hpp"
+    #endif
+#endif
 
 #endif /* header guard */

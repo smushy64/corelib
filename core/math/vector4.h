@@ -79,8 +79,6 @@ struct Vector4 {
 #if !defined(CORE_CPLUSPLUS)
     /// @brief 4 Component 32-bit Floating Point Vector.
     typedef struct Vector4 vec4;
-    /// @brief RGBA 32-bit Floating Point.
-    typedef struct Vector4 rgba;
 #endif
 
 /// @brief 4 Component 32-bit Signed Integer Vector.
@@ -528,162 +526,19 @@ attr_header b32 iv4_cmp( struct IVector4 a, struct IVector4 b ) {
         a.w == b.w;
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Vector4 : public ::Vector4 {
-    Vector4() : ::Vector4{ .v= {0.0f, 0.0f, 0.0f, 0.0f} } {}
-    Vector4( f32 x, f32 y, f32 z, f32 w ) : ::Vector4{ .v={ x, y, z, w } } {}
-    Vector4( f32 s ) : Vector4( s, s, s, s ) {}
-    Vector4( ::Vector4 v ) : Vector4( v.x, v.y, v.z, v.w ) {}
-
-    attr_always_inline
-    attr_header f32 operator[]( usize index ) const {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header f32& operator[]( usize index ) {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header void operator+=( const Vector4 rhs ) {
-        *this = v4_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( Vector4 rhs ) {
-        *this = v4_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = v4_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = v4_div( *this, rhs );
-    }
-    attr_always_inline
-    attr_header Vector4 operator-() const {
-        return v4_neg( *this );
-    }
-}; /* struct CoreMathInternal::Vector4 */
-
-struct IVector4 : public ::IVector4 {
-    IVector4() : ::IVector4{ .v= {0, 0, 0, 0} } {}
-    IVector4( i32 x, i32 y, i32 z, i32 w ) : ::IVector4{ .v={ x, y, z, w } } {}
-    IVector4( i32 s ) : IVector4( s, s, s, s ) {}
-    IVector4( ::IVector4 v ) : IVector4( v.x, v.y, v.z, v.w ) {}
-
-    attr_always_inline
-    attr_header i32 operator[]( usize index ) const {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header i32& operator[]( usize index ) {
-        return v[index];
-    }
-    attr_always_inline
-    attr_header void operator+=( const IVector4 rhs ) {
-        *this = iv4_add( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( const IVector4 rhs ) {
-        *this = iv4_sub( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( i32 rhs ) {
-        *this = iv4_mul( *this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( i32 rhs ) {
-        *this = iv4_div( *this, rhs );
-    }
-    attr_always_inline
-    attr_header IVector4 operator-() const {
-        return iv4_neg( *this );
-    }
-}; /* struct CoreMathInternal::IVector4 */
-
-}; /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Vector4 vec4;
-typedef CoreMathInternal::Vector4 rgba;
-typedef CoreMathInternal::IVector4 ivec4;
-
-attr_always_inline
-attr_header vec4 operator+( const vec4 lhs, const vec4 rhs ) {
-    return v4_add( lhs, rhs );
-}
-attr_always_inline
-attr_header vec4 operator-( const vec4 lhs, const vec4 rhs ) {
-    return v4_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header vec4 operator*( const vec4 lhs, f32 rhs ) {
-    return v4_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header vec4 operator*( f32 lhs, const vec4 rhs ) {
-    return v4_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header vec4 operator/( const vec4 lhs, f32 rhs ) {
-    return v4_div( lhs, rhs );
-}
-attr_always_inline
-attr_header vec4 operator-( const vec4 x ) {
-    return v4_neg( x );
-}
-attr_always_inline
-attr_header b32 operator==( const vec4 a, const vec4 b ) {
-    return v4_cmp( a, b );
-}
-attr_always_inline
-attr_header b32 operator!=( const vec4 a, const vec4 b ) {
-    return !(a == b);
-}
-
-attr_always_inline
-attr_header ivec4 operator+( const ivec4 lhs, const ivec4 rhs ) {
-    return iv4_add( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec4 operator-( const ivec4 lhs, const ivec4 rhs ) {
-    return iv4_sub( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec4 operator*( const ivec4 lhs, i32 rhs ) {
-    return iv4_mul( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec4 operator*( i32 lhs, const ivec4 rhs ) {
-    return iv4_mul( rhs, lhs );
-}
-attr_always_inline
-attr_header ivec4 operator/( const ivec4 lhs, i32 rhs ) {
-    return iv4_div( lhs, rhs );
-}
-attr_always_inline
-attr_header ivec4 operator-( const ivec4 x ) {
-    return iv4_neg( x );
-}
-attr_always_inline
-attr_header b32 operator==( const ivec4 a, const ivec4 b ) {
-    return iv4_cmp( a, b );
-}
-attr_always_inline
-attr_header b32 operator!=( const ivec4 a, const ivec4 b ) {
-    return !(a == b);
-}
-
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
 #endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_VECTOR4_HPP)
+        #include "core/cpp/math/vector4.hpp"
+    #endif
+    typedef Vector4CPP  vec4;
+    typedef IVector4CPP ivec4;
+#endif
+
+typedef vec4 rgba;
 
 #endif /* header guard */

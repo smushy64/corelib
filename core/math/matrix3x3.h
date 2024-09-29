@@ -240,94 +240,16 @@ attr_header f32 m3_determinant( const struct Matrix3x3* m ) {
     ( m->v[6] * ( ( m->v[1] * m->v[5] ) - ( m->v[4] * m->v[2] ) ) );
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Matrix3x3 : public ::Matrix3x3 {
-    Matrix3x3() : ::Matrix3x3{ .v= {
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f
-    } } {}
-    Matrix3x3(
-        f32 m00, f32 m01, f32 m02,
-        f32 m10, f32 m11, f32 m12,
-        f32 m20, f32 m21, f32 m22
-    ) : ::Matrix3x3{ .v={
-            m00, m01, m02,
-            m10, m11, m12,
-            m20, m21, m22
-        } } {}
-    Matrix3x3( ::Matrix3x3 m ) : Matrix3x3(
-        m.v[0], m.v[1], m.v[2],
-        m.v[3], m.v[4], m.v[5],
-        m.v[6], m.v[7], m.v[8]
-    ) {}
-
-    attr_always_inline
-    attr_header vec3 operator[]( usize index ) const {
-        return c[index];
-    }
-    attr_always_inline
-    attr_header vec3& operator[]( usize index ) {
-        return *(vec3*)(c + index);
-    }
-    attr_always_inline
-    attr_header void operator+=( const Matrix3x3* rhs ) {
-        *this = m3_add( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( const Matrix3x3* rhs ) {
-        *this = m3_sub( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = m3_mul( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = m3_div( this, rhs );
-    }
-
-}; /* struct Matrix3x3 */
-
-} /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Matrix3x3 mat3;
-
-attr_always_inline
-attr_header mat3 operator+( const mat3& lhs, const mat3& rhs ) {
-    return m3_add( &lhs, &rhs );
-}
-attr_always_inline
-attr_header mat3 operator-( const mat3& lhs, const mat3& rhs ) {
-    return m3_sub( &lhs, &rhs );
-}
-attr_always_inline
-attr_header mat3 operator*( const mat3& lhs, f32 rhs ) {
-    return m3_mul( &lhs, rhs );
-}
-attr_always_inline
-attr_header mat3 operator*( f32 lhs, const mat3& rhs ) {
-    return rhs * lhs;
-}
-attr_always_inline
-attr_header mat3 operator*( const mat3& lhs, const mat3& rhs ) {
-    return m3_mul_m3( &lhs, &rhs );
-}
-attr_always_inline
-attr_header mat3 operator/( const mat3& lhs, f32 rhs ) {
-    return m3_div( &lhs, rhs );
-}
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
+#endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_MATRIX3X3_HPP)
+        #include "core/cpp/math/matrix3x3.hpp"
+    #endif
+    typedef Matrix3x3CPP mat3;
 #endif
 
 #endif /* header guard */

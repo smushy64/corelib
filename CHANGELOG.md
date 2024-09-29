@@ -22,6 +22,10 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- cbuild: added C++ test compilation.
+- int128:cpp: partially implemented C++ int128 
+- types: partially implemented int128
+- math:cpp: moved all C++ implementations out to core/cpp directory
 - string: removed hashing functions, moved to hash.h/.c
 - hash: created header and source for hashing algorithms, implemented murmur2 and cityhash
 - string: bug: string_trim_* functions wouldn't return empty string when input string is all whitespace.

@@ -449,106 +449,16 @@ attr_header struct Matrix4x4 m4_transform_2d(
     return m4_transform_euler( translation3d, rotation3d, scale3d );
 }
 
-#if defined(CORE_CPLUSPLUS)
-
-// TODO(alicia): DOCUMENT C++
-
-namespace CoreMathInternal {
-
-struct Matrix4x4 : public ::Matrix4x4 {
-    Matrix4x4() : ::Matrix4x4{ .v= {
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f
-    } } {}
-    Matrix4x4(
-        f32 m00, f32 m01, f32 m02, f32 m03,
-        f32 m10, f32 m11, f32 m12, f32 m13,
-        f32 m20, f32 m21, f32 m22, f32 m23,
-        f32 m30, f32 m31, f32 m32, f32 m33
-    ) : ::Matrix4x4{ .v={
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33
-        } } {}
-    Matrix4x4( ::Matrix4x4 m ) : Matrix4x4(
-        m.v[ 0], m.v[ 1], m.v[ 2], m.v[ 3],
-        m.v[ 4], m.v[ 5], m.v[ 6], m.v[ 7],
-        m.v[ 8], m.v[ 9], m.v[10], m.v[11],
-        m.v[12], m.v[13], m.v[14], m.v[15]
-    ) {}
-
-    attr_always_inline
-    attr_header vec4 operator[]( usize index ) const {
-        return c[index];
-    }
-    attr_always_inline
-    attr_header vec4& operator[]( usize index ) {
-        return *(vec4*)( c + index );
-    }
-    attr_always_inline
-    attr_header void operator+=( const Matrix4x4* rhs ) {
-        *this = m4_add( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator-=( const Matrix4x4* rhs ) {
-        *this = m4_sub( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator*=( f32 rhs ) {
-        *this = m4_mul( this, rhs );
-    }
-    attr_always_inline
-    attr_header void operator/=( f32 rhs ) {
-        *this = m4_div( this, rhs );
-    }
-
-}; /* struct Matrix4x4 */
-
-} /* namespace CoreMathInternal */
-
-typedef CoreMathInternal::Matrix4x4 mat4;
-
-attr_always_inline
-attr_header mat4 operator+( const mat4& lhs, const mat4& rhs ) {
-    return m4_add( &lhs, &rhs );
-}
-attr_always_inline
-attr_header mat4 operator-( const mat4& lhs, const mat4& rhs ) {
-    return m4_sub( &lhs, &rhs );
-}
-attr_always_inline
-attr_header mat4 operator*( const mat4& lhs, f32 rhs ) {
-    return m4_mul( &lhs, rhs );
-}
-attr_always_inline
-attr_header mat4 operator*( f32 lhs, const mat4& rhs ) {
-    return rhs * lhs;
-}
-attr_always_inline
-attr_header mat4 operator*( const mat4& lhs, const mat4& rhs ) {
-    return m4_mul_m4( &lhs, &rhs );
-}
-attr_always_inline
-attr_header vec4 operator*( const mat4& lhs, const vec4 rhs ) {
-    return m4_mul_v4( &lhs, rhs );
-}
-attr_always_inline
-attr_header vec3 operator*( const mat4& lhs, const vec3 rhs ) {
-    return m4_mul_v3( &lhs, rhs );
-}
-attr_always_inline
-attr_header mat4 operator/( const mat4& lhs, f32 rhs ) {
-    return m4_div( &lhs, rhs );
-}
-
-#endif /* C++ */
-
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
     #pragma clang diagnostic pop
+#endif
+
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(CORE_CPP_MATH_MATRIX4X4_HPP)
+        #include "core/cpp/math/matrix4x4.hpp"
+    #endif
+    typedef Matrix4x4CPP mat4;
 #endif
 
 #endif /* header guard */
