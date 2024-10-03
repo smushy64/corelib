@@ -67,7 +67,7 @@ union FmtValue {
     vec2         v2;
     vec3         v3;
     vec4         v4;
-    c_utf32       c;
+    c32          c;
     f32           f;
     f32         f32;
     f64         f64;
@@ -204,9 +204,40 @@ attr_core_api usize stream_fmt_char(
 
     return res;
 }
+attr_internal usize internal_stream_fmt_path(
+    StreamBytesFN* stream, void* target,
+    Path path, struct StringFormatArguments* args
+) {
+    usize result = 0;
+    if( args->flags & FMT_STRING_PATH_CANONICALIZE ) {
+        result += path_stream_canonicalize_utf8( stream, target, path );
+    } else {
+        result += path_stream_convert_to_utf8( stream, target, path );
+    }
+    return result;
+}
+attr_internal usize internal_stream_fmt_string(
+    StreamBytesFN* stream, void* target,
+    String string, struct StringFormatArguments* args
+) {
+    FormatStringFlags casing = (args->flags & FMT_STRING_CASING_MASK) >> 4;
+    usize result = 0;
+    switch( casing ) {
+        case FMT_STRING_CASING_UPPER_BIT: {
+            result += string_stream_to_upper( stream, target, string );
+        } break;
+        case FMT_STRING_CASING_LOWER_BIT: {
+            result += string_stream_to_lower( stream, target, string );
+        } break;
+        default: {
+            result += stream( target, string.len, string.v );
+        } break;
+    }
+    return result;
+}
 attr_core_api usize stream_fmt_string(
     StreamBytesFN* stream, void* target,
-    int pad, usize string_len, const char* string,
+    int pad, usize string_len, const void* string,
     struct StringFormatArguments* args
 ) {
     if( !string_len ) {
@@ -214,115 +245,28 @@ attr_core_api usize stream_fmt_string(
     }
     usize res = 0;
 
-    if( args->replace_separators ) {
-        b32 right_pad = pad < 0;
-        u32 upadding  = absolute( pad );
-        char separator =
-#if defined(CORE_PLATFORM_WINDOWS)
-            '\\';
-#else
-            '/';
-#endif
-
-        if( string_len > upadding ) {
-            upadding = 0;
-        } else {
-            upadding -= string_len;
-        }
-
-        if( !right_pad ) {
-            res += stream_repeat( stream, target, upadding, ' ' );
-        }
-
-        String substr = string_new( string_len, string );
-
-        while( substr.len ) {
-            usize sep = 0;
-            b32   found =
-#if defined(CORE_PLATFORM_WINDOWS)
-                string_find( substr, '/', &sep );
-#else
-                string_find( substr, '\\', &sep );
-#endif
-            if( found ) {
-                String chunk = substr;
-                chunk.len    = sep;
-
-                // TODO(alicia): handle utf8 to_upper to_lower!
-                switch( args->casing ) {
-                    case FMT_CASING_AS_IS: {
-                        res += stream( target, chunk.len, chunk.cc );
-                    } break;
-                    case FMT_CASING_UPPER: {
-                        res += string_stream_to_upper( stream, target, chunk );
-                    } break;
-                    case FMT_CASING_LOWER: {
-                        res += string_stream_to_lower( stream, target, chunk );
-                    } break;
-                }
-                res += stream( target, 1, &separator );
-
-                substr = string_advance_by( substr, chunk.len + 1 );
-            } else {
-                switch( args->casing ) {
-                    case FMT_CASING_AS_IS: {
-                        res += stream( target, substr.len, substr.cc );
-                    } break;
-                    case FMT_CASING_UPPER: {
-                        res += string_stream_to_upper( stream, target, substr );
-                    } break;
-                    case FMT_CASING_LOWER: {
-                        res += string_stream_to_lower( stream, target, substr );
-                    } break;
-                }
-                break;
-            }
-        }
-
-        if( right_pad ) {
-            res += stream_repeat( stream, target, upadding, ' ' );
-        }
+    b32 right_pad = pad < 0;
+    u32 upadding  = absolute( pad );
+    if( string_len > upadding ) {
+        upadding = 0;
     } else {
-        switch( args->casing ) {
-            case FMT_CASING_AS_IS: {
-                res += stream_padded(
-                    stream, target, pad, ' ', string_len, string );
-            } break;
-            case FMT_CASING_UPPER: {
-                b32 right_pad = pad < 0;
-                u32 upadding  = absolute( pad );
-                if( string_len > upadding ) {
-                    upadding = 0;
-                } else {
-                    upadding -= string_len;
-                }
-                String str    = string_new( string_len, string );
-                if( right_pad ) {
-                    res += string_stream_to_upper( stream, target, str );
-                    res += stream_repeat( stream, target, upadding, ' ' );
-                } else {
-                    res += stream_repeat( stream, target, upadding, ' ' );
-                    res += string_stream_to_upper( stream, target, str );
-                }
-            } break;
-            case FMT_CASING_LOWER: {
-                b32 right_pad = pad < 0;
-                u32 upadding  = absolute( pad );
-                if( string_len > upadding ) {
-                    upadding = 0;
-                } else {
-                    upadding -= string_len;
-                }
-                String str    = string_new( string_len, string );
-                if( right_pad ) {
-                    res += string_stream_to_lower( stream, target, str );
-                    res += stream_repeat( stream, target, upadding, ' ' );
-                } else {
-                    res += stream_repeat( stream, target, upadding, ' ' );
-                    res += string_stream_to_lower( stream, target, str );
-                }
-            } break;
-        }
+        upadding -= string_len;
+    }
+
+    if( !right_pad ) {
+        res += stream_repeat( stream, target, upadding, ' ' );
+    }
+
+    if( args->flags & FMT_STRING_IS_PATH ) {
+        res += internal_stream_fmt_path(
+            stream, target, path_new( string_len, (PathCharacter*)string ), args );
+    } else {
+        res += internal_stream_fmt_string(
+            stream, target, string_new( string_len, string ), args );
+    }
+
+    if( right_pad ) {
+        res += stream_repeat( stream, target, upadding, ' ' );
     }
 
     return res;
@@ -1151,6 +1095,10 @@ attr_internal b32 internal_fmt_parse_args(
         return false;
     }
 
+    if( spec.cc[0] == 'p' ) {
+        args->string.flags |= FMT_STRING_IS_PATH;
+    }
+
     rem = string_advance_by( rem, spec.len + 1 );
 
     b32 pointer         = false;
@@ -1227,14 +1175,14 @@ attr_internal b32 internal_fmt_parse_args(
                     if( args->type == FT_CHAR ) {
                         args->character.casing = FMT_CASING_UPPER;
                     } else {
-                        args->string.casing = FMT_CASING_UPPER;
+                        args->string.flags |= FMT_STRING_CASING_UPPER;
                     }
                     skip();
                 } else if( string_cmp( arg, string_text( "l" ) ) ) {
                     if( args->type == FT_CHAR ) {
                         args->character.casing = FMT_CASING_LOWER;
                     } else {
-                        args->string.casing = FMT_CASING_LOWER;
+                        args->string.flags |= FMT_STRING_CASING_LOWER;
                     }
                     skip();
                 }
@@ -1447,9 +1395,17 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_STRING: {
                 if( spec.cc[0] == 'p' ) {
-                    if( string_cmp( arg, string_text( "p" ) ) ) {
-                        args->string.replace_separators = true;
-                        skip();
+                    if( arg.len == 1 ) {
+                        switch( arg.cc[0] ) {
+                            case 'p': {
+                                args->string.flags |= FMT_STRING_PATH_REPLACE_SEPARATORS;
+                                skip();
+                            } break;
+                            case 'c': {
+                                args->string.flags |= FMT_STRING_PATH_CANONICALIZE;
+                                skip();
+                            } break;
+                        }
                     }
                 }
             } break;
@@ -1526,7 +1482,7 @@ internal_fmt_parse_args_skip:
                 if( repeat_by_value ) {
                     args->character.repeat = va_arg( *va, u32 );
                 }
-                out_val->c  = va_arg( *va, c_utf32 );
+                out_val->c  = va_arg( *va, u32 );
             } break;
             case FT_STRING: {
                 String str = va_arg( *va, String );

@@ -253,7 +253,14 @@ attr_core_api b32 directory_create( Path path );
 ///     - @c true  : Successfully removed directory.
 ///     - @c false : Failed to remove directory.
 ///     - @c false : @c recursive is false and directory is not empty.
-attr_core_api b32 directory_remove( Path path, b32 recursive );
+attr_core_api b32 directory_remove( Path path );
+/// @brief Remove directory recursively.
+/// @note
+/// Allocates DirectoryWalk in order to recursively delete every item in directory.
+/// @param     path      Path of directory to remove.
+/// @param[in] allocator Pointer to allocator interface.
+attr_core_api b32 directory_remove_recursive(
+    Path path, struct AllocatorInterface* allocator );
 /// @brief Check if directory exists.
 /// @note
 /// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
@@ -262,30 +269,6 @@ attr_core_api b32 directory_remove( Path path, b32 recursive );
 ///     - @c true  : Directory exists.
 ///     - @c false : Directory does not exist or path does not point to a directory.
 attr_core_api b32 directory_exists( Path path );
-/// @brief Query how many items are in a directory.
-/// @details
-/// When @c recursive is set, function allocates memory from the heap to
-/// collect subdirectories' items.
-/// @note
-/// If recursive:
-///
-/// - true  : Counts only non-directory items in directory/subdirectories.
-/// - false : Counts any items in directory.
-/// @param     path      Path of directory to query.
-/// @param     recursive If true, counts items in subdirectories as well.
-/// @param[in] allocator (optional) Allocator to use. If null, uses heap.
-/// @return Number of items in directory.
-attr_core_api usize directory_query_item_count(
-    Path path, b32 recursive, struct AllocatorInterface* allocator );
-/// @brief Check if directory is empty.
-/// @note
-/// Allocates wide path buffer on Windows.
-/// @param      path      Path of directory to check.
-/// @param[out] out_found Pointer to write if directory to check was found or not.
-/// @return
-///     - @c true  : Directory is empty.
-///     - @c false : Directory is not empty.
-attr_core_api b32 directory_is_empty( Path path, b32* out_found );
 /// @brief Begin directory walk.
 /// @param     path      Path of directory to walk. Must be null-terminated.
 /// @param[in] allocator Pointer to allocator interface.
@@ -295,6 +278,9 @@ attr_core_api b32 directory_is_empty( Path path, b32* out_found );
 attr_core_api DirectoryWalk* directory_walk_begin(
     Path path, struct AllocatorInterface* allocator );
 /// @brief Get next item in directory.
+/// @note
+/// @c out_path is invalidated next time directory_walk_next() is called or
+/// if directory_walk_end() is called.
 /// @param[in]  walk                 Directory walk structure.
 /// @param[out] out_path             Pointer to write path to. Does not include directory.
 /// @param[out] opt_out_is_directory (optional) Pointer to write if path is a directory.
@@ -308,6 +294,18 @@ attr_core_api b32 directory_walk_next(
 /// @param[in] allocator Pointer to allocator interface.
 attr_core_api void directory_walk_end(
     DirectoryWalk* walk, struct AllocatorInterface* allocator );
+/// @brief Get read-only current working directory.
+/// @return Current working directory.
+attr_core_api Path directory_query_cwd(void);
+/// @brief Set current working directory.
+/// @warning
+/// This function is not thread safe! Make sure to only call it
+/// when no other threads are using any file system functions!
+/// @param path Path to set current working directory to.
+/// @return
+///     - @c true  : Set current working directory successfully.
+///     - @c false : Failed to set current working directory.
+attr_core_api b32 directory_set_cwd( Path path );
 
 /// @brief Get standard in pipe.
 /// @return Standard in pipe.

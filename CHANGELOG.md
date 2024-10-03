@@ -22,6 +22,17 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- cbuild: fixed C++ test argument parsing.
+- path: path_stream_canonicalized() and its UTF-8 equivalent added.
+- fmt: {p,c} argument added for printing canonicalized path.
+- types: removed old rune32 typedef.
+- string: implemented UTF-8 indexing and string advance functions.
+- unicode: added UTF-8, UTF-16 and UTF-32 functions.
+- win32: changed all functions to use new Path API.
+- fs: directory_set_cwd() and directory_query_cwd() added.
+- fs: directory_item_count() removed.
+- string:bug: string_buf_free only checked if buffer pointer was null, it should also check if pointer is null
+- path: changed path to be UTF-16 on Windows, UTF-8 on Linux.
 - cbuild: added C++ test compilation.
 - int128:cpp: partially implemented C++ int128 
 - types: partially implemented int128

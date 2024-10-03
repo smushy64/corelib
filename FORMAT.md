@@ -261,6 +261,7 @@ Only writes up to valid max path (4096 characters).
 | <tt>u</tt>             | Characters are printed as upper-case.                                                                  |
 | <tt>l</tt>             | Characters are printed as lower-case.                                                                  |
 | <tt>p</tt>             | Replace path separators with system separator.                                                         |
+| <tt>c</tt>             | Output canonical path instead of relative path.                                                        |
 
 Time Split
 ----------

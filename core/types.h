@@ -108,29 +108,11 @@ typedef double f64;
 typedef char cstr;
 
 /// @brief UTF-8 character.
-typedef char c_utf8;
+typedef char c8;
 /// @brief UTF-16 character.
-typedef i16 c_utf16;
+typedef u16 c16;
 /// @brief UTF-32 character.
-typedef i32 c_utf32;
-/// @brief UTF-8 codepoint.
-/// @details
-/// In little endian. First codepoint is least significant, fourth is most significant.
-typedef union rune32 {
-    /// @brief Anonymous struct of codepoints.
-    struct {
-        /// @brief First codepoint. Least significant codepoint.
-        u8 cp0;
-        /// @brief Second codepoint.
-        u8 cp1;
-        /// @brief Third codepoint.
-        u8 cp2;
-        /// @brief Fourth codepoint. Most significant codepoint.
-        u8 cp3;
-    };
-    /// @brief Codepoints array.
-    u8 cp[4];
-} rune32;
+typedef u32 c32;
 
 #if !defined(TRUE)
     #define TRUE (1)

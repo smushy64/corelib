@@ -130,35 +130,6 @@ attr_header char ascii_to_lower( char c ) {
     }
     return c;
 }
-/// @brief Convert UTF-8 to rune32.
-/// @param c (c_utf8) UTF-8 codepoint.
-/// @return rune32.
-#define utf8_to_rune( c )\
-    struct_literal(rune32){ .cp={ c, 0, 0, 0 } }
-/// @brief Convert UTF-16 to rune32.
-/// @param c (c_utf16) UTF-16 codepoint.
-/// @return rune32.
-#define utf16_to_rune( c )\
-    struct_literal(rune32){ .cp={\
-        (c & 0x00FF),\
-        (c & 0xFF00) >> 8,\
-        0,\
-        0,\
-    } }
-/// @brief Convert UTF-32 to rune32.
-/// @param c (c_utf32) UTF-32 codepoint.
-/// @return rune32.
-#define utf32_to_rune( c )\
-    struct_literal(rune32){ .cp={\
-        (c & 0x000000FF),\
-        (c & 0x0000FF00) >> 8,\
-        (c & 0x00FF0000) >> 16,\
-        (c & 0xFF000000) >> 24,\
-    } }
-/// @brief Convert rune32 to UTF-32.
-/// @param r (rune32*) Pointer to rune.
-/// @return c_utf32.
-#define rune_to_utf32( r ) *(c_utf32*)(r)
 
 /// @brief Calculate ascii length of null terminated C string.
 /// @param[in] c_string Pointer to string.
@@ -228,9 +199,14 @@ attr_header char string_index( String str, usize index ) {
 }
 /// @brief Index into string, using UTF-8 index. Debug asserts that index is in bounds.
 /// @param str   String to index into.
-/// @param index UTF-8 index of codepoint.
+/// @param index UTF-8 index.
 /// @return Codepoint at given index.
-attr_core_api rune32 string_index_utf8( String str, usize index );
+attr_core_api c32 string_index_utf8( String str, usize index );
+/// @brief Get next rune in string and advance.
+/// @param      src           String to get next codepoint from.
+/// @param[out] out_codepoint Pointer to write codepoint to.
+/// @return String advanced by number of bytes in rune.
+attr_core_api String string_utf8_next( String src, c32* out_codepoint );
 /// @brief Get pointer to first character in string.
 /// @param str String to get pointer from.
 /// @return

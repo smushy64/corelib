@@ -62,9 +62,10 @@ b32 platform_file_remove( Path path );
 b32 platform_file_exists( Path path );
 
 b32 platform_directory_create( Path path );
-b32 platform_directory_remove( Path path, b32 recursive );
+b32 platform_directory_remove( Path path );
 b32 platform_directory_exists( Path path );
-b32 platform_directory_is_empty( Path path, b32* out_found );
+Path platform_directory_query_cwd(void);
+b32 platform_directory_set_cwd( Path path );
 
 DirectoryWalk* platform_directory_walk_begin(
     Path path, struct AllocatorInterface* allocator );
@@ -86,5 +87,12 @@ void* platform_library_get( const char* name );
 void platform_library_close( void* lib );
 void* platform_library_load( void* lib, const char* function );
 
+usize platform_path_stream_canonicalize(
+    StreamBytesFN* stream, void* target, Path path );
+
+#if defined(CORE_PLATFORM_WINDOWS)
+usize platform_path_stream_canonicalize_utf8(
+    StreamBytesFN* stream, void* target, Path path );
+#endif
 
 #endif /* header guard */

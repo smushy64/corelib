@@ -17,15 +17,15 @@ attr_core_api usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
     int padding, usize opt_format_len, const char* opt_format );
 
-/// @brief String and char formatting case.
-typedef enum FormatCasing {
+/// @brief Char formatting case.
+typedef enum FormatCharCasing {
     /// @brief Do not convert characters.
     FMT_CASING_AS_IS,
     /// @brief Convert alphabetic characters to upper-case.
     FMT_CASING_UPPER,
     /// @brief Convert alphabetic characters to lower-case.
     FMT_CASING_LOWER,
-} FormatCasing;
+} FormatCharCasing;
 /// @brief Flags for float formatting.
 typedef enum FormatFloatFlags {
     /// @brief Format float as if it is an amount of memory.
@@ -95,6 +95,27 @@ typedef enum FormatIntFlags {
 #define FMT_INT_BITDEPTH_MASK\
     (FMT_INT_BITDEPTH_8 | FMT_INT_BITDEPTH_16 |\
         FMT_INT_BITDEPTH_32 | FMT_INT_BITDEPTH_64 | FMT_INT_BITDEPTH_PTR)
+typedef enum FormatStringFlags {
+    /// @brief String is a Path slice.
+    FMT_STRING_IS_PATH                 = 0x1, // 001
+    /// @brief If FMT_STRING_IS_PATH, replace path separators with platform separators.
+    FMT_STRING_PATH_REPLACE_SEPARATORS = 0x2, // 010
+    /// @brief If FMT_STRING_IS_PATH, canonicalize path.
+    FMT_STRING_PATH_CANONICALIZE       = 0x4, // 100
+
+    FMT_STRING_CASING_AS_IS_BIT        = 0x0, // 0
+    FMT_STRING_CASING_UPPER_BIT        = 0x1, // 1
+    FMT_STRING_CASING_LOWER_BIT        = 0x2, // 2
+
+    /// @brief Don't change character case.
+    FMT_STRING_CASING_AS_IS = (FMT_STRING_CASING_AS_IS_BIT << 4), // 00000
+    /// @brief Change characters to upper case.
+    FMT_STRING_CASING_UPPER = (FMT_STRING_CASING_UPPER_BIT << 4), // 01000
+    /// @brief Change characters to lower case.
+    FMT_STRING_CASING_LOWER = (FMT_STRING_CASING_LOWER_BIT << 4), // 10000
+
+    FMT_STRING_CASING_MASK = ((0x2 | 0x1) << 4),
+} FormatStringFlags;
 /// @brief Types that formatter can handle.
 typedef enum FormatType {
     /// @brief Type to format is boolean.
@@ -132,15 +153,12 @@ typedef struct FormatArguments {
             /// @brief How many times to repeat character.
             u32 repeat;
             /// @brief What casing should character be printed in.
-            enum FormatCasing casing;
+            FormatCharCasing casing;
         } character;
         /// @brief String format arguments.
         struct StringFormatArguments {
-            /// @brief If string is path,
-            /// should separators be replaced with system default?
-            b32 replace_separators;
-            /// @brief What casing should string be printed in.
-            enum FormatCasing casing;
+            /// @brief String format flags.
+            FormatStringFlags flags;
         } string;
         /// @brief Float format arguments.
         struct FloatFormatArguments {
@@ -198,7 +216,7 @@ attr_core_api usize stream_fmt_char(
 /// @return Number of characters that could not be streamed to target.
 attr_core_api usize stream_fmt_string(
     StreamBytesFN* stream, void* target,
-    int padding, usize string_len, const char* string,
+    int padding, usize string_len, const void* string,
     struct StringFormatArguments* args );
 /// @brief Stream float formatted string.
 /// @param[in] stream  Pointer to streaming function.

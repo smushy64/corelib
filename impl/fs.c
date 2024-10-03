@@ -15,35 +15,7 @@
 volatile b32 global_void_pipes_created = false;
 attr_global FD global_void_pipes[2];
 
-#if defined( CORE_COMPILER_MSVC )
-attr_global AllocatorInterface global_fs_heap_allocator = {
-    .alloc=___internal_memory_alloc_,
-    .realloc=___internal_memory_realloc_,
-    .free=___internal_memory_free_, .ctx=NULL
-};
-#else
-attr_global AllocatorInterface global_fs_heap_allocator =
-    allocator_interface_from_heap();
-#endif
-
-attr_internal b32 check_path( Path path ) {
-    if( path.len >= CORE_MAX_PATH_NAME ) {
-        return false;
-    }
-    if( !path_is_null_terminated( path ) ) {
-        return false;
-    }
-    return true;
-}
-
 attr_core_api b32 fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "fd_open: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
-
     if( bitfield_check( flags, FOPEN_CREATE ) ) {
         if( bitfield_check( flags, FOPEN_TRUNCATE ) ) {
             core_error( "fd_open: flags create and truncate cannot be combined!" );
@@ -111,146 +83,98 @@ attr_core_api usize fd_stream_write(
 }
 
 attr_core_api b32 file_copy( Path dst, Path src, b32 create_dst ) {
-    if( !(check_path( dst ) && check_path( src )) ) {
-        core_error( "file_copy: paths must be null terminated!" );
-        return false;
-    }
     return platform_file_copy( dst, src, create_dst );
 }
 attr_core_api b32 file_move( Path dst, Path src, b32 create_dst ) {
-    if( !(check_path( dst ) && check_path( src )) ) {
-        core_error( "file_move: paths must be null terminated!" );
-        return false;
-    }
     return platform_file_move( dst, src, create_dst );
 }
 attr_core_api b32 file_remove( Path path ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "file_remove: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
     return platform_file_remove( path );
 }
 attr_core_api b32 file_exists( Path path ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "file_exists: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
     return platform_file_exists( path );
 }
 
+attr_core_api Path directory_query_cwd(void) {
+    return platform_directory_query_cwd();
+}
+attr_core_api b32 directory_set_cwd( Path path ) {
+    return platform_directory_set_cwd( path );
+}
 attr_core_api b32 directory_create( Path path ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "directory_create: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
     return platform_directory_create( path );
 }
-attr_core_api b32 directory_remove( Path path, b32 recursive ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "directory_remove: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
+attr_core_api b32 directory_remove( Path path ) {
+    return platform_directory_remove( path );
+}
+attr_internal b32 internal_directory_remove_recursive(
+    PathBuf* buf, struct AllocatorInterface* allocator
+) {
+    usize original_len = buf->len;
+    DirectoryWalk* walk = directory_walk_begin( buf->slice, allocator );
+    if( !walk ) {
+        core_error( "directory_remove_recursive: failed to walk '{p}'!", buf->slice );
         return false;
     }
-    return platform_directory_remove( path, recursive );
+
+    Path path = path_empty();
+    b32 is_dir = false;
+    b32 result = true;
+    while( directory_walk_next( walk, &path, &is_dir )) {
+        if( !path_buf_push( buf, path, allocator ) ) {
+            core_error( "directory_remove_recursive: "
+               "failed to push new path to path buffer!");
+            result = false;
+            goto internal_directory_remove_recursive_end;
+        }
+
+        if( is_dir ) {
+            if( !internal_directory_remove_recursive( buf, allocator ) ) {
+                result = false;
+                goto internal_directory_remove_recursive_end;
+            }
+            if( !directory_remove( buf->slice ) ) {
+                result = false;
+                goto internal_directory_remove_recursive_end;
+            }
+            continue;
+        }
+
+        if( !file_remove( buf->slice ) ) {
+            result = false;
+            goto internal_directory_remove_recursive_end;
+        }
+
+        buf->len = original_len;
+        buf->raw[buf->len] = 0;
+    }
+
+internal_directory_remove_recursive_end:
+    directory_walk_end( walk, allocator );
+    buf->len = original_len;
+    buf->raw[buf->len] = 0;
+    return result;
+}
+attr_core_api b32 directory_remove_recursive(
+    Path path, struct AllocatorInterface* allocator
+) {
+    PathBuf buf = path_buf_empty();
+    if( !path_buf_from_path( path, allocator, &buf ) ) {
+        core_error( "directory_remove_recursive: failed to create path buffer!" );
+        return false;
+    }
+    b32 result = internal_directory_remove_recursive( &buf, allocator );
+
+    path_buf_free( &buf, allocator );
+
+    if( result ) {
+        return directory_remove( path );
+    } else {
+        return false;
+    }
 }
 attr_core_api b32 directory_exists( Path path ) {
-    if( !check_path( path ) ) {
-        core_error(
-            "directory_exists: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
     return platform_directory_exists( path );
-}
-attr_internal usize internal_directory_count_items(
-    Path path, AllocatorInterface* allocator
-) {
-    DirectoryWalk* walk = directory_walk_begin( path, allocator );
-    if( !walk ) {
-        core_warn( "directory_query_item_count: cannot open directory '{p}'", path );
-        return 0;
-    }
-
-    usize result  = 0;
-    Path  subpath = path_empty();
-    b32   is_dir  = false;
-    while( directory_walk_next( walk, &subpath, &is_dir ) ) {
-        if( is_dir ) {
-            usize path_buf_size = subpath.len + path.len + 16;
-            char* path_buf = allocator->alloc( path_buf_size, 0, allocator->ctx );
-            if( !path_buf ) {
-                core_warn(
-                    "directory_query_item_count: "
-                    "could not allocate {usize,m} for subdirectory path!",
-                    path_buf_size );
-                continue;
-            }
-
-            StringBuf buf = string_buf_new( path_buf_size, path_buf );
-            string_buf_try_append( &buf, path );
-            path_buf_try_push( &buf, subpath );
-
-            result += internal_directory_count_items( buf.slice, allocator );
-
-            allocator->free( path_buf, path_buf_size, 0, allocator->ctx );
-        } else {
-            result++;
-        }
-    }
-
-    directory_walk_end( walk, allocator );
-    return result;
-}
-attr_core_api usize directory_query_item_count(
-    Path path, b32 recursive, struct AllocatorInterface* in_allocator
-) {
-    if( !check_path( path ) ) {
-        core_error( "directory_query_item_count: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
-
-    AllocatorInterface* allocator = in_allocator;
-    if( !allocator ) {
-        allocator = &global_fs_heap_allocator;
-    }
-
-    usize result = 0;
-    if( recursive ) {
-        result = internal_directory_count_items( path, allocator );
-    } else {
-        DirectoryWalk* walk = directory_walk_begin( path, allocator );
-        if( !walk ) {
-            core_warn(
-                "directory_query_item_count: could not walk directory '{p}'!", path );
-            return 0;
-        }
-
-        Path subpath = path_empty();
-        while( directory_walk_next( walk, &subpath, NULL ) ) {
-            result++;
-        }
-
-        directory_walk_end( walk, allocator );
-    }
-
-    return result;
-}
-attr_core_api b32 directory_is_empty( Path path, b32* out_found ) {
-    if( !check_path( path ) ) {
-        core_error( "directory_is_empty: "
-            "path must be null terminated and less than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
-    return platform_directory_is_empty( path, out_found );
 }
 attr_core_api DirectoryWalk* directory_walk_begin(
     Path path, struct AllocatorInterface* allocator

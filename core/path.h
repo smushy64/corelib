@@ -8,52 +8,122 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/slice.h"
+#include "core/defines.h"
+#include "core/macros.h"
+#include "core/stream.h"
+#include "core/memory.h"
 #include "core/string.h"
 
-/// @brief UTF-8 Path. Same as String.
-/// @details
-/// Not necessarily null terminated.
-/// @see #ByteSlice
-/// @see #String
-typedef String Path;
-/// @brief UTF-8 Path buffer. Same as StringBuf.
-/// @details
-/// Not necessarily null terminated.
-/// @see #ByteBuffer
-/// @see #StringBuf
-typedef StringBuf PathBuf;
+struct AllocatorInterface;
 
-/// @brief Create new path slice.
-/// @param length (usize) Byte length of path.
-/// @param start  (char*) Pointer to start of path.
+#if defined(CORE_PLATFORM_WINDOWS)
+    /// @brief Current platform's path character.
+    typedef c16 PathCharacter;
+    /// @brief Create a path character literal.
+    /// @param literal (character literal) Character literal.
+    /// @return Path character literal.
+    #define path_raw_char( literal ) L##literal
+    /// @brief Create a path string literal.
+    /// @param literal (string literal) String literal.
+    /// @return Path string literal.
+    #define path_raw_string( literal ) L##literal
+    /// @brief Path separator character for current platform.
+    #define PATH_SEPARATOR path_raw_char( '\\' )
+#else
+    /// @brief Current platform's path character.
+    typedef char PathCharacter;
+    /// @brief Create a path character literal.
+    /// @param literal (character literal) Character literal.
+    /// @return Path character literal.
+    #define path_raw_char( literal ) literal
+    /// @brief Create a path string literal.
+    /// @param literal (string literal) String literal.
+    /// @return Path string literal.
+    #define path_raw_string( literal ) u8##literal
+    /// @brief Path separator character for current platform.
+    #define PATH_SEPARATOR path_raw_char( '/' )
+#endif
+
+
+/// @brief Path string slice.
+typedef struct Path {
+    /// @brief Number of characters in slice.
+    usize len;
+    /// @brief Anonymous union of slice pointers.
+    union {
+        /// @brief Raw path string pointer.
+        PathCharacter* raw;
+        /// @brief Raw path string const pointer.
+        const PathCharacter* const_raw;
+    };
+} Path;
+
+/// @brief Path string buffer.
+typedef struct PathBuf {
+    /// @brief Number of characters path buffer can hold.
+    usize cap;
+    /// @brief Anonymous union of path slice components and path slice.
+    union {
+        /// @brief Anonymous struct of path slice components.
+        struct {
+            /// @brief Number of characters in slice.
+            usize len;
+            /// @brief Anonymous union of slice pointers.
+            union {
+                /// @brief Raw path string pointer.
+                PathCharacter* raw;
+                /// @brief Raw path string const pointer.
+                const PathCharacter* const_raw;
+            };
+        };
+        /// @brief Path string slice.
+        Path slice;
+    };
+} PathBuf;
+
+/// @brief Create a new path slice from length and pointer.
+/// @param     length (usize)          Length of raw path string.
+/// @param[in] start  (PathCharacter*) Pointer to start of raw path string.
 /// @return Path slice.
-#define path_new( length, start )  string_new( length, start )
-/// @brief Create empty path slice.
+#define path_new( length, start )\
+    struct_literal(Path){ .len=length, .const_raw=start }
+/// @brief Create an empty path slice.
 /// @return Path slice.
-#define path_empty()               string_empty()
-/// @brief Create path from null terminated C string.
-/// @param c_string (const char*) Null-terminated UTF-8 string.
+#define path_empty() path_new( 0, 0 )
+/// @brief Create a path slice from path literal.
+/// @param[in] literal (string literal) Path literal.
 /// @return Path slice.
-#define path_from_cstr( c_string ) string_from_cstr( c_string )
-/// @brief Create immutable path from string literal.
-/// @param literal (string literal) String.
+#define path_text( literal )\
+    path_new(\
+        (sizeof((path_raw_string(literal))) / sizeof(PathCharacter)) - 1,\
+        path_raw_string(literal)\
+    )
+/// @brief Create a path slice from raw path string.
+/// @details
+/// If @c len is 0, calculates length of @c raw string.
+/// This means @c raw must be null-terminated if @c len is 0.
+/// @param len (usize)          (optional) Length of raw path string.
+/// @param raw (PathCharacter*) Pointer to start of raw path string.
 /// @return Path slice.
-#define path_text( literal )       string_text( literal )
-/// @brief Check if path is empty.
-/// @note Same as string_is_empty()
-/// @param path (Path) Path slice to check.
+#define path_from_raw( len, raw )\
+    path_new( len ? len : path_raw_len(raw), raw )
+/// @brief Check if path slice is empty.
+/// @param path (Path) Path to check.
 /// @return
 ///     - @c true  : @c path is empty.
 ///     - @c false : @c path is not empty.
-#define path_is_empty( path )      string_is_empty( path )
+#define path_is_empty( path ) ((path).len == 0)
+
+/// @brief Calculate length of null-terminated raw path string.
+/// @param[in] raw Pointer to start of raw path string.
+/// @return Number of characters in @c raw.
+attr_core_api usize path_raw_len( const PathCharacter* raw );
 /// @brief Compare two paths for equality.
-/// @note Same as string_cmp()
-/// @param a, b (Path) Paths to compare.
+/// @param a, b Paths to compare.
 /// @return
 ///     - @c true  : @c a and @c b are equal in length and contents.
 ///     - @c false : @c a and @c b are not equal.
-#define path_cmp( a, b )           string_cmp( a, b )
+attr_core_api b32 path_cmp( Path a, Path b );
 
 /// @brief Count how many path chunks are in path.
 /// @param path Path to get chunk count of.
@@ -141,84 +211,245 @@ attr_header b32 path_is_null_terminated( Path path ) {
     if( !path.len ) {
         return false;
     }
-    return !path.c[path.len - 1] || !path.c[path.len];
+    return !path.const_raw[path.len - 1] || !path.const_raw[path.len];
 }
-/// @brief Change all path separators to given separator.
-/// @param path Path to set separators for.
-/// @param sep  Separator to set to. (should be forward or backslash)
-attr_core_api void path_mut_set_separators( Path path, char sep );
-/// @brief Stream path with separators set to given separator.
+/// @brief Set path separators to posix separators.
+/// @details
+/// If path contains any windows separators '\\', this function
+/// converts them to posix separators '/'.
+/// @param path Path to modify. @c .raw must not be a path literal.
+attr_core_api void path_set_posix_separators( Path path );
+/// @brief Set path separators to windows separators.
+/// @details
+/// If path contains any posix separators '/', this function
+/// converts them to windows separators '\\'.
+/// @param path Path to modify. @c .raw must not be a path literal.
+attr_core_api void path_set_windows_separators( Path path );
+#if defined(CORE_PLATFORM_WINDOWS)
+    #define path_set_platform_separators path_set_windows_separators
+#else
+    #define path_set_platform_separators path_set_posix_separators
+#endif
+
+/// @brief Stream path with windows separators changed to posix separators.
+/// @details
+/// If path contains any windows separators '\\', this function
+/// converts them to posix separators '/'.
 /// @param[in] stream Pointer to streaming function.
 /// @param[in] target (optional) Pointer to streaming target.
 /// @param     path   Path to stream.
-/// @param     sep    Separator to stream.
 /// @return Number of bytes that could not be written to stream target.
-attr_core_api usize path_stream_set_separators(
-    StreamBytesFN* stream, void* target, Path path, char sep );
+attr_core_api usize path_stream_set_posix_separators(
+    StreamBytesFN* stream, void* target, Path path );
+/// @brief Stream path with posix separators changed to windows separators.
+/// @details
+/// If path contains any posix separators '/' this function
+/// converts them to windows separators '\\'.
+/// @param[in] stream Pointer to streaming function.
+/// @param[in] target (optional) Pointer to streaming target.
+/// @param     path   Path to stream.
+/// @return Number of bytes that could not be written to stream target.
+attr_core_api usize path_stream_set_windows_separators(
+    StreamBytesFN* stream, void* target, Path path );
+#if defined(CORE_PLATFORM_WINDOWS)
+    #define path_stream_set_platform_separators path_stream_set_windows_separators
+#else
+    #define path_stream_set_platform_separators path_stream_set_posix_separators
+#endif
+
+/// @brief Stream convert path characters to UTF-8.
+/// @details
+/// On Windows, paths use UTF-16 encoding so this function converts
+/// path characters to UTF-8 for printing or other purposes where
+/// UTF-8 encoding is required.
+/// On other platforms, this function just
+/// streams path to target without modifying it.
+/// @param[in] stream Pointer to streaming function.
+/// @param[in] target (optional) Pointer to streaming target.
+/// @param     path   Path to convert.
+/// @return Number of bytes that could not be written to streaming target.
+attr_core_api usize path_stream_convert_to_utf8(
+    StreamBytesFN* stream, void* target, Path path );
+/// @brief Stream canonical path.
+/// @details
+/// Converts relative/home path to full path.
+/// All . are removed and .. remove the previous directory.
+/// ~ is converted to user's home path.
+///
+/// @note
+/// Target should be @c PathBuf as the canonical path is streamed as
+/// the current platform's PathCharacter. To stream to a UTF-8 target,
+/// use path_stream_canonicalize_utf8().
+/// @param[in] stream Pointer to streaming function.
+/// @param[in] target (optional) Target to stream to.
+/// @param     path   Path to convert.
+/// @return Number of bytes that could not be written to streaming target.
+attr_core_api usize path_stream_canonicalize(
+    StreamBytesFN* stream, void* target, Path path );
+#if defined(CORE_PLATFORM_WINDOWS)
+/// @brief Stream canonical path.
+/// @details
+/// Converts relative/home path to full path.
+/// All . are removed and .. remove the previous directory.
+/// ~ is converted to user's home path.
+///
+/// @note
+/// Target should never be @c PathBuf as the canonical path is streamed as
+/// UTF-8 instead of current platform's PathCharacter. To stream to a PathBuf target,
+/// use path_stream_canonicalize().
+/// @param[in] stream Pointer to streaming function.
+/// @param[in] target (optional) Target to stream to.
+/// @param     path   Path to convert.
+/// @return Number of bytes that could not be written to streaming target.
+attr_core_api usize path_stream_canonicalize_utf8(
+    StreamBytesFN* stream, void* target, Path path );
+#else
+attr_always_inline
+attr_header usize path_stream_canonicalize_utf8(
+    StreamBytesFN* stream, void* target, Path path
+) {
+    return path_stream_canonicalize( stream, target, path );
+}
+#endif
+/// @brief Path buffer stream function.
+/// @param[in] target_PathBuf Pointer to PathBuf.
+/// @param     bytes          Byte size of @c buffer.
+/// @param[in] buffer         Pointer to buffer to stream to @c target_PathBuf.
+/// @return Number of bytes that could not be written to path buf.
+attr_core_api usize path_buf_stream(
+    void* target_PathBuf, usize bytes, const void* buffer );
+/// @brief Create path buffer from UTF-8 String.
+/// @param      utf8_path String containing UTF-8 encoded path.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @param[out] out_buf   Pointer to write result of conversion.
+/// @return
+///     - @c true  : Successfully converted UTF-8 path to system path.
+///     - @c false : Failed to convert UTF-8 path to system path.
+attr_core_api b32 path_buf_from_string(
+    String utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf );
+/// @brief Copy UTF-8 path into path buffer.
+/// @param[in] buf       Pointer to path buffer to copy into.
+/// @param     utf8_path UTF-8 path to copy.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Successfully converted UTF-8 path to system path.
+///     - @c false : Failed to convert UTF-8 path to system path.
+attr_core_api b32 path_buf_copy_from_string(
+    PathBuf* buf, String utf8_path, struct AllocatorInterface* allocator );
+/// @brief Try to copy UTF-8 path into existing path buffer.
+/// @param[in] buf       Pointer to write result of conversion.
+/// @param     utf8_path String containing UTF-8 encoded path.
+/// @return
+///     - @c true  : Successfully converted UTF-8 path to system path.
+///     - @c false : Failed to convert UTF-8 path to system path.
+attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, String utf8_path );
+/// @brief Stream conversion UTF-8 path to system path.
+/// @param[in] stream    Pointer to streaming function.
+/// @param[in] target    (optional) Pointer to target to receive result.
+/// @param     utf8_path String containing UTF-8 encoded path.
+/// @return Number of bytes that could not be written to stream target.
+attr_core_api usize path_stream_convert_from_utf8(
+    StreamBytesFN* stream, void* target, String utf8_path );
 
 /// @brief Create new path buffer.
-/// @param capacity (usize) Size of path buffer.
-/// @param start    (char*) Pointer to start of path buffer.
+/// @param capacity (usize)          Size of path buffer.
+/// @param start    (PathCharacter*) Pointer to start of path buffer.
 /// @return Path buffer.
-#define path_buf_new( capacity, start ) string_buf_new( capacity, start )
+#define path_buf_new( capacity, start )\
+    struct_literal(PathBuf){ .cap=capacity, .len=0, .const_raw=start }
 /// @brief Create empty path buffer.
 /// @return Path buffer.
-#define path_buf_empty()                string_buf_empty()
+#define path_buf_empty() path_buf_new( 0, 0 )
 /// @brief Initialize a path buffer from the stack.
 /// @details
-/// Defines a stack char buffer with name @c name\#\#_buffer
+/// Defines a stack PathCharacter buffer with name @c name.
 /// of given size and a PathBuf from that buffer with given name.
 /// @param name (valid identifier) Name of path buffer.
 /// @param size (usize)            Size of path buffer.
 #define path_buf_create_from_stack( name, size )\
-    string_buf_create_from_stack( name, size )
+    PathCharacter name##_buffer[size];\
+    memory_zero( name##_buffer, sizeof(name##_buffer) );\
+    PathBuf name = path_buf_new( size, name##_buffer )
 /// @brief Create path buffer using allocator.
-/// @param      size      (usize)               Size of path buffer.
-/// @param[in]  allocator (AllocatorInterface*) Interface for allocator to use.
-/// @param[out] out_buf   (PathBuf*)            Pointer to write new buffer to.
+/// @param      size      Size of path buffer.
+/// @param[in]  allocator Interface for allocator to use.
+/// @param[out] out_buf   Pointer to write new buffer to.
 /// @return
 ///     - @c true  : Allocated path buffer successfully.
 ///     - @c false : Failed to allocate path buffer.
-#define path_buf_from_alloc( size, allocator, out_buf )\
-    string_buf_from_alloc( size, allocator, out_buf )
+attr_core_api b32 path_buf_from_alloc(
+    usize capacity, struct AllocatorInterface* allocator, PathBuf* out_buf );
+/// @brief Create path buffer from existing path.
+/// @param      path      Path to create buffer from.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @param[out] out_buf   Pointer to write new buffer to.
+/// @return
+///     - @c true  : Allocated path buffer successfully.
+///     - @c false : Failed to allocate path buffer.
+attr_core_api b32 path_buf_from_path(
+    Path path, struct AllocatorInterface* allocator, PathBuf* out_buf );
+/// @brief Copy path into path buffer.
+/// @param[in] buf       Pointer to path buffer to copy to.
+/// @param     path      Path to copy.
+/// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Copied path successfully.
+///     - @c false : Failed to allocate space to copy path.
+attr_core_api b32 path_buf_copy_from_path(
+    PathBuf* buf, Path path, struct AllocatorInterface* allocator );
+/// @brief Attempt to copy path into path buffer.
+/// @param[in] buf  Pointer to path buffer to copy to.
+/// @param     path Path to copy.
+/// @return
+///     - @c true  : Buffer had enough space to copy.
+///     - @c false : Buffer did not have enough space to copy.
+attr_core_api b32 path_buf_try_copy_from_path( PathBuf* buf, Path path );
 /// @brief Reallocate path buffer.
-/// @param[in] buf       (PathBuf*)            Path buffer to grow.
-/// @param     amount    (usize)               Number of bytes to grow buffer by.
-/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
+/// @param[in] buf       Path buffer to grow.
+/// @param     amount    Number of bytes to grow buffer by.
+/// @param[in] allocator Pointer to allocator.
 /// @return
 ///     - @c true  : Reallocated buffer successfully.
 ///     - @c false : Failed to reallocate buffer.
-#define path_buf_grow( buf, amount, allocator )\
-    string_buf_grow( buf, amount, allocator )
+attr_core_api b32 path_buf_grow(
+    PathBuf* buf, usize amount, struct AllocatorInterface* allocator );
 /// @brief Free path buffer allocated with allocator.
-/// @param[in] buf       (PathBuf*)            Path buffer to free.
-/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
-#define path_buf_free( buf, allocator )\
-    string_buf_free( buf, allocator )
+/// @param[in] buf       Path buffer to free.
+/// @param[in] allocator Pointer to allocator.
+attr_core_api void path_buf_free(
+    PathBuf* buf, struct AllocatorInterface* allocator );
 /// @brief Calculate remaining capacity in path buffer.
-/// @param[in] buf (PathBuf*) Path buffer.
+/// @param[in] buf Path buffer.
 /// @return Number of bytes remaining. Does not include null terminator.
-#define path_buf_remaining( buf )\
-    string_buf_remaining( buf )
+attr_always_inline
+attr_header usize path_buf_remaining( const PathBuf* buf ) {
+    return buf->cap ? ( buf->cap - 1 ) - buf->len : 0;
+}
 /// @brief Check if path buffer is empty.
-/// @param[in] buf (PathBuf*) Path buffer to check.
+/// @param[in] buf Path buffer to check.
 /// @return
 ///     - @c true  : @c buf is empty.
 ///     - @c false : @c buf is not empty.
-#define path_buf_is_empty( buf )\
-    string_buf_is_empty( buf )
+attr_always_inline
+attr_header b32 path_buf_is_empty( const PathBuf* buf ) {
+    return buf->len == 0;
+}
 /// @brief Check if path buffer still has space.
 /// @note Path buffer always tries to have space for null terminator.
-/// @param[in] buf (PathBuf*) Path to check.
+/// @param[in] buf Path to check.
 /// @return
 ///     - @c true : @c buf is full.
-#define path_buf_is_full( buf )\
-    string_buf_is_full( buf )
+attr_always_inline
+attr_header b32 path_buf_is_full( const PathBuf* buf ) {
+    return buf->len == ( buf->cap - 1 );
+}
 /// @brief Set path buffer length to zero and zero out memory.
-/// @param[in] buf (PathBuf*) Path to clear.
-#define path_buf_clear( buf )\
-    string_buf_clear( buf )
-
+/// @param[in] buf Path to clear.
+attr_always_inline
+attr_header void path_buf_clear( PathBuf* buf ) {
+    memory_zero( buf->raw, sizeof(PathCharacter) * buf->len );
+    buf->len = 0;
+}
 /// @brief Attempt to push chunk to end of path buffer.
 /// @details
 /// It always uses / as a path separator regardless of platform.

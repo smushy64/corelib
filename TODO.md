@@ -1,4 +1,7 @@
 # Todo List
+- [ ] fmt: path to upper/lower.
+- [ ] fmt: path convert separators.
+- [ ] collections: swap insert, swap remove etc.
 - [ ] collections: queue atomic functions.
 - [ ] collections: allocating functions with alignment.
 - [ ] alloc: Block allocator.
@@ -15,7 +18,6 @@
 - [ ] math: generics/function overloads(C++)
 - [ ] math: RGB <-> HEX conversions
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
-- [ ] cpp: move all C++ wrappers to their own headers
 ## Bugs
 - [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
 - [ ] console: win32: SetConsoleOutputCP( CP_UTF8 ) for UTF-8 support.
@@ -23,6 +25,7 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] cpp: move all C++ wrappers to their own headers
 - [x] build: test flag --open for opening docs in browser
 - [x] platform: win32: use internal_win32_log_error to send custom error message and message from FormatMessageA
 - [x] fs: traverse directory.

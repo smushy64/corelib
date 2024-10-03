@@ -1242,8 +1242,10 @@ void parsed_arguments_init( Mode mode, ParsedArguments* out_args ) {
         case MODE_DOCS: {
             out_args->docs.open = false;
         } break;
+        case MODE_TEST: {
+            out_args->test.cpp = false;
+        } break;
         case MODE_BUILD:
-        case MODE_TEST:
         case MODE_LSP:
         case MODE_CLEAN: {
             out_args->build.output_dir = DEFAULT_OUTPUT_DIR;

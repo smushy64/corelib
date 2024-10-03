@@ -12,6 +12,7 @@
 #include "core/memory.h"
 #include "core/fmt.h"
 #include "core/alloc.h"
+#include "core/unicode.h"
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
     #include "core/internal/sse.h" // IWYU pragma: keep
@@ -57,10 +58,56 @@ attr_core_api usize string_len_utf8( String str ) {
     }
     return res;
 }
-attr_core_api rune32 string_index_utf8( String str, usize index ) {
-    // TODO(alicia): 
-    unused(str, index);
-    unimplemented();
+attr_core_api c32 string_index_utf8( String str, usize index ) {
+    debug_assert( index < str.len, "string_index_utf8: index is out of bounds!" );
+
+    b32   found      = false;
+    usize counter    = 0;
+    usize byte_index = 0;
+    for( usize i = 0; i < str.len; ++i ) {
+        if( (str.bytes[i] & 0xC0) != 0x80 ) {
+            counter++;
+        }
+        if( counter == index ) {
+            byte_index = i;
+            found = true;
+            break;
+        }
+    }
+
+    if( !found ) {
+        return UTF32_REPLACEMENT_CHARACTER;
+    }
+
+    String remaining = string_advance_by( str, byte_index );
+    UTF8 utf8;
+    utf8.len = remaining.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : remaining.len;
+    if( utf8.len ) {
+        memory_copy( utf8.bytes, remaining.cc, utf8.len );
+    }
+    return utf8_to_codepoint( utf8, NULL );
+    /* String rem    = str; */
+    /* usize i       = 0; */
+    /* c32 result    = UTF_32_REPLACEMENT_CHARACTER; */
+    /* while( !string_is_empty(rem) ) { */
+    /*     if( i >= index ) { */
+    /*         break; */
+    /*     } */
+    /*     rem = string_utf8_next( rem, &result ); */
+    /* } */
+    /* return result; */
+}
+attr_core_api String string_utf8_next( String src, c32* out_codepoint ) {
+    usize read_count = 0;
+    UTF8 utf8;
+    utf8.len = src.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : src.len;
+    if( utf8.len ) {
+        memory_copy( utf8.bytes, src.cc, utf8.len );
+    }
+    c32 codepoint = utf8_to_codepoint( utf8, &read_count );
+
+    *out_codepoint = codepoint;
+    return string_advance_by( src, read_count ? read_count : 1 );
 }
 attr_core_api b32 string_cmp( String a, String b ) {
     if( a.len != b.len ) {
@@ -503,7 +550,7 @@ attr_core_api b32 string_buf_grow(
 attr_core_api void string_buf_free(
     StringBuf* buf, struct AllocatorInterface* allocator
 ) {
-    if( buf ) {
+    if( buf && buf->v ) {
         allocator->free( buf->v, buf->cap, 0, allocator->ctx );
         memory_zero( buf, sizeof(*buf) );
     }
