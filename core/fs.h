@@ -10,6 +10,7 @@
 #include "core/attributes.h"
 #include "core/path.h"
 #include "core/macros.h" // IWYU pragma: export
+#include "core/cpp/enum.hpp"
 
 // forward declarations
 struct AllocatorInterface;
@@ -75,6 +76,7 @@ typedef enum FileOpenFlags {
     /// Cannot combine with #FOPEN_CREATE, #FOPEN_TRUNCATE or #FOPEN_APPEND.
     FOPEN_TEMP             = (1 << 7),
 } FileOpenFlags;
+define_bitwise_operators( enum FileOpenFlags, unsigned int );
 /// @brief File seek types.
 typedef enum FileSeek {
     /// @brief Seek from current file offset.

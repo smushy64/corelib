@@ -22,6 +22,10 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- path: cpp: win32: changed PathCharacter typedef to wchar_t in C++
+- fs: defined bitwise operators for bitfield enums in C++
+- fmt: defined bitwise operators for bitfield enums in C++
+- cpp: added enum.hpp for defining enum bitwise operators in C++
 - assertions: c++,bug: ___helper3 macro was incorrectly pasting macro arguments in c++.
 - cbuild: fixed C++ test argument parsing.
 - path: path_stream_canonicalized() and its UTF-8 equivalent added.

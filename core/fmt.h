@@ -10,6 +10,7 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/stream.h"
+#include "core/cpp/enum.hpp"
 
 // forward declaration
 struct TimeSplit;
@@ -45,6 +46,7 @@ typedef enum FormatFloatFlags {
     /// @brief Floats are 64-bit. (doubles)
     FMT_FLOAT_F64         = 0b01000000,
 } FormatFloatFlags;
+define_bitwise_operators(enum FormatFloatFlags, unsigned int);
 /// @brief Mask for extracting which type of vector float is.
 #define FMT_FLOAT_VECTOR_MASK\
     (FMT_FLOAT_VECTOR2 | FMT_FLOAT_VECTOR3 | FMT_FLOAT_VECTOR4)
@@ -87,6 +89,7 @@ typedef enum FormatIntFlags {
     /// @brief Integers are signed.
     FMT_INT_SIGNED       = 0b00100000 << 8,
 } FormatIntFlags;
+define_bitwise_operators(enum FormatIntFlags, unsigned int);
 /// @brief Mask for extracting integer vector flags.
 #define FMT_INT_VECTOR_MASK (FMT_INT_VECTOR2 | FMT_INT_VECTOR3 | FMT_INT_VECTOR4)
 /// @brief Mask for extracting integer number base flags.
@@ -116,6 +119,7 @@ typedef enum FormatStringFlags {
 
     FMT_STRING_CASING_MASK = ((0x2 | 0x1) << 4),
 } FormatStringFlags;
+define_bitwise_operators(enum FormatStringFlags, unsigned int);
 /// @brief Types that formatter can handle.
 typedef enum FormatType {
     /// @brief Type to format is boolean.

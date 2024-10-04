@@ -17,8 +17,13 @@
 struct AllocatorInterface;
 
 #if defined(CORE_PLATFORM_WINDOWS)
-    /// @brief Current platform's path character.
-    typedef c16 PathCharacter;
+    #if defined(CORE_CPLUSPLUS)
+        /// @brief Current platform's path character.
+        typedef wchar_t PathCharacter;
+    #else
+        /// @brief Current platform's path character.
+        typedef c16 PathCharacter;
+    #endif
     /// @brief Create a path character literal.
     /// @param literal (character literal) Character literal.
     /// @return Path character literal.
