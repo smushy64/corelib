@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- assertions: c++,bug: ___helper3 macro was incorrectly pasting macro arguments in c++.
 - cbuild: fixed C++ test argument parsing.
 - path: path_stream_canonicalized() and its UTF-8 equivalent added.
 - fmt: {p,c} argument added for printing canonicalized path.

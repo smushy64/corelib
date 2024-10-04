@@ -12,7 +12,7 @@
 #define ___helper(x) #x
 #define ___helper2(x) ___helper(x)
 #define ___helper3( prefix, ...)\
-    print_err( ANSI_COLOR_MAGENTA __FILE__",{cc}:"___helper2(__LINE__)": " prefix, __FUNCTION__ );\
+    print_err( ANSI_COLOR_MAGENTA __FILE__ ",{cc}:" ___helper2(__LINE__) ": " prefix, __FUNCTION__ );\
     print_err( "" __VA_ARGS__ );\
     println_err( ANSI_COLOR_RESET )
 
