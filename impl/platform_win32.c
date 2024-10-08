@@ -607,17 +607,12 @@ attr_internal u32 win32_wide_to_utf8(
     return WideCharToMultiByte(
         CP_UTF8, 0, wide, wide_len, utf8_buf, utf8_cap, 0, 0 );
 }
-usize platform_path_stream_canonicalize(
-    StreamBytesFN* stream, void* target, Path path
-) {
+void win32_canonicalize( PathBuf* buf, Path path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
         WIN32_PATH_ABS,
     } type = WIN32_PATH_REL;
-    usize result = 0;
-
-    path_buf_create_from_stack( buffer, sizeof(wchar_t) * kibibytes(4) );
 
     Path rem = path; {
         Path prefix = path_text("\\\\?\\");
@@ -630,9 +625,9 @@ usize platform_path_stream_canonicalize(
         }
         if( prefix_required ) {
             memory_copy(
-                buffer.raw, prefix.const_raw,
+                buf->raw, prefix.const_raw,
                 sizeof(wchar_t) * prefix.len );
-            buffer.len += prefix.len;
+            buf->len += prefix.len;
         } else {
             rem = internal_path_advance_by( rem, prefix.len + 1 );
         }
@@ -646,11 +641,11 @@ usize platform_path_stream_canonicalize(
 
     switch( type ) {
         case WIN32_PATH_REL: {
-            path_buf_try_push( &buffer, global_win32.buf_cwd.slice );
+            path_buf_try_push( buf, global_win32.buf_cwd.slice );
         } break;
         case WIN32_PATH_HOME: {
             path_buf_try_push(
-                &buffer, path_new( global_win32.home_len, global_win32.home ) );
+                buf, path_new( global_win32.home_len, global_win32.home ) );
             rem = internal_path_advance_by( rem, 2 );
         } break;
         case WIN32_PATH_ABS: break;
@@ -675,29 +670,35 @@ usize platform_path_stream_canonicalize(
                 continue;
             }
             if( path_cmp( chunk, path_text(".."))) {
-                for( usize i = buffer.len; i-- > 0; ) {
-                    if( buffer.const_raw[i] == L'\\' ) {
-                        buffer.len = i;
+                for( usize i = buf->len; i-- > 0; ) {
+                    if( buf->const_raw[i] == L'\\' ) {
+                        buf->len = i;
                         break;
                     }
                 }
 
-                if( buffer.len < min ) {
-                    buffer.len = min;
+                if( buf->len < min ) {
+                    buf->len = min;
                 }
 
-                buffer.raw[buffer.len] = 0;
+                buf->raw[buf->len] = 0;
                 rem = internal_path_advance_by( rem, chunk.len + 1 );
                 continue;
             }
         }
 
-        path_buf_try_push( &buffer, chunk );
+        path_buf_try_push( buf, chunk );
         rem = internal_path_advance_by( rem, chunk.len + 1 );
     }
-    result += stream( target, sizeof(wchar_t) * buffer.len, buffer.const_raw );
+}
+usize platform_path_stream_canonicalize(
+    StreamBytesFN* stream, void* target, Path path
+) {
+    path_buf_create_from_stack( buffer, kibibytes(4) );
+    win32_canonicalize( &buffer, path );
 
-    return result;
+    return stream(
+        target, sizeof(PathCharacter) * buffer.len, buffer.const_raw );
 }
 usize platform_path_stream_canonicalize_utf8(
     StreamBytesFN* stream, void* target, Path path
@@ -782,7 +783,36 @@ usize platform_path_stream_canonicalize_utf8(
     return result;
 
 }
-PathBuf win32_make_path( Path path, b32 allocate ) {
+usize win32_path_memory_requirement( Path path ) {
+    Path prefix = path_text( "\\\\?\\" );
+    b32 prefix_required = false;
+
+    if( path.const_raw[0] == path_raw_char('~') ) {
+        prefix_required = true;
+    } else {
+        if( path.len >= prefix.len ) {
+            Path potential_prefix = path;
+            potential_prefix.len  = prefix.len;
+            if( !path_cmp( prefix, potential_prefix ) ) {
+                prefix_required = true;
+            }
+        } else {
+            prefix_required = true;
+        }
+    }
+
+    usize memory_requirement = prefix_required ? prefix.len : 0;
+    if( global_win32.buf_cwd.len > global_win32.home_len ) {
+        memory_requirement += global_win32.buf_cwd.len;
+    } else {
+        memory_requirement += global_win32.home_len;
+    }
+    memory_requirement += path.len + 1;
+    memory_requirement *= sizeof(wchar_t);
+
+    return memory_requirement;
+}
+PathBuf win32_make_path( Path path ) {
     Path prefix = path_text("\\\\?\\");
 
     b32 prefix_required = false;
@@ -823,10 +853,6 @@ PathBuf win32_make_path( Path path, b32 allocate ) {
 
     PathBuf buf = path_buf_empty();
     buf.cap = memory_requirement;
-
-    if( !allocate ) {
-        return buf;
-    }
 
     if( !alloc_required ) {
         PathBuf result = {0};
@@ -876,7 +902,7 @@ b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
 
     b32 append = bitfield_check( flags, FOPEN_APPEND );
 
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -909,11 +935,11 @@ b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
     return true;
 }
 b32 platform_file_copy( Path dst, Path src, b32 create_dst ) {
-    PathBuf d = win32_make_path( dst, true );
+    PathBuf d = win32_make_path( dst );
     if( path_buf_is_empty( &d ) ) {
         return false;
     }
-    PathBuf s = win32_make_path( src, true );
+    PathBuf s = win32_make_path( src );
     if( path_buf_is_empty( &s ) ) {
         if( d.cap ) {
             HeapFree( GetProcessHeap(), 0, d.raw );
@@ -936,7 +962,7 @@ b32 platform_file_copy( Path dst, Path src, b32 create_dst ) {
     return res;
 }
 b32 platform_file_move( Path dst, Path src, b32 create_dst ) {
-    PathBuf d = win32_make_path( dst, true );
+    PathBuf d = win32_make_path( dst );
     if( path_buf_is_empty( &d ) ) {
         return false;
     }
@@ -953,7 +979,7 @@ b32 platform_file_move( Path dst, Path src, b32 create_dst ) {
         }
     }
 
-    PathBuf s = win32_make_path( src, true );
+    PathBuf s = win32_make_path( src );
     if( path_buf_is_empty( &s ) ) {
         if( d.cap ) {
             HeapFree( GetProcessHeap(), 0, d.raw );
@@ -976,7 +1002,7 @@ b32 platform_file_move( Path dst, Path src, b32 create_dst ) {
     return res;
 }
 b32 platform_file_remove( Path path ) {
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -987,7 +1013,7 @@ b32 platform_file_remove( Path path ) {
     return res;
 }
 b32 platform_file_exists( Path path ) {
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -1033,7 +1059,7 @@ b32 platform_directory_set_cwd( Path path ) {
     return true;
 }
 b32 platform_directory_create( Path path ) {
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -1044,7 +1070,7 @@ b32 platform_directory_create( Path path ) {
     return res;
 }
 b32 platform_directory_remove( Path path ) {
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -1055,7 +1081,7 @@ b32 platform_directory_remove( Path path ) {
     return result;
 }
 b32 platform_directory_exists( Path path ) {
-    PathBuf p = win32_make_path( path, true );
+    PathBuf p = win32_make_path( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -1075,22 +1101,17 @@ DirectoryWalk* platform_directory_walk_begin(
         core_error( "failed to allocate directory walk!");
         return NULL;
     }
-    PathBuf buf = path_buf_empty(); {
-        usize memory_requirement = win32_make_path( path, false ).cap;
-        if( !path_buf_from_alloc( memory_requirement + 16, allocator, &buf ) ) {
-            allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
-            core_error( "failed to allocate directory walk path buffer!" );
-            return NULL;
-        }
-
-        path_stream_canonicalize( path_buf_stream, &buf, path );
+    path_buf_create_from_stack( buf, kibibytes(4) );
+    win32_canonicalize( &buf, path );
+    if( !path_buf_try_push( &buf, path_text( "*" ) ) ) {
+        allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
+        core_error( "win32: path too long!" );
+        return NULL;
     }
-    path_buf_try_push( &buf, path_text("*") );
 
     walk->h = FindFirstFileExW(
         buf.const_raw, FindExInfoBasic,
         &walk->fd, FindExSearchNameMatch, 0, 0 );
-    path_buf_free( &buf, allocator );
 
     if( walk->h == INVALID_HANDLE_VALUE ) {
         win32_log_error( GetLastError() );

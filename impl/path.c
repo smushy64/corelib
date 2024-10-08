@@ -640,6 +640,9 @@ attr_core_api usize path_buf_stream(
 
     usize characters = bytes / sizeof(PathCharacter);
     usize remaining  = path_buf_remaining( buf );
+    if( !remaining ) {
+        return bytes;
+    }
 
     usize push_count = 0;
     if( remaining < characters ) {
