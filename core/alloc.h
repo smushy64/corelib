@@ -87,7 +87,8 @@ typedef struct AllocatorInterface {
 /// @return Allocator interface.
 #define allocator_interface_new( _alloc, _realloc, _free, opt_ctx )\
     struct_literal( AllocatorInterface ) {\
-        .alloc=_alloc, .realloc=_realloc, .free=_free, .ctx=opt_ctx }
+        .alloc=_alloc, .realloc=_realloc, .free=_free, .ctx=opt_ctx,\
+        .name={ .len=0,.cc="" } }
 /// @brief Create allocator interface for default heap allocator.
 /// @return Allocator interface.
 #define allocator_interface_from_heap()\

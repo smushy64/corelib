@@ -560,7 +560,7 @@ attr_core_api usize stream_fmt_args(
         case FT_BOOL: {
             return stream_fmt_bool(
                 stream, target, args->padding,
-                args->count, args->data, &args->bool );
+                args->count, args->data, &args->boolean );
         } break;
         case FT_CHAR: {
             return stream_fmt_char(
@@ -1116,7 +1116,7 @@ attr_internal b32 internal_fmt_parse_args(
             }
         } break;
         case FT_BOOL: {
-            args->bool.binary = false;
+            args->boolean.binary = false;
         } break;
         case FT_FLOAT: {
             args->floating.precision = 6;
@@ -1383,7 +1383,7 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_BOOL: {
                 if( string_cmp( arg, string_text( "b" ) ) ) {
-                    args->bool.binary = true;
+                    args->boolean.binary = true;
                     skip();
                 }
             } break;

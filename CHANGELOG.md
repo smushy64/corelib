@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- alloc: added name field to allocator initialization.
+- fmt: renamed bool format arguments to boolean.
 - fmt: moved format argument struct declarations outside of anonymous union.
 - path: win32: changed how paths are canonicalized and how directory_walk allocates.
 - path: cpp: win32: changed PathCharacter typedef to wchar_t in C++

@@ -136,41 +136,41 @@ typedef enum FormatType {
     FT_TIME,
 } FormatType;
 /// @brief Boolean format arguments.
-struct BoolFormatArguments {
+typedef struct BoolFormatArguments {
     /// @brief If boolean should be formatted as binary.
     b32 binary;
-};
+} BoolFormatArguments;
 /// @brief Character format arguments.
-struct CharFormatArguments {
+typedef struct CharFormatArguments {
     /// @brief How many times to repeat character.
     u32 repeat;
     /// @brief What casing should character be printed in.
     FormatCharCasing casing;
-};
+} CharFormatArguments;
 /// @brief String format arguments.
-struct StringFormatArguments {
+typedef struct StringFormatArguments {
     /// @brief String format flags.
     FormatStringFlags flags;
-};
+} StringFormatArguments;
 /// @brief Float format arguments.
-struct FloatFormatArguments {
+typedef struct FloatFormatArguments {
     /// @brief How much precision to print with.
     int precision;
     /// @brief Float formatting flags.
     enum FormatFloatFlags flags;
-};
+} FloatFormatArguments;
 /// @brief Integer format arguments.
-struct IntFormatArguments {
+typedef struct IntFormatArguments {
     /// @brief Integer formatting flags.
     enum FormatIntFlags flags;
-};
+} IntFormatArguments;
 /// @brief Time format arguments.
-struct TimeFormatArguments {
+typedef struct TimeFormatArguments {
     /// @brief Size of format string.
     usize fmt_len;
     /// @brief Pointer to time format string.
     const char* fmt;
-};
+} TimeFormatArguments;
 /// @brief Arguments for formatter.
 typedef struct FormatArguments {
     /// @brief Type of data to format.
@@ -184,17 +184,17 @@ typedef struct FormatArguments {
     /// @brief Anonymous union of format arguments.
     union {
         /// @brief Boolean format arguments.
-        struct BoolFormatArguments bool;
+        BoolFormatArguments boolean;
         /// @brief Character format arguments.
-        struct CharFormatArguments character;
+        CharFormatArguments character;
         /// @brief String format arguments.
-        struct StringFormatArguments string;
+        StringFormatArguments string;
         /// @brief Float format arguments.
-        struct FloatFormatArguments floating;
+        FloatFormatArguments floating;
         /// @brief Integer format arguments.
-        struct IntFormatArguments integer;
+        IntFormatArguments integer;
         /// @brief Time format arguments.
-        struct TimeFormatArguments time;
+        TimeFormatArguments time;
     };
 } FormatArguments;
 
