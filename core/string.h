@@ -553,7 +553,7 @@ attr_core_api usize string_stream_to_lower(
 /// @param[in] start    (char*) Pointer to start of string buffer.
 /// @return String buffer.
 #define string_buf_new( capacity, start )\
-    struct_literal(StringBuf){ .len=0, .cap=capacity, .c=start }
+    struct_literal(StringBuf){ .cap=capacity, .len=0, .c=start }
 /// @brief Create empty string buffer.
 /// @return String buffer.
 #define string_buf_empty() string_buf_new( 0, 0 )

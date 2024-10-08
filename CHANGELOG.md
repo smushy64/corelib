@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- string:string_buf_new: initialize .cap before .len, otherwise C++ gets upset
 - alloc: added name field to allocator initialization.
 - fmt: renamed bool format arguments to boolean.
 - fmt: moved format argument struct declarations outside of anonymous union.
