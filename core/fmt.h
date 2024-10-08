@@ -135,6 +135,42 @@ typedef enum FormatType {
     /// @brief Type to format is time split.
     FT_TIME,
 } FormatType;
+/// @brief Boolean format arguments.
+struct BoolFormatArguments {
+    /// @brief If boolean should be formatted as binary.
+    b32 binary;
+};
+/// @brief Character format arguments.
+struct CharFormatArguments {
+    /// @brief How many times to repeat character.
+    u32 repeat;
+    /// @brief What casing should character be printed in.
+    FormatCharCasing casing;
+};
+/// @brief String format arguments.
+struct StringFormatArguments {
+    /// @brief String format flags.
+    FormatStringFlags flags;
+};
+/// @brief Float format arguments.
+struct FloatFormatArguments {
+    /// @brief How much precision to print with.
+    int precision;
+    /// @brief Float formatting flags.
+    enum FormatFloatFlags flags;
+};
+/// @brief Integer format arguments.
+struct IntFormatArguments {
+    /// @brief Integer formatting flags.
+    enum FormatIntFlags flags;
+};
+/// @brief Time format arguments.
+struct TimeFormatArguments {
+    /// @brief Size of format string.
+    usize fmt_len;
+    /// @brief Pointer to time format string.
+    const char* fmt;
+};
 /// @brief Arguments for formatter.
 typedef struct FormatArguments {
     /// @brief Type of data to format.
@@ -148,41 +184,17 @@ typedef struct FormatArguments {
     /// @brief Anonymous union of format arguments.
     union {
         /// @brief Boolean format arguments.
-        struct BoolFormatArguments {
-            /// @brief If boolean should be formatted as binary.
-            b32 binary;
-        } bool;
+        struct BoolFormatArguments bool;
         /// @brief Character format arguments.
-        struct CharFormatArguments {
-            /// @brief How many times to repeat character.
-            u32 repeat;
-            /// @brief What casing should character be printed in.
-            FormatCharCasing casing;
-        } character;
+        struct CharFormatArguments character;
         /// @brief String format arguments.
-        struct StringFormatArguments {
-            /// @brief String format flags.
-            FormatStringFlags flags;
-        } string;
+        struct StringFormatArguments string;
         /// @brief Float format arguments.
-        struct FloatFormatArguments {
-            /// @brief How much precision to print with.
-            int precision;
-            /// @brief Float formatting flags.
-            enum FormatFloatFlags flags;
-        } floating;
+        struct FloatFormatArguments floating;
         /// @brief Integer format arguments.
-        struct IntFormatArguments {
-            /// @brief Integer formatting flags.
-            enum FormatIntFlags flags;
-        } integer;
+        struct IntFormatArguments integer;
         /// @brief Time format arguments.
-        struct TimeFormatArguments {
-            /// @brief Size of format string.
-            usize fmt_len;
-            /// @brief Pointer to time format string.
-            const char* fmt;
-        } time;
+        struct TimeFormatArguments time;
     };
 } FormatArguments;
 
