@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- posix: cbuild/sync: defined CORE_PLATFORM_OS_MUTEX_SIZE in build system.
 - cbuild: fixed --include flag so it works with clang and gcc
 - README: added linux to supported platforms.
 - BUILD: fixed typos and changed POSIX dependencies to just libc.

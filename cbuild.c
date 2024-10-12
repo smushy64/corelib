@@ -393,8 +393,14 @@ b32 mode_build( struct BuildArguments* args ) {
         def( "CORE_ENABLE_EXPORT" );
     }
 
+    dstring* dyn_arg = NULL;
+
 #if defined(PLATFORM_POSIX)
+    dyn_arg = dstring_fmt(
+        "-DCORE_PLATFORM_OS_MUTEX_SIZE=%u", (u32)sizeof(pthread_mutex_t) );
+
     def( "CORE_ENABLE_STDLIB" );
+    push( dyn_arg );
 #else
     if( args->enable_stdlib ) {
         def( "CORE_ENABLE_STDLIB" );
@@ -454,6 +460,9 @@ b32 mode_build( struct BuildArguments* args ) {
             dstring_free( command_flat );
         }
 
+        if( dyn_arg ) {
+            dstring_free( dyn_arg );
+        }
         if( target_obj_path ) {
             dstring_free( target_obj_path );
         }
@@ -466,6 +475,10 @@ b32 mode_build( struct BuildArguments* args ) {
         if( target_obj_path ) {
             dstring_free( target_obj_path );
         }
+        if( dyn_arg ) {
+            dstring_free( dyn_arg );
+        }
+
         dstring_free( target_path );
         command_builder_free( &builder );
         return false;
@@ -480,6 +493,9 @@ b32 mode_build( struct BuildArguments* args ) {
                 if( target_obj_path ) {
                     dstring_free( target_obj_path );
                 }
+                if( dyn_arg ) {
+                    dstring_free( dyn_arg );
+                }
                 dstring_free( target_path );
                 command_builder_free( &builder );
                 return false;
@@ -490,6 +506,9 @@ b32 mode_build( struct BuildArguments* args ) {
         if( target_obj_path && !path_exists( target_obj_path ) ) {
             if( !dir_create( target_obj_path ) ) {
                 cb_error( "failed to create directory at path '%s'!", target_obj_path );
+                if( dyn_arg ) {
+                    dstring_free( dyn_arg );
+                }
                 dstring_free( target_obj_path );
                 dstring_free( target_path );
                 command_builder_free( &builder );
@@ -512,6 +531,9 @@ b32 mode_build( struct BuildArguments* args ) {
         if( target_obj_path ) {
             dstring_free( target_obj_path );
         }
+        if( dyn_arg ) {
+            dstring_free( dyn_arg );
+        }
         dstring_free( target_path );
         command_builder_free( &builder );
         return false;
@@ -519,6 +541,9 @@ b32 mode_build( struct BuildArguments* args ) {
 
     PID pid = process_exec( cmd, false, NULL, NULL, NULL, NULL );
     dstring_free( target_path );
+    if( dyn_arg ) {
+        dstring_free( dyn_arg );
+    }
     command_builder_free( &builder );
     if( target_obj_path ) {
         dstring_free( target_obj_path );

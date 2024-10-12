@@ -17,12 +17,12 @@
 
 #if defined(CORE_PLATFORM_WINDOWS)
     #define CORE_PLATFORM_NAMED_SEMAPHORE_SIZE (sizeof(void*))
-    #define CORE_PLATFORM_NAMED_MUTEX_SIZE     (sizeof(void*))
+    #define CORE_PLATFORM_OS_MUTEX_SIZE        (sizeof(void*))
 #elif defined(CORE_PLATFORM_POSIX)
     #define CORE_PLATFORM_NAMED_SEMAPHORE_SIZE (sizeof(void*))
-    // TODO(alicia): use build system to define posix mutex size
-    // as it could be implementation defined.
-    #define CORE_PLATFORM_NAMED_MUTEX_SIZE (40) // sizeof pthread_mutex_t
+    #if !defined(CORE_PLATFORM_OS_MUTEX_SIZE)
+        #define CORE_PLATFORM_OS_MUTEX_SIZE (40) // sizeof pthread_mutex_t
+    #endif
 #endif
 
 /// @brief Unnamed Mutex. Cannot be shared across processes.
@@ -51,7 +51,7 @@ typedef struct Semaphore {
 /// This Mutex is implemented by the OS.
 /// That means that it can be opened by other processes.
 typedef struct OSMutex {
-    u8 opaque[CORE_PLATFORM_NAMED_MUTEX_SIZE];
+    u8 opaque[CORE_PLATFORM_OS_MUTEX_SIZE];
 } OSMutex;
 
 /// @brief Named Semaphore.
