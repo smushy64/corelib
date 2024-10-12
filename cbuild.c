@@ -275,7 +275,8 @@ b32 mode_build( struct BuildArguments* args ) {
         case BC_CLANG:
         case BC_GCC: {
             push( "-std=c11" );
-            push( "--include./generated/core_command_line.c");
+            push( "-include");
+            push( "./generated/core_command_line.c");
             push( "-xc" );
             push( "./impl/sources.h" );
             if( args->static_build ) {

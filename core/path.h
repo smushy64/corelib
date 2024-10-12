@@ -8,7 +8,7 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/defines.h"
+#include "core/defines.h" // IWYU pragma: keep
 #include "core/macros.h"
 #include "core/stream.h"
 #include "core/memory.h"
@@ -376,7 +376,7 @@ attr_core_api usize path_stream_convert_from_utf8(
     memory_zero( name##_buffer, sizeof(name##_buffer) );\
     PathBuf name = path_buf_new( size, name##_buffer )
 /// @brief Create path buffer using allocator.
-/// @param      size      Size of path buffer.
+/// @param      capacity  Number of characters in buffer.
 /// @param[in]  allocator Interface for allocator to use.
 /// @param[out] out_buf   Pointer to write new buffer to.
 /// @return

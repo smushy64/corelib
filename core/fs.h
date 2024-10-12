@@ -249,18 +249,19 @@ attr_core_api b32 directory_create( Path path );
 /// @brief Remove directory from file system.
 /// @note
 /// Allocates wide path buffer on Windows if @c path is longer than 260 characters.
-/// @param path      Path of directory to remove.
-/// @param recursive Remove all files and directories in @c path.
+/// @param path Path of directory to remove.
 /// @return
 ///     - @c true  : Successfully removed directory.
 ///     - @c false : Failed to remove directory.
-///     - @c false : @c recursive is false and directory is not empty.
 attr_core_api b32 directory_remove( Path path );
 /// @brief Remove directory recursively.
 /// @note
 /// Allocates DirectoryWalk in order to recursively delete every item in directory.
 /// @param     path      Path of directory to remove.
 /// @param[in] allocator Pointer to allocator interface.
+/// @return
+///     - @c true  : Successfully removed directory and all its items.
+///     - @c false : Failed to remove directory.
 attr_core_api b32 directory_remove_recursive(
     Path path, struct AllocatorInterface* allocator );
 /// @brief Check if directory exists.

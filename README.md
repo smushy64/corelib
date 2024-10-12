@@ -12,7 +12,7 @@ It's a cross-platform library that provides math types & functions
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
 ## Limitations
-- currently only win32 is supported.
+- currently only win32 and linux are supported.
 - wasm support is planned but not yet implemented.
 
 ## Links

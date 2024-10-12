@@ -22,6 +22,16 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- cbuild: fixed --include flag so it works with clang and gcc
+- README: added linux to supported platforms.
+- BUILD: fixed typos and changed POSIX dependencies to just libc.
+- path: fixed documentation warnings.
+- fs: fixed typo in documentation.
+- fmt: documented StringFormatFlags.
+- sync: fixed typo in documentation.
+- docs: added documentation for unicode.h
+- hash: added attr_explicit_fallthough for cases that fallthrough.
+- attr: added attr_explicit_fallthough for marking switch case fallthroughs.
 - thread: posix: added atom in order to do a timedjoin on non-linux platforms.
 - linux: implemented linux platform functions.
 - posix: implemented posix platform functions.

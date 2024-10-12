@@ -66,12 +66,13 @@ typedef struct NamedSemaphore {
 /// @details
 /// If semaphore doesn't already exist, create one.
 /// Otherwise, open existing semaphore.
-/// @param[in]  name    Name of semaphore to open. Cannot be longer than CORE_NAMED_SYNC_NAME_CAP.
-///                     Actual path that semaphore is opened at is implementation defined.
-/// @parma[out] out_sem Pointer to write openened named semaphore.
+/// @param[in]  name          Name of semaphore to open. Cannot be longer than CORE_NAMED_SYNC_NAME_CAP.
+///                           Actual path that semaphore is opened at is implementation defined.
+/// @param      initial_value Value to intialize semaphore with.
+/// @param[out] out_sem       Pointer to write openened named semaphore.
 /// @return
-///     - true  : Opened named semaphore successfully.
-///     - false : Failed to open named semaphore.
+///     - @c true  : Opened named semaphore successfully.
+///     - @c false : Failed to open named semaphore.
 attr_core_api b32 named_semaphore_open(
     const char* name, u32 initial_value, struct NamedSemaphore* out_sem );
 /// @brief Close openend named semaphore.
@@ -84,8 +85,8 @@ attr_core_api void named_semaphore_signal( struct NamedSemaphore* sem );
 /// @param[in] sem Pointer to named semaphore.
 /// @param     ms  Milliseconds to wait. Use CORE_WAIT_INFINITE to wait indefinitely.
 /// @return
-///     - true  : Named semaphore was signaled before @c ms elapsed.
-///     - false : Named semaphore timed out.
+///     - @c true  : Named semaphore was signaled before @c ms elapsed.
+///     - @c false : Named semaphore timed out.
 attr_core_api b32 named_semaphore_wait_timed( struct NamedSemaphore* sem, u32 ms );
 /// @brief Wait for named semaphore signal indefinitely.
 /// @param[in] sem Pointer to named semaphore.
@@ -96,8 +97,8 @@ attr_header void named_semaphore_wait( struct NamedSemaphore* sem ) {
 /// @brief Create an os mutex.
 /// @param[out] out_mtx Pointer to write opened mutex to.
 /// @return
-///     - true  : Opened os mutex successfully.
-///     - false : Failed to create os mutex.
+///     - @c true  : Opened os mutex successfully.
+///     - @c false : Failed to create os mutex.
 attr_core_api b32 os_mutex_create( struct OSMutex* out_mtx );
 /// @brief Destroy an os mutex.
 /// @param[in] mtx Pointer to os mutex to destroy.
@@ -109,8 +110,8 @@ attr_core_api void os_mutex_unlock( struct OSMutex* mtx );
 /// @param[in] mtx Pointer to os mutex to lock.
 /// @param     ms  Milliseconds to wait for lock. Use CORE_WAIT_INFINITE to wait indefinitely.
 /// @return
-///     - true  : OS mutex was signaled before @c ms elapsed.
-///     - false : OS mutex timed out.
+///     - @c true  : OS mutex was signaled before @c ms elapsed.
+///     - @c false : OS mutex timed out.
 attr_core_api b32 os_mutex_lock_timed( struct OSMutex* mtx, u32 ms );
 /// @brief Wait for os mutex lock indefinitely.
 /// @param[in] mtx Pointer to os mutex to lock.
@@ -129,8 +130,8 @@ attr_core_api void semaphore_signal( struct Semaphore* sem );
 /// @param[in] sem Pointer to semaphore to wait for.
 /// @param     ms  Milliseconds to wait for signal. Use CORE_WAIT_INFINITE to wait indefinitely. 
 /// @return
-///     - true  : Semaphore was signaled before @c ms elapsed.
-///     - false : Semaphore timed out.
+///     - @c true  : Semaphore was signaled before @c ms elapsed.
+///     - @c false : Semaphore timed out.
 attr_core_api b32 semaphore_wait_timed( struct Semaphore* sem, u32 ms );
 /// @brief Wait for semaphore signal indefinitely.
 /// @param[in] sem Pointer to semaphore to wait for.
@@ -146,8 +147,8 @@ attr_core_api void mutex_unlock( struct Mutex* mtx );
 /// @param[in] mtx Pointer to mutex to lock.
 /// @param     ms  Milliseconds to wait for. Use CORE_WAIT_INFINITE to wait indefinitely.
 /// @return
-///     - true  : Obtained mutex lock before @c ms elapsed.
-///     - false : Timed out.
+///     - @c true  : Obtained mutex lock before @c ms elapsed.
+///     - @c false : Timed out.
 attr_core_api b32 mutex_lock_timed( struct Mutex* mtx, u32 ms );
 /// @brief Wait for mutex lock indefinitely.
 /// @param[in] mtx Pointer to mutex to lock.
@@ -160,8 +161,8 @@ attr_header void mutex_lock( struct Mutex* mtx ) {
 /// @param     sentinel Sentinel value to check for.
 /// @param     ms       Milliseconds to spinlock for. Use CORE_WAIT_INFINITE to wait indefinitely.
 /// @return
-///     - true  : Atom equals sentinel value before @c ms elapsed.
-///     - false : Timed out.
+///     - @c true  : Atom equals sentinel value before @c ms elapsed.
+///     - @c false : Timed out.
 attr_core_api b32 atomic_spinlock_timed( atomic32* atom, atomic32 sentinel, u32 ms );
 /// @brief Spinlock the current thread until atom equals sentinel value indefinitely.
 /// @param[in] atom     Pointer to atom to compare sentinel to.

@@ -5,7 +5,7 @@ Build from Source
 
 ### General
 
-- clang, gcc or msvc (Windows only)
+- clang, gcc or msvc(Windows only)
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
 ### Windows
@@ -18,7 +18,7 @@ Build from Source
 
 ### Posix
 
-- C standard library
+- libc
 
 ## Steps
 
@@ -40,7 +40,7 @@ to compile using a compiler different from the one used to compile cbuild:
 ```console
 ./cbuild build --compiler=gcc
 ```
-**compiler** being either clang, gcc, cc(for default compiler, usually gcc) or msvc on windows.
+**compiler** being clang, gcc, cc(for default compiler, usually gcc) or msvc on windows.
 
 @note if compiling with msvc, you need to run vcvarsall.bat before running cbuild to have cl and masm in PATH.
 

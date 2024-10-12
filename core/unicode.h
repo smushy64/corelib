@@ -10,23 +10,38 @@
 #include "core/attributes.h"
 #include "core/macros.h"
 
+/// @brief UTF-8 codepoints.
 typedef struct UTF8 {
-    u32 len; u8 bytes[4];
+    /// @brief Number of actual codepoints.
+    u32 len;
+    /// @brief Bytes.
+    u8 bytes[4];
 } UTF8;
+/// @brief UTF-16 codepoints.
 typedef struct UTF16 {
+    /// @brief Number of actual codepoints.
     u32 len;
     union {
+        /// @brief UTF-16 characters.
         u16 shorts[2];
+        /// @brief Bytes.
         u8  bytes[4];
     };
 } UTF16;
 
+/// @brief UTF-32 codepoint for replacement character. 
 #define UTF32_REPLACEMENT_CHARACTER 0xFFFD
+/// @brief UTF-16 codepoint for replacement character. 
 #define UTF16_REPLACEMENT_CHARACTER \
     struct_literal(UTF16){ .len=1,.shorts={ 0xFFFD, 0 }}
+/// @brief UTF-8 codepoint for replacement character. 
 #define UTF8_REPLACEMENT_CHARACTER \
     struct_literal(UTF8){ .len=3,.bytes={ 0xEF, 0xBF, 0xBD, 0 }}
 
+/// @brief Convert UTF-8 to codepoint.
+/// @param      utf8               UTF-8 characters.
+/// @param[out] opt_out_read_count (optional) Pointer to write number of bytes read from UTF-8.
+/// @return UTF-32 codepoint.
 attr_always_inline
 attr_header c32 utf8_to_codepoint(
     UTF8 utf8, usize* opt_out_read_count
@@ -63,6 +78,9 @@ attr_header c32 utf8_to_codepoint(
 
     return codepoint;
 }
+/// @brief Convert UTF-32 codepoint to UTF-8 characters.
+/// @param codepoint UTF-32 codepoint to convert.
+/// @return UTF-8 characters.
 attr_always_inline
 attr_header UTF8 codepoint_to_utf8( c32 codepoint ) {
     UTF8 result = {0};
@@ -90,6 +108,10 @@ attr_header UTF8 codepoint_to_utf8( c32 codepoint ) {
 
     return result;
 }
+/// @brief Convert UTF-16 to codepoint.
+/// @param      utf16              UTF-16 characters.
+/// @param[out] opt_out_read_count (optional) Pointer to write number of shorts read from UTF-16.
+/// @return UTF-32 codepoint.
 attr_always_inline
 attr_header c32 utf16_to_codepoint( UTF16 utf16, usize* opt_out_read_count ) {
     if( !utf16.len ) {
@@ -115,6 +137,9 @@ attr_header c32 utf16_to_codepoint( UTF16 utf16, usize* opt_out_read_count ) {
 
     return codepoint;
 }
+/// @brief Convert UTF-32 codepoint to UTF-16 characters.
+/// @param codepoint UTF-32 codepoint to convert.
+/// @return UTF-16 characters.
 attr_always_inline
 attr_header UTF16 codepoint_to_utf16( c32 codepoint ) {
     UTF16 result = UTF16_REPLACEMENT_CHARACTER;

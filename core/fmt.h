@@ -98,6 +98,7 @@ define_bitwise_operators(enum FormatIntFlags, unsigned int);
 #define FMT_INT_BITDEPTH_MASK\
     (FMT_INT_BITDEPTH_8 | FMT_INT_BITDEPTH_16 |\
         FMT_INT_BITDEPTH_32 | FMT_INT_BITDEPTH_64 | FMT_INT_BITDEPTH_PTR)
+/// @brief Flags for string formatting.
 typedef enum FormatStringFlags {
     /// @brief String is a Path slice.
     FMT_STRING_IS_PATH                 = 0x1, // 001
@@ -106,9 +107,12 @@ typedef enum FormatStringFlags {
     /// @brief If FMT_STRING_IS_PATH, canonicalize path.
     FMT_STRING_PATH_CANONICALIZE       = 0x4, // 100
 
-    FMT_STRING_CASING_AS_IS_BIT        = 0x0, // 0
-    FMT_STRING_CASING_UPPER_BIT        = 0x1, // 1
-    FMT_STRING_CASING_LOWER_BIT        = 0x2, // 2
+    /// @brief Bit in bitfield, don't use directly.
+    FMT_STRING_CASING_AS_IS_BIT = 0x0, // 0
+    /// @brief Bit in bitfield, don't use directly.
+    FMT_STRING_CASING_UPPER_BIT = 0x1, // 1
+    /// @brief Bit in bitfield, don't use directly.
+    FMT_STRING_CASING_LOWER_BIT = 0x2, // 2
 
     /// @brief Don't change character case.
     FMT_STRING_CASING_AS_IS = (FMT_STRING_CASING_AS_IS_BIT << 4), // 00000
@@ -117,6 +121,7 @@ typedef enum FormatStringFlags {
     /// @brief Change characters to lower case.
     FMT_STRING_CASING_LOWER = (FMT_STRING_CASING_LOWER_BIT << 4), // 10000
 
+    /// @brief Mask for isolating casing bits.
     FMT_STRING_CASING_MASK = ((0x2 | 0x1) << 4),
 } FormatStringFlags;
 define_bitwise_operators(enum FormatStringFlags, unsigned int);
