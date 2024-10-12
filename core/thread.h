@@ -23,14 +23,34 @@ typedef int ThreadMainFN( u32 thread_id, void* params );
 
 /// @brief Opaque thread handle.
 typedef struct ThreadHandle {
+#if defined(CORE_PLATFORM_WINDOWS)
     void* opaque;
+#else
+    struct {
+        void*     handle;
+        atomic32* atom;
+    } opaque;
+#endif
 } ThreadHandle;
+#if defined(CORE_PLATFORM_WINDOWS)
 /// @brief Initialize a null thread handle.
 /// @return Thread handle.
 #define thread_handle_null() struct_literal(ThreadHandle){ .opaque=NULL }
+#else
+/// @brief Initialize a null thread handle.
+/// @return Thread handle.
+#define thread_handle_null() struct_literal(ThreadHandle){\
+    .opaque={\
+        .handle=NULL,\
+        .atom=NULL,\
+    }\
+}
+#endif
 /// @brief Sleep current thread for given milliseconds.
 /// @param ms Milliseconds to sleep for.
 attr_core_api void thread_sleep( u32 ms );
+/// @brief Yield execution to another thread.
+attr_core_api void thread_yield(void);
 /// @brief Spawn a new thread.
 /// @details
 /// Handle obtained must be freed using thread_free() or thread_destroy().

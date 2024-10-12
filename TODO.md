@@ -25,6 +25,11 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] sync: software/OS semaphore and mutex
+    - anonymous semaphores and mutexes can be implemented with
+    relatively fast atomic operations. since i haven't yet had a
+    use for named semaphores/mutexes, it would be good to have
+    separate structs for atomic and OS versions.
 - [x] cpp: move all C++ wrappers to their own headers
 - [x] build: test flag --open for opening docs in browser
 - [x] platform: win32: use internal_win32_log_error to send custom error message and message from FormatMessageA

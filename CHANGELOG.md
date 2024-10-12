@@ -22,6 +22,20 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- thread: posix: added atom in order to do a timedjoin on non-linux platforms.
+- linux: implemented linux platform functions.
+- posix: implemented posix platform functions.
+- math: removed SSE todo.
+- fmt: use va_copy instead of passing pointer to va_list.
+- job_queue: uses atomic semaphores instead of named semaphores.
+- alloc: reflect changes made to atomic_*size.
+- sync: renamed atomic_*size to atomic_*ptrsize.
+- win32: reflect changes made to sync and internal/platform.h
+- internal: platform: reflect changes made to sync.
+- thread: implemented thread_yield().
+- sync: split named semaphore and os mutex from atomic semaphore/mutex.
+- sync: implemented atomic semaphore and mutex.
+- sync: implemented atomic spinlocks.
 - string:string_buf_new: initialize .cap before .len, otherwise C++ gets upset
 - alloc: added name field to allocator initialization.
 - fmt: renamed bool format arguments to boolean.

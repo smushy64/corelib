@@ -9,78 +9,180 @@
 #include "core/types.h"
 #include "core/attributes.h"
 
-// TODO(alicia): define platform sizes in build system!
-#if defined(CORE_PLATFORM_WINDOWS)
-    #define CORE_PLATFORM_SEMAPHORE_SIZE (sizeof(void*))
-    #define CORE_PLATFORM_MUTEX_SIZE     (sizeof(void*))
-#elif defined(CORE_PLATFORM_POSIX)
-    #define CORE_PLATFORM_SEMAPHORE_SIZE (sizeof(void*))
-    #define CORE_PLATFORM_MUTEX_SIZE     (40) // sizeof glibc pthread_mutex_t
-#endif
-
 /// @brief Wait for sync object indefinitely.
 #define CORE_WAIT_INFINITE 0xFFFFFFFF
 
-/// @brief Semaphore.
-typedef struct Semaphore {
-    u8 opaque[CORE_PLATFORM_SEMAPHORE_SIZE];
-} Semaphore;
-/// @brief Mutex.
+/// @brief Max name capacity for named sync object.
+#define CORE_NAMED_SYNC_NAME_CAP 250
+
+#if defined(CORE_PLATFORM_WINDOWS)
+    #define CORE_PLATFORM_NAMED_SEMAPHORE_SIZE (sizeof(void*))
+    #define CORE_PLATFORM_NAMED_MUTEX_SIZE     (sizeof(void*))
+#elif defined(CORE_PLATFORM_POSIX)
+    #define CORE_PLATFORM_NAMED_SEMAPHORE_SIZE (sizeof(void*))
+    // TODO(alicia): use build system to define posix mutex size
+    // as it could be implementation defined.
+    #define CORE_PLATFORM_NAMED_MUTEX_SIZE (40) // sizeof pthread_mutex_t
+#endif
+
+/// @brief Unnamed Mutex. Cannot be shared across processes.
+/// @details
+/// This mutex is implemented in corelib using atomic operations.
+/// For OS mutex that can be shared across processes,
+/// use NamedMutex.
+/// @see NamedMutex.
 typedef struct Mutex {
-    u8 opaque[CORE_PLATFORM_MUTEX_SIZE];
+    atomic32 atom;
 } Mutex;
 
-/// @brief Create a semaphore.
-/// @param[out] out_sem Pointer to write semaphore to.
-/// @return
-///     - @c true  : Created semaphore successfully.
-///     - @c false : Failed to create semaphore.
-attr_core_api b32  semaphore_create( Semaphore* out_sem );
-/// @brief Signal a semaphore.
-/// @param[in] sem Semaphore to signal.
-attr_core_api void semaphore_signal( Semaphore* sem );
-/// @brief Wait for semaphore for specified time.
-/// @param[in] sem Semaphore to wait on.
-/// @param     ms  Milliseconds to wait for. Use CORE_WAIT_INFINITE to wait indefinitely.
-/// @return
-///     - @c true  : Semaphore was signaled in time.
-///     - @c false : Wait for semaphore timed out.
-attr_core_api b32 semaphore_wait_timed( Semaphore* sem, u32 ms );
-/// @brief Wait indefinitely for semaphore.
-/// @param[in] sem Semaphore to wait on.
-attr_always_inline
-attr_header void semaphore_wait( Semaphore* sem ) {
-    (void)semaphore_wait_timed( sem, CORE_WAIT_INFINITE );
-}
-/// @brief Destroy semaphore object.
-/// @param[in] sem Semaphore to destroy.
-attr_core_api void semaphore_destroy( Semaphore* sem );
+/// @brief Unnamed Semaphore. Cannot be shared across processes.
+/// @details
+/// This semaphore is implemented in corelib using atomic operations.
+/// For OS semaphore that can be shared across processes,
+/// use NamedSemaphore.
+/// @see NamedSemaphore.
+typedef struct Semaphore {
+    atomic32 atom;
+    Mutex    mtx;
+} Semaphore;
 
-/// @brief Create a mutex.
-/// @param[out] out_mut Pointer to write mutex to.
+/// @brief OS Mutex.
+/// @details
+/// This Mutex is implemented by the OS.
+/// That means that it can be opened by other processes.
+typedef struct OSMutex {
+    u8 opaque[CORE_PLATFORM_NAMED_MUTEX_SIZE];
+} OSMutex;
+
+/// @brief Named Semaphore.
+/// @details
+/// This Semaphore is implemented by the OS.
+/// That means that it can be opened by other processes.
+typedef struct NamedSemaphore {
+    u8 opaque[CORE_PLATFORM_NAMED_SEMAPHORE_SIZE];
+} NamedSemaphore;
+
+/// @brief Open a named semaphore.
+/// @details
+/// If semaphore doesn't already exist, create one.
+/// Otherwise, open existing semaphore.
+/// @param[in]  name    Name of semaphore to open. Cannot be longer than CORE_NAMED_SYNC_NAME_CAP.
+///                     Actual path that semaphore is opened at is implementation defined.
+/// @parma[out] out_sem Pointer to write openened named semaphore.
 /// @return
-///     - @c true  : Created mutex successfully.
-///     - @c false : Failed to create mutex.
-attr_core_api b32 mutex_create( Mutex* out_mut );
-/// @brief Wait for mutex lock for specified time.
-/// @param[in] mut Mutex to wait for lock.
+///     - true  : Opened named semaphore successfully.
+///     - false : Failed to open named semaphore.
+attr_core_api b32 named_semaphore_open(
+    const char* name, u32 initial_value, struct NamedSemaphore* out_sem );
+/// @brief Close openend named semaphore.
+/// @param[in] sem Pointer to named semaphore to close.
+attr_core_api void named_semaphore_close( struct NamedSemaphore* sem );
+/// @brief Signal named semaphore.
+/// @param[in] sem Pointer to named semaphore to signal.
+attr_core_api void named_semaphore_signal( struct NamedSemaphore* sem );
+/// @brief Wait for named semaphore signal.
+/// @param[in] sem Pointer to named semaphore.
+/// @param     ms  Milliseconds to wait. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - true  : Named semaphore was signaled before @c ms elapsed.
+///     - false : Named semaphore timed out.
+attr_core_api b32 named_semaphore_wait_timed( struct NamedSemaphore* sem, u32 ms );
+/// @brief Wait for named semaphore signal indefinitely.
+/// @param[in] sem Pointer to named semaphore.
+attr_header void named_semaphore_wait( struct NamedSemaphore* sem ) {
+    named_semaphore_wait_timed( sem, CORE_WAIT_INFINITE );
+}
+
+/// @brief Create an os mutex.
+/// @param[out] out_mtx Pointer to write opened mutex to.
+/// @return
+///     - true  : Opened os mutex successfully.
+///     - false : Failed to create os mutex.
+attr_core_api b32 os_mutex_create( struct OSMutex* out_mtx );
+/// @brief Destroy an os mutex.
+/// @param[in] mtx Pointer to os mutex to destroy.
+attr_core_api void os_mutex_destroy( struct OSMutex* mtx );
+/// @brief Unlock os mutex.
+/// @param[in] mtx Pointer to os mutex to unlock.
+attr_core_api void os_mutex_unlock( struct OSMutex* mtx );
+/// @brief Wait for os mutex lock.
+/// @param[in] mtx Pointer to os mutex to lock.
+/// @param     ms  Milliseconds to wait for lock. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - true  : OS mutex was signaled before @c ms elapsed.
+///     - false : OS mutex timed out.
+attr_core_api b32 os_mutex_lock_timed( struct OSMutex* mtx, u32 ms );
+/// @brief Wait for os mutex lock indefinitely.
+/// @param[in] mtx Pointer to os mutex to lock.
+attr_header void os_mutex_lock( struct OSMutex* mtx ) {
+    os_mutex_lock_timed( mtx, CORE_WAIT_INFINITE );
+}
+
+/// @brief Initialize semaphore.
+/// @param[out] sem               Pointer to write semaphore to.
+/// @param      opt_initial_value (optional) Initial value of semaphore.
+attr_core_api void semaphore_init( struct Semaphore* sem, u32 opt_initial_value );
+/// @brief Signal semaphore.
+/// @param[in] sem Pointer to semaphore to signal.
+attr_core_api void semaphore_signal( struct Semaphore* sem );
+/// @brief Wait for semaphore signal.
+/// @param[in] sem Pointer to semaphore to wait for.
+/// @param     ms  Milliseconds to wait for signal. Use CORE_WAIT_INFINITE to wait indefinitely. 
+/// @return
+///     - true  : Semaphore was signaled before @c ms elapsed.
+///     - false : Semaphore timed out.
+attr_core_api b32 semaphore_wait_timed( struct Semaphore* sem, u32 ms );
+/// @brief Wait for semaphore signal indefinitely.
+/// @param[in] sem Pointer to semaphore to wait for.
+attr_core_api void semaphore_wait( struct Semaphore* sem );
+
+/// @brief Initialize mutex.
+/// @param[out] mtx Pointer to write mutex to.
+attr_core_api void mutex_init( struct Mutex* mtx );
+/// @brief Unlock mutex.
+/// @param[in] mtx Pointer to mutex to unlock.
+attr_core_api void mutex_unlock( struct Mutex* mtx );
+/// @brief Wait for mutex lock.
+/// @param[in] mtx Pointer to mutex to lock.
 /// @param     ms  Milliseconds to wait for. Use CORE_WAIT_INFINITE to wait indefinitely.
 /// @return
-///     - @c true  : Mutex lock was obtained in time.
-///     - @c false : Wait for mutex lock timed out.
-attr_core_api b32 mutex_lock_timed( Mutex* mut, u32 ms );
+///     - true  : Obtained mutex lock before @c ms elapsed.
+///     - false : Timed out.
+attr_core_api b32 mutex_lock_timed( struct Mutex* mtx, u32 ms );
 /// @brief Wait for mutex lock indefinitely.
-/// @param[in] mut Mutex to wait for lock on.
-attr_always_inline
-attr_header void mutex_lock( Mutex* mut ) {
-    (void)mutex_lock_timed( mut, CORE_WAIT_INFINITE );
+/// @param[in] mtx Pointer to mutex to lock.
+attr_header void mutex_lock( struct Mutex* mtx ) {
+    mutex_lock_timed( mtx, CORE_WAIT_INFINITE );
 }
-/// @brief Release lock on mutex.
-/// @param[in] mut Mutex to unlock.
-attr_core_api void mutex_unlock( Mutex* mut );
-/// @brief Destroy mutex.
-/// @param[in] mut Mutex to destroy.
-attr_core_api void mutex_destroy( Mutex* mut );
+
+/// @brief Spinlock the current thread until atom equals sentinel value.
+/// @param[in] atom     Pointer to atom to compare sentinel to.
+/// @param     sentinel Sentinel value to check for.
+/// @param     ms       Milliseconds to spinlock for. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - true  : Atom equals sentinel value before @c ms elapsed.
+///     - false : Timed out.
+attr_core_api b32 atomic_spinlock_timed( atomic32* atom, atomic32 sentinel, u32 ms );
+/// @brief Spinlock the current thread until atom equals sentinel value indefinitely.
+/// @param[in] atom     Pointer to atom to compare sentinel to.
+/// @param     sentinel Sentinel value to check for.
+attr_header void atomic_spinlock( atomic32* atom, atomic32 sentinel ) {
+    atomic_spinlock_timed( atom, sentinel, CORE_WAIT_INFINITE );
+}
+/// @brief Spinlock the current thread until atom equals sentinel value.
+/// @param[in] atom     Pointer to atom to compare sentinel to.
+/// @param     sentinel Sentinel value to check for.
+/// @param     ms       Milliseconds to spinlock for. Use CORE_WAIT_INFINITE to wait indefinitely.
+/// @return
+///     - true  : Atom equals sentinel value before @c ms elapsed.
+///     - false : Timed out.
+attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, atomic64 sentinel, u32 ms );
+/// @brief Spinlock the current thread until atom equals sentinel value indefinitely.
+/// @param[in] atom     Pointer to atom to compare sentinel to.
+/// @param     sentinel Sentinel value to check for.
+attr_header void atomic_spinlock64( atomic64* atom, atomic64 sentinel ) {
+    atomic_spinlock_timed64( atom, sentinel, CORE_WAIT_INFINITE );
+}
 
 #if defined(CORE_COMPILER_MSVC)
     /// @brief Issue a full read write barrier.
@@ -225,52 +327,52 @@ attr_core_api void mutex_destroy( Mutex* mut );
     /// @param[out] atom   Atomic integer to add to.
     /// @param      addend Value to add to atom.
     /// @return Previous value of @c atom.
-    #define atomic_add_size( atom, addend ) atomic_add64( atom, addend )
+    #define atomic_add_ptrsize( atom, addend ) atomic_add64( atom, addend )
     /// @brief Perform an atomic increment on signed integer.
     /// @param[out] atom Atomic integer to add one to.
     /// @return Previous value of @c atom.
-    #define atomic_increment_size( atom ) atomic_increment64( atom )
+    #define atomic_increment_ptrsize( atom ) atomic_increment64( atom )
     /// @brief Perform an atomic decrement on signed integer.
     /// @param[out] atom Atomic integer to subtract one from.
     /// @return Previous value of @c atom.
-    #define atomic_decrement_size( atom ) atomic_decrement64( atom )
+    #define atomic_decrement_ptrsize( atom ) atomic_decrement64( atom )
     /// @brief Atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to exchange.
     /// @param      exch Value to exchange atom with.
     /// @return Previous value of @c atom.
-    #define atomic_exchange_size( atom, exch ) atomic_exchange64( atom, exch )
+    #define atomic_exchange_ptrsize( atom, exch ) atomic_exchange64( atom, exch )
     /// @brief Conditionally and atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to compare and exchange.
     /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
     /// @param      exch Value to exchange atom with.
     /// @return Previous value of @c atom.
-    #define atomic_compare_exchange_size( atom, cmp, exch )\
+    #define atomic_compare_exchange_ptrsize( atom, cmp, exch )\
         atomic_compare_exchange64( atom, cmp, exch )
 #else
     /// @brief Perform an atomic add on signed integer.
     /// @param[out] atom   Atomic integer to add to.
     /// @param      addend Value to add to atom.
     /// @return Previous value of @c atom.
-    #define atomic_add_size( atom, addend ) atomic_add32( atom, addend )
+    #define atomic_add_ptrsize( atom, addend ) atomic_add32( atom, addend )
     /// @brief Perform an atomic increment on signed integer.
     /// @param[out] atom Atomic integer to add one to.
     /// @return Previous value of @c atom.
-    #define atomic_increment_size( atom ) atomic_increment32( atom )
+    #define atomic_increment_ptrsize( atom ) atomic_increment32( atom )
     /// @brief Perform an atomic decrement on signed integer.
     /// @param[out] atom Atomic integer to subtract one from.
     /// @return Previous value of @c atom.
-    #define atomic_decrement_size( atom ) atomic_decrement32( atom )
+    #define atomic_decrement_ptrsize( atom ) atomic_decrement32( atom )
     /// @brief Atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to exchange.
     /// @param      exch Value to exchange atom with.
     /// @return Previous value of @c atom.
-    #define atomic_exchange_size( atom, exch ) atomic_exchange32( atom, exch )
+    #define atomic_exchange_ptrsize( atom, exch ) atomic_exchange32( atom, exch )
     /// @brief Conditionally and atomically exchange value of atom with new value.
     /// @param[out] atom Atomic integer to compare and exchange.
     /// @param      cmp  Value to compare atom to. If they are equal, @c atom is exchanged with @c exch.
     /// @param      exch Value to exchange atom with.
     /// @return Previous value of @c atom.
-    #define atomic_compare_exchange_size( atom, cmp, exch )\
+    #define atomic_compare_exchange_ptrsize( atom, cmp, exch )\
         atomic_compare_exchange32( atom, cmp, exch )
 #endif
 

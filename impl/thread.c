@@ -12,6 +12,9 @@
 attr_core_api void thread_sleep( u32 ms ) {
     platform_sleep( ms );
 }
+attr_core_api void thread_yield(void) {
+    platform_yield();
+}
 attr_core_api b32 thread_create(
     ThreadMainFN* main, void* params,
     usize stack_size, ThreadHandle* out_handle

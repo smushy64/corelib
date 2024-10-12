@@ -223,10 +223,10 @@ struct Win32Mutex {
     rcast_ref( struct Win32Mutex, m )
 
 b32 platform_semaphore_create(
-    const char* name, struct Semaphore* out_sem
+    const char* name, u32 initial_value, struct NamedSemaphore* out_sem
 ) {
-    HANDLE handle = CreateSemaphoreEx(
-        NULL, 0, I32_MAX, name, 0, SEMAPHORE_ALL_ACCESS );
+    HANDLE handle = CreateSemaphoreExA(
+        NULL, initial_value, I32_MAX, name, 0, SEMAPHORE_ALL_ACCESS );
     if( handle == INVALID_HANDLE_VALUE ) {
         return false;
     }
@@ -236,15 +236,15 @@ b32 platform_semaphore_create(
 
     return true;
 }
-void platform_semaphore_destroy( struct Semaphore* in_sem ) {
+void platform_semaphore_destroy( struct NamedSemaphore* in_sem ) {
     struct Win32Semaphore* sem = to_win32sem( in_sem );
     CloseHandle( sem->handle );
 }
-void platform_semaphore_signal( struct Semaphore* in_sem ) {
+void platform_semaphore_signal( struct NamedSemaphore* in_sem ) {
     struct Win32Semaphore* sem = to_win32sem(in_sem);
     ReleaseSemaphore( sem->handle, 1, NULL );
 }
-b32 platform_semaphore_wait( struct Semaphore* in_sem, u32 ms ) {
+b32 platform_semaphore_wait( struct NamedSemaphore* in_sem, u32 ms ) {
     struct Win32Semaphore* sem = to_win32sem( in_sem );
 
     // NOTE(alicia): U32_MAX == INFINITE
@@ -256,9 +256,9 @@ b32 platform_semaphore_wait( struct Semaphore* in_sem, u32 ms ) {
     return true;
 }
 
-b32 platform_mutex_create( const char* name, struct Mutex* out_mutex ) {
+b32 platform_mutex_create( struct OSMutex* out_mutex ) {
     struct Win32Mutex* mutex = to_win32mut( out_mutex );
-    HANDLE handle = CreateMutexA( NULL, false, name );
+    HANDLE handle = CreateMutexA( NULL, false, NULL );
 
     if( handle == INVALID_HANDLE_VALUE ) {
         return false;
@@ -267,11 +267,11 @@ b32 platform_mutex_create( const char* name, struct Mutex* out_mutex ) {
     mutex->handle = handle;
     return true;
 }
-void platform_mutex_destroy( struct Mutex* in_mutex ) {
+void platform_mutex_destroy( struct OSMutex* in_mutex ) {
     struct Win32Mutex* mutex = to_win32mut( in_mutex );
     CloseHandle( mutex->handle );
 }
-b32 platform_mutex_lock( struct Mutex* in_mutex, u32 ms ) {
+b32 platform_mutex_lock( struct OSMutex* in_mutex, u32 ms ) {
     struct Win32Mutex* mutex = to_win32mut( in_mutex );
 
     // NOTE(alicia): U32_MAX == INFINITE
@@ -282,13 +282,16 @@ b32 platform_mutex_lock( struct Mutex* in_mutex, u32 ms ) {
     }
     return true;
 }
-void platform_mutex_unlock( struct Mutex* in_mutex ) {
+void platform_mutex_unlock( struct OSMutex* in_mutex ) {
     struct Win32Mutex* mutex = to_win32mut( in_mutex );
     ReleaseMutex( mutex->handle );
 }
 
 void platform_sleep( u32 ms ) {
     Sleep( (DWORD)ms );
+}
+void platform_yield() {
+    SwitchToThread();
 }
 
 struct Win32Thread {
@@ -317,7 +320,6 @@ u32 platform_thread_query_id(void) {
     usize value = (usize)TlsGetValue( global_win32.tls_index );
     return value;
 }
-
 b32 platform_thread_create(
     ThreadMainFN* main, void* params,
     usize stack_size, ThreadHandle* out_handle

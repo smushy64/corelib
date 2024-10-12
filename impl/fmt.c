@@ -592,7 +592,7 @@ attr_core_api usize stream_fmt_args(
     unreachable();
 }
 attr_internal b32 internal_fmt_parse_args(
-    String text, FormatArguments* args, union FmtValue* out_val, va_list* va );
+    String text, FormatArguments* args, union FmtValue* out_val, va_list va );
 attr_core_api usize stream_fmt(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ...
@@ -641,7 +641,9 @@ attr_core_api usize stream_fmt_va(
             args_text     = string_advance( args_text );
             format        = string_advance_by( format, close + 1 );
 
-            if( internal_fmt_parse_args( args_text, &args, &val, (va_list*)&va ) ) {
+            va_list va2;
+            va_copy( va2, va );
+            if( internal_fmt_parse_args( args_text, &args, &val, va2 ) ) {
                 if( !args.data ) {
                     args.data = &val;
                 }
@@ -649,6 +651,7 @@ attr_core_api usize stream_fmt_va(
                 memory_zero( &args, sizeof(args) );
                 memory_zero( &val, sizeof(val) );
             }
+            va_end( va2 );
         } else {
             res += stream( target, format.len, format.cc );
             break;
@@ -1074,7 +1077,7 @@ attr_internal b32 internal_fmt_parse_format_type(
     return false;
 }
 attr_internal b32 internal_fmt_parse_args(
-    String text, FormatArguments* args, union FmtValue* out_val, va_list* va
+    String text, FormatArguments* args, union FmtValue* out_val, va_list va
 ) {
 
     #define skip()\
@@ -1458,12 +1461,12 @@ internal_fmt_parse_args_skip:
 
     if( count_by_value ) {
         if( !repeat_by_value ) {
-            args->count = va_arg( *va, u32 );
+            args->count = va_arg( va, u32 );
         }
     }
 
     if( pointer && args->type != FT_TIME ) {
-        args->data = va_arg( *va, const void* );
+        args->data = va_arg( va, const void* );
         if( args->type == FT_STRING ) {
             usize strlen = cstr_len( (const cstr*)args->data );
             if( !args->count || args->count > strlen ) {
@@ -1476,16 +1479,16 @@ internal_fmt_parse_args_skip:
         }
         switch( args->type ) {
             case FT_BOOL: {
-                out_val->b32 = va_arg( *va, b32 );
+                out_val->b32 = va_arg( va, b32 );
             } break;
             case FT_CHAR: {
                 if( repeat_by_value ) {
-                    args->character.repeat = va_arg( *va, u32 );
+                    args->character.repeat = va_arg( va, u32 );
                 }
-                out_val->c  = va_arg( *va, u32 );
+                out_val->c  = va_arg( va, u32 );
             } break;
             case FT_STRING: {
-                String str = va_arg( *va, String );
+                String str = va_arg( va, String );
 
                 if( args->count <= 0 || args->count > str.len ) {
                     args->count = str.len;
@@ -1496,19 +1499,19 @@ internal_fmt_parse_args_skip:
             case FT_FLOAT: {
                 switch( args->floating.flags & FMT_FLOAT_VECTOR_MASK ) {
                     case FMT_FLOAT_VECTOR2: {
-                        out_val->v2 = va_arg( *va, vec2 );
+                        out_val->v2 = va_arg( va, vec2 );
                     } break;
                     case FMT_FLOAT_VECTOR3: {
-                        out_val->v3 = va_arg( *va, vec3 );
+                        out_val->v3 = va_arg( va, vec3 );
                     } break;
                     case FMT_FLOAT_VECTOR4: {
-                        out_val->v4 = va_arg( *va, vec4 );
+                        out_val->v4 = va_arg( va, vec4 );
                     } break;
                     case 0: {
                         if( bitfield_check( args->floating.flags, FMT_FLOAT_F64 ) ) {
-                            out_val->f64 = va_arg( *va, f64 );
+                            out_val->f64 = va_arg( va, f64 );
                         } else {
-                            out_val->f32 = va_arg( *va, f64 );
+                            out_val->f32 = va_arg( va, f64 );
                         }
                     } break;
                 }
@@ -1516,13 +1519,13 @@ internal_fmt_parse_args_skip:
             case FT_INT: {
                 switch( args->integer.flags & FMT_INT_VECTOR_MASK ) {
                     case FMT_INT_VECTOR2: {
-                        out_val->v2 = va_arg( *va, vec2 );
+                        out_val->v2 = va_arg( va, vec2 );
                     } break;
                     case FMT_INT_VECTOR3: {
-                        out_val->v3 = va_arg( *va, vec3 );
+                        out_val->v3 = va_arg( va, vec3 );
                     } break;
                     case FMT_INT_VECTOR4: {
-                        out_val->v4 = va_arg( *va, vec4 );
+                        out_val->v4 = va_arg( va, vec4 );
                     } break;
                     default: {
                         switch( args->integer.flags & FMT_INT_BITDEPTH_MASK ) {
@@ -1530,27 +1533,27 @@ internal_fmt_parse_args_skip:
                             case FMT_INT_BITDEPTH_PTR:
 #endif
                             case FMT_INT_BITDEPTH_32: {
-                                out_val->u32 = va_arg( *va, u32 );
+                                out_val->u32 = va_arg( va, u32 );
                             } break;
                             case FMT_INT_BITDEPTH_16: {
                                 if( args->integer.flags & FMT_INT_SIGNED ) {
-                                    out_val->i16 = va_arg( *va, i32 );
+                                    out_val->i16 = va_arg( va, i32 );
                                 } else {
-                                    out_val->u16 = va_arg( *va, u32 );
+                                    out_val->u16 = va_arg( va, u32 );
                                 }
                             } break;
                             case FMT_INT_BITDEPTH_8: {
                                 if( args->integer.flags & FMT_INT_SIGNED ) {
-                                    out_val->i8 = va_arg( *va, i32 );
+                                    out_val->i8 = va_arg( va, i32 );
                                 } else {
-                                    out_val->u8 = va_arg( *va, u32 );
+                                    out_val->u8 = va_arg( va, u32 );
                                 }
                             } break;
 #if defined(CORE_ARCH_64_BIT)
                             case FMT_INT_BITDEPTH_PTR:
 #endif
                             case FMT_INT_BITDEPTH_64: {
-                                out_val->u64 = va_arg( *va, u64 );
+                                out_val->u64 = va_arg( va, u64 );
                             } break;
                         }
                     } break;
@@ -1558,10 +1561,10 @@ internal_fmt_parse_args_skip:
             } break;
             case FT_TIME: {
                 if( pointer ) {
-                    args->time.fmt     = va_arg( *va, char* );
+                    args->time.fmt     = va_arg( va, char* );
                     args->time.fmt_len = cstr_len( args->time.fmt );
                 }
-                out_val->ts = va_arg( *va, TimeSplit );
+                out_val->ts = va_arg( va, TimeSplit );
             } break;
         }
     }

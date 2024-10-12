@@ -134,15 +134,8 @@ attr_core_api JobQueue* job_queue_create(
     q->front       = -1;
     q->back        = 0;
 
-    if( !semaphore_create( &q->sem_wake_up ) ) {
-        core_error( "job queue failed to create required semaphore!" );
-        return false;
-    }
-    if( !semaphore_create( &q->sem_entry_complete ) ) {
-        core_error( "job queue failed to create required semaphore!" );
-        semaphore_destroy( &q->sem_wake_up );
-        return false;
-    }
+    semaphore_init( &q->sem_wake_up, 0 );
+    semaphore_init( &q->sem_entry_complete, 0 );
 
     struct InternalThreadArray* array =
         (struct InternalThreadArray*)
@@ -168,8 +161,6 @@ attr_core_api JobQueue* job_queue_create(
         }
     } else {
         core_error( "job queue failed to create any threads!" );
-        semaphore_destroy( &q->sem_wake_up );
-        semaphore_destroy( &q->sem_entry_complete );
         return false;
     }
 
@@ -189,9 +180,6 @@ attr_core_api void job_queue_destroy( JobQueue* queue ) {
         semaphore_signal( &q->sem_wake_up );
     }
     read_write_barrier();
-
-    semaphore_destroy( &q->sem_wake_up );
-    semaphore_destroy( &q->sem_entry_complete );
 
     read_write_barrier();
     usize job_queue_size = internal_job_queue_size( max_entries );

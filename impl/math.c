@@ -920,8 +920,6 @@ attr_core_api struct Vector4 m4_mul_v4(
     );
 }
 attr_core_api f32 m4_determinant( const struct Matrix4x4* m ) {
-    // TODO(alicia): sse?
-
     struct Matrix3x3 sub0 = m4_submatrix( m, 0, 0 );
     struct Matrix3x3 sub1 = m4_submatrix( m, 1, 0 );
     struct Matrix3x3 sub2 = m4_submatrix( m, 2, 0 );
@@ -1099,8 +1097,6 @@ attr_core_api struct Matrix4x4 m4_rotation_euler( f32 pitch, f32 yaw, f32 roll )
 }
 attr_core_api struct Matrix4x4 m4_rotation( struct Quaternion rotation ) {
     struct Matrix4x4 res = MAT4_IDENTITY;
-
-    // TODO(alicia): sse?
 
     f32 _2x2 = 2.0f * (rotation.x * rotation.x);
     f32 _2y2 = 2.0f * (rotation.y * rotation.y);

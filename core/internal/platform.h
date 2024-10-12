@@ -22,21 +22,23 @@ TimeSplit platform_time_split(void);
 f64 platform_timer_milliseconds(void);
 f64 platform_timer_seconds(void);
 
-struct Semaphore;
-struct Mutex;
+struct NamedSemaphore;
+struct OSMutex;
 
 b32 platform_semaphore_create(
-    const char* name, struct Semaphore* out_sem );
-void platform_semaphore_destroy( struct Semaphore* sem );
-void platform_semaphore_signal( struct Semaphore* sem );
-b32 platform_semaphore_wait( struct Semaphore* sem, u32 ms );
+    const char* name, u32 initial_value, struct NamedSemaphore* out_sem );
+void platform_semaphore_destroy( struct NamedSemaphore* sem );
+void platform_semaphore_signal( struct NamedSemaphore* sem );
+b32 platform_semaphore_wait( struct NamedSemaphore* sem, u32 ms );
 
-b32 platform_mutex_create( const char* name, struct Mutex* out_mutex );
-void platform_mutex_destroy( struct Mutex* mutex );
-b32 platform_mutex_lock( struct Mutex* mutex, u32 ms );
-void platform_mutex_unlock( struct Mutex* mutex );
+b32 platform_mutex_create( struct OSMutex* out_mutex );
+void platform_mutex_destroy( struct OSMutex* mutex );
+b32 platform_mutex_lock( struct OSMutex* mutex, u32 ms );
+void platform_mutex_unlock( struct OSMutex* mutex );
 
 void platform_sleep( u32 ms );
+
+void platform_yield(void);
 
 b32 platform_thread_create(
     ThreadMainFN* main, void* params,

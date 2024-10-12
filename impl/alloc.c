@@ -21,7 +21,7 @@ attr_core_api void* stack_allocator_push(
     }
     usize offset = 0;
     if( stack->is_atomic ) {
-        offset = atomic_add_size( (atomic_size*)&stack->at, _size );
+        offset = atomic_add_ptrsize( (atomic_size*)&stack->at, _size );
     } else {
         offset = stack->at;
         stack->at += _size;
@@ -47,7 +47,7 @@ attr_core_api void stack_allocator_pop(
         _size += alignment + sizeof(void*);
     }
     if( stack->is_atomic ) {
-        atomic_add_size( (atomic_size*)&stack->at, -_size );
+        atomic_add_ptrsize( (atomic_size*)&stack->at, -_size );
     } else {
         stack->at -= _size;
     }
@@ -56,7 +56,7 @@ attr_core_api void stack_allocator_pop(
 attr_core_api void stack_allocator_clear( StackAllocator* stack ) {
     usize at = 0;
     if( stack->is_atomic ) {
-        at = atomic_exchange_size( (atomic_size*)&stack->at, 0 );
+        at = atomic_exchange_ptrsize( (atomic_size*)&stack->at, 0 );
     } else {
         at        = stack->at;
         stack->at = 0;
