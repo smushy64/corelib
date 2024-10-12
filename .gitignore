@@ -7,3 +7,4 @@ docs/Doxyfile_*
 !docs/Doxyfile_default
 generated
 *.pdb
+cbuild
