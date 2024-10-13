@@ -163,11 +163,11 @@ attr_header void mutex_lock( struct Mutex* mtx ) {
 /// @return
 ///     - @c true  : Atom equals sentinel value before @c ms elapsed.
 ///     - @c false : Timed out.
-attr_core_api b32 atomic_spinlock_timed( atomic32* atom, atomic32 sentinel, u32 ms );
+attr_core_api b32 atomic_spinlock_timed( atomic32* atom, i32 sentinel, u32 ms );
 /// @brief Spinlock the current thread until atom equals sentinel value indefinitely.
 /// @param[in] atom     Pointer to atom to compare sentinel to.
 /// @param     sentinel Sentinel value to check for.
-attr_header void atomic_spinlock( atomic32* atom, atomic32 sentinel ) {
+attr_header void atomic_spinlock( atomic32* atom, i32 sentinel ) {
     atomic_spinlock_timed( atom, sentinel, CORE_WAIT_INFINITE );
 }
 /// @brief Spinlock the current thread until atom equals sentinel value.
@@ -177,11 +177,11 @@ attr_header void atomic_spinlock( atomic32* atom, atomic32 sentinel ) {
 /// @return
 ///     - true  : Atom equals sentinel value before @c ms elapsed.
 ///     - false : Timed out.
-attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, atomic64 sentinel, u32 ms );
+attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, i64 sentinel, u32 ms );
 /// @brief Spinlock the current thread until atom equals sentinel value indefinitely.
 /// @param[in] atom     Pointer to atom to compare sentinel to.
 /// @param     sentinel Sentinel value to check for.
-attr_header void atomic_spinlock64( atomic64* atom, atomic64 sentinel ) {
+attr_header void atomic_spinlock64( atomic64* atom, i64 sentinel ) {
     atomic_spinlock_timed64( atom, sentinel, CORE_WAIT_INFINITE );
 }
 

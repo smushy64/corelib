@@ -113,7 +113,7 @@ attr_core_api b32 mutex_lock_timed( struct Mutex* mtx, u32 ms ) {
     return true;
 }
 
-attr_internal void internal_atomic_spinlock( atomic32* atom, atomic32 sentinel ) {
+attr_internal void internal_atomic_spinlock( atomic32* atom, i32 sentinel ) {
     for( ;; ) {
         atomic_compare_exchange32( atom, sentinel, sentinel );
         if( *atom == sentinel ) {
@@ -125,7 +125,7 @@ attr_internal void internal_atomic_spinlock( atomic32* atom, atomic32 sentinel )
     }
 }
 
-attr_internal void internal_atomic_spinlock64( atomic64* atom, atomic64 sentinel ) {
+attr_internal void internal_atomic_spinlock64( atomic64* atom, i64 sentinel ) {
     for( ;; ) {
         atomic_compare_exchange64( atom, sentinel, sentinel );
         if( *atom == sentinel ) {
@@ -137,7 +137,7 @@ attr_internal void internal_atomic_spinlock64( atomic64* atom, atomic64 sentinel
     }
 }
 
-attr_core_api b32 atomic_spinlock_timed( atomic32* atom, atomic32 sentinel, u32 ms ) {
+attr_core_api b32 atomic_spinlock_timed( atomic32* atom, i32 sentinel, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         internal_atomic_spinlock( atom, sentinel );
         return true;
@@ -164,7 +164,7 @@ attr_core_api b32 atomic_spinlock_timed( atomic32* atom, atomic32 sentinel, u32 
 
     return true;
 }
-attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, atomic64 sentinel, u32 ms ) {
+attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, i64 sentinel, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         internal_atomic_spinlock64( atom, sentinel );
         return true;

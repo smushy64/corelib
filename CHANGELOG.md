@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- sync: changed type of sentinel from volatile to just integer for atomic_spinlock functions.
 - posix: cbuild/sync: defined CORE_PLATFORM_OS_MUTEX_SIZE in build system.
 - cbuild: fixed --include flag so it works with clang and gcc
 - README: added linux to supported platforms.
