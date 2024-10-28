@@ -9,6 +9,23 @@
 */
 #include "core/defines.h"
 
+#if defined(CORE_PLATFORM_WINDOWS)
+    #include "impl/platform_win32.c"
+#endif
+#if defined(CORE_PLATFORM_POSIX)
+    #include "impl/platform_posix.c"
+#endif
+#if defined(CORE_ENABLE_STATIC_BUILD)
+    // pragma_error( "static build option is unimplemented!" );
+    #include "impl/platform_staticmain.c"
+#else
+    #include "impl/platform_sharedmain.c"
+#endif
+
+#if !defined(CORE_ENABLE_STDLIB)
+    #include "impl/cstdlib.c"
+#endif
+
 #include "impl/alloc.c"
 #include "impl/collections.c"
 #include "impl/fmt.c"
@@ -28,22 +45,5 @@
 #include "impl/time.c"
 #include "impl/hash.c"
 #include "impl/unicode.c"
-
-#if defined(CORE_PLATFORM_WINDOWS)
-    #include "impl/platform_win32.c"
-#endif
-#if defined(CORE_PLATFORM_POSIX)
-    #include "impl/platform_posix.c"
-#endif
-#if defined(CORE_ENABLE_STATIC_BUILD)
-    // pragma_error( "static build option is unimplemented!" );
-    #include "impl/platform_staticmain.c"
-#else
-    #include "impl/platform_sharedmain.c"
-#endif
-
-#if !defined(CORE_ENABLE_STDLIB)
-    #include "impl/cstdlib.c"
-#endif
 
 #endif /* header guard */
