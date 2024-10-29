@@ -190,7 +190,7 @@ void platform_sleep( u32 ms ) {
     memory_zero( &rem, sizeof(rem) );
 
     while( clock_nanosleep( CLOCK_REALTIME, 0, &ts, &rem ) ) {
-        rem = ts;
+        ts = rem;
     }
 }
 void platform_yield(void) {
