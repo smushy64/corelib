@@ -107,17 +107,27 @@ void posix_shutdown(void) {
 }
 
 void* platform_heap_alloc( const usize size ) {
+    return calloc( 1, size );
+#if 0
     void* result = mmap(
         0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0 );
     if( result == MAP_FAILED ) {
         return NULL;
     }
     return result;
+#endif
 }
 #if !defined(CORE_PLATFORM_LINUX)
 void* platform_heap_realloc(
     void* old_buffer, const usize old_size, const usize new_size
 ) {
+    u8* result = (u8*)realloc( old_buffer, new_size );
+    if( !result ) {
+        return NULL;
+    }
+    memory_set( result + old_size, 0, new_size - old_size );
+    return result;
+#if 0
     void* new_buffer = platform_heap_alloc( new_size );
     if( !new_buffer ) {
         return NULL;
@@ -126,10 +136,15 @@ void* platform_heap_realloc(
     platform_heap_free( old_buffer, old_size );
 
     return new_buffer;
+#endif
 }
 #endif
 void platform_heap_free( void* buffer, const usize size ) {
+    unused(size);
+    free( buffer );
+#if 0
     munmap( buffer, size );
+#endif
 }
 
 TimePosix platform_time_posix(void) {
