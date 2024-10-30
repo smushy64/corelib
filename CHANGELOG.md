@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- posix: fd_read/write logging.
 - path: posix: removed u8 from path_text string literal.
 - time: posix: bug: platform_sleep() was reassigning rem instead of ts.
 - sources: moved order of includes to appease POSIX-layer when enabling SIMD

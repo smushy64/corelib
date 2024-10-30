@@ -541,6 +541,9 @@ b32 platform_fd_write(
 ) {
     isize result = write( fd->opaque, buf, bytes );
     if( result < 0 ) {
+        core_error(
+            "posix: failed to write {usize,mib}! reason: {cc}",
+            bytes, strerror(errno) );
         return false;
     }
     if( opt_out_write ) {
@@ -553,6 +556,9 @@ b32 platform_fd_read(
 ) {
     isize result = read( fd->opaque, buf, buf_size );
     if( result < 0 ) {
+        core_error(
+            "posix: failed to read {usize,mib}! reason: {cc}",
+            buf_size, strerror(errno) );
         return false;
     }
     if( opt_out_read ) {
