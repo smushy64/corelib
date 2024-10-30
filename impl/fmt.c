@@ -641,9 +641,9 @@ attr_core_api usize stream_fmt_va(
             args_text     = string_advance( args_text );
             format        = string_advance_by( format, close + 1 );
 
-            va_list va2;
-            va_copy( va2, va );
-            if( internal_fmt_parse_args( args_text, &args, &val, va2 ) ) {
+            /* va_list va2; */
+            /* va_copy( va2, va ); */
+            if( internal_fmt_parse_args( args_text, &args, &val, va ) ) {
                 if( !args.data ) {
                     args.data = &val;
                 }
@@ -651,7 +651,7 @@ attr_core_api usize stream_fmt_va(
                 memory_zero( &args, sizeof(args) );
                 memory_zero( &val, sizeof(val) );
             }
-            va_end( va2 );
+            /* va_end( va2 ); */
         } else {
             res += stream( target, format.len, format.cc );
             break;

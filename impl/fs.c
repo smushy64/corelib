@@ -66,8 +66,11 @@ attr_core_api b32 fd_read(
 attr_core_api b32 fd_write_fmt_va(
     FD* fd, usize* opt_out_write, usize format_len, const char* format, va_list va
 ) {
-    *opt_out_write = stream_fmt_va( fd_stream_write, fd, format_len, format, va );
-    return *opt_out_write == 0;
+    usize write = stream_fmt_va( fd_stream_write, fd, format_len, format, va );
+    if( opt_out_write ) {
+        *opt_out_write = format_len - write;
+    }
+    return write == 0;
 }
 attr_core_api usize fd_stream_write(
     void* struct_FD, usize count, const void* buf

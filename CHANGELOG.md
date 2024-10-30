@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- fmt: bug: copy va unnecessarily. -- test on windows
+- fs: bug: fd_write_fmt_va not checking for null on opt_out_write parameter.
 - posix: fd_read/write logging.
 - path: posix: removed u8 from path_text string literal.
 - time: posix: bug: platform_sleep() was reassigning rem instead of ts.
