@@ -23,7 +23,11 @@ void ms_to_ts_abs( u32 ms, struct timespec* out_ts );
 void* platform_heap_realloc(
     void* old_buffer, const usize old_size, const usize new_size
 ) {
-    return mremap( old_buffer, old_size, new_size, MREMAP_MAYMOVE );
+    void* result = mremap( old_buffer, old_size, new_size, MREMAP_MAYMOVE );
+    if( result == MAP_FAILED ) {
+        return NULL;
+    }
+    return result;
 }
 b32 posix_thread_join_timed( ThreadHandle* handle, u32 ms, int* opt_out_exit_code ) {
     struct timespec ts;

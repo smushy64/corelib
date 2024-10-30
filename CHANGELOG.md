@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- posix: bug: mmap and mremap return MAP_FAILED instead of NULL when they fail.
 - fmt: bug: copy va unnecessarily. -- test on windows
 - fs: bug: fd_write_fmt_va not checking for null on opt_out_write parameter.
 - posix: fd_read/write logging.

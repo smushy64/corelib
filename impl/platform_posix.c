@@ -107,7 +107,12 @@ void posix_shutdown(void) {
 }
 
 void* platform_heap_alloc( const usize size ) {
-    return mmap( 0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0 );
+    void* result = mmap(
+        0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0 );
+    if( result == MAP_FAILED ) {
+        return NULL;
+    }
+    return result;
 }
 #if !defined(CORE_PLATFORM_LINUX)
 void* platform_heap_realloc(
