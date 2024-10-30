@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- path: posix: removed u8 from path_text string literal.
 - time: posix: bug: platform_sleep() was reassigning rem instead of ts.
 - sources: moved order of includes to appease POSIX-layer when enabling SIMD
 - sync: changed type of sentinel from volatile to just integer for atomic_spinlock functions.

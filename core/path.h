@@ -44,7 +44,7 @@ struct AllocatorInterface;
     /// @brief Create a path string literal.
     /// @param literal (string literal) String literal.
     /// @return Path string literal.
-    #define path_raw_string( literal ) u8##literal
+    #define path_raw_string( literal ) literal
     /// @brief Path separator character for current platform.
     #define PATH_SEPARATOR path_raw_char( '/' )
 #endif
