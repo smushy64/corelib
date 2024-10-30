@@ -51,7 +51,7 @@ attr_core_api void stack_allocator_pop(
     } else {
         stack->at -= _size;
     }
-    memory_free( (u8*)stack->start + stack->at, _size );
+    memory_zero( (u8*)stack->start + stack->at, _size );
 }
 attr_core_api void stack_allocator_clear( StackAllocator* stack ) {
     usize at = 0;

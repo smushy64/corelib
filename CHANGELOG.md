@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- alloc: bug: calling memory_free instead of memory_zero!
 - posix: reverted to using malloc/realloc/free instead of mmap.
 - posix: bug: mmap and mremap return MAP_FAILED instead of NULL when they fail.
 - fmt: bug: copy va unnecessarily. -- test on windows
