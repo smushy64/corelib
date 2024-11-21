@@ -119,15 +119,21 @@
 )(edge0, edge1, x)
 
 #define neg( x ) _Generic( (x),\
-    vec2: vec2_neg,\
-    vec3: vec3_neg,\
-    vec4: vec4_neg,\
-    quat: quat_neg\
+    vec2:  vec2_neg,\
+    vec3:  vec3_neg,\
+    vec4:  vec4_neg,\
+    ivec2: ivec2_neg,\
+    ivec3: ivec3_neg,\
+    ivec4: ivec4_neg,\
+    quat:  quat_neg\
 )(x)
 #define add( lhs, rhs ) _Generic( (lhs),\
     vec2:        vec2_add,\
     vec3:        vec3_add,\
     vec4:        vec4_add,\
+    ivec2:       ivec2_add,\
+    ivec3:       ivec3_add,\
+    ivec4:       ivec4_add,\
     quat:        quat_add,\
     mat2:        mat2_add,\
     mat3*:       mat3_add,\
@@ -139,6 +145,9 @@
     vec2:        vec2_sub,\
     vec3:        vec3_sub,\
     vec4:        vec4_sub,\
+    ivec2:       ivec2_sub,\
+    ivec3:       ivec3_sub,\
+    ivec4:       ivec4_sub,\
     quat:        quat_sub,\
     mat2:        mat2_sub,\
     mat3*:       mat3_sub,\
@@ -158,6 +167,18 @@
     vec4: _Generic( (rhs),\
         vec4:    vec4_mul_vec4,\
         default: vec4_mul\
+    ),\
+    ivec2: _Generic( (rhs),\
+        ivec2:   ivec2_mul_ivec2,\
+        default: ivec2_mul\
+    ),\
+    ivec3: _Generic( (rhs),\
+        ivec3:   ivec3_mul_ivec3,\
+        default: ivec3_mul\
+    ),\
+    ivec4: _Generic( (rhs),\
+        ivec4:   ivec4_mul_ivec4,\
+        default: ivec4_mul\
     ),\
     quat: _Generic( (rhs),\
         quat:    quat_mul_quat,\
@@ -194,9 +215,12 @@
     )\
 )( lhs, rhs )
 #define hadamard( lhs, rhs ) _Generic( (lhs),\
-    vec2: vec2_mul_vec2,\
-    vec3: vec3_mul_vec3,\
-    vec4: vec4_mul_vec4,\
+    vec2:  vec2_mul_vec2,\
+    vec3:  vec3_mul_vec3,\
+    vec4:  vec4_mul_vec4,\
+    ivec2: ivec2_mul_ivec2,\
+    ivec3: ivec3_mul_ivec3,\
+    ivec4: ivec4_mul_ivec4\
 )( lhs, rhs )
 #define div( lhs, rhs ) _Generic( (lhs),\
     vec2: _Generic( (rhs),\
@@ -210,6 +234,18 @@
     vec4: _Generic( (rhs),\
         vec4:    vec4_div_vec4,\
         default: vec4_div\
+    ),\
+    ivec2: _Generic( (rhs),\
+        ivec2:   ivec2_div_ivec2,\
+        default: ivec2_div\
+    ),\
+    ivec3: _Generic( (rhs),\
+        ivec3:   ivec3_div_ivec3,\
+        default: ivec3_div\
+    ),\
+    ivec4: _Generic( (rhs),\
+        ivec4:   ivec4_div_ivec4,\
+        default: ivec4_div\
     ),\
     quat: _Generic( (rhs),\
         quat:    quat_div_quat,\
@@ -226,20 +262,29 @@
     const mat4*: mat4_div\
 )( lhs, rhs )
 #define hadd( x ) _Generic( (x),\
-    vec2: vec2_hadd,\
-    vec3: vec3_hadd,\
-    vec4: vec4_hadd\
+    vec2:  vec2_hadd,\
+    vec3:  vec3_hadd,\
+    vec4:  vec4_hadd,\
+    ivec2: ivec2_hadd,\
+    ivec3: ivec3_hadd,\
+    ivec4: ivec4_hadd\
 )( x )
 #define hmul( x ) _Generic( (x),\
-    vec2: vec2_hmul,\
-    vec3: vec3_hmul,\
-    vec4: vec4_hmul\
+    vec2:  vec2_hmul,\
+    vec3:  vec3_hmul,\
+    vec4:  vec4_hmul,\
+    ivec2: ivec2_hmul,\
+    ivec3: ivec3_hmul,\
+    ivec4: ivec4_hmul\
 )( x )
 #define dot( lhs, rhs ) _Generic( (lhs),\
-    vec2: vec2_dot,\
-    vec3: vec3_dot,\
-    vec4: vec4_dot,\
-    quat: quat_dot\
+    vec2:  vec2_dot,\
+    vec3:  vec3_dot,\
+    vec4:  vec4_dot,\
+    ivec2: ivec2_dot,\
+    ivec3: ivec3_dot,\
+    ivec4: ivec4_dot,\
+    quat:  quat_dot\
 )( lhs, rhs )
 #define cross( lhs, rhs ) _Generic( (lhs),\
     vec3: vec3_cross\
@@ -282,26 +327,38 @@
     default: num_clamp\
 )( x, min, max )
 #define length_sqr( x ) _Generic( (x),\
-    vec2: vec2_length_sqr,\
-    vec3: vec3_length_sqr,\
-    vec4: vec4_length_sqr,\
-    quat: quat_length_sqr\
+    vec2:  vec2_length_sqr,\
+    vec3:  vec3_length_sqr,\
+    vec4:  vec4_length_sqr,\
+    ivec2: ivec2_length_sqr,\
+    ivec3: ivec3_length_sqr,\
+    ivec4: ivec4_length_sqr,\
+    quat:  quat_length_sqr\
 )( x )
 #define length( x ) _Generic( (x),\
-    vec2: vec2_length,\
-    vec3: vec3_length,\
-    vec4: vec4_length,\
-    quat: quat_length\
+    vec2:  vec2_length,\
+    vec3:  vec3_length,\
+    vec4:  vec4_length,\
+    ivec2: ivec2_length,\
+    ivec3: ivec3_length,\
+    ivec4: ivec4_length,\
+    quat:  quat_length\
 )( x )
 #define distance_sqr( a, b ) _Generic( (a),\
-    vec2: vec2_distance_sqr,\
-    vec3: vec3_distance_sqr,\
-    vec4: vec4_distance_sqr\
+    vec2:  vec2_distance_sqr,\
+    vec3:  vec3_distance_sqr,\
+    vec4:  vec4_distance_sqr,\
+    ivec2: ivec2_distance_sqr,\
+    ivec3: ivec3_distance_sqr,\
+    ivec4: ivec4_distance_sqr\
 )( a, b )
 #define distance( a, b ) _Generic( (a),\
-    vec2: vec2_distance,\
-    vec3: vec3_distance,\
-    vec4: vec4_distance\
+    vec2:  vec2_distance,\
+    vec3:  vec3_distance,\
+    vec4:  vec4_distance,\
+    ivec2: ivec2_distance,\
+    ivec3: ivec3_distance,\
+    ivec4: ivec4_distance\
 )( a, b )
 #define normalize( x ) _Generic( (x),\
     u8:  u8_normalize,\
@@ -408,6 +465,9 @@
     vec2:    vec2_cmp,\
     vec3:    vec3_cmp,\
     vec4:    vec4_cmp,\
+    ivec2:   ivec2_cmp,\
+    ivec3:   ivec3_cmp,\
+    ivec4:   ivec4_cmp,\
     quat:    quat_cmp,\
     default: f32_cmp\
 )( a, b )

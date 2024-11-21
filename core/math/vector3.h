@@ -666,6 +666,15 @@ attr_header struct IVector3 ivec3_sub(
 ) {
     return ivec3_new( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z );
 }
+/// @brief Component-wise multiply vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+attr_always_inline
+attr_header struct IVector3 ivec3_mul_ivec3(
+    struct IVector3 lhs, struct IVector3 rhs
+) {
+    return ivec3_new( lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z );
+}
 /// @brief Multiply vector components.
 /// @param lhs Vector to multiply.
 /// @param rhs Scalar to multiply components by.
@@ -673,6 +682,15 @@ attr_header struct IVector3 ivec3_sub(
 attr_always_inline
 attr_header struct IVector3 ivec3_mul( struct IVector3 lhs, i32 rhs ) {
     return ivec3_new( lhs.x * rhs, lhs.y * rhs, lhs.z * rhs );
+}
+/// @brief Component-wise divide vectors.
+/// @param lhs, rhs Vectors to divide.
+/// @return Result of division.
+attr_always_inline
+attr_header struct IVector3 ivec3_div_ivec3(
+    struct IVector3 lhs, struct IVector3 rhs
+) {
+    return ivec3_new( lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z );
 }
 /// @brief Divide vector components.
 /// @param lhs Vector to divide.

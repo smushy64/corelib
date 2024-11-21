@@ -34,6 +34,8 @@ struct Vector2CPP {
     attr_always_inline attr_header
     Vector2CPP( const struct Vector2& v ) : x(v.x), y(v.y) {}
     attr_always_inline attr_header
+    explicit Vector2CPP( const struct IVector2& v ) : x(v.x), y(v.y) {}
+    attr_always_inline attr_header
     explicit Vector2CPP( f32 s ) : x(s), y(s) {}
     attr_always_inline attr_header
     explicit Vector2CPP( f32 x, f32 y ) : x(x), y(y) {}
@@ -86,7 +88,78 @@ struct Vector2CPP {
         return array[idx];
     }
 };
+struct IVector2CPP {
+    union {
+        struct { i32 x, y; };
+        struct { i32 w, h; };
+        struct IVector2 pod;
 
+        Swizzler<IVector2CPP, i32, 0, 0> xx, ww;
+        Swizzler<IVector2CPP, i32, 1, 1> yy, hh;
+        Swizzler<IVector2CPP, i32, 1, 0> yx, hw;
+
+        i32 array[2];
+    };
+
+    attr_always_inline attr_header
+    IVector2CPP() : x(0), y(0) {}
+    attr_always_inline attr_header
+    IVector2CPP( const struct IVector2& v ) : x(v.x), y(v.y) {}
+    attr_always_inline attr_header
+    explicit IVector2CPP( const struct Vector2& v ) : x(v.x), y(v.y) {}
+    attr_always_inline attr_header
+    explicit IVector2CPP( i32 s ) : x(s), y(s) {}
+    attr_always_inline attr_header
+    explicit IVector2CPP( i32 x, i32 y ) : x(x), y(y) {}
+
+    attr_always_inline attr_header
+    operator IVector2() const {
+        return *(struct IVector2*)this;
+    }
+
+    attr_always_inline attr_header static
+    IVector2CPP zero() {
+        return IVector2CPP();
+    }
+    attr_always_inline attr_header static
+    IVector2CPP one() {
+        return IVector2CPP( 1, 1 );
+    }
+    attr_always_inline attr_header static
+    IVector2CPP left() {
+        return IVector2CPP( -1, 0 );
+    }
+    attr_always_inline attr_header static
+    IVector2CPP right() {
+        return IVector2CPP( 1, 0 );
+    }
+    attr_always_inline attr_header static
+    IVector2CPP up() {
+        return IVector2CPP( 0, 1 );
+    }
+    attr_always_inline attr_header static
+    IVector2CPP down() {
+        return IVector2CPP( 0, -1 );
+    }
+
+    attr_always_inline attr_header static
+    IVector2CPP from_array( const i32 array[2] ) {
+        return *(IVector2CPP*)array;
+    }
+    attr_always_inline attr_header
+    void to_array( i32 out_array[2] ) const {
+        out_array[0] = array[0]; out_array[1] = array[1];
+    }
+
+    attr_always_inline attr_header
+    i32 operator[]( usize idx ) const {
+        return array[idx];
+    }
+    attr_always_inline attr_header
+    i32& operator[]( usize idx ) {
+        return array[idx];
+    }
+};
 attr_always_inline
 attr_header Vector2CPP add(
     Vector2CPP lhs, Vector2CPP rhs
@@ -333,6 +406,136 @@ attr_header b32 operator==( Vector2CPP a, Vector2CPP b ) {
 attr_always_inline
 attr_header b32 operator!=( Vector2CPP a, Vector2CPP b ) {
     return !(a == b);
+}
+
+attr_always_inline
+attr_header IVector2CPP add( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_add( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header IVector2CPP sub( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_sub( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header IVector2CPP mul( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_mul_ivec2( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header IVector2CPP hadamard( IVector2CPP lhs, IVector2CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP mul( IVector2CPP lhs, i32 rhs ) {
+    return ivec2_mul( lhs.pod, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP mul( i32 lhs, IVector2CPP rhs ) {
+    return ivec2_mul( rhs.pod, lhs );
+}
+attr_always_inline
+attr_header IVector2CPP div( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_div_ivec2( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header IVector2CPP div( IVector2CPP lhs, i32 rhs ) {
+    return ivec2_div( lhs.pod, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP neg( IVector2CPP v ) {
+    return ivec2_neg( v.pod );
+}
+attr_always_inline
+attr_header i32 hadd( IVector2CPP v ) {
+    return ivec2_hadd( v.pod );
+}
+attr_always_inline
+attr_header i32 hmul( IVector2CPP v ) {
+    return ivec2_hmul( v.pod );
+}
+attr_always_inline
+attr_header f32 dot( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_dot( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header f32 aspect_ratio( IVector2CPP v ) {
+    return ivec2_aspect_ratio( v.pod );
+}
+attr_always_inline
+attr_header f32 length_sqr( IVector2CPP v ) {
+    return ivec2_length_sqr( v.pod );
+}
+attr_always_inline
+attr_header f32 length( IVector2CPP v ) {
+    return ivec2_length( v.pod );
+}
+attr_always_inline
+attr_header b32 cmp( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_cmp( a.pod, b.pod );
+}
+
+attr_always_inline
+attr_header IVector2CPP& operator+=( IVector2CPP& lhs, IVector2CPP rhs ) {
+    return lhs = add( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP& operator-=( IVector2CPP& lhs, IVector2CPP rhs ) {
+    return lhs = sub( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP& operator*=( IVector2CPP& lhs, IVector2CPP rhs ) {
+    return lhs = mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP& operator*=( IVector2CPP& lhs, i32 rhs ) {
+    return lhs = mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP& operator/=( IVector2CPP& lhs, IVector2CPP rhs ) {
+    return lhs = div( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP& operator/=( IVector2CPP& lhs, i32 rhs ) {
+    return lhs = div( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator+( IVector2CPP lhs, IVector2CPP rhs ) {
+    return add( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator-( IVector2CPP lhs, IVector2CPP rhs ) {
+    return sub( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator*( IVector2CPP lhs, IVector2CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator*( IVector2CPP lhs, i32 rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator*( i32 lhs, IVector2CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator/( IVector2CPP lhs, IVector2CPP rhs ) {
+    return div( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator/( IVector2CPP lhs, i32 rhs ) {
+    return div( lhs, rhs );
+}
+attr_always_inline
+attr_header IVector2CPP operator-( IVector2CPP v ) {
+    return neg( v );
+}
+attr_always_inline
+attr_header b32 operator==( IVector2CPP a, IVector2CPP b ) {
+    return cmp( a, b );
+}
+attr_always_inline
+attr_header b32 operator!=( IVector2CPP a, IVector2CPP b ) {
+    return !( a == b );
 }
 
 #endif /* header guard */
