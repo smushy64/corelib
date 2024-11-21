@@ -13,150 +13,140 @@ struct Matrix3x3CPP;
     #include "core/math/matrix3x3.h"
 #endif
 
-struct Matrix3x3CPP : public Matrix3x3 {
-    attr_header Matrix3x3CPP() : Matrix3x3{
-        .m00=0,.m01=0,.m02=0,
-        .m10=0,.m11=0,.m12=0,
-        .m20=0,.m21=0,.m22=0
-    } {}
-    attr_header Matrix3x3CPP(
+struct Matrix3x3CPP {
+    union {
+        struct {
+            union {
+                struct { f32 m00, m01, m02; };
+                Vector3CPP col0;
+            };
+            union {
+                struct { f32 m10, m11, m12; };
+                Vector3CPP col1;
+            };
+            union {
+                struct { f32 m20, m21, m22; };
+                Vector3CPP col2;
+            };
+        };
+        struct Matrix3x3 pod;
+
+        Vector3CPP col[3];
+        f32 array[9];
+    };
+
+    attr_always_inline attr_header
+    Matrix3x3CPP() : col0(), col1(), col2() {}
+    attr_always_inline attr_header
+    explicit Matrix3x3CPP(
         f32 m00, f32 m01, f32 m02,
         f32 m10, f32 m11, f32 m12,
         f32 m20, f32 m21, f32 m22
-    ) : Matrix3x3{
-        .m00=m00, .m01=m01, .m02=m02,
-        .m10=m10, .m11=m11, .m12=m12,
-        .m20=m20, .m21=m21, .m22=m22,
-    } {}
-    attr_header Matrix3x3CPP( const Matrix3x3& m ) : Matrix3x3{m} {}
-    attr_header explicit Matrix3x3CPP( const f32 a[9] ) :
-        Matrix3x3CPP(from_array(a)) {}
+    ) :
+    col0( m00, m01, m02 ),
+    col1( m10, m11, m12 ),
+    col2( m20, m21, m22 ) {}
+    attr_always_inline attr_header
+    explicit Matrix3x3CPP(
+        Vector3CPP col0, Vector3CPP col1, Vector3CPP col2 ) :
+    col0(col0), col1(col1), col2(col2) {}
+    attr_always_inline attr_header
+    Matrix3x3CPP( const struct Matrix3x3& m ) : pod(m) {}
 
-    attr_header static Matrix3x3CPP zero(void) {
-        return MAT3_ZERO;
-    }
-    attr_header static Matrix3x3CPP identity(void) {
-        return MAT3_IDENTITY;
-    }
-    attr_header static Matrix3x3CPP from_array( const f32 a[9] ) {
-        return m3_from_array( a );
-    }
-    
-    attr_header void to_array( f32 out_array[9] ) const {
-        m3_to_array( this, out_array );
-    }
-    attr_header Matrix3x3CPP add( const Matrix3x3CPP& rhs ) const {
-        return m3_add( this, &rhs );
-    }
-    attr_header Matrix3x3CPP sub( const Matrix3x3CPP& rhs ) const {
-        return m3_sub( this, &rhs );
-    }
-    attr_header Matrix3x3CPP mul( f32 rhs ) const {
-        return m3_mul( this, rhs );
-    }
-    attr_header Matrix3x3CPP mul( const Matrix3x3CPP& rhs ) const {
-        return m3_mul_m3( this, &rhs );
-    }
-    attr_header Matrix3x3CPP div( f32 rhs ) const {
-        return m3_div( this, rhs );
-    }
-    attr_header Matrix3x3CPP transpose(void) const {
-        return m3_transpose( this );
-    }
-    attr_header f32 determinant(void) const {
-        return m3_determinant( this );
+    attr_always_inline attr_header
+    operator Matrix3x3() const {
+        return *(struct Matrix3x3*)this;
     }
 
-    attr_header const Vector3CPP& operator[]( usize idx ) const {
-        const Vector3* ptr = c + idx;
-        return *(const Vector3CPP*)ptr;
+    attr_always_inline attr_header static
+    Matrix3x3CPP zero() {
+        return Matrix3x3CPP();
     }
-    attr_header Vector3CPP& operator[]( usize idx ) {
-        Vector3* ptr = c + idx;
-        return *(Vector3CPP*)ptr;
+    attr_always_inline attr_header static
+    Matrix3x3CPP identity() {
+        return Matrix3x3CPP(
+            1.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0 );
     }
-    attr_header Matrix3x3CPP& operator+=( const Matrix3x3CPP& rhs ) {
-        return *this = add( rhs );
+
+    attr_always_inline attr_header static
+    Matrix3x3CPP from_array( const f32 array[9] ) {
+        return *(Matrix3x3CPP*)array;
     }
-    attr_header Matrix3x3CPP& operator-=( const Matrix3x3CPP& rhs ) {
-        return *this = sub( rhs );
+    attr_always_inline attr_header
+    void to_array( f32* out_array ) {
+        for( usize i = 0; i < 9; ++i ) {
+            out_array[i] = array[i];
+        }
     }
-    attr_header Matrix3x3CPP& operator*=( f32 rhs ) {
-        return *this = mul( rhs );
+
+    attr_always_inline attr_header
+    const Vector3CPP& operator[]( usize idx ) const {
+        return col[idx];
     }
-    attr_header Matrix3x3CPP& operator*=( const Matrix3x3CPP& rhs ) {
-        return *this = mul( rhs );
-    }
-    attr_header Matrix3x3CPP& operator/=( f32 rhs ) {
-        return *this = div( rhs );
+    attr_always_inline attr_header
+    Vector3CPP& operator[]( usize idx ) {
+        return col[idx];
     }
 };
-attr_header Matrix3x3 operator+(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return m3_add( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix3x3CPP add( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
+    return mat3_add( &lhs.pod, &rhs.pod );
 }
-attr_header Matrix3x3 operator-(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return m3_sub( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix3x3CPP sub( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
+    return mat3_sub( &lhs.pod, &rhs.pod );
 }
-attr_header Matrix3x3 operator*(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return m3_mul_m3( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix3x3CPP mul( const Matrix3x3CPP& lhs, f32 rhs ) {
+    return mat3_mul( &lhs.pod, rhs );
 }
-attr_header Matrix3x3 operator*(
-    const Matrix3x3& lhs, f32 rhs
-) {
-    return m3_mul( &lhs, rhs );
+attr_always_inline attr_header
+Matrix3x3CPP mul( f32 lhs, const Matrix3x3CPP& rhs ) {
+    return mat3_mul( &rhs.pod, lhs );
 }
-attr_header Matrix3x3 operator*(
-    f32 lhs, const Matrix3x3& rhs
-) {
-    return m3_mul( &rhs, lhs );
+attr_always_inline attr_header
+Matrix3x3CPP mul( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
+    return mat3_mul_mat3( &lhs.pod, &rhs.pod );
 }
-attr_header Matrix3x3 operator/(
-    const Matrix3x3& lhs, f32 rhs
-) {
-    return m3_div( &lhs, rhs );
+attr_always_inline attr_header
+Matrix3x3CPP div( const Matrix3x3CPP& lhs, f32 rhs ) {
+    return mat3_div( &lhs.pod, rhs );
+}
+attr_always_inline attr_header
+Matrix3x3 transpose( const Matrix3x3& m ) {
+    return mat3_transpose( &m );
+}
+attr_always_inline attr_header
+f32 determinant( const Matrix3x3& m ) {
+    return mat3_determinant( &m );
 }
 
-attr_header Matrix3x3 add(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return lhs + rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator+( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+    return add( lhs, rhs );
 }
-attr_header Matrix3x3 sub(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return lhs - rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator-( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+    return sub( lhs, rhs );
 }
-attr_header Matrix3x3 mul(
-    const Matrix3x3& lhs, const Matrix3x3& rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator*( const Matrix3x3& lhs, f32 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix3x3 mul(
-    const Matrix3x3& lhs, f32 rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator*( f32 lhs, const Matrix3x3& rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix3x3 mul(
-    f32 lhs, const Matrix3x3& rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator*( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix3x3 div(
-    const Matrix3x3& lhs, f32 rhs
-) {
-    return lhs / rhs;
+attr_always_inline attr_header
+Matrix3x3CPP operator/( const Matrix3x3& lhs, f32 rhs ) {
+    return div( lhs, rhs );
 }
-attr_header Matrix3x3 transpose( const Matrix3x3& m ) {
-    return m3_transpose( &m );
-}
-attr_header f32 determinant( const Matrix3x3& m ) {
-    return m3_determinant( &m );
-}
+
 
 #endif /* header guard */

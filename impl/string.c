@@ -490,7 +490,7 @@ attr_core_api b32 string_parse_float( String str, f64* out_float ) {
 
         u64 pow = places + zero_count;
         if( pow ) {
-            fractional_part_f64 /= (f64)poweri( 10.0f, pow );
+            fractional_part_f64 /= (f64)f32_power_i32( 10.0f, pow );
         }
 
         if( whole_part < 0 ) {

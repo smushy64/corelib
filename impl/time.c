@@ -49,7 +49,7 @@ attr_core_api u32 time_day_month_to_day_week( u32 year, u32 month, u32 day ) {
     return (day += month < 3 ? year-- : year - 2, 23 * month / 9 + day + 4 + year / 4 - year / 100 + year / 400 ) % 7;
 }
 attr_core_api u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month ) {
-    u32 m_idx = clamp( month, 1, 12 ) - 1;
+    u32 m_idx = num_clamp( month, 1, 12 ) - 1;
     u32 days  = 0;
     b32 leap  = time_year_is_leap( year );
 
@@ -91,7 +91,7 @@ attr_core_api usize stream_fmt_time(
         format = DEFAULT_FORMAT;
     }
 
-    u32 upadding = absolute( padding );
+    u32 upadding = num_abs( padding );
     if( padding ) {
         usize final_len = stream_fmt_time(
             internal_time_dummy_stream, target, ts,

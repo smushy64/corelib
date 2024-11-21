@@ -93,7 +93,7 @@ attr_internal usize stream_padded(
     int padding, char padding_c, usize len, const char* message
 ) {
     b32 right_pad = padding < 0;
-    u32 upadding  = absolute( padding );
+    u32 upadding  = num_abs( padding );
     if( len > upadding ) {
         upadding = 0;
     } else {
@@ -175,7 +175,7 @@ attr_core_api usize stream_fmt_char(
 
         if( args->repeat ) {
             b32 right_pad = pad < 0;
-            u32 upadding  = absolute( pad );
+            u32 upadding  = num_abs( pad );
             if( args->repeat > upadding ) {
                 upadding = 0;
             } else {
@@ -246,7 +246,7 @@ attr_core_api usize stream_fmt_string(
     usize res = 0;
 
     b32 right_pad = pad < 0;
-    u32 upadding  = absolute( pad );
+    u32 upadding  = num_abs( pad );
     if( string_len > upadding ) {
         upadding = 0;
     } else {
@@ -774,7 +774,7 @@ attr_internal void internal_int_fmt(
                 i64 signed_value = rcast( i64, &value );
                 if( signed_value < 0 ) {
                     neg = true;
-                    abs = absolute( signed_value );
+                    abs = num_abs( signed_value );
                 }
             }
             base_num = 10;
@@ -840,7 +840,7 @@ attr_internal void internal_float_fmt(
     f64 value, b32 seperate, int precision, StringBuf* buf 
 ) {
     // TODO(alicia): Grisu3
-    if( is_nan64( value ) ) {
+    if( f64_isnan( value ) ) {
         string_buf_try_append( buf, string_text( "NaN" ) );
         return;
     } else if( value == F64_POS_INFINITY ) {
@@ -852,7 +852,7 @@ attr_internal void internal_float_fmt(
     }
 
     i64 whole = (i64)value;
-    f64 fract = absolute( value ) - (f64)absolute(whole);
+    f64 fract = num_abs( value ) - (f64)num_abs(whole);
 
     internal_int_fmt(
         rcast( u64, &whole ),
@@ -1247,7 +1247,7 @@ attr_internal b32 internal_fmt_parse_args(
                         if( !string_parse_uint( prec, &precision ) ) {
                             return false;
                         }
-                        args->floating.precision = clamp( (int)precision, 0, 6 );
+                        args->floating.precision = num_clamp( (int)precision, 0, 6 );
                     }
 
                     skip();

@@ -65,7 +65,7 @@ attr_internal void internal_sort_swap(
 
 attr_internal isize quicksort_generic_partition(
     isize low, isize high, usize stride, void* buffer,
-    SortCmpFN* cmp, void* cmp_params, void* swap_buffer
+    SortCmpFN* cmp_fn, void* cmp_params, void* swap_buffer
 ) {
     u8* buf = buffer;
     void* pivot = buf + (high * stride);
@@ -75,7 +75,7 @@ attr_internal isize quicksort_generic_partition(
     for( isize j = (isize)low; j <= (isize)high - 1; ++j ) {
         void* at_j = buf + (j * stride);
 
-        if( cmp( at_j, pivot, stride, cmp_params ) ) {
+        if( cmp_fn( at_j, pivot, stride, cmp_params ) ) {
             ++i;
             void* at_i = buf + (i * stride);
             internal_sort_swap( at_i, at_j, swap_buffer, stride );

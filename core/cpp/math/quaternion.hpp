@@ -14,231 +14,293 @@ struct AngleAxisCPP;
     #include "core/math/quaternion.h"
 #endif
 
-struct QuaternionCPP : public Quaternion {
-    attr_header QuaternionCPP() : Quaternion{.w=0,.x=0,.y=0,.z=0} {}
-    attr_header QuaternionCPP( f32 w, f32 x, f32 y, f32 z ) :
-        Quaternion{.w=w,.x=x,.y=y,.z=z} {}
-    attr_header QuaternionCPP( const Quaternion& q ) : Quaternion{q} {}
-    attr_header explicit QuaternionCPP( f32 real, const Vector3& imaginary ) :
-        Quaternion{.w=real,.xyz=imaginary} {}
-    attr_header explicit QuaternionCPP( const AngleAxis_& angle_axis ) :
-        Quaternion( q_from_angle_axis( angle_axis ) ) {}
+struct AngleAxisCPP {
+    union {
+        struct {
+            /// @brief Angle in radians.
+            f32 angle;
+            /// @brief Union of axis components.
+            union {
+                /// @brief Axis X, Y and Z components.
+                struct {
+                    /// @brief X component of axis.
+                    f32 x;
+                    /// @brief Y component of axis.
+                    f32 y;
+                    /// @brief Z component of axis.
+                    f32 z;
+                };
+                /// @brief X, Y and Z components of axis as #Vector3.
+                Vector3CPP axis;
+            };
+        };
+        struct AngleAxis_ pod;
+    };
 
-    attr_header static QuaternionCPP zero(void) {
-        return QUAT_ZERO;
-    }
-    attr_header static QuaternionCPP identity(void) {
-        return QUAT_IDENTITY;
-    }
-    attr_header static QuaternionCPP from_array( const f32 a[4] ) {
-        return q_from_array( a );
-    }
-    attr_header static QuaternionCPP from_angle_axis(
-        const AngleAxis_& angle_axis
-    ) {
-        return q_from_angle_axis( angle_axis );
-    }
-    attr_header static QuaternionCPP from_euler( f32 x, f32 y, f32 z ) {
-        return q_from_euler( x, y, z );
-    }
-    attr_header static QuaternionCPP from_euler( const Vector3& euler ) {
-        return q_from_euler_v3( euler );
-    }
+    attr_always_inline attr_header
+    AngleAxisCPP() : angle(0), axis() {};
+    attr_always_inline attr_header
+    AngleAxisCPP( f32 angle, f32 x, f32 y, f32 z ) :
+        angle(angle), axis(x, y, z) {};
+    attr_always_inline attr_header
+    AngleAxisCPP( f32 angle, Vector3CPP axis ) : angle(angle), axis(axis) {};
+    attr_always_inline attr_header
+    AngleAxisCPP( const struct AngleAxis_& aa ) : AngleAxisCPP( aa.angle, aa.axis ) {}
 
-    attr_header void to_array( f32 out_array[4] ) const {
-        q_to_array( *this, out_array );
-    }
-    attr_header Vector3 to_euler(void) const {
-        return q_to_euler( *this );
-    }
-    attr_header AngleAxis_ to_angle_axis(void) const {
-        return q_to_angle_axis( *this );
-    }
-
-    attr_header QuaternionCPP add( const QuaternionCPP& rhs ) const {
-        return q_add( *this, rhs );
-    }
-    attr_header QuaternionCPP sub( const QuaternionCPP& rhs ) const {
-        return q_sub( *this, rhs );
-    }
-    attr_header QuaternionCPP mul( f32 rhs ) const {
-        return q_mul( *this, rhs );
-    }
-    attr_header QuaternionCPP mul( const QuaternionCPP& rhs ) const {
-        return q_mul_q( *this, rhs );
-    }
-    attr_header Vector3 mul( const Vector3& rhs ) const {
-        return q_mul_v3( *this, rhs );
-    }
-    attr_header QuaternionCPP div( f32 rhs ) const {
-        return q_div( *this, rhs );
-    }
-    attr_header QuaternionCPP neg(void) const {
-        return q_neg( *this );
-    }
-    attr_header f32 sqrmag(void) const {
-        return q_sqrmag( *this );
-    }
-    attr_header f32 mag(void) const {
-        return q_mag( *this );
-    }
-    attr_header QuaternionCPP normalize(void) const {
-        return q_normalize( *this );
-    }
-    attr_header f32 dot( const QuaternionCPP& rhs ) const {
-        return q_dot( *this, rhs );
-    }
-    attr_header QuaternionCPP conjugate(void) const {
-        return q_conjugate( *this );
-    }
-    attr_header QuaternionCPP inverse(void) const {
-        return q_inverse( *this );
-    }
-    attr_header QuaternionCPP lerp( const QuaternionCPP& b, f32 t ) const {
-        return q_lerp( *this, b, t );
-    }
-    attr_header QuaternionCPP slerp( const QuaternionCPP& b, f32 t ) const {
-        return q_slerp( *this, b, t );
-    }
-    attr_header b32 cmp( const QuaternionCPP& b ) const {
-        return q_cmp( *this, b );
-    }
-
-    attr_header QuaternionCPP& operator+=( const QuaternionCPP& rhs ) {
-        return *this = add(rhs);
-    }
-    attr_header QuaternionCPP& operator-=( const QuaternionCPP& rhs ) {
-        return *this = sub(rhs);
-    }
-    attr_header QuaternionCPP& operator*=( f32 rhs ) {
-        return *this = mul(rhs);
-    }
-    attr_header QuaternionCPP& operator/=( f32 rhs ) {
-        return *this = div(rhs);
-    }
-    attr_header QuaternionCPP operator-(void) const {
-        return neg();
+    attr_always_inline attr_header
+    operator AngleAxis_() const {
+        return *(struct AngleAxis_*)this;
     }
 };
-attr_header QuaternionCPP operator+(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.add(rhs);
+
+struct QuaternionCPP {
+    union {
+        /// @brief W, X, Y, and Z components.
+        struct {
+            /// @brief W component.
+            union {
+                /// @brief W component.
+                f32 w;
+                /// @brief A component (W component).
+                f32 a;
+            };
+            /// @brief X, Y and Z components.
+            union {
+                /// @brief X, Y and Z components.
+                struct {
+                    /// @brief X component.
+                    f32 x;
+                    /// @brief Y component.
+                    f32 y;
+                    /// @brief Z component.
+                    f32 z;
+                };
+                /// @brief B, C and D components. (X, Y and Z components).
+                struct {
+                    /// @brief B component (X component).
+                    f32 b;
+                    /// @brief C component (Y component).
+                    f32 c;
+                    /// @brief D component (Z component).
+                    f32 d;
+                };
+                /// @brief X, Y and Z components as #Vector3.
+                Vector3CPP xyz;
+                /// @brief B, C and D components as #Vector3.
+                Vector3CPP bcd;
+            };
+        };
+        /// @brief W, X, Y, and Z components as an array.
+        f32 array[4];
+
+        struct Quaternion pod;
+    };
+
+    attr_always_inline attr_header
+    QuaternionCPP() : w(0), x(0), y(0), z(0) {}
+    attr_always_inline attr_header
+    QuaternionCPP( const struct Quaternion& q ) : QuaternionCPP( q.w, q.x, q.y, q.z ) {}
+    attr_always_inline attr_header
+    explicit QuaternionCPP( f32 w, f32 x, f32 y, f32 z ) : w(w), x(x), y(y), z(z) {}
+    attr_always_inline attr_header
+    explicit QuaternionCPP( f32 real, Vector3CPP imaginary ) :
+        QuaternionCPP( real, imaginary.x, imaginary.y, imaginary.z ) {}
+
+    attr_always_inline attr_header
+    operator Quaternion() const {
+        return *(struct Quaternion*)this;
+    }
+
+    attr_always_inline attr_header static
+    QuaternionCPP zero() {
+        return QuaternionCPP();
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP identity() {
+        return QuaternionCPP( 1.0, 0.0, 0.0, 0.0 );
+    }
+
+    attr_always_inline attr_header static
+    QuaternionCPP from_array( const f32 array[4] ) {
+        return *(QuaternionCPP*)array;
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP from_angle_axis( AngleAxisCPP angle_axis ) {
+        return quat_from_angle_axis( angle_axis.pod );
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP from_angle_axis( f32 angle, f32 x, f32 y, f32 z ) {
+        return from_angle_axis( AngleAxisCPP( angle, x, y, z ) );
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP from_angle_axis( f32 angle, Vector3CPP axis ) {
+        return from_angle_axis( AngleAxisCPP( angle, axis ) );
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP from_euler( f32 x, f32 y, f32 z ) {
+        return quat_from_euler( x, y, z );
+    }
+    attr_always_inline attr_header static
+    QuaternionCPP from_euler( Vector3CPP euler ) {
+        return from_euler( euler.x, euler.y, euler.z );
+    }
+
+    attr_always_inline attr_header
+    void to_array( f32 out_array[4] ) const {
+        out_array[0] = array[0];
+        out_array[1] = array[1];
+        out_array[2] = array[2];
+        out_array[3] = array[3];
+    }
+    attr_always_inline attr_header
+    Vector3CPP to_euler() const {
+        return quat_to_euler( pod );
+    }
+    attr_always_inline attr_header
+    AngleAxisCPP to_angle_axis() const {
+        return quat_to_angle_axis( pod );
+    }
+
+    attr_always_inline attr_header
+    f32 operator[]( usize idx ) const {
+        return array[idx];
+    }
+    attr_always_inline attr_header
+    f32& operator[]( usize idx ) {
+        return array[idx];
+    }
+};
+attr_always_inline
+attr_header QuaternionCPP add( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return quat_add( lhs.pod, rhs.pod );
 }
-attr_header QuaternionCPP operator-(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.sub(rhs);
+attr_always_inline
+attr_header QuaternionCPP sub( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return quat_sub( lhs.pod, rhs.pod );
 }
-attr_header QuaternionCPP operator*(
-    const QuaternionCPP& lhs, f32 rhs
-) {
-    return lhs.mul(rhs);
+attr_always_inline
+attr_header QuaternionCPP mul( QuaternionCPP lhs, f32 rhs ) {
+    return quat_mul( lhs.pod, rhs );
 }
-attr_header QuaternionCPP operator*(
-    f32 lhs, const QuaternionCPP& rhs
-) {
-    return rhs.mul(lhs);
+attr_always_inline
+attr_header QuaternionCPP mul( f32 lhs, QuaternionCPP rhs ) {
+    return quat_mul( rhs.pod, lhs );
 }
-attr_header QuaternionCPP operator*(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.mul(rhs);
+attr_always_inline
+attr_header QuaternionCPP mul( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return quat_mul_quat( lhs.pod, rhs.pod );
 }
-attr_header Vector3 operator*(
-    const QuaternionCPP& lhs, const Vector3& rhs
-) {
-    return lhs.mul(rhs);
+attr_always_inline
+attr_header Vector3CPP mul( QuaternionCPP lhs, Vector3CPP rhs ) {
+    return quat_mul_vec3( lhs.pod, rhs.pod );
 }
-attr_header QuaternionCPP operator/(
-    const QuaternionCPP& lhs, f32 rhs
-) {
-    return lhs.div(rhs);
+attr_always_inline
+attr_header QuaternionCPP div( QuaternionCPP lhs, f32 rhs ) {
+    return quat_div( lhs.pod, rhs );
 }
-attr_header b32 operator==( const QuaternionCPP& a, const QuaternionCPP& b ) {
-    return a.cmp(b);
+attr_always_inline
+attr_header QuaternionCPP neg( QuaternionCPP q ) {
+    return quat_neg( q.pod );
 }
-attr_header b32 operator!=( const QuaternionCPP& a, const QuaternionCPP& b ) {
+attr_always_inline
+attr_header f32 length_sqr( QuaternionCPP q ) {
+    return quat_length_sqr( q.pod );
+}
+attr_always_inline
+attr_header f32 length( QuaternionCPP q ) {
+    return quat_length( q.pod );
+}
+attr_always_inline
+attr_header QuaternionCPP normalize( QuaternionCPP q ) {
+    return quat_normalize( q.pod );
+}
+attr_always_inline
+attr_header f32 dot( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return quat_dot( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header QuaternionCPP conjugate( QuaternionCPP q ) {
+    return quat_conjugate( q.pod );
+}
+attr_always_inline
+attr_header QuaternionCPP inverse( QuaternionCPP q ) {
+    return quat_inverse( q.pod );
+}
+attr_always_inline
+attr_header b32 inverse_checked( QuaternionCPP q, QuaternionCPP& out_inverse ) {
+    return quat_inverse_checked( q.pod, &out_inverse.pod );
+}
+attr_always_inline
+attr_header QuaternionCPP lerp( QuaternionCPP a, QuaternionCPP b, f32 t ) {
+    return quat_lerp( a.pod, b.pod, t );
+}
+attr_always_inline
+attr_header QuaternionCPP mix( QuaternionCPP a, QuaternionCPP b, f32 t ) {
+    return lerp( a, b, t );
+}
+attr_always_inline
+attr_header QuaternionCPP slerp( QuaternionCPP a, QuaternionCPP b, f32 t ) {
+    return quat_slerp( a.pod, b.pod, t );
+}
+attr_always_inline
+attr_header b32 cmp( QuaternionCPP a, QuaternionCPP b ) {
+    return quat_cmp( a.pod, b.pod );
+}
+attr_always_inline
+attr_header QuaternionCPP& operator+=( QuaternionCPP& lhs, QuaternionCPP rhs ) {
+    return lhs = add( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP& operator-=( QuaternionCPP& lhs, QuaternionCPP rhs ) {
+    return lhs = sub( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP& operator*=( QuaternionCPP& lhs, f32 rhs ) {
+    return lhs = mul( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP& operator/=( QuaternionCPP& lhs, f32 rhs ) {
+    return lhs = div( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator-( QuaternionCPP q ) {
+    return neg( q );
+}
+attr_always_inline
+attr_header QuaternionCPP operator+( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return add( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator-( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return sub( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator*( QuaternionCPP lhs, f32 rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator*( f32 lhs, QuaternionCPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator*( QuaternionCPP lhs, QuaternionCPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector3CPP operator*( QuaternionCPP lhs, Vector3CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header QuaternionCPP operator/( QuaternionCPP lhs, f32 rhs ) {
+    return div( lhs, rhs );
+}
+attr_always_inline
+attr_header b32 operator==( QuaternionCPP a, QuaternionCPP b ) {
+    return cmp( a, b );
+}
+attr_always_inline
+attr_header b32 operator!=( QuaternionCPP a, QuaternionCPP b ) {
     return !(a == b);
 }
-
-attr_header QuaternionCPP add(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.add(rhs);
-}
-attr_header QuaternionCPP sub(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.sub(rhs);
-}
-attr_header QuaternionCPP mul(
-    const QuaternionCPP& lhs, f32 rhs
-) {
-    return lhs.mul(rhs);
-}
-attr_header QuaternionCPP mul(
-    f32 lhs, const QuaternionCPP& rhs
-) {
-    return rhs.mul(lhs);
-}
-attr_header QuaternionCPP mul(
-    const QuaternionCPP& lhs, const QuaternionCPP& rhs
-) {
-    return lhs.mul(rhs);
-}
-attr_header Vector3 mul(
-    const QuaternionCPP& lhs, const Vector3& rhs
-) {
-    return lhs.mul(rhs);
-}
-attr_header QuaternionCPP div(
-    const QuaternionCPP& lhs, f32 rhs
-) {
-    return lhs.div(rhs);
-}
-attr_header b32 cmp( const QuaternionCPP& a, const QuaternionCPP& b ) {
-    return a.cmp(b);
-}
-attr_header f32 sqrmag( const QuaternionCPP& q ) {
-    return q.sqrmag();
-}
-attr_header f32 mag( const QuaternionCPP& q ) {
-    return q.mag();
-}
-attr_header QuaternionCPP normalize( const QuaternionCPP& q ) {
-    return q.normalize();
-}
-attr_header f32 dot( const QuaternionCPP& lhs, const QuaternionCPP& rhs ) {
-    return lhs.dot( rhs );
-}
-attr_header QuaternionCPP conjugate( const QuaternionCPP& q ) {
-    return q.conjugate();
-}
-attr_header QuaternionCPP inverse( const QuaternionCPP& q ) {
-    return q.inverse();
-}
-attr_header QuaternionCPP lerp(
-    const QuaternionCPP& a, const QuaternionCPP& b, f32 t 
-) {
-    return a.lerp(b, t);
-}
-attr_header QuaternionCPP slerp(
-    const QuaternionCPP& a, const QuaternionCPP& b, f32 t 
-) {
-    return a.slerp(b, t);
-}
-
-struct AngleAxisCPP : public AngleAxis_ {
-    attr_header AngleAxisCPP() : AngleAxis_{.angle=0,.x=0,.y=0,.z=0} {}
-    attr_header AngleAxisCPP( f32 angle, f32 x, f32 y, f32 z ) :
-        AngleAxis_{.angle=angle,.x=x,.y=y,.z=z} {}
-    attr_header AngleAxisCPP( f32 angle, const Vector3& axis ) :
-        AngleAxis_{.angle=angle,.axis=axis} {}
-
-    attr_header QuaternionCPP to_quaternion(void) const {
-        return QuaternionCPP( *this );
-    }
-};
 
 #endif /* header guard */

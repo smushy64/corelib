@@ -59,7 +59,7 @@ struct Quaternion {
             };
         };
         /// @brief W, X, Y, and Z components as an array.
-        f32 v[4];
+        f32 array[4];
     };
 };
 #if !defined(CORE_CPLUSPLUS)
@@ -90,52 +90,53 @@ struct AngleAxis_ {
     typedef struct AngleAxis_ AngleAxis;
 #endif
 
-#if defined(CORE_DOXYGEN)
+#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
 
 /// @brief Construct a new Quaternion.
 /// @param w Real component.
 /// @param x, y, z Imaginary components.
 /// @return Quaternion.
-#define q( w, x, y, z )
+#define quat( w, x, y, z )
 
 #else /* Doxygen */
 
 #if defined(CORE_CPLUSPLUS)
-    #define q( w, x, y, z ) Quaternion{ .v={ w, x, y, z } }
+    #define quat_new( w, x, y, z ) Quaternion{ .array={ w, x, y, z } }
 #else
-    #define q( w, x, y, z ) (struct Quaternion){ .v={ w, x, y, z } }
+    #define quat_new( w, x, y, z ) (struct Quaternion){ .array={ w, x, y, z } }
+    #define quat(...) quat_new(__VA_ARGS__)
 #endif
 
 #endif /* Doxygen */
 
 /// @brief Quaternion zero constant.
-#define QUAT_ZERO     q( 0.0f, 0.0f, 0.0f, 0.0f )
+#define QUAT_ZERO     quat_new( 0.0f, 0.0f, 0.0f, 0.0f )
 /// @brief Quaternion identity constant.
-#define QUAT_IDENTITY q( 1.0f, 0.0f, 0.0f, 0.0f )
+#define QUAT_IDENTITY quat_new( 1.0f, 0.0f, 0.0f, 0.0f )
 
 /// @brief Create Quaternion from array.
 /// @param array Array, must have at least 4 floats.
 /// @return Quaternion.
 attr_always_inline
-attr_header struct Quaternion q_from_array( const f32 array[4] ) {
-    return q( array[0], array[1], array[2], array[3] );
+attr_header struct Quaternion quat_from_array( const f32 array[4] ) {
+    return quat_new( array[0], array[1], array[2], array[3] );
 }
 /// @brief Fill array with components from Quaternion.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 floats.
 attr_always_inline
-attr_header void q_to_array( struct Quaternion v, f32* out_array ) {
-    out_array[0] = v.v[0]; out_array[1] = v.v[1];
-    out_array[2] = v.v[2]; out_array[3] = v.v[3];
+attr_header void quat_to_array( struct Quaternion v, f32* out_array ) {
+    out_array[0] = v.array[0]; out_array[1] = v.array[1];
+    out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
 /// @brief Add two quaternions.
 /// @param lhs, rhs Quaternions to add.
 /// @return Result of addition.
 attr_always_inline
-attr_header struct Quaternion q_add(
+attr_header struct Quaternion quat_add(
     struct Quaternion lhs, struct Quaternion rhs
 ) {
-    return q(
+    return quat_new(
         lhs.w + rhs.w, lhs.x + rhs.x,
         lhs.y + rhs.y, lhs.z + rhs.z );
 }
@@ -143,10 +144,10 @@ attr_header struct Quaternion q_add(
 /// @param lhs, rhs Quaternions to subtract.
 /// @return Result of subtraction.
 attr_always_inline
-attr_header struct Quaternion q_sub(
+attr_header struct Quaternion quat_sub(
     struct Quaternion lhs, struct Quaternion rhs
 ) {
-    return q(
+    return quat_new(
         lhs.w - rhs.w, lhs.x - rhs.x,
         lhs.y - rhs.y, lhs.z - rhs.z );
 }
@@ -155,8 +156,8 @@ attr_header struct Quaternion q_sub(
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header struct Quaternion q_mul( struct Quaternion lhs, f32 rhs ) {
-    return q(
+attr_header struct Quaternion quat_mul( struct Quaternion lhs, f32 rhs ) {
+    return quat_new(
         lhs.w * rhs, lhs.x * rhs,
         lhs.y * rhs, lhs.z * rhs );
 }
@@ -165,8 +166,8 @@ attr_header struct Quaternion q_mul( struct Quaternion lhs, f32 rhs ) {
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
 attr_always_inline
-attr_header struct Quaternion q_div( struct Quaternion lhs, f32 rhs ) {
-    return q(
+attr_header struct Quaternion quat_div( struct Quaternion lhs, f32 rhs ) {
+    return quat_new(
         lhs.w / rhs, lhs.x / rhs,
         lhs.y / rhs, lhs.z / rhs );
 }
@@ -174,109 +175,125 @@ attr_header struct Quaternion q_div( struct Quaternion lhs, f32 rhs ) {
 /// @param lhs, rhs Quaternions to multiply.
 /// @return Result of quaternion multiplication.
 /// @note lhs X rhs and rhs X lhs give different results!
-attr_core_api struct Quaternion q_mul_q(
+attr_core_api struct Quaternion quat_mul_quat(
     struct Quaternion lhs, struct Quaternion rhs );
 /// @brief Multiply Vector3 by Quaternion.
 /// @param lhs Quaternion to multiply.
 /// @param rhs Vector3 to multiply
 /// @return Result of quaternion vector multiplication.
-attr_core_api struct Vector3 q_mul_v3(
+attr_core_api struct Vector3 quat_mul_vec3(
     struct Quaternion lhs, struct Vector3 rhs );
 /// @brief Negate quaternion.
 /// @param x Quaternion to negate.
 /// @return Negated quaternion.
 attr_always_inline
-attr_header struct Quaternion q_neg( struct Quaternion x ) {
-    return q( -x.w, -x.x, -x.y, -x.z );
+attr_header struct Quaternion quat_neg( struct Quaternion x ) {
+    return quat_new( -x.w, -x.x, -x.y, -x.z );
 }
 /// @brief Calculate square magnitude of quaternion.
 /// @param q Quaternion to get square magnitude of.
 /// @return Square magnitude of quaternion.
 attr_always_inline
-attr_header f32 q_sqrmag( struct Quaternion q ) {
+attr_header f32 quat_length_sqr( struct Quaternion q ) {
     return (q.w * q.w) + (q.x * q.x) + (q.y * q.y) + (q.z * q.z);
 }
 /// @brief Calculate magnitude of Quaternion.
 /// @param q Quaternion to get magnitude of.
 /// @return Magnitude of quaternion.
-attr_core_api f32 q_mag( struct Quaternion q );
+attr_core_api f32 quat_length( struct Quaternion q );
 /// @brief Normalize a Quaternion.
 /// @param x Quaternion to normalize.
 /// @return Normalized quaternion.
 attr_always_inline
-attr_header struct Quaternion q_normalize( struct Quaternion x ) {
-    f32 m = q_mag( x );
+attr_header struct Quaternion quat_normalize( struct Quaternion x ) {
+    f32 m = quat_length( x );
     if( m == 0.0f ) {
         return QUAT_ZERO;
     } else {
-        return q_div( x, m );
+        return quat_div( x, m );
     }
 }
 /// @brief Inner product of two quaternions.
 /// @param lhs, rhs Quaternions to take inner product of.
 /// @return Inner product.
 attr_always_inline
-attr_header f32 q_dot( struct Quaternion lhs, struct Quaternion rhs ) {
+attr_header f32 quat_dot( struct Quaternion lhs, struct Quaternion rhs ) {
     return (lhs.w * rhs.w) + (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z);
 }
 /// @brief Calculate conjugate of quaternion.
 /// @param q Quaternion.
 /// @return Conjugate of quaternion.
 attr_always_inline
-attr_header struct Quaternion q_conjugate( struct Quaternion q ) {
-    return q( q.w, -q.x, -q.y, -q.z );
+attr_header struct Quaternion quat_conjugate( struct Quaternion q ) {
+    return quat_new( q.w, -q.x, -q.y, -q.z );
 }
-// TODO(alicia): checked and unchecked q_inverse!
-
 /// @brief Invert quaternion.
 /// @param q Quaternion.
 /// @return Inverted quaternion.
 attr_always_inline
-attr_header struct Quaternion q_inverse( struct Quaternion q ) {
-    return q_div( q_conjugate( q ), q_sqrmag( q ) );
+attr_header struct Quaternion quat_inverse( struct Quaternion q ) {
+    return quat_div( quat_conjugate( q ), quat_length_sqr( q ) );
+}
+/// @brief Invert quaternion.
+/// @param      q           Quaternion.
+/// @param[out] out_inverse Inverse quaternion.
+/// @return True if quaternion could be inverted.
+attr_always_inline
+attr_header b32 quat_inverse_checked( struct Quaternion q, struct Quaternion* out_inverse ) {
+    f32 len_sqr = quat_length_sqr( q );
+    if( len_sqr == 0.0f ) {
+        return false;
+    }
+    *out_inverse = quat_div( quat_conjugate( q ), len_sqr );
+    return true;
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Interpolated quaternion.
-attr_core_api struct Quaternion q_lerp(
+attr_core_api struct Quaternion quat_lerp(
     struct Quaternion a, struct Quaternion b, f32 t );
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Interpolated quaternion.
+#define quat_mix quat_lerp
 /// @brief Spherical interpolation.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Interpolated quaternion.
-attr_core_api struct Quaternion q_slerp(
+attr_core_api struct Quaternion quat_slerp(
     struct Quaternion a, struct Quaternion b, f32 t );
 /// @brief Convert AngleAxis to Quaternion.
 /// @param angle_axis Angle axis.
 /// @return Quaternion representation of angle axis rotation.
-attr_core_api struct Quaternion q_from_angle_axis( struct AngleAxis_ angle_axis );
+attr_core_api struct Quaternion quat_from_angle_axis( struct AngleAxis_ angle_axis );
 /// @brief Convert euler angles rotation to quaternion rotation.
 /// @param x, y, z Euler angles.
 /// @return Euler angle rotation as quaternion.
-attr_core_api struct Quaternion q_from_euler( f32 x, f32 y, f32 z );
+attr_core_api struct Quaternion quat_from_euler( f32 x, f32 y, f32 z );
 /// @brief Convert euler angles rotation to quaternion rotation.
 /// @param euler_angles Euler angles.
 /// @return Euler angle rotation as quaternion.
 attr_always_inline
-attr_header struct Quaternion q_from_euler_v3( struct Vector3 euler_angles ) {
-    return q_from_euler( euler_angles.x, euler_angles.y, euler_angles.z );
+attr_header struct Quaternion quat_from_euler_vec3( struct Vector3 euler_angles ) {
+    return quat_from_euler( euler_angles.x, euler_angles.y, euler_angles.z );
 }
 /// @brief Convert quaternion rotation to euler angles.
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as euler angles.
-attr_core_api struct Vector3 q_to_euler( struct Quaternion q );
+attr_core_api struct Vector3 quat_to_euler( struct Quaternion q );
 /// @brief Convert quaternion rotation to angle axis rotation.
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as angle axis rotation.
-attr_core_api struct AngleAxis_ q_to_angle_axis( struct Quaternion q );
+attr_core_api struct AngleAxis_ quat_to_angle_axis( struct Quaternion q );
 /// @brief Compare two quaternions for equality.
 /// @param a, b Quaternions to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
 /// @see #F32_EPSILON
 attr_always_inline
-attr_header b32 q_cmp( struct Quaternion a, struct Quaternion b ) {
-    return q_sqrmag( q_sub( a, b ) ) < F32_EPSILON;
+attr_header b32 quat_cmp( struct Quaternion a, struct Quaternion b ) {
+    return quat_length_sqr( quat_sub( a, b ) ) < F32_EPSILON;
 }
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)

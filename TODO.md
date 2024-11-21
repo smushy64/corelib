@@ -1,4 +1,11 @@
 # Todo List
+- [ ] math: quat_from_angle_axis_vec3, from_angle_axis_combined, from_angle_axis (scalars)
+- [ ] math: simd (trig, linear algebra)
+- [ ] math: sine_cosine MASM (for compiling with MSVC)
+- [ ] math: saturating,wrapping,checked add/sub/mul/div
+- [ ] math: RGB <-> HEX conversions
+- [ ] math: uvec2/3/4 bvec2/3/4 dvec2/3/4
+- [ ] math:docs: write docs for overloads and C++ vector/matrix/quaternion
 - [ ] fmt: path to upper/lower.
 - [ ] fmt: path convert separators.
 - [ ] collections: swap insert, swap remove etc.
@@ -12,11 +19,6 @@
 - [ ] memory: more memory allocation functions
     - page protections, shared memory, allocate pages for example.
 - [ ] fs: memory mapped file?
-- [ ] math: simd (trig, linear algebra)
-- [ ] math: sine_cosine MASM (for compiling with MSVC)
-- [ ] math: saturating,wrapping,checked add/sub/mul/div
-- [ ] math: generics/function overloads(C++)
-- [ ] math: RGB <-> HEX conversions
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
 ## Bugs
 - [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
@@ -25,6 +27,9 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] math: rewrite vec3/vec4 macro
+- [x] math: vector swizzling
+- [x] math: generics/function overloads(C++)
 - [x] sync: software/OS semaphore and mutex
     - anonymous semaphores and mutexes can be implemented with
     relatively fast atomic operations. since i haven't yet had a

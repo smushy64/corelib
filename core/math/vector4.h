@@ -59,6 +59,18 @@ struct Vector4 {
                         f32 b;
                     };
                 };
+                /// @brief Swizzle yz.
+                struct {
+                    f32 __unused0;
+                    /// @brief Y and Z components as a #Vector2.
+                    struct Vector2 yz;
+                };
+                /// @brief Swizzle gb.
+                struct {
+                    f32 __unused1;
+                    /// @brief Green and Blue channels as a #Vector2.
+                    struct Vector2 gb;
+                };
                 /// @brief X, Y and Z components as a #Vector3.
                 struct Vector3 xyz;
                 /// @brief Red, Green and Blue components as a #Vector3.
@@ -72,15 +84,34 @@ struct Vector4 {
                 f32 a;
             };
         };
+        /// @brief Swizzle yzw.
+        struct {
+            f32 __unused2;
+            /// @brief Y, Z and W components as a #Vector3.
+            struct Vector3 yzw;
+        };
+        /// @brief Swizzle gba.
+        struct {
+            f32 __unused3;
+            /// @brief Green, Blue and Alpha channels as a #Vector3.
+            struct Vector3 gba;
+        };
+        /// @brief Swizzle zw.
+        struct {
+            struct Vector2 __unused4;
+            /// @brief Z and W components as a #Vector2.
+            struct Vector2 zw;
+        };
+        /// @brief Swizzle ba.
+        struct {
+            struct Vector2 __unused5;
+            /// @brief Blue and Alpha channels as a #Vector2.
+            struct Vector2 ba;
+        };
         /// @brief X, Y, Z and W components as an array.
-        f32 v[4];
+        f32 array[4];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief 4 Component 32-bit Floating Point Vector.
-    typedef struct Vector4 vec4;
-#endif
-
 /// @brief 4 Component 32-bit Signed Integer Vector.
 struct IVector4 {
     /// @brief Union of vector component aliases.
@@ -100,7 +131,7 @@ struct IVector4 {
                             /// @brief Y component.
                             i32 y;
                         };
-                        /// @brief X and Y components as a #IVector2.
+                        /// @brief X and Y components as an #IVector2.
                         struct IVector2 xy;
                     };
                     /// @brief Z component.
@@ -109,7 +140,13 @@ struct IVector4 {
                         i32 z;
                     };
                 };
-                /// @brief X, Y and Z components as a #IVector3.
+                /// @brief Swizzle yz.
+                struct {
+                    i32 __unused0;
+                    /// @brief Y and Z components as an #IVector2.
+                    struct IVector2 yz;
+                };
+                /// @brief X, Y and Z components as an #IVector3.
                 struct IVector3 xyz;
             };
             /// @brief W component.
@@ -118,36 +155,88 @@ struct IVector4 {
                 i32 w;
             };
         };
+        /// @brief Swizzle yzw.
+        struct {
+            i32 __unused2;
+            /// @brief Y, Z and W components as an #IVector3.
+            struct IVector3 yzw;
+        };
+        /// @brief Swizzle zw.
+        struct {
+            struct IVector2 __unused4;
+            /// @brief Z and W components as an #IVector2.
+            struct IVector2 zw;
+        };
         /// @brief X, Y, Z and W components as an array.
-        i32 v[4];
+        i32 array[4];
+    };
+};
+struct UVector4 {
+    union {
+        struct {
+            u32 x;
+            u32 y;
+            u32 z;
+            u32 w;
+        };
+        u32 array[4];
+    };
+};
+struct DVector4 {
+    union {
+        struct {
+            f64 x;
+            f64 y;
+            f64 z;
+            f64 w;
+        };
+        f64 array[4];
+    };
+};
+struct BVector4 {
+    union {
+        struct {
+            b32 x;
+            b32 y;
+            b32 z;
+            b32 w;
+        };
+        b32 array[4];
     };
 };
 #if !defined(CORE_CPLUSPLUS)
+    /// @brief 4 Component 32-bit Floating Point Vector.
+    typedef struct Vector4 vec4;
     /// @brief 4 Component 32-bit Signed Integer Vector.
     typedef struct IVector4 ivec4;
 #endif
+typedef struct UVector4 uvec4;
+typedef struct DVector4 dvec4;
+typedef struct BVector4 bvec4;
 
-#if defined(CORE_DOXYGEN)
+#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
     /// @brief Construct a Vector4.
     /// @param x, y, z, w (f32) Components.
     /// @return Vector4.
-    #define v4( x, y, z, w )
+    #define vec4( x, y, z, w )
     /// @brief Construct an IVector4.
     /// @param x, y, z, w (i32) Components.
     /// @return IVector4.
-    #define iv4( x, y, z, w )
+    #define ivec4( x, y, z, w )
 #else /* Doxygen */
 
 #if defined(CORE_CPLUSPLUS)
-    #define v4( x, y, z, w )\
-        Vector4{ .v={ (x), (y), (z), (w) } }
-    #define iv4( x, y, z, w )\
-        IVector4{ .v={ (x), (y), (z), (w) } }
+    #define vec4_new( x, y, z, w )\
+        Vector4{ .array={ (x), (y), (z), (w) } }
+    #define ivec4_new( x, y, z, w )\
+        IVector4{ .array={ (x), (y), (z), (w) } }
 #else /* C++ constructors */
-    #define v4( x, y, z, w )\
-        (struct Vector4){ .v={ (x), (y), (z), (w) } }
-    #define iv4( x, y, z, w )\
-        (struct IVector4){ .v={ (x), (y), (z), (w) } }
+    #define vec4( x, y, z, w )\
+        (struct Vector4){ .array={ (x), (y), (z), (w) } }
+    #define ivec4( x, y, z, w )\
+        (struct IVector4){ .array={ (x), (y), (z), (w) } }
+    #define vec4_new(...)  vec4(__VA_ARGS__)
+    #define ivec4_new(...) ivec4(__VA_ARGS__)
 #endif /* C constructors */ 
 
 #endif /* Doxygen */
@@ -155,27 +244,27 @@ struct IVector4 {
 /// @brief Construct a new Vector4 with identical components.
 /// @param x (f32) Value for components.
 /// @return Vector4.
-#define v4_set( x )\
-    v4( (x), (x), (x), (x) )
+#define vec4_set( x )\
+    vec4_new( (x), (x), (x), (x) )
 /// @brief Construct a new RGBA (Vector4).
 /// @param r, g, b, a (f32) Red, Green, Blue and Alpha channels.
 /// @return RGBA (Vector4).
-#define rgba( r, g, b, a ) v4( r, g, b, a )
+#define rgba( r, g, b, a ) vec4_new( r, g, b, a )
 /// @brief Construct a new IVector4 with identical components.
 /// @param x (i32) Value for components.
 /// @return IVector4.
-#define iv4_set( x )\
-    iv4( (x), (x), (x), (x) )
+#define ivec4_set( x )\
+    ivec4_new( (x), (x), (x), (x) )
 
 /// @brief Vector4 zero constant.
-#define VEC4_ZERO ( v4_set( 0.0f ) )
+#define VEC4_ZERO ( vec4_set( 0.0f ) )
 /// @brief Vector4 one constant.
-#define VEC4_ONE  ( v4_set( 1.0f ) )
+#define VEC4_ONE  ( vec4_set( 1.0f ) )
 
 /// @brief IVector4 zero constant.
-#define IVEC4_ZERO ( iv4_set( 0 ) )
+#define IVEC4_ZERO ( ivec4_set( 0 ) )
 /// @brief IVector4 one constant.
-#define IVEC4_ONE  ( iv4_set( 1 ) )
+#define IVEC4_ONE  ( ivec4_set( 1 ) )
 
 /// @brief RGBA red constant.
 #define RGBA_RED     ( rgba( 1.0f, 0.0f, 0.0f, 1.0f ) )
@@ -192,33 +281,33 @@ struct IVector4 {
 /// @brief RGBA black constant.
 #define RGBA_BLACK   ( rgba( 0.0f, 0.0f, 0.0f, 1.0f ) )
 /// @brief RGBA white constant.
-#define RGBA_WHITE   ( v4_set( 1.0f ) )
+#define RGBA_WHITE   ( vec4_set( 1.0f ) )
 /// @brief RGBA clear constant.
-#define RGBA_CLEAR   ( v4_set( 0.0f ) )
+#define RGBA_CLEAR   ( vec4_set( 0.0f ) )
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 4 values.
 /// @return Vector with components from array.
 attr_always_inline
-attr_header struct Vector4 v4_from_array( const f32 array[4] ) {
-    return v4( array[0], array[1], array[2], array[3] );
+attr_header struct Vector4 vec4_from_array( const f32 array[4] ) {
+    return vec4_new( array[0], array[1], array[2], array[3] );
 }
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 values.
 attr_always_inline
-attr_header void v4_to_array( struct Vector4 v, f32* out_array ) {
-    out_array[0] = v.v[0]; out_array[1] = v.v[1];
-    out_array[2] = v.v[2]; out_array[3] = v.v[3];
+attr_header void vec4_to_array( struct Vector4 v, f32* out_array ) {
+    out_array[0] = v.array[0]; out_array[1] = v.array[1];
+    out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
 attr_always_inline
-attr_header struct Vector4 v4_add(
+attr_header struct Vector4 vec4_add(
     struct Vector4 lhs, struct Vector4 rhs
 ) {
-    return v4(
+    return vec4_new(
         lhs.x + rhs.x, lhs.y + rhs.y,
         lhs.z + rhs.z, lhs.w + rhs.w );
 }
@@ -226,10 +315,10 @@ attr_header struct Vector4 v4_add(
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
 attr_always_inline
-attr_header struct Vector4 v4_sub(
+attr_header struct Vector4 vec4_sub(
     struct Vector4 lhs, struct Vector4 rhs
 ) {
-    return v4(
+    return vec4_new(
         lhs.x - rhs.x, lhs.y - rhs.y,
         lhs.z - rhs.z, lhs.w - rhs.w );
 }
@@ -238,55 +327,10 @@ attr_header struct Vector4 v4_sub(
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header struct Vector4 v4_mul( struct Vector4 lhs, f32 rhs ) {
-    return v4(
+attr_header struct Vector4 vec4_mul( struct Vector4 lhs, f32 rhs ) {
+    return vec4_new(
         lhs.x * rhs, lhs.y * rhs,
         lhs.z * rhs, lhs.w * rhs );
-}
-/// @brief Divide vector components.
-/// @param lhs Vector to divide.
-/// @param rhs Scalar to divide components by.
-/// @return Result of division.
-attr_always_inline
-attr_header struct Vector4 v4_div( struct Vector4 lhs, f32 rhs ) {
-    return v4(
-        lhs.x / rhs, lhs.y / rhs,
-        lhs.z / rhs, lhs.w / rhs );
-}
-/// @brief Negate components of a vector.
-/// @param x Vector to negate.
-/// @return Result of negation.
-attr_always_inline
-attr_header struct Vector4 v4_neg( struct Vector4 x ) {
-    return v4( -x.x, -x.y, -x.z, -x.w );
-}
-/// @brief Rotate vector components to the left.
-/// @param x Vector to rotate components of.
-/// @return Vector with components rotated to the left.
-attr_always_inline
-attr_header struct Vector4 v4_rotl( struct Vector4 x ) {
-    return v4( x.y, x.z, x.w, x.x );
-}
-/// @brief Rotate vector components to the right.
-/// @param x Vector to rotate components of.
-/// @return Vector with components rotated to the right.
-attr_always_inline
-attr_header struct Vector4 v4_rotr( struct Vector4 x ) {
-    return v4( x.w, x.x, x.y, x.z );
-}
-/// @brief Horizontally add components of vector.
-/// @param x Vector whose components are to be added.
-/// @return Result of addition.
-attr_always_inline
-attr_header f32 v4_hadd( struct Vector4 x ) {
-    return x.x + x.y + x.z + x.w;
-}
-/// @brief Horizontally multply components of vector.
-/// @param x Vector whose components are to be multiplied.
-/// @return Result of multiplication.
-attr_always_inline
-attr_header f32 v4_hmul( struct Vector4 x ) {
-    return x.x * x.y * x.z * x.w;
 }
 /// @brief Hadamard product between two vectors.
 ///
@@ -294,118 +338,333 @@ attr_header f32 v4_hmul( struct Vector4 x ) {
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header struct Vector4 v4_hadamard(
+attr_header struct Vector4 vec4_mul_vec4(
     struct Vector4 lhs, struct Vector4 rhs
 ) {
-    return v4(
+    return vec4_new(
         lhs.x * rhs.x, lhs.y * rhs.y,
         lhs.z * rhs.z, lhs.w * rhs.w );
+}
+/// @brief Hadamard product between two vectors.
+///
+/// Component-wise multiplication of two vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+attr_always_inline
+attr_header struct Vector4 vec4_hadamard(
+    struct Vector4 lhs, struct Vector4 rhs
+) {
+    return vec4_mul_vec4( lhs, rhs );
+}
+/// @brief Divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+attr_always_inline
+attr_header struct Vector4 vec4_div( struct Vector4 lhs, f32 rhs ) {
+    return vec4_new(
+        lhs.x / rhs, lhs.y / rhs,
+        lhs.z / rhs, lhs.w / rhs );
+}
+/// @brief Divide vector components.
+/// @param lhs,rhs Vectors to divide.
+/// @return Result of division.
+attr_always_inline
+attr_header struct Vector4 vec4_div_vec4( struct Vector4 lhs, struct Vector4 rhs ) {
+    return vec4_new(
+        lhs.x / rhs.x, lhs.y / rhs.y,
+        lhs.z / rhs.z, lhs.w / rhs.w );
+}
+/// @brief Negate components of a vector.
+/// @param x Vector to negate.
+/// @return Result of negation.
+attr_always_inline
+attr_header struct Vector4 vec4_neg( struct Vector4 x ) {
+    return vec4_new( -x.x, -x.y, -x.z, -x.w );
+}
+/// @brief Rotate vector components to the left.
+/// @param x Vector to rotate components of.
+/// @return Vector with components rotated to the left.
+attr_always_inline
+attr_header struct Vector4 vec4_rotl( struct Vector4 x ) {
+    return vec4_new( x.y, x.z, x.w, x.x );
+}
+/// @brief Rotate vector components to the right.
+/// @param x Vector to rotate components of.
+/// @return Vector with components rotated to the right.
+attr_always_inline
+attr_header struct Vector4 vec4_rotr( struct Vector4 x ) {
+    return vec4_new( x.w, x.x, x.y, x.z );
+}
+/// @brief Horizontally add components of vector.
+/// @param x Vector whose components are to be added.
+/// @return Result of addition.
+attr_always_inline
+attr_header f32 vec4_hadd( struct Vector4 x ) {
+    return x.x + x.y + x.z + x.w;
+}
+/// @brief Horizontally multply components of vector.
+/// @param x Vector whose components are to be multiplied.
+/// @return Result of multiplication.
+attr_always_inline
+attr_header f32 vec4_hmul( struct Vector4 x ) {
+    return x.x * x.y * x.z * x.w;
 }
 /// @brief Inner product of two vectors.
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
 attr_always_inline
-attr_header f32 v4_dot( struct Vector4 lhs, struct Vector4 rhs ) {
-    return v4_hadd( v4_hadamard( lhs, rhs ) );
+attr_header f32 vec4_dot( struct Vector4 lhs, struct Vector4 rhs ) {
+    return vec4_hadd( vec4_hadamard( lhs, rhs ) );
 }
 /// @brief Get the maximum component in vector.
 /// @param x Vector to get maximum of.
 /// @return Component with largest value.
 attr_always_inline
-attr_header f32 v4_max( struct Vector4 x ) {
-    f32 _0 = v2_max( x.xy );
-    f32 _1 = v2_max( v2( x.y, x.z ) );
+attr_header f32 vec4_hmax( struct Vector4 x ) {
+    f32 _0 = vec2_hmax( x.xy );
+    f32 _1 = vec2_hmax( vec2_new( x.y, x.z ) );
     return _0 < _1 ? _1 : _0;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline
+attr_header struct Vector4 vec4_max( struct Vector4 x, struct Vector4 y ) {
+    struct Vector4 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
+    result.z = x.z < y.z ? y.z : x.z;
+    result.w = x.w < y.w ? y.w : x.w;
+    return result;
 }
 /// @brief Get the minimum component in vector.
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
 attr_always_inline
-attr_header f32 v4_min( struct Vector4 x ) {
-    f32 _0 = v2_max( x.xy );
-    f32 _1 = v2_max( v2( x.y, x.z ) );
+attr_header f32 vec4_hmin( struct Vector4 x ) {
+    f32 _0 = vec2_hmin( x.xy );
+    f32 _1 = vec2_hmin( vec2_new( x.y, x.z ) );
     return _0 < _1 ? _0 : _1;
+}
+/// @brief Component-wise minimum value.
+/// @param x, y Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline
+attr_header struct Vector4 vec4_min( struct Vector4 x, struct Vector4 y ) {
+    struct Vector4 result;
+    result.x = x.x < y.x ? x.x : y.x;
+    result.y = x.y < y.y ? x.y : y.y;
+    result.z = x.z < y.z ? x.z : y.z;
+    result.w = x.w < y.w ? x.w : y.w;
+    return result;
 }
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
 attr_always_inline
-attr_header f32 v4_sqrmag( struct Vector4 x ) {
-    return v4_dot( x, x );
+attr_header f32 vec4_length_sqr( struct Vector4 x ) {
+    return vec4_dot( x, x );
 }
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
-attr_core_api f32 v4_mag( struct Vector4 x );
+attr_core_api f32 vec4_length( struct Vector4 x );
+/// @brief Calculate distance between two points.
+/// @param a, b Points to calculate distance of.
+/// @return Distance squared.
+attr_always_inline
+attr_header f32 vec4_distance_sqr( struct Vector4 a, struct Vector4 b ) {
+    return vec4_length_sqr( vec4_sub( a, b ) );
+}
+/// @brief Calculate distance between two points.
+/// @param a, b Points to calculate distance of.
+/// @return Distance.
+attr_always_inline
+attr_header f32 vec4_distance( struct Vector4 a, struct Vector4 b ) {
+    return vec4_length( vec4_sub( a, b ) );
+}
 /// @brief Normalize a Vector.
 /// @param x Vector to normalize.
 /// @return Normalized vector or zero vector if magnitude == 0.
-attr_core_api struct Vector4 v4_normalize( struct Vector4 x );
+attr_core_api struct Vector4 vec4_normalize( struct Vector4 x );
+/// @brief Component-wise clamp.
+/// @param v        Vector.
+/// @param min, max Range.
+/// @return Clamped vector.
+attr_always_inline
+attr_header struct Vector4 vec4_clamp(
+    struct Vector4 v, struct Vector4 min, struct Vector4 max
+) {
+    struct Vector4 result;
+    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
+    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
+    result.z = ( (v.z) < (min.z) ? (min.z) : ( (v.z) > (max.z) ? (max.z) : (v.z) ) );
+    result.w = ( (v.w) < (min.w) ? (min.w) : ( (v.w) > (max.w) ? (max.w) : (v.w) ) );
+    return result;
+}
 /// @brief Clamp vector's magnitude to range min -> max.
 /// @param v Vector to clamp.
 /// @param min_, max_ Range to clamp to, min_ must be < max_.
 /// @return Clamped vector.
 attr_always_inline
-attr_header struct Vector4 v4_clamp_mag(
+attr_header struct Vector4 vec4_clamp_length(
     struct Vector4 v, f32 min_, f32 max_
 ) {
-    f32 mag = v4_mag( v );
+    f32 mag = vec4_length( v );
     if( mag == 0.0f ) {
         return VEC4_ZERO;
     }
-    f32 new_mag = ( mag < min_ ? min_ : ( mag > max_ ? max_ : mag ) );
-    return v4_mul( v4_div( v, mag ), new_mag );
+    f32 new_length = ( mag < min_ ? min_ : ( mag > max_ ? max_ : mag ) );
+    return vec4_mul( vec4_div( v, mag ), new_length );
+}
+/// @brief Component-wise abs.
+/// @param v Vector.
+/// @return Vector with absolute values.
+attr_header
+struct Vector4 vec4_abs( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = v.x < 0.0f ? -v.x : v.x;
+    result.y = v.y < 0.0f ? -v.y : v.y;
+    result.z = v.z < 0.0f ? -v.z : v.z;
+    result.w = v.w < 0.0f ? -v.w : v.w;
+    return result;
+}
+/// @brief Component-wise sign.
+/// @param v Vector.
+/// @return Vector with sign values.
+attr_header
+struct Vector4 vec4_sign( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = (v.x > 0.0f) - (f32)(v.x < 0.0f);
+    result.y = (v.y > 0.0f) - (f32)(v.y < 0.0f);
+    result.z = (v.z > 0.0f) - (f32)(v.z < 0.0f);
+    result.w = (v.w > 0.0f) - (f32)(v.w < 0.0f);
+    return result;
+}
+/// @brief Component-wise truncate.
+/// @param v Vector to truncate.
+/// @return Vector with truncated values.
+attr_header
+struct Vector4 vec4_trunc( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = (f32)(i32)v.x;
+    result.y = (f32)(i32)v.y;
+    result.z = (f32)(i32)v.z;
+    result.w = (f32)(i32)v.w;
+    return result;
+}
+/// @brief Component-wise floor.
+/// @param v Vector to floor.
+/// @return Vector with floored values.
+attr_header
+struct Vector4 vec4_floor( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 1.0f ) : (i32)( v.x ) );
+    result.y = (f32)( v.y < 0.0f ? (i32)( v.y - 1.0f ) : (i32)( v.y ) );
+    result.z = (f32)( v.z < 0.0f ? (i32)( v.z - 1.0f ) : (i32)( v.z ) );
+    result.w = (f32)( v.w < 0.0f ? (i32)( v.w - 1.0f ) : (i32)( v.w ) );
+    return result;
+}
+/// @brief Component-wise ceil.
+/// @param v Vector to ceil.
+/// @return Vector with ceiled values.
+attr_header
+struct Vector4 vec4_ceil( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = (f32)( v.x < 0.0f ? (i32)( v.x ) : (i32)( v.x + 1.0f ) );
+    result.y = (f32)( v.y < 0.0f ? (i32)( v.y ) : (i32)( v.y + 1.0f ) );
+    result.z = (f32)( v.z < 0.0f ? (i32)( v.z ) : (i32)( v.z + 1.0f ) );
+    result.w = (f32)( v.w < 0.0f ? (i32)( v.w ) : (i32)( v.w + 1.0f ) );
+    return result;
+}
+/// @brief Component-wise round.
+/// @param v Vector to round.
+/// @return Vector with rounded values.
+attr_header
+struct Vector4 vec4_round( struct Vector4 v ) {
+    struct Vector4 result;
+    result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 0.5f ) : (i32)( v.x + 0.5f ) );
+    result.y = (f32)( v.y < 0.0f ? (i32)( v.y - 0.5f ) : (i32)( v.y + 0.5f ) );
+    result.z = (f32)( v.z < 0.0f ? (i32)( v.z - 0.5f ) : (i32)( v.z + 0.5f ) );
+    result.w = (f32)( v.w < 0.0f ? (i32)( v.w - 0.5f ) : (i32)( v.w + 0.5f ) );
+    return result;
+}
+/// @brief Get fractional part.
+/// @param v Vector.
+/// @return Vector with fractional part.
+attr_header
+struct Vector4 vec4_fract( struct Vector4 v ) {
+    return vec4_sub( v, vec4_round(v) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector4 v4_lerp(
+attr_core_api struct Vector4 vec4_lerp(
     struct Vector4 a, struct Vector4 b, f32 t );
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Vector in range a -> b.
+#define vec4_mix vec4_lerp
+/// @brief Step function.
+/// @param edge Value to compare @c x to.
+/// @param x    Value.
+/// @return 0 if x < edge, otherwise 1.
+attr_header
+struct Vector4 vec4_step( struct Vector4 edge, struct Vector4 x ) {
+    struct Vector4 result;
+    result.x = x.x < edge.x ? 0.0 : 1.0;
+    result.y = x.y < edge.y ? 0.0 : 1.0;
+    result.z = x.z < edge.z ? 0.0 : 1.0;
+    result.w = x.w < edge.w ? 0.0 : 1.0;
+    return result;
+}
 /// @brief Smooth step interpolation.
 /// @param a, b Range of interpolation.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector4 v4_smooth_step(
+attr_core_api struct Vector4 vec4_smoothstep(
     struct Vector4 a, struct Vector4 b, f32 t );
 /// @brief Smoother step interpolation.
 /// @param a, b Range of interpolation.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector4 v4_smoother_step(
+attr_core_api struct Vector4 vec4_smootherstep(
     struct Vector4 a, struct Vector4 b, f32 t );
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
 /// @see #F32_EPSILON
 attr_always_inline
-attr_header b32 v4_cmp( struct Vector4 a, struct Vector4 b ) {
-    return v4_sqrmag( v4_sub( a, b ) ) < F32_EPSILON;
+attr_header b32 vec4_cmp( struct Vector4 a, struct Vector4 b ) {
+    return vec4_length_sqr( vec4_sub( a, b ) ) < F32_EPSILON;
 }
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 4 values.
 /// @return Vector with components from array.
 attr_always_inline
-attr_header struct IVector4 iv4_from_array( const i32 array[4] ) {
-    return iv4( array[0], array[1], array[2], array[4] );
+attr_header struct IVector4 ivec4_from_array( const i32 array[4] ) {
+    return ivec4_new( array[0], array[1], array[2], array[4] );
 }
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 values.
 attr_always_inline
-attr_header void iv4_to_array( struct IVector4 v, i32* out_array ) {
-    out_array[0] = v.v[0]; out_array[1] = v.v[1];
-    out_array[2] = v.v[2]; out_array[3] = v.v[3];
+attr_header void ivec4_to_array( struct IVector4 v, i32* out_array ) {
+    out_array[0] = v.array[0]; out_array[1] = v.array[1];
+    out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
 attr_always_inline
-attr_header struct IVector4 iv4_add(
+attr_header struct IVector4 ivec4_add(
     struct IVector4 lhs, struct IVector4 rhs
 ) {
-    return iv4(
+    return ivec4_new(
         lhs.x + rhs.x, lhs.y + rhs.y,
         lhs.z + rhs.z, lhs.w + rhs.w );
 }
@@ -413,10 +672,10 @@ attr_header struct IVector4 iv4_add(
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
 attr_always_inline
-attr_header struct IVector4 iv4_sub(
+attr_header struct IVector4 ivec4_sub(
     struct IVector4 lhs, struct IVector4 rhs
 ) {
-    return iv4(
+    return ivec4_new(
         lhs.x - rhs.x, lhs.y - rhs.y,
         lhs.z - rhs.z, lhs.w - rhs.w );
 }
@@ -425,8 +684,8 @@ attr_header struct IVector4 iv4_sub(
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header struct IVector4 iv4_mul( struct IVector4 lhs, i32 rhs ) {
-    return iv4(
+attr_header struct IVector4 ivec4_mul( struct IVector4 lhs, i32 rhs ) {
+    return ivec4_new(
         lhs.x * rhs, lhs.y * rhs,
         lhs.z * rhs, lhs.w * rhs );
 }
@@ -435,8 +694,8 @@ attr_header struct IVector4 iv4_mul( struct IVector4 lhs, i32 rhs ) {
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
 attr_always_inline
-attr_header struct IVector4 iv4_div( struct IVector4 lhs, i32 rhs ) {
-    return iv4(
+attr_header struct IVector4 ivec4_div( struct IVector4 lhs, i32 rhs ) {
+    return ivec4_new(
         lhs.x / rhs, lhs.y / rhs,
         lhs.z / rhs, lhs.w / rhs );
 }
@@ -444,35 +703,35 @@ attr_header struct IVector4 iv4_div( struct IVector4 lhs, i32 rhs ) {
 /// @param x Vector to negate.
 /// @return Result of negation.
 attr_always_inline
-attr_header struct IVector4 iv4_neg( struct IVector4 x ) {
-    return iv4( -x.x, -x.y, -x.z, -x.w );
+attr_header struct IVector4 ivec4_neg( struct IVector4 x ) {
+    return ivec4_new( -x.x, -x.y, -x.z, -x.w );
 }
 /// @brief Rotate vector components to the left.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the left.
 attr_always_inline
-attr_header struct IVector4 iv4_rotl( struct IVector4 x ) {
-    return iv4( x.y, x.z, x.w, x.x );
+attr_header struct IVector4 ivec4_rotl( struct IVector4 x ) {
+    return ivec4_new( x.y, x.z, x.w, x.x );
 }
 /// @brief Rotate vector components to the right.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the right.
 attr_always_inline
-attr_header struct IVector4 iv4_rotr( struct IVector4 x ) {
-    return iv4( x.w, x.x, x.y, x.z );
+attr_header struct IVector4 ivec4_rotr( struct IVector4 x ) {
+    return ivec4_new( x.w, x.x, x.y, x.z );
 }
 /// @brief Horizontally add components of vector.
 /// @param x Vector whose components are to be added.
 /// @return Result of addition.
 attr_always_inline
-attr_header i32 iv4_hadd( struct IVector4 x ) {
+attr_header i32 ivec4_hadd( struct IVector4 x ) {
     return x.x + x.y + x.z + x.w;
 }
 /// @brief Horizontally multply components of vector.
 /// @param x Vector whose components are to be multiplied.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header i32 iv4_hmul( struct IVector4 x ) {
+attr_header i32 ivec4_hmul( struct IVector4 x ) {
     return x.x * x.y * x.z * x.w;
 }
 /// @brief Hadamard product between two vectors.
@@ -481,10 +740,10 @@ attr_header i32 iv4_hmul( struct IVector4 x ) {
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
 attr_always_inline
-attr_header struct IVector4 iv4_hadamard(
+attr_header struct IVector4 ivec4_hadamard(
     struct IVector4 lhs, struct IVector4 rhs
 ) {
-    return iv4(
+    return ivec4_new(
         lhs.x * rhs.x, lhs.y * rhs.y,
         lhs.z * rhs.z, lhs.w * rhs.w );
 }
@@ -492,33 +751,33 @@ attr_header struct IVector4 iv4_hadamard(
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
 attr_always_inline
-attr_header f32 iv4_dot( struct IVector4 lhs, struct IVector4 rhs ) {
-    struct Vector4 _lhs = v4( (f32)lhs.x, (f32)lhs.y, (f32)lhs.z, (f32)lhs.w );
-    struct Vector4 _rhs = v4( (f32)rhs.x, (f32)rhs.y, (f32)rhs.z, (f32)rhs.w );
+attr_header f32 ivec4_dot( struct IVector4 lhs, struct IVector4 rhs ) {
+    struct Vector4 _lhs = vec4_new( (f32)lhs.x, (f32)lhs.y, (f32)lhs.z, (f32)lhs.w );
+    struct Vector4 _rhs = vec4_new( (f32)rhs.x, (f32)rhs.y, (f32)rhs.z, (f32)rhs.w );
 
-    return v4_dot( _lhs, _rhs );
+    return vec4_dot( _lhs, _rhs );
 }
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
 attr_always_inline
-attr_header f32 iv4_sqrmag( struct IVector4 x ) {
-    struct Vector4 _x = v4( (f32)x.x, (f32)x.y, (f32)x.z, (f32)x.w );
-    return v4_sqrmag( _x );
+attr_header f32 ivec4_length_sqr( struct IVector4 x ) {
+    struct Vector4 _x = vec4_new( (f32)x.x, (f32)x.y, (f32)x.z, (f32)x.w );
+    return vec4_length_sqr( _x );
 }
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
 attr_always_inline
-attr_header f32 iv4_mag( struct IVector4 x ) {
-    struct Vector4 _x = v4( (f32)x.x, (f32)x.y, (f32)x.z, (f32)x.w );
-    return v4_mag( _x );
+attr_header f32 ivec4_length( struct IVector4 x ) {
+    struct Vector4 _x = vec4_new( (f32)x.x, (f32)x.y, (f32)x.z, (f32)x.w );
+    return vec4_length( _x );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if vector components are equal.
 attr_always_inline
-attr_header b32 iv4_cmp( struct IVector4 a, struct IVector4 b ) {
+attr_header b32 ivec4_cmp( struct IVector4 a, struct IVector4 b ) {
     return
         a.x == b.x &&
         a.y == b.y &&

@@ -6,146 +6,138 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   September 28, 2024
 */
-
 struct Matrix2x2CPP;
 
 #if !defined(CORE_MATH_MATRIX2X2_H)
     #include "core/math/matrix2x2.h"
 #endif
 
-struct Matrix2x2CPP : public Matrix2x2 {
-    attr_header Matrix2x2CPP() : Matrix2x2{.m00=0,.m01=0,.m10=0,.m11=0} {}
-    attr_header Matrix2x2CPP( f32 m00, f32 m01, f32 m10, f32 m11 ) :
-        Matrix2x2{ .m00=m00,.m01=m01,.m10=m10,.m11=m11 } {}
-    attr_header Matrix2x2CPP( const Matrix2x2& m ) : Matrix2x2{m} {}
-    attr_header explicit Matrix2x2CPP( const f32 a[4] ) :
-        Matrix2x2CPP( from_array(a) ) {}
+struct Matrix2x2CPP {
+    union {
+        struct {
+            union {
+                struct { f32 m00, m01; };
+                Vector2CPP col0;
+            };
+            union {
+                struct { f32 m10, m11; };
+                Vector2CPP col1;
+            };
+        };
+        struct Matrix2x2 pod;
 
-    attr_header static Matrix2x2CPP zero(void) {
-        return MAT2_ZERO;
-    }
-    attr_header static Matrix2x2CPP identity(void) {
-        return MAT2_IDENTITY;
-    }
-    attr_header static Matrix2x2CPP from_array( const f32 a[4] ) {
-        return m2_from_array( a );
-    }
-    
-    attr_header void to_array( f32 out_array[4] ) const {
-        m2_to_array( *this, out_array );
-    }
-    attr_header Matrix2x2CPP add( const Matrix2x2CPP& rhs ) const {
-        return m2_add( *this, rhs );
-    }
-    attr_header Matrix2x2CPP sub( const Matrix2x2CPP& rhs ) const {
-        return m2_sub( *this, rhs );
-    }
-    attr_header Matrix2x2CPP mul( f32 rhs ) const {
-        return m2_mul( *this, rhs );
-    }
-    attr_header Matrix2x2CPP mul( const Matrix2x2CPP& rhs ) const {
-        return m2_mul_m2( *this, rhs );
-    }
-    attr_header Matrix2x2CPP div( f32 rhs ) const {
-        return m2_div( *this, rhs );
-    }
-    attr_header Matrix2x2CPP transpose(void) const {
-        return m2_transpose( *this );
-    }
-    attr_header f32 determinant(void) const {
-        return m2_determinant( *this );
+        Vector2CPP col[2];
+        f32 array[4];
+    };
+
+    attr_always_inline attr_header
+    Matrix2x2CPP() : col0(), col1() {}
+    attr_always_inline attr_header
+    explicit Matrix2x2CPP(
+        f32 m00, f32 m01,
+        f32 m10, f32 m11
+    ) :
+    col0( m00, m01 ),
+    col1( m10, m11 ) {}
+    attr_always_inline attr_header
+    explicit Matrix2x2CPP( Vector2CPP col0, Vector2CPP col1 ) :
+        col0(col0), col1(col1) {}
+    attr_always_inline attr_header
+    Matrix2x2CPP( const struct Matrix2x2& m ) : pod(m) {}
+
+    attr_always_inline attr_header
+    operator Matrix2x2() const {
+        return *(struct Matrix2x2*)this;
     }
 
-    attr_header const Vector2CPP& operator[]( usize idx ) const {
-        const Vector2* ptr = c + idx;
-        return *(const Vector2CPP*)ptr;
+    attr_always_inline attr_header static
+    Matrix2x2CPP zero() {
+        return Matrix2x2CPP();
     }
-    attr_header Vector2CPP& operator[]( usize idx ) {
-        Vector2* ptr = c + idx;
-        return *(Vector2CPP*)ptr;
+    attr_always_inline attr_header static
+    Matrix2x2CPP identity() {
+        return Matrix2x2CPP(
+            1.0, 0.0,
+            0.0, 1.0 );
     }
-    attr_header Matrix2x2CPP& operator+=( const Matrix2x2CPP& rhs ) {
-        return *this = add( rhs );
+
+    attr_always_inline attr_header static
+    Matrix2x2CPP from_array( const f32 array[4] ) {
+        return *(Matrix2x2CPP*)array;
     }
-    attr_header Matrix2x2CPP& operator-=( const Matrix2x2CPP& rhs ) {
-        return *this = sub( rhs );
+    attr_always_inline attr_header
+    void to_array( f32* out_array ) {
+        out_array[0] = array[0];
+        out_array[1] = array[1];
+        out_array[2] = array[2];
+        out_array[3] = array[3];
     }
-    attr_header Matrix2x2CPP& operator*=( f32 rhs ) {
-        return *this = mul( rhs );
+
+    attr_always_inline attr_header
+    const Vector2CPP& operator[]( usize idx ) const {
+        return col[idx];
     }
-    attr_header Matrix2x2CPP& operator*=( const Matrix2x2CPP& rhs ) {
-        return *this = mul( rhs );
-    }
-    attr_header Matrix2x2CPP& operator/=( f32 rhs ) {
-        return *this = div( rhs );
+    attr_always_inline attr_header
+    Vector2CPP& operator[]( usize idx ) {
+        return col[idx];
     }
 };
-attr_header Matrix2x2 operator+(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return m2_add( lhs, rhs );
+attr_always_inline attr_header
+Matrix2x2CPP add( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return mat2_add( lhs.pod, rhs.pod );
 }
-attr_header Matrix2x2 operator-(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return m2_sub( lhs, rhs );
+attr_always_inline attr_header
+Matrix2x2CPP sub( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return mat2_sub( lhs.pod, rhs.pod );
 }
-attr_header Matrix2x2 operator*(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return m2_mul_m2( lhs, rhs );
+attr_always_inline attr_header
+Matrix2x2CPP mul( Matrix2x2CPP lhs, f32 rhs ) {
+    return mat2_mul( lhs.pod, rhs );
 }
-attr_header Matrix2x2 operator*(
-    const Matrix2x2& lhs, f32 rhs
-) {
-    return m2_mul( lhs, rhs );
+attr_always_inline attr_header
+Matrix2x2CPP mul( f32 lhs, Matrix2x2CPP rhs ) {
+    return mat2_mul( rhs.pod, lhs );
 }
-attr_header Matrix2x2 operator*(
-    f32 lhs, const Matrix2x2& rhs
-) {
-    return m2_mul( rhs, lhs );
+attr_always_inline attr_header
+Matrix2x2CPP mul( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return mat2_mul_mat2( lhs.pod, rhs.pod );
 }
-attr_header Matrix2x2 operator/(
-    const Matrix2x2& lhs, f32 rhs
-) {
-    return m2_div( lhs, rhs );
+attr_always_inline attr_header
+Matrix2x2CPP div( Matrix2x2CPP lhs, f32 rhs ) {
+    return mat2_div( lhs.pod, rhs );
+}
+attr_always_inline attr_header
+Matrix2x2CPP transpose( Matrix2x2CPP m ) {
+    return mat2_transpose( m.pod );
+}
+attr_always_inline attr_header
+f32 determinant( Matrix2x2CPP m ) {
+    return mat2_determinant( m.pod );
 }
 
-attr_header Matrix2x2 add(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return lhs + rhs;
+attr_always_inline attr_header
+Matrix2x2CPP operator+( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return add( lhs, rhs );
 }
-attr_header Matrix2x2 sub(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return lhs - rhs;
+attr_always_inline attr_header
+Matrix2x2CPP operator-( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return sub( lhs, rhs );
 }
-attr_header Matrix2x2 mul(
-    const Matrix2x2& lhs, const Matrix2x2& rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix2x2CPP operator*( Matrix2x2CPP lhs, f32 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix2x2 mul(
-    const Matrix2x2& lhs, f32 rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix2x2CPP operator*( f32 lhs, Matrix2x2CPP rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix2x2 mul(
-    f32 lhs, const Matrix2x2& rhs
-) {
-    return lhs * rhs;
+attr_always_inline attr_header
+Matrix2x2CPP operator*( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix2x2 div(
-    const Matrix2x2& lhs, f32 rhs
-) {
-    return lhs / rhs;
-}
-attr_header Matrix2x2 transpose( const Matrix2x2& m ) {
-    return m2_transpose( m );
-}
-attr_header f32 determinant( const Matrix2x2& m ) {
-    return m2_determinant( m );
+attr_always_inline attr_header
+Matrix2x2CPP operator/( Matrix2x2CPP lhs, f32 rhs ) {
+    return div( lhs, rhs );
 }
 
 #endif /* header guard */

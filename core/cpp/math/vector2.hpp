@@ -6,6 +6,7 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   September 28, 2024
 */
+#include "core/cpp/math/swizzler.hpp"
 
 struct Vector2CPP;
 struct IVector2CPP;
@@ -14,378 +15,324 @@ struct IVector2CPP;
     #include "core/math/vector2.h"
 #endif
 
-struct Vector2CPP : public Vector2 {
-    attr_header Vector2CPP() : Vector2{ .x=0, .y=0 } {}
-    attr_header Vector2CPP( f32 x, f32 y ) : Vector2{ .x=x, .y=y } {}
-    attr_header Vector2CPP( const Vector2& v ) : Vector2CPP( v.x, v.y ) {}
-    attr_header explicit Vector2CPP( f32 s ) : Vector2CPP( s, s ) {}
-    attr_header explicit Vector2CPP( const f32 a[2] ) : Vector2CPP( a[0], a[1] ) {}
-    attr_header explicit Vector2CPP( const IVector2& v ) : Vector2CPP( v.x, v.y ) {}
+struct Vector2CPP {
+    union {
+        struct { f32 x, y; };
+        struct { f32 w, h; };
+        struct { f32 u, v; };
+        struct Vector2 pod;
 
-    attr_header static Vector2CPP zero() {
-        return VEC2_ZERO;
-    }
-    attr_header static Vector2CPP one() {
-        return VEC2_ONE;
-    }
-    attr_header static Vector2CPP left() {
-        return VEC2_LEFT;
-    }
-    attr_header static Vector2CPP right() {
-        return VEC2_RIGHT;
-    }
-    attr_header static Vector2CPP up() {
-        return VEC2_UP;
-    }
-    attr_header static Vector2CPP down() {
-        return VEC2_DOWN;
-    }
+        Swizzler<Vector2CPP, f32, 0, 0> xx, uu, ww;
+        Swizzler<Vector2CPP, f32, 1, 1> yy, vv, hh;
+        Swizzler<Vector2CPP, f32, 1, 0> yx, vu, hw;
 
-    attr_header static Vector2CPP from_array( const f32 a[2] ) {
-        return Vector2CPP( a );
+        f32 array[2];
+    };
+
+    attr_always_inline attr_header
+    Vector2CPP() : x(0), y(0) {}
+    attr_always_inline attr_header
+    Vector2CPP( const struct Vector2& v ) : x(v.x), y(v.y) {}
+    attr_always_inline attr_header
+    explicit Vector2CPP( f32 s ) : x(s), y(s) {}
+    attr_always_inline attr_header
+    explicit Vector2CPP( f32 x, f32 y ) : x(x), y(y) {}
+
+    attr_always_inline attr_header
+    operator Vector2() const {
+        return *(struct Vector2*)this;
     }
 
-    attr_header void to_array( f32 out_array[2] ) const {
-        out_array[0] = v[0];
-        out_array[1] = v[1];
+    attr_always_inline attr_header static
+    Vector2CPP zero() {
+        return Vector2CPP();
     }
-    attr_header Vector2CPP add( const Vector2CPP& rhs ) const {
-        return v2_add( *this, rhs );
+    attr_always_inline attr_header static
+    Vector2CPP one() {
+        return Vector2CPP( 1.0, 1.0 );
     }
-    attr_header Vector2CPP sub( const Vector2CPP& rhs ) const {
-        return v2_sub( *this, rhs );
+    attr_always_inline attr_header static
+    Vector2CPP left() {
+        return Vector2CPP( -1.0, 0.0 );
     }
-    attr_header Vector2CPP mul( f32 rhs ) const {
-        return v2_mul( *this, rhs );
+    attr_always_inline attr_header static
+    Vector2CPP right() {
+        return Vector2CPP( 1.0, 0.0 );
     }
-    attr_header Vector2CPP div( f32 rhs ) const {
-        return v2_div( *this, rhs );
+    attr_always_inline attr_header static
+    Vector2CPP up() {
+        return Vector2CPP( 0.0, 1.0 );
     }
-    attr_header Vector2CPP neg(void) const {
-        return v2_neg( *this );
-    }
-    attr_header Vector2CPP swap(void) const {
-        return v2_swap( *this );
-    }
-    attr_header f32 hadd(void) const {
-        return v2_hadd( *this );
-    }
-    attr_header f32 hmul(void) const {
-        return v2_hmul( *this );
-    }
-    attr_header Vector2CPP hadamard( const Vector2CPP& rhs ) const {
-        return v2_hadamard( *this, rhs );
-    }
-    attr_header f32 dot( const Vector2CPP& rhs ) const {
-        return v2_dot( *this, rhs );
-    }
-    attr_header f32 aspect_ratio(void) const {
-        return v2_aspect_ratio( *this );
-    }
-    attr_header f32 max(void) const {
-        return v2_max( *this );
-    }
-    attr_header f32 min(void) const {
-        return v2_min( *this );
-    }
-    attr_header f32 sqrmag(void) const {
-        return v2_sqrmag( *this );
-    }
-    attr_header f32 mag(void) const {
-        return v2_mag( *this );
-    }
-    attr_header Vector2CPP normalize(void) const {
-        return v2_normalize(*this);
-    }
-    attr_header Vector2CPP rotate( f32 angle ) const {
-        return v2_rotate( *this, angle );
-    }
-    attr_header Vector2 clamp_mag( f32 min_, f32 max_ ) const {
-        return v2_clamp_mag( *this, min_, max_ );
-    }
-    attr_header f32 angle( const Vector2CPP& b ) const {
-        return v2_angle( *this, b );
-    }
-    attr_header Vector2CPP lerp( const Vector2CPP& b, f32 t ) const {
-        return v2_lerp( *this, b, t );
-    }
-    attr_header Vector2CPP smooth_step( const Vector2CPP& b, f32 t ) const {
-        return v2_smooth_step( *this, b, t );
-    }
-    attr_header Vector2CPP smoother_step( const Vector2CPP& b, f32 t ) const {
-        return v2_smoother_step( *this, b, t );
-    }
-    attr_header b32 cmp( const Vector2CPP& b ) const {
-        return v2_cmp( *this, b );
+    attr_always_inline attr_header static
+    Vector2CPP down() {
+        return Vector2CPP( 0.0, -1.0 );
     }
 
-    attr_header f32 operator[]( usize idx ) const {
-        return v[idx];
+    attr_always_inline attr_header static
+    Vector2CPP from_array( const f32 array[2] ) {
+        return *(Vector2CPP*)array;
     }
-    attr_header f32& operator[]( usize idx ) {
-        return v[idx];
+    attr_always_inline attr_header
+    void to_array( f32 out_array[2] ) const {
+        out_array[0] = array[0]; out_array[1] = array[1];
     }
-    attr_header Vector2CPP& operator+=( const Vector2CPP& rhs ) {
-        return *this = add( rhs );
+
+    attr_always_inline attr_header
+    f32 operator[]( usize idx ) const {
+        return array[idx];
     }
-    attr_header Vector2CPP& operator-=( const Vector2CPP& rhs ) {
-        return *this = sub( rhs );
-    }
-    attr_header Vector2CPP& operator*=( f32 rhs ) {
-        return *this = mul(rhs);
-    }
-    attr_header Vector2CPP& operator/=( f32 rhs ) {
-        return *this = div(rhs);
-    }
-    attr_header Vector2CPP operator-(void) const {
-        return neg();
+    attr_always_inline attr_header
+    f32& operator[]( usize idx ) {
+        return array[idx];
     }
 };
-attr_header Vector2 operator+( const Vector2& lhs, const Vector2& rhs ) {
-    return v2_add( lhs, rhs );
-}
-attr_header Vector2 operator-( const Vector2& lhs, const Vector2& rhs ) {
-    return v2_sub( lhs, rhs );
-}
-attr_header Vector2 operator*( const Vector2& lhs, f32 rhs ) {
-    return v2_mul( lhs, rhs );
-}
-attr_header Vector2 operator*( f32 lhs, const Vector2& rhs ) {
-    return v2_mul( rhs, lhs );
-}
-attr_header Vector2 operator/( const Vector2& lhs, f32 rhs ) {
-    return v2_div( lhs, rhs );
-}
-attr_header b32 operator==( const Vector2& a, const Vector2& b ) {
-    return v2_cmp( a, b );
-}
-attr_header b32 operator!=( const Vector2& a, const Vector2& b ) {
-    return !(a == b);
-}
 
-attr_header Vector2CPP add( const Vector2CPP& lhs, const Vector2CPP& rhs ) {
-    return lhs + rhs;
-}
-attr_header Vector2CPP sub( const Vector2CPP& lhs, const Vector2CPP& rhs ) {
-    return lhs - rhs;
-}
-attr_header Vector2CPP mul( const Vector2CPP& lhs, f32 rhs ) {
-    return lhs * rhs;
-}
-attr_header Vector2CPP mul( f32 lhs, const Vector2CPP& rhs ) {
-    return lhs * rhs;
-}
-attr_header Vector2CPP div( const Vector2CPP& lhs, f32 rhs ) {
-    return lhs / rhs;
-}
-attr_header Vector2CPP neg( const Vector2CPP& v ) {
-    return -v;
-}
-attr_header b32 cmp( const Vector2CPP& lhs, const Vector2CPP& rhs ) {
-    return lhs == rhs;
-}
-attr_header f32 hadd( const Vector2CPP& v ) {
-    return v.hadd();
-}
-attr_header f32 hmul( const Vector2CPP& v ) {
-    return v.hmul();
-}
-attr_header Vector2CPP hadamard( const Vector2CPP& lhs, const Vector2CPP& rhs ) {
-    return lhs.hadamard(rhs);
-}
-attr_header f32 dot( const Vector2CPP& lhs, const Vector2CPP& rhs ) {
-    return lhs.dot(rhs);
-}
-attr_header f32 max( const Vector2CPP& v ) {
-    return v.max();
-}
-attr_header f32 min( const Vector2CPP& v ) {
-    return v.min();
-}
-attr_header f32 sqrmag( const Vector2CPP& v ) {
-    return v.sqrmag();
-}
-attr_header f32 mag( const Vector2CPP& v ) {
-    return v.mag();
-}
-attr_header Vector2CPP normalize( const Vector2CPP& v ) {
-    return v.normalize();
-}
-attr_header Vector2CPP rotate( const Vector2CPP& v, f32 angle ) {
-    return v.rotate( angle );
-}
-attr_header Vector2CPP lerp( const Vector2CPP& a, const Vector2CPP& b, f32 t ) {
-    return a.lerp( b, t );
-}
-attr_header Vector2CPP smooth_step( const Vector2CPP& a, const Vector2CPP& b, f32 t ) {
-    return a.smooth_step( b, t );
-}
-attr_header Vector2CPP smoother_step(
-    const Vector2CPP& a, const Vector2CPP& b, f32 t
+attr_always_inline
+attr_header Vector2CPP add(
+    Vector2CPP lhs, Vector2CPP rhs
 ) {
-    return a.smoother_step( b, t );
+    return vec2_add( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header Vector2CPP sub(
+    Vector2CPP lhs, Vector2CPP rhs
+) {
+    return vec2_sub( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header Vector2CPP mul( Vector2CPP lhs, f32 rhs ) {
+    return vec2_mul( lhs.pod, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP mul( f32 lhs, Vector2CPP rhs ) {
+    return vec2_mul( rhs.pod, lhs );
+}
+attr_always_inline
+attr_header Vector2CPP mul(
+    Vector2CPP lhs, Vector2CPP rhs
+) {
+    return vec2_mul_vec2( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header Vector2CPP hadamard(
+    Vector2CPP lhs, Vector2CPP rhs
+) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP div( Vector2CPP lhs, f32 rhs ) {
+    return vec2_div( lhs.pod, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP div( Vector2CPP lhs, Vector2CPP rhs ) {
+    return vec2_div_vec2( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header Vector2CPP neg( Vector2CPP x ) {
+    return vec2_neg( x.pod );
+}
+attr_always_inline
+attr_header f32 hadd( Vector2CPP x ) {
+    return vec2_hadd( x.pod );
+}
+attr_always_inline
+attr_header f32 hmul( Vector2CPP x ) {
+    return vec2_hmul( x.pod );
+}
+attr_always_inline
+attr_header f32 dot(
+    Vector2CPP lhs, Vector2CPP rhs
+) {
+    return vec2_dot( lhs.pod, rhs.pod );
+}
+attr_always_inline
+attr_header f32 aspect_ratio( Vector2CPP x ) {
+    return vec2_aspect_ratio( x.pod );
+}
+attr_always_inline
+attr_header f32 hmax( Vector2CPP x ) {
+    return vec2_hmax( x.pod );
+}
+attr_always_inline
+attr_header Vector2CPP max( Vector2CPP x, Vector2CPP y ) {
+    return vec2_max( x.pod, y.pod );
+}
+attr_always_inline
+attr_header f32 hmin( Vector2CPP x ) {
+    return vec2_hmin( x.pod );
+}
+attr_always_inline
+attr_header Vector2CPP min( Vector2CPP x, Vector2CPP y ) {
+    return vec2_min( x.pod, y.pod );
+}
+attr_always_inline
+attr_header f32 length_sqr( Vector2CPP x ) {
+    return vec2_length_sqr( x.pod );
+}
+attr_always_inline
+attr_header f32 length( Vector2CPP x ) {
+    return vec2_length( x.pod );
+}
+attr_always_inline
+attr_header f32 distance_sqr( Vector2CPP a, Vector2CPP b ) {
+    return vec2_distance_sqr( a.pod, b.pod );
+}
+attr_always_inline
+attr_header f32 distance( Vector2CPP a, Vector2CPP b ) {
+    return vec2_distance( a.pod, b.pod );
+}
+attr_always_inline
+attr_header Vector2CPP normalize( Vector2CPP x ) {
+    return vec2_normalize( x.pod );
+}
+attr_always_inline
+attr_header Vector2CPP reflect( Vector2CPP direction, Vector2CPP normal ) {
+    return vec2_reflect( direction.pod, normal.pod );
+}
+attr_always_inline
+attr_header Vector2CPP rotate( Vector2CPP v, f32 angle ) {
+    return vec2_rotate( v.pod, angle );
+}
+attr_always_inline
+attr_header Vector2CPP clamp(
+    Vector2CPP v, Vector2CPP min, Vector2CPP max
+) {
+    return vec2_clamp( v.pod, min.pod, max.pod );
+}
+attr_always_inline
+attr_header Vector2CPP clamp(
+    const Vector2CPP v, f32 min, f32 max
+) {
+    return vec2_clamp_length( v.pod, min, max );
+}
+attr_always_inline
+attr_header f32 angle( Vector2CPP a, Vector2CPP b ) {
+    return vec2_angle( a.pod, b.pod );
+}
+attr_always_inline
+attr_header Vector2CPP abs( Vector2CPP v ) {
+    return vec2_abs( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP sign( Vector2CPP v ) {
+    return vec2_sign( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP trunc( Vector2CPP v ) {
+    return vec2_trunc( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP floor( Vector2CPP v ) {
+    return vec2_floor( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP ceil( Vector2CPP v ) {
+    return vec2_ceil( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP round( Vector2CPP v ) {
+    return vec2_round( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP fract( Vector2CPP v ) {
+    return vec2_fract( v.pod );
+}
+attr_always_inline
+attr_header Vector2CPP lerp(
+    Vector2CPP a, Vector2CPP b, f32 t 
+) {
+    return vec2_lerp( a.pod, b.pod, t );
+}
+attr_always_inline
+attr_header Vector2CPP mix(
+    Vector2CPP a, Vector2CPP b, f32 t 
+) {
+    return lerp( a, b, t );
+}
+attr_always_inline
+attr_header Vector2CPP step( Vector2CPP edge, Vector2CPP x ) {
+    return vec2_step( edge.pod, x.pod );
+}
+attr_always_inline
+attr_header Vector2CPP smoothstep(
+    Vector2CPP a, Vector2CPP b, f32 t 
+) {
+    return vec2_smoothstep( a.pod, b.pod, t );
+}
+attr_always_inline
+attr_header Vector2CPP smootherstep(
+    Vector2CPP a, Vector2CPP b, f32 t 
+) {
+    return vec2_smootherstep( a.pod, b.pod, t );
+}
+attr_always_inline
+attr_header b32 cmp( Vector2CPP a, Vector2CPP b ) {
+    return vec2_cmp( a.pod, b.pod );
 }
 
-struct IVector2CPP : public IVector2 {
-    attr_header IVector2CPP() : IVector2{ .x=0, .y=0 } {}
-    attr_header IVector2CPP( i32 x, i32 y ) : IVector2{ .x=x, .y=y } {}
-    attr_header IVector2CPP( const IVector2& v ) : IVector2CPP( v.x, v.y ) {}
-    attr_header explicit IVector2CPP( i32 s ) : IVector2CPP( s, s ) {}
-    attr_header explicit IVector2CPP( const i32 a[2] ) : IVector2CPP( a[0], a[1] ) {}
-    attr_header explicit IVector2CPP( const Vector2& v ) : IVector2CPP( v.x, v.y ) {}
-
-    attr_header static IVector2CPP zero(void) {
-        return IVEC2_ZERO;
-    }
-    attr_header static IVector2CPP one(void) {
-        return IVEC2_ONE;
-    }
-    attr_header static IVector2CPP left(void) {
-        return IVEC2_LEFT;
-    }
-    attr_header static IVector2CPP right(void) {
-        return IVEC2_RIGHT;
-    }
-    attr_header static IVector2CPP up(void) {
-        return IVEC2_UP;
-    }
-    attr_header static IVector2CPP down(void) {
-        return IVEC2_DOWN;
-    }
-
-    attr_header static IVector2CPP from_array( const i32 a[2] ) {
-        return IVector2CPP( a );
-    }
-
-    attr_header void to_array( i32 out_array[2] ) const {
-        out_array[0] = v[0];
-        out_array[1] = v[1];
-    }
-    attr_header IVector2CPP add( const IVector2CPP& rhs ) const {
-        return iv2_add( *this, rhs );
-    }
-    attr_header IVector2CPP sub( const IVector2CPP& rhs ) const {
-        return iv2_sub( *this, rhs );
-    }
-    attr_header IVector2CPP mul( i32 rhs ) const {
-        return iv2_mul( *this, rhs );
-    }
-    attr_header IVector2CPP div( i32 rhs ) const {
-        return iv2_div( *this, rhs );
-    }
-    attr_header IVector2CPP neg(void) const {
-        return iv2_neg( *this );
-    }
-    attr_header IVector2CPP swap(void) const {
-        return iv2_swap( *this );
-    }
-    attr_header i32 hadd(void) const {
-        return iv2_hadd( *this );
-    }
-    attr_header i32 hmul(void) const {
-        return iv2_hmul( *this );
-    }
-    attr_header IVector2CPP hadamard( const IVector2CPP& rhs ) const {
-        return iv2_hadamard( *this, rhs );
-    }
-    attr_header f32 dot( const IVector2CPP& rhs ) const {
-        return iv2_dot( *this, rhs );
-    }
-    attr_header f32 aspect_ratio(void) const {
-        return iv2_aspect_ratio( *this );
-    }
-    attr_header f32 sqrmag(void) const {
-        return iv2_sqrmag( *this );
-    }
-    attr_header f32 mag(void) const {
-        return iv2_mag( *this );
-    }
-    attr_header b32 cmp( const IVector2CPP& rhs ) const {
-        return iv2_cmp( *this, rhs );
-    }
-
-    attr_header i32 operator[]( usize idx ) const {
-        return v[idx];
-    }
-    attr_header i32& operator[]( usize idx ) {
-        return v[idx];
-    }
-    attr_header IVector2CPP& operator+=( const IVector2CPP& rhs ) {
-        return *this = add( rhs );
-    }
-    attr_header IVector2CPP& operator-=( const IVector2CPP& rhs ) {
-        return *this = sub( rhs );
-    }
-    attr_header IVector2CPP& operator*=( i32 rhs ) {
-        return *this = mul( rhs );
-    }
-    attr_header IVector2CPP& operator/=( i32 rhs ) {
-        return *this = div( rhs );
-    }
-    attr_header IVector2CPP operator-(void) const {
-        return neg();
-    }
-};
-attr_header IVector2 operator+( const IVector2& lhs, const IVector2& rhs ) {
-    return iv2_add( lhs, rhs );
+attr_always_inline
+attr_header Vector2CPP operator-( Vector2CPP v ) {
+    return neg( v );
 }
-attr_header IVector2 operator-( const IVector2& lhs, const IVector2& rhs ) {
-    return iv2_sub( lhs, rhs );
+attr_always_inline
+attr_header Vector2CPP& operator+=( Vector2CPP& lhs, Vector2CPP rhs ) {
+    return lhs = add( lhs, rhs );
 }
-attr_header IVector2 operator*( const IVector2& lhs, i32 rhs ) {
-    return iv2_mul( lhs, rhs );
+attr_always_inline
+attr_header Vector2CPP& operator-=( Vector2CPP& lhs, Vector2CPP rhs ) {
+    return lhs = sub( lhs, rhs );
 }
-attr_header IVector2 operator*( i32 lhs, const IVector2& rhs ) {
-    return iv2_mul( rhs, lhs );
+attr_always_inline
+attr_header Vector2CPP& operator*=( Vector2CPP& lhs, Vector2CPP rhs ) {
+    return lhs = mul( lhs, rhs );
 }
-attr_header IVector2 operator/( const IVector2& lhs, i32 rhs ) {
-    return iv2_div( lhs, rhs );
+attr_always_inline
+attr_header Vector2CPP& operator/=( Vector2CPP& lhs, Vector2CPP rhs ) {
+    return lhs = div( lhs, rhs );
 }
-attr_header b32 operator==( const IVector2& a, const IVector2& b ) {
-    return iv2_cmp( a, b );
+attr_always_inline
+attr_header Vector2CPP& operator*=( Vector2CPP& lhs, f32 rhs ) {
+    return lhs = mul( lhs, rhs );
 }
-attr_header b32 operator!=( const IVector2& a, const IVector2& b ) {
+attr_always_inline
+attr_header Vector2CPP& operator/=( Vector2CPP& lhs, f32 rhs ) {
+    return lhs = div( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator+( Vector2CPP lhs, Vector2CPP rhs ) {
+    return add( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator-( Vector2CPP lhs, Vector2CPP rhs ) {
+    return sub( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator*( Vector2CPP lhs, Vector2CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator/( Vector2CPP lhs, Vector2CPP rhs ) {
+    return div( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator*( Vector2CPP lhs, f32 rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator*( f32 lhs, Vector2CPP rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline
+attr_header Vector2CPP operator/( Vector2CPP lhs, f32 rhs ) {
+    return div( lhs, rhs );
+}
+attr_always_inline
+attr_header b32 operator==( Vector2CPP a, Vector2CPP b ) {
+    return cmp( a, b );
+}
+attr_always_inline
+attr_header b32 operator!=( Vector2CPP a, Vector2CPP b ) {
     return !(a == b);
-}
-
-attr_header IVector2CPP add( const IVector2CPP& lhs, const IVector2CPP& rhs ) {
-    return lhs + rhs;
-}
-attr_header IVector2CPP sub( const IVector2CPP& lhs, const IVector2CPP& rhs ) {
-    return lhs - rhs;
-}
-attr_header IVector2CPP mul( const IVector2CPP& lhs, i32 rhs ) {
-    return lhs * rhs;
-}
-attr_header IVector2CPP mul( i32 lhs, const IVector2CPP& rhs ) {
-    return lhs * rhs;
-}
-attr_header IVector2CPP div( const IVector2CPP& lhs, i32 rhs ) {
-    return lhs / rhs;
-}
-attr_header IVector2CPP neg( const IVector2CPP& v ) {
-    return -v;
-}
-attr_header b32 cmp( const IVector2CPP& lhs, const IVector2CPP& rhs ) {
-    return lhs == rhs;
-}
-attr_header i32 hadd( const IVector2CPP& v ) {
-    return v.hadd();
-}
-attr_header i32 hmul( const IVector2CPP& v ) {
-    return v.hmul();
-}
-attr_header IVector2CPP hadamard( const IVector2CPP& lhs, const IVector2CPP& rhs ) {
-    return lhs.hadamard(rhs);
-}
-attr_header i32 dot( const IVector2CPP& lhs, const IVector2CPP& rhs ) {
-    return lhs.dot(rhs);
-}
-attr_header i32 sqrmag( const IVector2CPP& v ) {
-    return v.sqrmag();
-}
-attr_header i32 mag( const IVector2CPP& v ) {
-    return v.mag();
 }
 
 #endif /* header guard */

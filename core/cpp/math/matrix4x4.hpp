@@ -6,294 +6,310 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   September 28, 2024
 */
-
 struct Matrix4x4CPP;
 
 #if !defined(CORE_MATH_MATRIX4X4_H)
     #include "core/math/matrix4x4.h"
 #endif
-#include "core/math/quaternion.h"
+#include "core/math/quaternion.h" // IWYU pragma: keep 
 
-struct Matrix4x4CPP : public Matrix4x4 {
-    attr_header Matrix4x4CPP() : Matrix4x4{
-        .m00=0, .m01=0, .m02=0, .m03=0,
-        .m10=0, .m11=0, .m12=0, .m13=0,
-        .m20=0, .m21=0, .m22=0, .m23=0,
-        .m30=0, .m31=0, .m32=0, .m33=0,
-    } {}
-    attr_header Matrix4x4CPP(
+struct Matrix4x4CPP {
+    union {
+        struct {
+            union {
+                struct { f32 m00, m01, m02, m03; };
+                Vector4CPP col0;
+            };
+            union {
+                struct { f32 m10, m11, m12, m13; };
+                Vector4CPP col1;
+            };
+            union {
+                struct { f32 m20, m21, m22, m23; };
+                Vector4CPP col2;
+            };
+            union {
+                struct { f32 m30, m31, m32, m33; };
+                Vector4CPP col3;
+            };
+        };
+        struct Matrix4x4 pod;
+
+        Vector4CPP col[4];
+        f32 array[16];
+    };
+
+    attr_always_inline attr_header
+    Matrix4x4CPP() : col0(), col1(), col2(), col3() {}
+    attr_always_inline attr_header
+    explicit Matrix4x4CPP(
         f32 m00, f32 m01, f32 m02, f32 m03,
         f32 m10, f32 m11, f32 m12, f32 m13,
         f32 m20, f32 m21, f32 m22, f32 m23,
         f32 m30, f32 m31, f32 m32, f32 m33
-    ) : Matrix4x4{
-        .m00=m00, .m01=m01, .m02=m02, .m03=m03,
-        .m10=m10, .m11=m11, .m12=m12, .m13=m13,
-        .m20=m20, .m21=m21, .m22=m22, .m23=m23,
-        .m30=m30, .m31=m31, .m32=m32, .m33=m33,
-    } {}
-    attr_header Matrix4x4CPP( const Matrix4x4& m ) : Matrix4x4{m} {}
-    attr_header explicit Matrix4x4CPP( const f32 a[16] ) :
-        Matrix4x4CPP(from_array(a)) {}
+    ) :
+    col0( m00, m01, m02, m03 ),
+    col1( m10, m11, m12, m13 ),
+    col2( m20, m21, m22, m23 ),
+    col3( m30, m31, m32, m33 ) {}
+    attr_always_inline attr_header
+    explicit Matrix4x4CPP(
+        Vector4CPP col0, Vector4CPP col1, Vector4CPP col2, Vector4CPP col3 ) :
+    col0(col0), col1(col1), col2(col2), col3(col3) {}
+    attr_always_inline attr_header
+    Matrix4x4CPP( const struct Matrix4x4& m ) : pod(m) {}
 
-    attr_header static Matrix4x4CPP zero() {
-        return MAT4_ZERO;
+    attr_always_inline attr_header
+    operator Matrix4x4() const {
+        return *(struct Matrix4x4*)this;
     }
-    attr_header static Matrix4x4CPP identity() {
-        return MAT4_IDENTITY;
+
+    attr_always_inline attr_header static
+    Matrix4x4CPP zero() {
+        return Matrix4x4CPP();
     }
-    attr_header static Matrix4x4CPP from_array( const f32 a[16] ) {
-        return m4_from_array( a );
+    attr_always_inline attr_header static
+    Matrix4x4CPP identity() {
+        return Matrix4x4CPP(
+            1.0, 0.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0 );
     }
-    attr_header static Matrix4x4CPP view(
-        f32 position_x, f32 position_y, f32 position_z,
-        f32 target_x, f32 target_y, f32 target_z,
-        f32 up_x, f32 up_y, f32 up_z
+
+    attr_always_inline attr_header static
+    Matrix4x4CPP view(
+        Vector3CPP position, Vector3CPP target, Vector3CPP up = Vector3CPP::up()
     ) {
-        return m4_view(
-            v3(position_x,position_y,position_z),
-            v3(target_x,target_y,target_z),
-            v3(up_x,up_y,up_z) );
+        return mat4_view( position.pod, target.pod, up.pod );
     }
-    attr_header static Matrix4x4CPP view(
-        const Vector3& position, const Vector3& target, const Vector3& up
-    ) {
-        return m4_view( position, target, up );
+    attr_always_inline attr_header static
+    Matrix4x4CPP view( Vector2CPP position, Vector2CPP up = Vector2CPP::up() ) {
+        return mat4_view_2d( position.pod, up.pod );
     }
-    attr_header static Matrix4x4CPP view_2d(
-        f32 position_x, f32 position_y,
-        f32 up_x, f32 up_y
-    ) {
-        return m4_view_2d( v2(position_x,position_y), v2(up_x,up_y) );
-    }
-    attr_header static Matrix4x4CPP view_2d(
-        const Vector2& position, const Vector2& up
-    ) {
-        return m4_view_2d( position, up );
-    }
-    attr_header static Matrix4x4CPP ortho(
+    attr_always_inline attr_header static
+    Matrix4x4CPP ortho(
         f32 left, f32 right,
         f32 bottom, f32 top,
-        f32 clip_near, f32 clip_far
+        f32 clip_near = 0.0001f, f32 clip_far = 1000.0f
     ) {
-        return m4_ortho( left, right, bottom, top, clip_near, clip_far );
+        return mat4_ortho( left, right, bottom, top, clip_near, clip_far );
     }
-    attr_header static Matrix4x4CPP ortho(
-        f32 left, f32 right,
-        f32 bottom, f32 top
+    attr_always_inline attr_header static
+    Matrix4x4CPP perspective(
+        f32 field_of_view, f32 aspect_ratio,
+        f32 clip_near = 0.0001f, f32 clip_far = 1000.0f
     ) {
-        return ortho( left, right, bottom, top, 0.0001f, 10000.0f );
+        return mat4_perspective( field_of_view, aspect_ratio, clip_near, clip_far );
     }
-    attr_header static Matrix4x4CPP perspective(
-        f32 field_of_view, f32 aspect_ratio, f32 clip_near, f32 clip_far
+    attr_always_inline attr_header static
+    Matrix4x4CPP translation( f32 x, f32 y, f32 z ) {
+        return mat4_translation( x, y, z );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP translation( Vector3CPP translation ) {
+        return mat4_translation_vec3( translation );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP translation( f32 x, f32 y ) {
+        return mat4_translation_2d( x, y );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP translation( Vector2CPP translation ) {
+        return mat4_translation_vec2( translation );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation_pitch( f32 pitch ) {
+        return mat4_rotation_pitch( pitch );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation_yaw( f32 yaw ) {
+        return mat4_rotation_yaw( yaw );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation_roll( f32 roll ) {
+        return mat4_rotation_roll( roll );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation( f32 pitch, f32 yaw, f32 roll ) {
+        return mat4_rotation_euler( pitch, yaw, roll );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation( Vector3CPP euler ) {
+        return mat4_rotation_euler_vec3( euler );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation( QuaternionCPP rotation ) {
+        return mat4_rotation( rotation );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP rotation( f32 rotation ) {
+        return mat4_rotation_2d( rotation );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP scale( f32 width, f32 height, f32 length ) {
+        return mat4_scale( width, height, length );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP scale( f32 width, f32 height ) {
+        return mat4_scale_2d( width, height );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP scale( Vector3CPP dimensions ) {
+        return mat4_scale_vec3( dimensions );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP scale( Vector2CPP dimensions ) {
+        return mat4_scale_vec2( dimensions );
+    }
+    attr_always_inline attr_header static
+    Matrix4x4CPP transform(
+        Vector3CPP translation, QuaternionCPP rotation, Vector3CPP scale
     ) {
-        return m4_perspective( field_of_view, aspect_ratio, clip_near, clip_far );
+        return mat4_transform( translation.pod, rotation.pod, scale.pod );
     }
-    attr_header static Matrix4x4CPP perspective(
-        f32 field_of_view, f32 aspect_ratio
+    attr_always_inline attr_header static
+    Matrix4x4CPP transform(
+        Vector3CPP translation, Vector3CPP rotation, Vector3CPP scale
     ) {
-        return perspective( field_of_view, aspect_ratio, 0.0001f, 10000.0f );
+        return mat4_transform_euler( translation.pod, rotation.pod, scale.pod );
     }
-    attr_header static Matrix4x4CPP translation( f32 x, f32 y, f32 z ) {
-        return m4_translation( x, y, z );
-    }
-    attr_header static Matrix4x4CPP translation( const Vector3& translation ) {
-        return m4_translation_v3( translation );
-    }
-    attr_header static Matrix4x4CPP translation_2d( f32 x, f32 y ) {
-        return m4_translation_2d( x, y );
-    }
-    attr_header static Matrix4x4CPP translation_2d( const Vector2& translation ) {
-        return m4_translation_v2( translation );
-    }
-    attr_header static Matrix4x4CPP rotation_pitch( f32 pitch ) {
-        return m4_rotation_pitch( pitch );
-    }
-    attr_header static Matrix4x4CPP rotation_yaw( f32 yaw ) {
-        return m4_rotation_yaw( yaw );
-    }
-    attr_header static Matrix4x4CPP rotation_roll( f32 roll ) {
-        return m4_rotation_roll( roll );
-    }
-    attr_header static Matrix4x4CPP rotation( f32 pitch, f32 yaw, f32 roll ) {
-        return m4_rotation_euler( pitch, yaw, roll );
-    }
-    attr_header static Matrix4x4CPP rotation( const Vector3& euler ) {
-        return m4_rotation_euler_v3( euler );
-    }
-    attr_header static Matrix4x4CPP rotation( const Quaternion& rotation ) {
-        return m4_rotation( rotation );
-    }
-    attr_header static Matrix4x4CPP rotation_2d( f32 rotation ) {
-        return m4_rotation_2d( rotation );
-    }
-    attr_header static Matrix4x4CPP scale( f32 width, f32 height, f32 length ) {
-        return m4_scale( width, height, length );
-    }
-    attr_header static Matrix4x4CPP scale( const Vector3& scale ) {
-        return m4_scale_v3( scale );
-    }
-    attr_header static Matrix4x4CPP scale_2d( f32 width, f32 height ) {
-        return m4_scale_2d( width, height );
-    }
-    attr_header static Matrix4x4CPP scale_2d( const Vector2& scale ) {
-        return m4_scale_v2( scale );
-    }
-    attr_header static Matrix4x4CPP transform(
-        const Vector3& translation, const Quaternion& rotation,
-        const Vector3& scale
+    attr_always_inline attr_header static
+    Matrix4x4CPP transform(
+        Vector2CPP translation, f32 rotation, Vector2CPP scale
     ) {
-        return m4_transform( translation, rotation, scale );
-    }
-    attr_header static Matrix4x4CPP transform(
-        const Vector3& translation, const Vector3& euler,
-        const Vector3& scale
-    ) {
-        return m4_transform_euler( translation, euler, scale );
-    }
-    attr_header static Matrix4x4CPP transform_2d(
-        const Vector2& translation, f32 rotation,
-        const Vector2& scale
-    ) {
-        return m4_transform_2d( translation, rotation, scale );
+        return mat4_transform_2d( translation.pod, rotation, scale.pod );
     }
 
-    attr_header void to_array( f32 out_array[16] ) {
-        m4_to_array( this, out_array );
+    attr_always_inline attr_header static
+    Matrix4x4CPP from_array( const f32 array[16] ) {
+        return *(Matrix4x4CPP*)array;
     }
-    attr_header Matrix4x4CPP add( const Matrix4x4& rhs ) const {
-        return m4_add( this, &rhs );
-    }
-    attr_header Matrix4x4CPP sub( const Matrix4x4& rhs ) const {
-        return m4_sub( this, &rhs );
-    }
-    attr_header Matrix4x4CPP mul( f32 rhs ) const {
-        return m4_mul( this, rhs );
-    }
-    attr_header Matrix4x4CPP mul( const Matrix4x4& rhs ) const {
-        return m4_mul_m4( this, &rhs );
-    }
-    attr_header Vector4 mul( const Vector4& rhs ) const {
-        return m4_mul_v4( this, rhs );
-    }
-    attr_header Vector3 mul( const Vector3& rhs ) const {
-        return m4_mul_v3( this, rhs );
-    }
-    attr_header Matrix4x4CPP div( f32 rhs ) const {
-        return m4_div( this, rhs );
-    }
-    attr_header Matrix4x4CPP transpose(void) const {
-        return m4_transpose( this );
-    }
-    attr_header f32 determinant(void) const {
-        return m4_determinant( this );
-    }
-    attr_header Matrix3x3 submatrix( u32 column, u32 row ) const {
-        return m4_submatrix( this, column, row );
-    }
-    attr_header f32 minor( u32 column, u32 row ) const {
-        return m4_minor( this, column, row );
-    }
-    attr_header f32 cofactor( u32 column, u32 row ) const {
-        return m4_cofactor( this, column, row );
-    }
-    attr_header Matrix4x4CPP cofactor_matrix(void) const {
-        return m4_cofactor_matrix( this );
-    }
-    attr_header Matrix4x4CPP adjoint(void) const {
-        return m4_adjoint( this );
-    }
-    attr_header b32 inverse( Matrix4x4CPP* out_inverse ) const {
-        return m4_inverse( this, out_inverse );
-    }
-    attr_header Matrix4x4CPP inverse_unchecked(void) const {
-        return m4_inverse_unchecked( this );
-    }
-    attr_header b32 normal_matrix( Matrix3x3* out_normal ) const {
-        return m4_normal_matrix( this, out_normal );
-    }
-    attr_header Matrix3x3 normal_matrix_unchecked(void) const {
-        return m4_normal_matrix_unchecked( this );
+    attr_always_inline attr_header
+    void to_array( f32* out_array ) {
+        for( usize i = 0; i < 16; ++i ) {
+            out_array[i] = array[i];
+        }
     }
 
-    attr_header const Vector4CPP& operator[]( usize idx ) const {
-        const Vector4* ptr = c + idx;
-        return *(const Vector4CPP*)ptr;
+    attr_always_inline attr_header
+    Matrix3x3CPP submatrix( u32 column, u32 row ) const {
+        return mat4_submatrix( &this->pod, column, row );
     }
-    attr_header Vector4CPP& operator[]( usize idx ) {
-        Vector4* ptr = c + idx;
-        return *(Vector4CPP*)ptr;
+    attr_always_inline attr_header
+    f32 minor( u32 column, u32 row ) const {
+        return mat4_minor( &this->pod, column, row );
     }
-    attr_header Matrix4x4CPP& operator+=( const Matrix4x4CPP& rhs ) {
-        return *this = add( rhs );
+    attr_always_inline attr_header
+    f32 cofactor( u32 column, u32 row ) const {
+        return mat4_cofactor( &this->pod, column, row );
     }
-    attr_header Matrix4x4CPP& operator-=( const Matrix4x4CPP& rhs ) {
-        return *this = sub( rhs );
+    attr_always_inline attr_header
+    Matrix3x3CPP normal_matrix() const {
+        return mat4_normal_matrix( &this->pod );
     }
-    attr_header Matrix4x4CPP& operator*=( f32 rhs ) {
-        return *this = mul( rhs );
+    attr_always_inline attr_header
+    b32 normal_matrix( Matrix3x3CPP* out_normal ) const {
+        return mat4_normal_matrix_checked( &this->pod, &out_normal->pod );
     }
-    attr_header Matrix4x4CPP& operator/=( f32 rhs ) {
-        return *this = div( rhs );
+
+    attr_always_inline attr_header
+    const Vector4CPP& operator[]( usize idx ) const {
+        return col[idx];
+    }
+    attr_always_inline attr_header
+    Vector4CPP& operator[]( usize idx ) {
+        return col[idx];
     }
 };
-attr_header Matrix4x4 operator+( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_add( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP add( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return mat4_add( &lhs.pod, &rhs.pod );
 }
-attr_header Matrix4x4 operator-( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_sub( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP sub( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return mat4_sub( &lhs.pod, &rhs.pod );
 }
-attr_header Matrix4x4 operator*( const Matrix4x4& lhs, f32 rhs ) {
-    return m4_mul( &lhs, rhs );
+attr_always_inline attr_header
+Matrix4x4CPP mul( const Matrix4x4CPP& lhs, f32 rhs ) {
+    return mat4_mul( &lhs.pod, rhs );
 }
-attr_header Matrix4x4 operator*( f32 lhs, const Matrix4x4& rhs ) {
-    return m4_mul( &rhs, lhs );
+attr_always_inline attr_header
+Matrix4x4CPP mul( f32 lhs, const Matrix4x4CPP& rhs ) {
+    return mat4_mul( &rhs.pod, lhs );
 }
-attr_header Matrix4x4 operator*( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_mul_m4( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP mul( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return mat4_mul_mat4( &lhs.pod, &rhs.pod );
 }
-attr_header Vector4 operator*( const Matrix4x4& lhs, const Vector4& rhs ) {
-    return m4_mul_v4( &lhs, rhs );
+attr_always_inline attr_header
+Vector3CPP mul( const Matrix4x4CPP& lhs, Vector3CPP rhs ) {
+    return mat4_mul_vec3( &lhs.pod, rhs.pod );
 }
-attr_header Vector3 operator*( const Matrix4x4& lhs, const Vector3& rhs ) {
-    return m4_mul_v3( &lhs, rhs );
+attr_always_inline attr_header
+Vector4CPP mul( const Matrix4x4CPP& lhs, Vector4CPP rhs ) {
+    return mat4_mul_vec4( &lhs.pod, rhs.pod );
 }
-attr_header Matrix4x4 operator/( const Matrix4x4& lhs, f32 rhs ) {
-    return m4_div( &lhs, rhs );
+attr_always_inline attr_header
+Matrix4x4CPP div( const Matrix4x4CPP& lhs, f32 rhs ) {
+    return mat4_div( &lhs.pod, rhs );
+}
+attr_always_inline attr_header
+Matrix4x4CPP transpose( const Matrix4x4CPP& m ) {
+    return mat4_transpose( &m.pod );
+}
+attr_always_inline attr_header
+f32 determinant( const Matrix4x4CPP& m ) {
+    return mat4_determinant( &m.pod );
+}
+attr_always_inline attr_header
+Matrix4x4CPP cofactor_matrix( const Matrix4x4CPP& m ) {
+    return mat4_cofactor_matrix( &m.pod );
+}
+attr_always_inline attr_header
+Matrix4x4CPP adjoint( const Matrix4x4CPP& m ) {
+    return mat4_adjoint( &m.pod );
+}
+attr_always_inline attr_header
+Matrix4x4CPP inverse( const Matrix4x4CPP& m ) {
+    return mat4_inverse( &m.pod );
+}
+attr_always_inline attr_header
+b32 inverse_checked( const Matrix4x4CPP& m, Matrix4x4CPP* out_inverse ) {
+    return mat4_inverse_checked( &m.pod, &out_inverse->pod );
 }
 
-attr_header Matrix4x4 add( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_add( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP operator+( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return add( lhs, rhs );
 }
-attr_header Matrix4x4 sub( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_sub( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP operator-( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return sub( lhs, rhs );
 }
-attr_header Matrix4x4 mul( const Matrix4x4& lhs, f32 rhs ) {
-    return m4_mul( &lhs, rhs );
+attr_always_inline attr_header
+Matrix4x4CPP operator*( const Matrix4x4CPP& lhs, const Matrix4x4CPP& rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix4x4 mul( f32 lhs, const Matrix4x4& rhs ) {
-    return m4_mul( &rhs, lhs );
+attr_always_inline attr_header
+Matrix4x4CPP operator*( f32 lhs, const Matrix4x4CPP& rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix4x4 mul( const Matrix4x4& lhs, const Matrix4x4& rhs ) {
-    return m4_mul_m4( &lhs, &rhs );
+attr_always_inline attr_header
+Matrix4x4CPP operator*( const Matrix4x4CPP& lhs, f32 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Vector4 mul( const Matrix4x4& lhs, const Vector4& rhs ) {
-    return m4_mul_v4( &lhs, rhs );
+attr_always_inline attr_header
+Vector3CPP operator*( const Matrix4x4CPP& lhs, Vector3CPP rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Vector3 mul( const Matrix4x4& lhs, const Vector3& rhs ) {
-    return m4_mul_v3( &lhs, rhs );
+attr_always_inline attr_header
+Vector4CPP operator*( const Matrix4x4CPP& lhs, Vector4CPP rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header Matrix4x4 div( const Matrix4x4& lhs, f32 rhs ) {
-    return m4_div( &lhs, rhs );
-}
-attr_header Matrix4x4 transponse( const Matrix4x4& m ) {
-    return m4_transpose( &m );
-}
-attr_header f32 determinant( const Matrix4x4& m ) {
-    return m4_determinant( &m );
-}
-attr_header Matrix4x4 adjoint( const Matrix4x4& m ) {
-    return m4_adjoint( &m );
+attr_always_inline attr_header
+Matrix4x4CPP operator/( const Matrix4x4CPP& lhs, f32 rhs ) {
+    return div( lhs, rhs );
 }
 
 #endif /* header guard */

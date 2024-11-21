@@ -187,6 +187,7 @@ string target_extension( BuildTarget target, b32 static_build ) {
 b32 mode_build( struct BuildArguments* args ) {
     #define btostr( b ) ( (b) ? "true" : "false" )
     #define btostr_en( b ) ( (b) ? "enabled" : "disabled" )
+    f64 start = timer_milliseconds();
 
     string compiler_name = build_compiler_name( args->compiler );
     string target_name   = build_target_name( args->target );
@@ -551,7 +552,8 @@ b32 mode_build( struct BuildArguments* args ) {
 
     int res = process_wait( pid );
     if( res == 0 ) {
-        cb_info( "core library compiled successfully!" );
+        f64 end = timer_milliseconds();
+        cb_info( "core library compiled in %fms", end - start );
     } else {
         cb_error(
             "failed to compile core library! compiler exited with code %i.", res );
