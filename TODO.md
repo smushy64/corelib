@@ -1,4 +1,7 @@
 # Todo List
+- [x] math: vector2 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
+- [x] math: vector3 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
+- [x] math: vector4 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
 - [ ] math: quat_from_angle_axis_vec3, from_angle_axis_combined, from_angle_axis (scalars)
 - [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)
@@ -6,6 +9,7 @@
 - [ ] math: RGB <-> HEX conversions
 - [ ] math: uvec2/3/4 bvec2/3/4 dvec2/3/4
 - [ ] math:docs: write docs for overloads and C++ vector/matrix/quaternion
+- [ ] remove alloc, it's too generic for any particular project.
 - [ ] fmt: path to upper/lower.
 - [ ] fmt: path convert separators.
 - [ ] collections: swap insert, swap remove etc.

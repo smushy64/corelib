@@ -11,23 +11,6 @@
 #include "core/constants.h"
 
 attr_header
-constexpr f32 radians( f32 x ) {
-    return x * F32_TO_RAD;
-}
-attr_header
-constexpr f64 radians( f64 x ) {
-    return x * F64_TO_RAD;
-}
-attr_header
-constexpr f32 degrees( f32 x ) {
-    return x * F32_TO_DEG;
-}
-attr_header
-constexpr f64 degrees( f64 x ) {
-    return x * F64_TO_DEG;
-}
-
-attr_header
 constexpr i32 trunc( f32 x ) {
     return (i32)x;
 }

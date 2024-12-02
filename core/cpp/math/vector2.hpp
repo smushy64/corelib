@@ -338,6 +338,38 @@ attr_header Vector2CPP smootherstep(
 ) {
     return vec2_smootherstep( a.pod, b.pod, t );
 }
+attr_always_inline attr_header
+Vector2CPP radians( Vector2CPP degrees ) {
+    return vec2_radians( degrees.pod );
+}
+attr_always_inline attr_header
+Vector2CPP degrees( Vector2CPP radians ) {
+    return vec2_degrees( radians.pod );
+}
+attr_always_inline attr_header
+Vector2CPP sin( Vector2CPP angle ) {
+    return vec2_sin( angle.pod );
+}
+attr_always_inline attr_header
+Vector2CPP cos( Vector2CPP angle ) {
+    return vec2_cos( angle.pod );
+}
+attr_always_inline attr_header
+Vector2CPP tan( Vector2CPP angle ) {
+    return vec2_tan( angle.pod );
+}
+attr_always_inline attr_header
+Vector2CPP asin( Vector2CPP angle ) {
+    return vec2_asin( angle.pod );
+}
+attr_always_inline attr_header
+Vector2CPP acos( Vector2CPP angle ) {
+    return vec2_acos( angle.pod );
+}
+attr_always_inline attr_header
+Vector2CPP atan2( Vector2CPP y, Vector2CPP x ) {
+    return vec2_atan2( y.pod, x.pod );
+}
 attr_always_inline
 attr_header b32 cmp( Vector2CPP a, Vector2CPP b ) {
     return vec2_cmp( a.pod, b.pod );

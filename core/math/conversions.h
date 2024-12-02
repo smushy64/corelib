@@ -13,11 +13,6 @@
 #if defined(CORE_CPLUSPLUS)
     #include "core/cpp/math/conversions.hpp"
 #else /* C++ API */
-    #define f32_radians( theta ) ((theta) * F32_TO_RAD)
-    #define f32_degrees( theta ) ((theta) * F32_TO_DEG)
-
-    #define f64_radians( theta ) ((theta) * F64_TO_RAD)
-    #define f64_degrees( theta ) ((theta) * F64_TO_DEG)
     /// @brief Normalize x to 0 -> 1 range.
     /// @param x Value to normalize.
     /// @return Normalized value.

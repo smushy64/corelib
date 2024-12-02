@@ -11,6 +11,14 @@
 #include "core/types.h"
 // IWYU pragma: end_exports
 
+#define radians( theta ) _Generic( (theta),\
+    double:  f64_radians,\
+    default: f32_radians\
+)( theta )
+#define degrees( theta ) _Generic( (theta),\
+    double:  f64_degrees,\
+    default: f32_degrees\
+)( theta )
 #define sin( angle ) _Generic( (angle),\
     default: f32_sin\
 )( angle )

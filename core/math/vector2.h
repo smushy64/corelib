@@ -11,6 +11,7 @@
 #include "core/attributes.h"
 #include "core/constants.h"
 #include "core/macros.h" // IWYU pragma: export
+#include "core/math/trig.h"
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
     #pragma clang diagnostic push
@@ -176,8 +177,8 @@ typedef struct BVector2 bvec2;
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 2 values.
 /// @return Vector with components from array.
-attr_always_inline
-attr_header struct Vector2 vec2_from_array( const f32 array[2] ) {
+attr_always_inline attr_header
+struct Vector2 vec2_from_array( const f32 array[2] ) {
     struct Vector2 result;
     result.x = array[0];
     result.y = array[1];
@@ -186,15 +187,15 @@ attr_header struct Vector2 vec2_from_array( const f32 array[2] ) {
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 2 values.
-attr_always_inline
-attr_header void vec2_to_array( struct Vector2 v, f32* out_array ) {
+attr_always_inline attr_header
+void vec2_to_array( struct Vector2 v, f32* out_array ) {
     out_array[0] = v.x; out_array[1] = v.y;
 }
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct Vector2 vec2_add(
+attr_always_inline attr_header
+struct Vector2 vec2_add(
     struct Vector2 lhs, struct Vector2 rhs
 ) {
     struct Vector2 result;
@@ -205,8 +206,8 @@ attr_header struct Vector2 vec2_add(
 /// @brief Component-wise subtract vectors.
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct Vector2 vec2_sub(
+attr_always_inline attr_header
+struct Vector2 vec2_sub(
     struct Vector2 lhs, struct Vector2 rhs
 ) {
     struct Vector2 result;
@@ -218,8 +219,8 @@ attr_header struct Vector2 vec2_sub(
 /// @param lhs Vector to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector2 vec2_mul( struct Vector2 lhs, f32 rhs ) {
+attr_always_inline attr_header
+struct Vector2 vec2_mul( struct Vector2 lhs, f32 rhs ) {
     struct Vector2 result;
     result.x = lhs.x * rhs;
     result.y = lhs.y * rhs;
@@ -230,8 +231,8 @@ attr_header struct Vector2 vec2_mul( struct Vector2 lhs, f32 rhs ) {
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector2 vec2_mul_vec2(
+attr_always_inline attr_header
+struct Vector2 vec2_mul_vec2(
     struct Vector2 lhs, struct Vector2 rhs
 ) {
     struct Vector2 result;
@@ -244,8 +245,8 @@ attr_header struct Vector2 vec2_mul_vec2(
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector2 vec2_hadamard(
+attr_always_inline attr_header
+struct Vector2 vec2_hadamard(
     struct Vector2 lhs, struct Vector2 rhs
 ) {
     return vec2_mul_vec2( lhs, rhs );
@@ -254,8 +255,8 @@ attr_header struct Vector2 vec2_hadamard(
 /// @param lhs Vector to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Vector2 vec2_div( struct Vector2 lhs, f32 rhs ) {
+attr_always_inline attr_header
+struct Vector2 vec2_div( struct Vector2 lhs, f32 rhs ) {
     struct Vector2 result;
     result.x = lhs.x / rhs;
     result.y = lhs.y / rhs;
@@ -265,8 +266,8 @@ attr_header struct Vector2 vec2_div( struct Vector2 lhs, f32 rhs ) {
 /// @param lhs Vector to divide.
 /// @param rhs Vector to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Vector2 vec2_div_vec2( struct Vector2 lhs, struct Vector2 rhs ) {
+attr_always_inline attr_header
+struct Vector2 vec2_div_vec2( struct Vector2 lhs, struct Vector2 rhs ) {
     struct Vector2 result;
     result.x = lhs.x / rhs.x;
     result.y = lhs.y / rhs.y;
@@ -275,8 +276,8 @@ attr_header struct Vector2 vec2_div_vec2( struct Vector2 lhs, struct Vector2 rhs
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
-attr_always_inline
-attr_header struct Vector2 vec2_neg( struct Vector2 x ) {
+attr_always_inline attr_header
+struct Vector2 vec2_neg( struct Vector2 x ) {
     struct Vector2 result;
     result.x = -x.x;
     result.y = -x.y;
@@ -285,8 +286,8 @@ attr_header struct Vector2 vec2_neg( struct Vector2 x ) {
 /// @brief Swap X and Y components.
 /// @param x Vector whose components are to be swapped.
 /// @return Vector with swapped components.
-attr_always_inline
-attr_header struct Vector2 vec2_swap( struct Vector2 x ) {
+attr_always_inline attr_header
+struct Vector2 vec2_swap( struct Vector2 x ) {
     struct Vector2 result;
     result.x = x.y;
     result.y = x.x;
@@ -295,22 +296,22 @@ attr_header struct Vector2 vec2_swap( struct Vector2 x ) {
 /// @brief Horizontally add components of vector.
 /// @param x Vector whose components are to be added.
 /// @return Result of addition.
-attr_always_inline
-attr_header f32 vec2_hadd( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_hadd( struct Vector2 x ) {
     return x.x + x.y;
 }
 /// @brief Horizontally multply components of vector.
 /// @param x Vector whose components are to be multiplied.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header f32 vec2_hmul( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_hmul( struct Vector2 x ) {
     return x.x * x.y;
 }
 /// @brief Inner product of two vectors.
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
-attr_always_inline
-attr_header f32 vec2_dot(
+attr_always_inline attr_header
+f32 vec2_dot(
     struct Vector2 lhs, struct Vector2 rhs
 ) {
     return vec2_hadd( vec2_hadamard( lhs, rhs ) );
@@ -318,22 +319,22 @@ attr_header f32 vec2_dot(
 /// @brief Calculate aspect ratio of X and Y components.
 /// @param x Vector to calculate aspect ratio of.
 /// @return Aspect ratio between X and Y components.
-attr_always_inline
-attr_header f32 vec2_aspect_ratio( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_aspect_ratio( struct Vector2 x ) {
     return x.x / x.y;
 }
 /// @brief Get the maximum component in vector.
 /// @param x Vector to get maximum of.
 /// @return Component with largest value.
-attr_always_inline
-attr_header f32 vec2_hmax( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_hmax( struct Vector2 x ) {
     return x.x < x.y ? x.y : x.x;
 }
 /// @brief Component-wise maximum value.
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
-attr_always_inline
-attr_header struct Vector2 vec2_max( struct Vector2 x, struct Vector2 y ) {
+attr_always_inline attr_header
+struct Vector2 vec2_max( struct Vector2 x, struct Vector2 y ) {
     struct Vector2 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
@@ -342,15 +343,15 @@ attr_header struct Vector2 vec2_max( struct Vector2 x, struct Vector2 y ) {
 /// @brief Get the minimum component in vector.
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
-attr_always_inline
-attr_header f32 vec2_hmin( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_hmin( struct Vector2 x ) {
     return x.x < x.y ? x.x : x.y;
 }
 /// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
-attr_always_inline
-attr_header struct Vector2 vec2_min( struct Vector2 x, struct Vector2 y ) {
+attr_always_inline attr_header
+struct Vector2 vec2_min( struct Vector2 x, struct Vector2 y ) {
     struct Vector2 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
@@ -359,8 +360,8 @@ attr_header struct Vector2 vec2_min( struct Vector2 x, struct Vector2 y ) {
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
-attr_always_inline
-attr_header f32 vec2_length_sqr( struct Vector2 x ) {
+attr_always_inline attr_header
+f32 vec2_length_sqr( struct Vector2 x ) {
     return vec2_dot( x, x );
 }
 /// @brief Calculate magnitude of Vector.
@@ -370,15 +371,15 @@ attr_core_api f32 vec2_length( struct Vector2 x );
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
 /// @return Distance squared.
-attr_always_inline
-attr_header f32 vec2_distance_sqr( struct Vector2 a, struct Vector2 b ) {
+attr_always_inline attr_header
+f32 vec2_distance_sqr( struct Vector2 a, struct Vector2 b ) {
     return vec2_length_sqr( vec2_sub( a, b ) );
 }
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
 /// @return Distance.
-attr_always_inline
-attr_header f32 vec2_distance( struct Vector2 a, struct Vector2 b ) {
+attr_always_inline attr_header
+f32 vec2_distance( struct Vector2 a, struct Vector2 b ) {
     return vec2_length( vec2_sub( a, b ) );
 }
 /// @brief Normalize a Vector.
@@ -389,8 +390,8 @@ attr_core_api struct Vector2 vec2_normalize( struct Vector2 x );
 /// @param direction Direction vector to reflect.
 /// @param normal    Normal of the surface to reflect off of.
 /// @return Reflected vector.
-attr_always_inline
-attr_header struct Vector2 vec2_reflect(
+attr_always_inline attr_header
+struct Vector2 vec2_reflect(
     struct Vector2 direction, struct Vector2 normal
 ) {
     return vec2_mul( vec2_sub( normal, direction ), 2.0f * vec2_dot( direction, normal ) );
@@ -404,8 +405,8 @@ attr_core_api struct Vector2 vec2_rotate( struct Vector2 v, f32 angle );
 /// @param v        Vector.
 /// @param min, max Range.
 /// @return Clamped vector.
-attr_always_inline
-attr_header struct Vector2 vec2_clamp(
+attr_always_inline attr_header
+struct Vector2 vec2_clamp(
     struct Vector2 v, struct Vector2 min, struct Vector2 max
 ) {
     struct Vector2 result;
@@ -417,8 +418,8 @@ attr_header struct Vector2 vec2_clamp(
 /// @param v Vector to clamp.
 /// @param min_, max_ Range to clamp to, min_ must be < max_.
 /// @return Clamped vector.
-attr_always_inline
-attr_header struct Vector2 vec2_clamp_length(
+attr_always_inline attr_header
+struct Vector2 vec2_clamp_length(
     const struct Vector2 v, f32 min_, f32 max_
 ) {
     f32 mag = vec2_length( v );
@@ -435,8 +436,8 @@ attr_core_api f32 vec2_angle( struct Vector2 a, struct Vector2 b );
 /// @brief Component-wise abs.
 /// @param v Vector.
 /// @return Vector with absolute values.
-attr_always_inline
-attr_header struct Vector2 vec2_abs( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_abs( struct Vector2 v ) {
     struct Vector2 result;
     result.x = v.x < 0.0f ? -v.x : v.x;
     result.y = v.y < 0.0f ? -v.y : v.y;
@@ -445,8 +446,8 @@ attr_header struct Vector2 vec2_abs( struct Vector2 v ) {
 /// @brief Component-wise sign.
 /// @param v Vector.
 /// @return Vector with sign values.
-attr_always_inline
-attr_header struct Vector2 vec2_sign( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_sign( struct Vector2 v ) {
     struct Vector2 result;
     result.x = (v.x > 0.0f) - (f32)(v.x < 0.0f);
     result.y = (v.y > 0.0f) - (f32)(v.y < 0.0f);
@@ -455,8 +456,8 @@ attr_header struct Vector2 vec2_sign( struct Vector2 v ) {
 /// @brief Component-wise truncate.
 /// @param v Vector to truncate.
 /// @return Vector with truncated values.
-attr_always_inline
-attr_header struct Vector2 vec2_trunc( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_trunc( struct Vector2 v ) {
     struct Vector2 result;
     result.x = (f32)(i32)v.x;
     result.y = (f32)(i32)v.y;
@@ -465,8 +466,8 @@ attr_header struct Vector2 vec2_trunc( struct Vector2 v ) {
 /// @brief Component-wise floor.
 /// @param v Vector to floor.
 /// @return Vector with floored values.
-attr_always_inline
-attr_header struct Vector2 vec2_floor( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_floor( struct Vector2 v ) {
     struct Vector2 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 1.0f ) : (i32)( v.x ) );
     result.y = (f32)( v.y < 0.0f ? (i32)( v.y - 1.0f ) : (i32)( v.y ) );
@@ -475,8 +476,8 @@ attr_header struct Vector2 vec2_floor( struct Vector2 v ) {
 /// @brief Component-wise ceil.
 /// @param v Vector to ceil.
 /// @return Vector with ceiled values.
-attr_always_inline
-attr_header struct Vector2 vec2_ceil( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_ceil( struct Vector2 v ) {
     struct Vector2 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x ) : (i32)( v.x + 1.0f ) );
     result.y = (f32)( v.y < 0.0f ? (i32)( v.y ) : (i32)( v.y + 1.0f ) );
@@ -485,8 +486,8 @@ attr_header struct Vector2 vec2_ceil( struct Vector2 v ) {
 /// @brief Component-wise round.
 /// @param v Vector to round.
 /// @return Vector with rounded values.
-attr_always_inline
-attr_header struct Vector2 vec2_round( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_round( struct Vector2 v ) {
     struct Vector2 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 0.5f ) : (i32)( v.x + 0.5f ) );
     result.y = (f32)( v.y < 0.0f ? (i32)( v.y - 0.5f ) : (i32)( v.y + 0.5f ) );
@@ -495,8 +496,8 @@ attr_header struct Vector2 vec2_round( struct Vector2 v ) {
 /// @brief Get fractional part.
 /// @param v Vector.
 /// @return Vector with fractional part.
-attr_always_inline
-attr_header struct Vector2 vec2_fract( struct Vector2 v ) {
+attr_always_inline attr_header
+struct Vector2 vec2_fract( struct Vector2 v ) {
     return vec2_sub( v, vec2_round(v) );
 }
 /// @brief Linearly interpolate from a to b.
@@ -514,8 +515,8 @@ attr_core_api struct Vector2 vec2_lerp(
 /// @param edge Value to compare @c x to.
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
-attr_always_inline
-attr_header struct Vector2 vec2_step( struct Vector2 edge, struct Vector2 x ) {
+attr_always_inline attr_header
+struct Vector2 vec2_step( struct Vector2 edge, struct Vector2 x ) {
     struct Vector2 result;
     result.x = x.x < edge.x ? 0.0 : 1.0;
     result.y = x.y < edge.y ? 0.0 : 1.0;
@@ -533,20 +534,89 @@ attr_core_api struct Vector2 vec2_smoothstep(
 /// @return Vector in range a -> b.
 attr_core_api struct Vector2 vec2_smootherstep(
     struct Vector2 a, struct Vector2 b, f32 t );
+/// @brief Convert degrees to radians.
+/// @param degrees Angles in degrees.
+/// @return Angles in radians.
+attr_always_inline attr_header
+struct Vector2 vec2_radians( struct Vector2 degrees ) {
+    return vec2_new( f32_radians(degrees.x), f32_radians(degrees.y) );
+}
+/// @brief Convert radians to degrees.
+/// @param radians Angles in radians.
+/// @return Angles in degrees.
+attr_always_inline attr_header
+struct Vector2 vec2_degrees( struct Vector2 radians ) {
+    return vec2_new( f32_degrees(radians.x), f32_degrees(radians.y) );
+}
+/// @brief Calculate sine of x.
+/// @param angle Value to get sine of.
+/// @return Sine of angle.
+attr_always_inline attr_header
+struct Vector2 vec2_sin( struct Vector2 angle ) {
+    return vec2_new( f32_sin(angle.x), f32_sin(angle.y) );
+}
+/// @brief Calculate cosine of x.
+/// @param angle Value to get cosine of.
+/// @return Cosine of angle.
+attr_always_inline attr_header
+struct Vector2 vec2_cos( struct Vector2 angle ) {
+    return vec2_new( f32_cos(angle.x), f32_cos(angle.y) );
+}
+/// @brief Calculate tangent of x.
+/// @param angle Value to get tangent of.
+/// @return Tangent of angle.
+/// @warning Returns NaN if cosine of angle is zero.
+attr_always_inline attr_header
+struct Vector2 vec2_tan( struct Vector2 angle ) {
+    return vec2_new( f32_tan(angle.x), f32_tan(angle.y) );
+}
+/// @brief Calculate arcsine of x.
+///
+/// Does not produce NaN when outside valid range.
+/// @param x Value to get arcsine of.
+/// @return Arcsine of x clamped to -Pi -> Pi.
+/// @see #F32_PI
+/// @see #asin()
+attr_always_inline attr_header
+struct Vector2 vec2_asin( struct Vector2 angle ) {
+    return vec2_new( f32_asin_real(angle.x), f32_asin_real(angle.y) );
+}
+/// @brief Calculate arccosine of x.
+/// @param x Value to get arccosine of.
+/// @return Arccosine of x.
+attr_always_inline attr_header
+struct Vector2 vec2_acos( struct Vector2 angle ) {
+    return vec2_new( f32_acos(angle.x), f32_acos(angle.y) );
+}
+/// @brief Calculate arctangent of x.
+/// @param x Value to get arctangent of.
+/// @return Arctangent of x.
+attr_always_inline attr_header
+struct Vector2 vec2_atan( struct Vector2 angle ) {
+    return vec2_new( f32_atan(angle.x), f32_atan(angle.y) );
+}
+/// @brief Calculate 2 component arctangent of y and x.
+/// @param y Value to get arctangent of.
+/// @param x Value to get arctangent of.
+/// @return Arctangent of y and x.
+attr_always_inline attr_header
+struct Vector2 vec2_atan2( struct Vector2 y, struct Vector2 x ) {
+    return vec2_new( f32_atan2(y.x, x.x), f32_atan2(y.y, x.y) );
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
 /// @see #F32_EPSILON
-attr_always_inline
-attr_header b32 vec2_cmp( struct Vector2 a, struct Vector2 b ) {
+attr_always_inline attr_header
+b32 vec2_cmp( struct Vector2 a, struct Vector2 b ) {
     return vec2_length_sqr( vec2_sub( a, b ) ) < F32_EPSILON;
 }
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 2 values.
 /// @return Vector with components from array.
-attr_always_inline
-attr_header struct IVector2 ivec2_from_array( const i32 array[2] ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_from_array( const i32 array[2] ) {
     struct IVector2 result;
     result.x = array[0];
     result.y = array[1];
@@ -555,15 +625,15 @@ attr_header struct IVector2 ivec2_from_array( const i32 array[2] ) {
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 2 values.
-attr_always_inline
-attr_header void ivec2_to_array( struct IVector2 v, i32* out_array ) {
+attr_always_inline attr_header
+void ivec2_to_array( struct IVector2 v, i32* out_array ) {
     out_array[0] = v.x; out_array[1] = v.y;
 }
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct IVector2 ivec2_add(
+attr_always_inline attr_header
+struct IVector2 ivec2_add(
     struct IVector2 lhs, struct IVector2 rhs
 ) {
     struct IVector2 result;
@@ -574,8 +644,8 @@ attr_header struct IVector2 ivec2_add(
 /// @brief Component-wise subtract vectors.
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct IVector2 ivec2_sub(
+attr_always_inline attr_header
+struct IVector2 ivec2_sub(
     struct IVector2 lhs, struct IVector2 rhs
 ) {
     struct IVector2 result;
@@ -587,8 +657,8 @@ attr_header struct IVector2 ivec2_sub(
 /// @param lhs Vector to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector2 ivec2_mul( struct IVector2 lhs, i32 rhs ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_mul( struct IVector2 lhs, i32 rhs ) {
     struct IVector2 result;
     result.x = lhs.x * rhs;
     result.y = lhs.y * rhs;
@@ -599,8 +669,8 @@ attr_header struct IVector2 ivec2_mul( struct IVector2 lhs, i32 rhs ) {
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector2 ivec2_mul_ivec2(
+attr_always_inline attr_header
+struct IVector2 ivec2_mul_ivec2(
     struct IVector2 lhs, struct IVector2 rhs
 ) {
     struct IVector2 result;
@@ -613,8 +683,8 @@ attr_header struct IVector2 ivec2_mul_ivec2(
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector2 ivec2_hadamard(
+attr_always_inline attr_header
+struct IVector2 ivec2_hadamard(
     struct IVector2 lhs, struct IVector2 rhs
 ) {
     return ivec2_mul_ivec2( lhs, rhs );
@@ -623,8 +693,8 @@ attr_header struct IVector2 ivec2_hadamard(
 /// @param lhs Vector to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct IVector2 ivec2_div( struct IVector2 lhs, i32 rhs ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_div( struct IVector2 lhs, i32 rhs ) {
     struct IVector2 result;
     result.x = lhs.x / rhs;
     result.y = lhs.y / rhs;
@@ -634,8 +704,8 @@ attr_header struct IVector2 ivec2_div( struct IVector2 lhs, i32 rhs ) {
 /// @param lhs Vector to divide.
 /// @param rhs Vector to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct IVector2 ivec2_div_ivec2( struct IVector2 lhs, struct IVector2 rhs ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_div_ivec2( struct IVector2 lhs, struct IVector2 rhs ) {
     struct IVector2 result;
     result.x = lhs.x / rhs.x;
     result.y = lhs.y / rhs.y;
@@ -644,8 +714,8 @@ attr_header struct IVector2 ivec2_div_ivec2( struct IVector2 lhs, struct IVector
 /// @brief Negate components of a Vector2.
 /// @param x Vector to negate.
 /// @return Result of negation.
-attr_always_inline
-attr_header struct IVector2 ivec2_neg( struct IVector2 x ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_neg( struct IVector2 x ) {
     struct IVector2 result;
     result.x = -x.x;
     result.y = -x.y;
@@ -654,8 +724,8 @@ attr_header struct IVector2 ivec2_neg( struct IVector2 x ) {
 /// @brief Swap X and Y components.
 /// @param x Vector whose components are to be swapped.
 /// @return Vector with swapped components.
-attr_always_inline
-attr_header struct IVector2 ivec2_swap( struct IVector2 x ) {
+attr_always_inline attr_header
+struct IVector2 ivec2_swap( struct IVector2 x ) {
     struct IVector2 result;
     result.x = x.y;
     result.y = x.x;
@@ -664,22 +734,22 @@ attr_header struct IVector2 ivec2_swap( struct IVector2 x ) {
 /// @brief Horizontally add components of vector.
 /// @param x Vector whose components are to be added.
 /// @return Result of addition.
-attr_always_inline
-attr_header i32 ivec2_hadd( struct IVector2 x ) {
+attr_always_inline attr_header
+i32 ivec2_hadd( struct IVector2 x ) {
     return x.x + x.y;
 }
 /// @brief Horizontally multply components of vector.
 /// @param x Vector whose components are to be multiplied.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header i32 ivec2_hmul( struct IVector2 x ) {
+attr_always_inline attr_header
+i32 ivec2_hmul( struct IVector2 x ) {
     return x.x * x.y;
 }
 /// @brief Inner product of two vectors.
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
-attr_always_inline
-attr_header f32 ivec2_dot(
+attr_always_inline attr_header
+f32 ivec2_dot(
     struct IVector2 lhs, struct IVector2 rhs
 ) {
     struct Vector2 _lhs = vec2_new( (f32)lhs.x, (f32)lhs.y );
@@ -690,31 +760,31 @@ attr_header f32 ivec2_dot(
 /// @brief Calculate aspect ratio of X and Y components.
 /// @param x Vector to calculate aspect ratio of.
 /// @return Aspect ratio between X and Y components.
-attr_always_inline
-attr_header f32 ivec2_aspect_ratio( struct IVector2 x ) {
+attr_always_inline attr_header
+f32 ivec2_aspect_ratio( struct IVector2 x ) {
     return (f32)x.x / (f32)x.y;
 }
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
-attr_always_inline
-attr_header f32 ivec2_length_sqr( struct IVector2 x ) {
+attr_always_inline attr_header
+f32 ivec2_length_sqr( struct IVector2 x ) {
     struct Vector2 _x = vec2_new( (f32)x.x, (f32)x.y );
     return vec2_length_sqr( _x );
 }
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
-attr_always_inline
-attr_header f32 ivec2_length( struct IVector2 x ) {
+attr_always_inline attr_header
+f32 ivec2_length( struct IVector2 x ) {
     struct Vector2 _x = vec2_new( (f32)x.x, (f32)x.y );
     return vec2_length( _x );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if components in vectors are equal.
-attr_always_inline
-attr_header b32 ivec2_cmp( struct IVector2 a, struct IVector2 b ) {
+attr_always_inline attr_header
+b32 ivec2_cmp( struct IVector2 a, struct IVector2 b ) {
     return
         a.x == b.x &&
         a.y == b.y;

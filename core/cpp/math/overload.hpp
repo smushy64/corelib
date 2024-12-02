@@ -22,6 +22,22 @@
 // IWYU pragma: end_exports
 
 attr_always_inline attr_header
+f32 radians( f32 theta ) {
+    return f32_radians( theta );
+}
+attr_always_inline attr_header
+f64 radians( f64 theta ) {
+    return f64_radians( theta );
+}
+attr_always_inline attr_header
+f32 degrees( f32 theta ) {
+    return f32_degrees( theta );
+}
+attr_always_inline attr_header
+f64 degrees( f64 theta ) {
+    return f64_degrees( theta );
+}
+attr_always_inline attr_header
 f32 sin( f32 angle ) {
     return f32_sin( angle );
 }

@@ -625,6 +625,75 @@ attr_core_api struct Vector3 vec3_smoothstep(
 /// @return Vector in range a -> b.
 attr_core_api struct Vector3 vec3_smootherstep(
     struct Vector3 a, struct Vector3 b, f32 t );
+/// @brief Convert degrees to radians.
+/// @param degrees Angles in degrees.
+/// @return Angles in radians.
+attr_always_inline attr_header
+struct Vector3 vec3_radians( struct Vector3 degrees ) {
+    return vec3_new( f32_radians(degrees.x), f32_radians(degrees.y), f32_radians(degrees.z) );
+}
+/// @brief Convert radians to degrees.
+/// @param radians Angles in radians.
+/// @return Angles in degrees.
+attr_always_inline attr_header
+struct Vector3 vec3_degrees( struct Vector3 radians ) {
+    return vec3_new( f32_degrees(radians.x), f32_degrees(radians.y ), f32_degrees(radians.z) );
+}
+/// @brief Calculate sine of x.
+/// @param angle Value to get sine of.
+/// @return Sine of angle.
+attr_always_inline attr_header
+struct Vector3 vec3_sin( struct Vector3 angle ) {
+    return vec3_new( f32_sin(angle.x), f32_sin(angle.y), f32_sin(angle.z) );
+}
+/// @brief Calculate cosine of x.
+/// @param angle Value to get cosine of.
+/// @return Cosine of angle.
+attr_always_inline attr_header
+struct Vector3 vec3_cos( struct Vector3 angle ) {
+    return vec3_new( f32_cos(angle.x), f32_cos(angle.y), f32_cos(angle.z) );
+}
+/// @brief Calculate tangent of x.
+/// @param angle Value to get tangent of.
+/// @return Tangent of angle.
+/// @warning Returns NaN if cosine of angle is zero.
+attr_always_inline attr_header
+struct Vector3 vec3_tan( struct Vector3 angle ) {
+    return vec3_new( f32_tan(angle.x), f32_tan(angle.y), f32_tan(angle.z) );
+}
+/// @brief Calculate arcsine of x.
+///
+/// Does not produce NaN when outside valid range.
+/// @param x Value to get arcsine of.
+/// @return Arcsine of x clamped to -Pi -> Pi.
+/// @see #F32_PI
+/// @see #asin()
+attr_always_inline attr_header
+struct Vector3 vec3_asin( struct Vector3 angle ) {
+    return vec3_new( f32_asin_real(angle.x), f32_asin_real(angle.y), f32_asin_real(angle.z) );
+}
+/// @brief Calculate arccosine of x.
+/// @param x Value to get arccosine of.
+/// @return Arccosine of x.
+attr_always_inline attr_header
+struct Vector3 vec3_acos( struct Vector3 angle ) {
+    return vec3_new( f32_acos(angle.x), f32_acos(angle.y), f32_acos(angle.z) );
+}
+/// @brief Calculate arctangent of x.
+/// @param x Value to get arctangent of.
+/// @return Arctangent of x.
+attr_always_inline attr_header
+struct Vector3 vec3_atan( struct Vector3 angle ) {
+    return vec3_new( f32_atan(angle.x), f32_atan(angle.y), f32_atan(angle.z) );
+}
+/// @brief Calculate 2 component arctangent of y and x.
+/// @param y Value to get arctangent of.
+/// @param x Value to get arctangent of.
+/// @return Arctangent of y and x.
+attr_always_inline attr_header
+struct Vector3 vec3_atan2( struct Vector3 y, struct Vector3 x ) {
+    return vec3_new( f32_atan2(y.x, x.x), f32_atan2(y.y, x.y), f32_atan2(y.z, x.z) );
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.

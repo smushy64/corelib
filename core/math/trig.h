@@ -10,6 +10,34 @@
 #include "core/attributes.h"
 #include "core/constants.h"
 
+/// @brief Convert degrees to radians.
+/// @param theta Angle in degrees.
+/// @return Angle in radians.
+attr_always_inline attr_header
+f32 f32_radians( f32 theta ) {
+    return theta * F32_TO_RAD;
+}
+/// @brief Convert degrees to radians.
+/// @param theta Angle in degrees.
+/// @return Angle in radians.
+attr_always_inline attr_header
+f64 f64_radians( f64 theta ) {
+    return theta * F64_TO_RAD;
+}
+/// @brief Convert radians to degrees.
+/// @param theta Angle in radians.
+/// @return Angle in degrees.
+attr_always_inline attr_header
+f32 f32_degrees( f32 theta ) {
+    return theta * F32_TO_DEG;
+}
+/// @brief Convert radians to degrees.
+/// @param theta Angle in radians.
+/// @return Angle in degrees.
+attr_always_inline attr_header
+f64 f64_degrees( f64 theta ) {
+    return theta * F64_TO_DEG;
+}
 /// @brief Calculate sine of x.
 /// @param angle Value to get sine of.
 /// @return Sine of angle.
@@ -46,7 +74,7 @@ attr_core_api f32 f32_asin( f32 x );
 /// @param x Value to get arcsine of.
 /// @return Arcsine of x clamped to -Pi -> Pi.
 /// @see #F32_PI
-/// @see #arc_sine()
+/// @see #asin()
 attr_always_inline
 attr_header f32 f32_asin_real( f32 x ) {
     f32 abs  = x < 0 ? -x : x;

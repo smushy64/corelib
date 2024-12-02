@@ -445,6 +445,38 @@ attr_always_inline
 attr_header Vector3CPP smootherstep( Vector3CPP a, Vector3CPP b, f32 t ) {
     return vec3_smootherstep( a.pod, b.pod, t );
 }
+attr_always_inline attr_header
+Vector3CPP radians( Vector3CPP degrees ) {
+    return vec3_radians( degrees.pod );
+}
+attr_always_inline attr_header
+Vector3CPP degrees( Vector3CPP radians ) {
+    return vec3_degrees( radians.pod );
+}
+attr_always_inline attr_header
+Vector3CPP sin( Vector3CPP angle ) {
+    return vec3_sin( angle.pod );
+}
+attr_always_inline attr_header
+Vector3CPP cos( Vector3CPP angle ) {
+    return vec3_cos( angle.pod );
+}
+attr_always_inline attr_header
+Vector3CPP tan( Vector3CPP angle ) {
+    return vec3_tan( angle.pod );
+}
+attr_always_inline attr_header
+Vector3CPP asin( Vector3CPP angle ) {
+    return vec3_asin( angle.pod );
+}
+attr_always_inline attr_header
+Vector3CPP acos( Vector3CPP angle ) {
+    return vec3_acos( angle.pod );
+}
+attr_always_inline attr_header
+Vector3CPP atan2( Vector3CPP y, Vector3CPP x ) {
+    return vec3_atan2( y.pod, x.pod );
+}
 attr_always_inline
 attr_header b32 cmp( Vector3CPP a, Vector3CPP b ) {
     return vec3_cmp( a.pod, b.pod );
