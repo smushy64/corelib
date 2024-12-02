@@ -7,7 +7,6 @@
  * @date   February 09, 2024
 */
 // IWYU pragma: begin_exports
-#include "core/math/macros.h"
 #include "core/math/trig.h"
 #include "core/math/exponential.h"
 #include "core/math/common.h"

@@ -9,6 +9,10 @@
 #include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
+
+#include "core/math/trig.h"
+#include "core/math/exponential.h"
+#include "core/math/common.h"
 #include "core/math/vector2.h"
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
@@ -249,15 +253,15 @@ typedef struct BVector3 bvec3;
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 3 values.
 /// @return Vector with components from array.
-attr_always_inline
-attr_header struct Vector3 vec3_from_array( const f32 array[3] ) {
+attr_always_inline attr_header
+struct Vector3 vec3_from_array( const f32 array[3] ) {
     return vec3_new( array[0], array[1], array[2] );
 }
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 3 values.
-attr_always_inline
-attr_header void vec3_to_array( struct Vector3 v, f32* out_array ) {
+attr_always_inline attr_header
+void vec3_to_array( struct Vector3 v, f32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1]; out_array[2] = v.array[2];
 }
 /// Convert RGB color to HSL color.
@@ -271,8 +275,8 @@ attr_core_api struct Vector3 hsl_to_rgb( struct Vector3 _hsl );
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct Vector3 vec3_add(
+attr_always_inline attr_header
+struct Vector3 vec3_add(
     struct Vector3 lhs, struct Vector3 rhs
 ) {
     return vec3_new( lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z );
@@ -280,8 +284,8 @@ attr_header struct Vector3 vec3_add(
 /// @brief Component-wise subtract vectors.
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct Vector3 vec3_sub(
+attr_always_inline attr_header
+struct Vector3 vec3_sub(
     struct Vector3 lhs, struct Vector3 rhs
 ) {
     return vec3_new( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z );
@@ -289,23 +293,23 @@ attr_header struct Vector3 vec3_sub(
 /// @brief Horizontally add components of vector.
 /// @param x Vector whose components are to be added.
 /// @return Result of addition.
-attr_always_inline
-attr_header f32 vec3_hadd( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_hadd( struct Vector3 x ) {
     return x.x + x.y + x.z;
 }
 /// @brief Horizontally multply components of vector.
 /// @param x Vector whose components are to be multiplied.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header f32 vec3_hmul( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_hmul( struct Vector3 x ) {
     return x.x * x.y * x.z;
 }
 /// @brief Multiply vector components.
 /// @param lhs Vector to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector3 vec3_mul( struct Vector3 lhs, f32 rhs ) {
+attr_always_inline attr_header
+struct Vector3 vec3_mul( struct Vector3 lhs, f32 rhs ) {
     return vec3_new( lhs.x * rhs, lhs.y * rhs, lhs.z * rhs );
 }
 /// @brief Hadamard product between two vectors.
@@ -313,8 +317,8 @@ attr_header struct Vector3 vec3_mul( struct Vector3 lhs, f32 rhs ) {
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector3 vec3_mul_vec3(
+attr_always_inline attr_header
+struct Vector3 vec3_mul_vec3(
     struct Vector3 lhs, struct Vector3 rhs
 ) {
     return vec3_new( lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z );
@@ -324,8 +328,8 @@ attr_header struct Vector3 vec3_mul_vec3(
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Vector3 vec3_hadamard(
+attr_always_inline attr_header
+struct Vector3 vec3_hadamard(
     struct Vector3 lhs, struct Vector3 rhs
 ) {
     return vec3_mul_vec3( lhs, rhs );
@@ -333,8 +337,8 @@ attr_header struct Vector3 vec3_hadamard(
 /// @brief Cross product between two vectors.
 /// @param lhs, rhs Vectors to cross.
 /// @return Result of cross product.
-attr_always_inline
-attr_header struct Vector3 vec3_cross(
+attr_always_inline attr_header
+struct Vector3 vec3_cross(
     struct Vector3 lhs, struct Vector3 rhs
 ) {
     return vec3_new(
@@ -345,60 +349,60 @@ attr_header struct Vector3 vec3_cross(
 /// @brief Inner product of two vectors.
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
-attr_always_inline
-attr_header f32 vec3_dot( struct Vector3 lhs, struct Vector3 rhs ) {
+attr_always_inline attr_header
+f32 vec3_dot( struct Vector3 lhs, struct Vector3 rhs ) {
     return vec3_hadd( vec3_hadamard( lhs, rhs ) );
 }
 /// @brief Divide vector components.
 /// @param lhs Vector to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Vector3 vec3_div( struct Vector3 lhs, f32 rhs ) {
+attr_always_inline attr_header
+struct Vector3 vec3_div( struct Vector3 lhs, f32 rhs ) {
     return vec3_new( lhs.x / rhs, lhs.y / rhs, lhs.z / rhs );
 }
 /// @brief Divide vector components.
 /// @param lhs Vector to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Vector3 vec3_div_vec3( struct Vector3 lhs, struct Vector3 rhs ) {
+attr_always_inline attr_header
+struct Vector3 vec3_div_vec3( struct Vector3 lhs, struct Vector3 rhs ) {
     return vec3_new( lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z );
 }
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
-attr_always_inline
-attr_header struct Vector3 vec3_neg( struct Vector3 x ) {
+attr_always_inline attr_header
+struct Vector3 vec3_neg( struct Vector3 x ) {
     return vec3_new( -x.x, -x.y, -x.z );
 }
 /// @brief Rotate vector components to the left.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the left.
-attr_always_inline
-attr_header struct Vector3 vec3_rotl( struct Vector3 x ) {
+attr_always_inline attr_header
+struct Vector3 vec3_rotl( struct Vector3 x ) {
     return vec3_new( x.y, x.z, x.x );
 }
 /// @brief Rotate vector components to the right.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the right.
-attr_always_inline
-attr_header struct Vector3 vec3_rotr( struct Vector3 x ) {
+attr_always_inline attr_header
+struct Vector3 vec3_rotr( struct Vector3 x ) {
     return vec3_new( x.z, x.x, x.y );
 }
 /// @brief Get the maximum component in vector.
 /// @param x Vector to get maximum of.
 /// @return Component with largest value.
-attr_always_inline
-attr_header f32 vec3_hmax( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_hmax( struct Vector3 x ) {
     f32 _0 = x.x < x.y ? x.y : x.x;
     return _0 < x.z ? x.z : _0;
 }
 /// @brief Component-wise maximum value.
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
-attr_always_inline
-attr_header struct Vector3 vec3_max( struct Vector3 x, struct Vector3 y ) {
+attr_always_inline attr_header
+struct Vector3 vec3_max( struct Vector3 x, struct Vector3 y ) {
     struct Vector3 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
@@ -408,8 +412,8 @@ attr_header struct Vector3 vec3_max( struct Vector3 x, struct Vector3 y ) {
 /// @brief Get the component in between min and max component.
 /// @param x Vector to get mid of.
 /// @return Component in between min and max component.
-attr_always_inline
-attr_header f32 vec3_hmid( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_hmid( struct Vector3 x ) {
     if( x.x < x.y ) {
         if( x.y < x.z ) {
             return x.z;
@@ -427,16 +431,16 @@ attr_header f32 vec3_hmid( struct Vector3 x ) {
 /// @brief Get the minimum component in vector.
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
-attr_always_inline
-attr_header f32 vec3_hmin( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_hmin( struct Vector3 x ) {
     f32 _0 = x.x < x.y ? x.x : x.y;
     return _0 < x.z ? _0 : x.z;
 }
 /// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
-attr_always_inline
-attr_header struct Vector3 vec3_min( struct Vector3 x, struct Vector3 y ) {
+attr_always_inline attr_header
+struct Vector3 vec3_min( struct Vector3 x, struct Vector3 y ) {
     struct Vector3 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
@@ -446,38 +450,49 @@ attr_header struct Vector3 vec3_min( struct Vector3 x, struct Vector3 y ) {
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
-attr_always_inline
-attr_header f32 vec3_length_sqr( struct Vector3 x ) {
+attr_always_inline attr_header
+f32 vec3_length_sqr( struct Vector3 x ) {
     return vec3_dot( x, x );
 }
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
-attr_core_api f32 vec3_length( struct Vector3 x );
+attr_always_inline attr_header
+f32 vec3_length( struct Vector3 x ) {
+    return f32_sqrt( vec3_length_sqr( x ) );
+}
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
 /// @return Distance squared.
-attr_always_inline
-attr_header f32 vec3_distance_sqr( struct Vector3 a, struct Vector3 b ) {
+attr_always_inline attr_header
+f32 vec3_distance_sqr( struct Vector3 a, struct Vector3 b ) {
     return vec3_length_sqr( vec3_sub( a, b ) );
 }
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
 /// @return Distance.
-attr_always_inline
-attr_header f32 vec3_distance( struct Vector3 a, struct Vector3 b ) {
+attr_always_inline attr_header
+f32 vec3_distance( struct Vector3 a, struct Vector3 b ) {
     return vec3_length( vec3_sub( a, b ) );
 }
 /// @brief Normalize a Vector.
 /// @param x Vector to normalize.
 /// @return Normalized vector or zero vector if magnitude == 0.
-attr_core_api struct Vector3 vec3_normalize( struct Vector3 x );
+attr_always_inline attr_header
+struct Vector3 vec3_normalize( struct Vector3 x ) {
+    f32 m = vec3_length_sqr( x );
+    if( m == 0.0f ) {
+        return VEC3_ZERO;
+    } else {
+        return vec3_div( x, f32_sqrt( m ) );
+    }
+}
 /// @brief Reflect direction vector off surface.
 /// @param direction Direction vector to reflect.
 /// @param normal    Normal of the surface to reflect off of.
 /// @return Reflected vector.
-attr_always_inline
-attr_header struct Vector3 vec3_reflect(
+attr_always_inline attr_header
+struct Vector3 vec3_reflect(
     struct Vector3 direction, struct Vector3 normal
 ) {
     return vec3_mul(
@@ -488,8 +503,8 @@ attr_header struct Vector3 vec3_reflect(
 /// @param v        Vector.
 /// @param min, max Range.
 /// @return Clamped vector.
-attr_always_inline
-attr_header struct Vector3 vec3_clamp(
+attr_always_inline attr_header
+struct Vector3 vec3_clamp(
     struct Vector3 v, struct Vector3 min, struct Vector3 max
 ) {
     struct Vector3 result;
@@ -502,8 +517,8 @@ attr_header struct Vector3 vec3_clamp(
 /// @param v Vector to clamp.
 /// @param min_, max_ Range to clamp to, min_ must be < max_.
 /// @return Clamped vector.
-attr_always_inline
-attr_header struct Vector3 vec3_clamp_length(
+attr_always_inline attr_header
+struct Vector3 vec3_clamp_length(
     struct Vector3 v, f32 min_, f32 max_
 ) {
     f32 mag = vec3_length( v );
@@ -516,11 +531,14 @@ attr_header struct Vector3 vec3_clamp_length(
 /// @brief Calculate the angle between two vectors.
 /// @param a, b Vectors to calculate angle of.
 /// @return Angle (in radians) between vectors.
-attr_core_api f32 vec3_angle( struct Vector3 a, struct Vector3 b );
+attr_always_inline attr_header
+f32 vec3_angle( struct Vector3 a, struct Vector3 b ) {
+    return f32_acos( vec3_dot( a, b ) );
+}
 /// @brief Component-wise abs.
 /// @param v Vector.
 /// @return Vector with absolute values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_abs( struct Vector3 v ) {
     struct Vector3 result;
     result.x = v.x < 0.0f ? -v.x : v.x;
@@ -531,7 +549,7 @@ struct Vector3 vec3_abs( struct Vector3 v ) {
 /// @brief Component-wise sign.
 /// @param v Vector.
 /// @return Vector with sign values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_sign( struct Vector3 v ) {
     struct Vector3 result;
     result.x = (v.x > 0.0f) - (f32)(v.x < 0.0f);
@@ -542,7 +560,7 @@ struct Vector3 vec3_sign( struct Vector3 v ) {
 /// @brief Component-wise truncate.
 /// @param v Vector to truncate.
 /// @return Vector with truncated values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_trunc( struct Vector3 v ) {
     struct Vector3 result;
     result.x = (f32)(i32)v.x;
@@ -553,7 +571,7 @@ struct Vector3 vec3_trunc( struct Vector3 v ) {
 /// @brief Component-wise floor.
 /// @param v Vector to floor.
 /// @return Vector with floored values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_floor( struct Vector3 v ) {
     struct Vector3 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 1.0f ) : (i32)( v.x ) );
@@ -564,7 +582,7 @@ struct Vector3 vec3_floor( struct Vector3 v ) {
 /// @brief Component-wise ceil.
 /// @param v Vector to ceil.
 /// @return Vector with ceiled values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_ceil( struct Vector3 v ) {
     struct Vector3 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x ) : (i32)( v.x + 1.0f ) );
@@ -575,7 +593,7 @@ struct Vector3 vec3_ceil( struct Vector3 v ) {
 /// @brief Component-wise round.
 /// @param v Vector to round.
 /// @return Vector with rounded values.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_round( struct Vector3 v ) {
     struct Vector3 result;
     result.x = (f32)( v.x < 0.0f ? (i32)( v.x - 0.5f ) : (i32)( v.x + 0.5f ) );
@@ -586,7 +604,7 @@ struct Vector3 vec3_round( struct Vector3 v ) {
 /// @brief Get fractional part.
 /// @param v Vector.
 /// @return Vector with fractional part.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_fract( struct Vector3 v ) {
     return vec3_sub( v, vec3_round(v) );
 }
@@ -594,37 +612,82 @@ struct Vector3 vec3_fract( struct Vector3 v ) {
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector3 vec3_lerp(
-    struct Vector3 a, struct Vector3 b, f32 t );
+attr_always_inline attr_header
+struct Vector3 vec3_lerp(
+    struct Vector3 a, struct Vector3 b, f32 t 
+) {
+    return vec3_add( vec3_mul( a, 1.0f - t ), vec3_mul( b, t ) );
+}
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-#define vec3_mix vec3_lerp
+attr_always_inline attr_header
+struct Vector3 vec3_mix(
+    struct Vector3 a, struct Vector3 b, f32 t 
+) {
+    return vec3_lerp( a, b, t );
+}
 /// @brief Step function.
 /// @param edge Value to compare @c x to.
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
-attr_header
+attr_always_inline attr_header
 struct Vector3 vec3_step( struct Vector3 edge, struct Vector3 x ) {
-    struct Vector3 result;
-    result.x = x.x < edge.x ? 0.0 : 1.0;
-    result.y = x.y < edge.y ? 0.0 : 1.0;
-    result.z = x.z < edge.z ? 0.0 : 1.0;
-    return result;
+    return vec3_new( f32_step( edge.x, x.x ), f32_step( edge.y, x.y ), f32_step( edge.z, x.z ) );
+}
+/// @brief Step function.
+/// @param edge Value to compare @c x to.
+/// @param x    Value.
+/// @return 0 if x < edge, otherwise 1.
+attr_always_inline attr_header
+struct Vector3 vec3_step_scalar( f32 edge, struct Vector3 x ) {
+    return vec3_step( vec3_set( edge ), x );
 }
 /// @brief Smooth step interpolation.
-/// @param a, b Range of interpolation.
-/// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
-attr_core_api struct Vector3 vec3_smoothstep(
-    struct Vector3 a, struct Vector3 b, f32 t );
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector3 vec3_smoothstep(
+    struct Vector3 edge0, struct Vector3 edge1, struct Vector3 x
+) {
+    return vec3_new(
+        f32_smoothstep( edge0.x, edge1.x, x.x ),
+        f32_smoothstep( edge0.y, edge1.y, x.y ),
+        f32_smoothstep( edge0.z, edge1.z, x.z ) );
+}
+/// @brief Smooth step interpolation.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector3 vec3_smoothstep_scalar( f32 edge0, f32 edge1, struct Vector3 x ) {
+    return vec3_smoothstep( vec3_set( edge0 ), vec3_set( edge1 ), x );
+}
 /// @brief Smoother step interpolation.
-/// @param a, b Range of interpolation.
-/// @param t Where to interpolate to.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector3 vec3_smootherstep(
-    struct Vector3 a, struct Vector3 b, f32 t );
+attr_always_inline attr_header
+struct Vector3 vec3_smootherstep(
+    struct Vector3 edge0, struct Vector3 edge1, struct Vector3 x
+) {
+    return vec3_new(
+        f32_smootherstep( edge0.x, edge1.x, x.x ),
+        f32_smootherstep( edge0.y, edge1.y, x.y ),
+        f32_smootherstep( edge0.z, edge1.z, x.z ) );
+}
+/// @brief Smoother step interpolation.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Vector in range a -> b.
+attr_always_inline attr_header
+struct Vector3 vec3_smootherstep_scalar(
+    f32 edge0, f32 edge1, struct Vector3 x
+) {
+    return vec3_smootherstep( vec3_set( edge0 ), vec3_set( edge1 ), x );
+}
 /// @brief Convert degrees to radians.
 /// @param degrees Angles in degrees.
 /// @return Angles in radians.
@@ -698,30 +761,30 @@ struct Vector3 vec3_atan2( struct Vector3 y, struct Vector3 x ) {
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
 /// @see #F32_EPSILON
-attr_always_inline
-attr_header b32 vec3_cmp( struct Vector3 a, struct Vector3 b ) {
+attr_always_inline attr_header
+b32 vec3_cmp( struct Vector3 a, struct Vector3 b ) {
     return vec3_length_sqr( vec3_sub( a, b ) ) < F32_EPSILON;
 }
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 3 values.
 /// @return Vector with components from array.
-attr_always_inline
-attr_header struct IVector3 ivec3_from_array( i32 array[3] ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_from_array( i32 array[3] ) {
     return ivec3_new( array[0], array[1], array[2] );
 }
 /// @brief Fill array with components from vector.
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 3 values.
-attr_always_inline
-attr_header void ivec3_to_array( struct IVector3 v, i32* out_array ) {
+attr_always_inline attr_header
+void ivec3_to_array( struct IVector3 v, i32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1]; out_array[2] = v.array[2];
 }
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct IVector3 ivec3_add(
+attr_always_inline attr_header
+struct IVector3 ivec3_add(
     struct IVector3 lhs, struct IVector3 rhs
 ) {
     return ivec3_new( lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z );
@@ -729,8 +792,8 @@ attr_header struct IVector3 ivec3_add(
 /// @brief Component-wise subtract vectors.
 /// @param lhs, rhs Vectors to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct IVector3 ivec3_sub(
+attr_always_inline attr_header
+struct IVector3 ivec3_sub(
     struct IVector3 lhs, struct IVector3 rhs
 ) {
     return ivec3_new( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z );
@@ -738,8 +801,8 @@ attr_header struct IVector3 ivec3_sub(
 /// @brief Component-wise multiply vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector3 ivec3_mul_ivec3(
+attr_always_inline attr_header
+struct IVector3 ivec3_mul_ivec3(
     struct IVector3 lhs, struct IVector3 rhs
 ) {
     return ivec3_new( lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z );
@@ -748,15 +811,15 @@ attr_header struct IVector3 ivec3_mul_ivec3(
 /// @param lhs Vector to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector3 ivec3_mul( struct IVector3 lhs, i32 rhs ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_mul( struct IVector3 lhs, i32 rhs ) {
     return ivec3_new( lhs.x * rhs, lhs.y * rhs, lhs.z * rhs );
 }
 /// @brief Component-wise divide vectors.
 /// @param lhs, rhs Vectors to divide.
 /// @return Result of division.
-attr_always_inline
-attr_header struct IVector3 ivec3_div_ivec3(
+attr_always_inline attr_header
+struct IVector3 ivec3_div_ivec3(
     struct IVector3 lhs, struct IVector3 rhs
 ) {
     return ivec3_new( lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z );
@@ -765,43 +828,43 @@ attr_header struct IVector3 ivec3_div_ivec3(
 /// @param lhs Vector to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct IVector3 ivec3_div( struct IVector3 lhs, i32 rhs ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_div( struct IVector3 lhs, i32 rhs ) {
     return ivec3_new( lhs.x / rhs, lhs.y / rhs, lhs.z / rhs );
 }
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
-attr_always_inline
-attr_header struct IVector3 ivec3_neg( struct IVector3 x ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_neg( struct IVector3 x ) {
     return ivec3_new( -x.x, -x.y, -x.z );
 }
 /// @brief Rotate vector components to the left.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the left.
-attr_always_inline
-attr_header struct IVector3 ivec3_rotl( struct IVector3 x ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_rotl( struct IVector3 x ) {
     return ivec3_new( x.y, x.z, x.x );
 }
 /// @brief Rotate vector components to the right.
 /// @param x Vector to rotate components of.
 /// @return Vector with components rotated to the right.
-attr_always_inline
-attr_header struct IVector3 ivec3_rotr( struct IVector3 x ) {
+attr_always_inline attr_header
+struct IVector3 ivec3_rotr( struct IVector3 x ) {
     return ivec3_new( x.z, x.x, x.y );
 }
 /// @brief Horizontally add components of vector.
 /// @param x Vector whose components are to be added.
 /// @return Result of addition.
-attr_always_inline
-attr_header i32 ivec3_hadd( struct IVector3 x ) {
+attr_always_inline attr_header
+i32 ivec3_hadd( struct IVector3 x ) {
     return x.x + x.y + x.z;
 }
 /// @brief Horizontally multply components of vector.
 /// @param x Vector whose components are to be multiplied.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header i32 ivec3_hmul( struct IVector3 x ) {
+attr_always_inline attr_header
+i32 ivec3_hmul( struct IVector3 x ) {
     return x.x * x.y * x.z;
 }
 /// @brief Hadamard product between two vectors.
@@ -809,8 +872,8 @@ attr_header i32 ivec3_hmul( struct IVector3 x ) {
 /// Component-wise multiplication of two vectors.
 /// @param lhs, rhs Vectors to multiply.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct IVector3 ivec3_hadamard(
+attr_always_inline attr_header
+struct IVector3 ivec3_hadamard(
     struct IVector3 lhs, struct IVector3 rhs
 ) {
     return ivec3_new( lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z );
@@ -818,8 +881,8 @@ attr_header struct IVector3 ivec3_hadamard(
 /// @brief Inner product of two vectors.
 /// @param lhs, rhs Vectors to take inner product of.
 /// @return Inner product.
-attr_always_inline
-attr_header f32 ivec3_dot( struct IVector3 lhs, struct IVector3 rhs ) {
+attr_always_inline attr_header
+f32 ivec3_dot( struct IVector3 lhs, struct IVector3 rhs ) {
     struct Vector3 _lhs = vec3_new( (f32)lhs.x, (f32)lhs.y, (f32)lhs.z );
     struct Vector3 _rhs = vec3_new( (f32)rhs.x, (f32)rhs.y, (f32)rhs.z );
 
@@ -828,24 +891,24 @@ attr_header f32 ivec3_dot( struct IVector3 lhs, struct IVector3 rhs ) {
 /// @brief Calculate the square magnitude of Vector.
 /// @param x Vector to get square magnitude of.
 /// @return Square magnitude.
-attr_always_inline
-attr_header f32 ivec3_length_sqr( struct IVector3 x ) {
+attr_always_inline attr_header
+f32 ivec3_length_sqr( struct IVector3 x ) {
     struct Vector3 _x = vec3_new( (f32)x.x, (f32)x.y, (f32)x.z );
     return vec3_length_sqr( _x );
 }
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
-attr_always_inline
-attr_header f32 ivec3_length( struct IVector3 x ) {
+attr_always_inline attr_header
+f32 ivec3_length( struct IVector3 x ) {
     struct Vector3 _x = vec3_new( (f32)x.x, (f32)x.y, (f32)x.z );
     return vec3_length( _x );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if vector components are equal.
-attr_always_inline
-attr_header b32 ivec3_cmp( struct IVector3 a, struct IVector3 b ) {
+attr_always_inline attr_header
+b32 ivec3_cmp( struct IVector3 a, struct IVector3 b ) {
     return
         a.x == b.x &&
         a.y == b.y &&

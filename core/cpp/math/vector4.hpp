@@ -1010,17 +1010,25 @@ attr_header
 Vector4CPP step( Vector4CPP edge, Vector4CPP x ) {
     return vec4_step( edge.pod, x.pod );
 }
-attr_always_inline
-attr_header Vector4CPP smoothstep(
-    Vector4CPP a, Vector4CPP b, f32 t
-) {
-    return vec4_smoothstep( a.pod, b.pod, t );
+attr_header
+Vector4CPP step( f32 edge, Vector4CPP x ) {
+    return vec4_step_scalar( edge, x.pod );
 }
-attr_always_inline
-attr_header Vector4CPP smootherstep(
-    Vector4CPP a, Vector4CPP b, f32 t
-) {
-    return vec4_smootherstep( a.pod, b.pod, t );
+attr_header
+Vector4CPP smoothstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
+    return vec4_smoothstep( edge0.pod, edge1.pod, x.pod );
+}
+attr_header
+Vector4CPP smoothstep( f32 edge0, f32 edge1, Vector4CPP x ) {
+    return vec4_smoothstep_scalar( edge0, edge1, x.pod );
+}
+attr_header
+Vector4CPP smootherstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
+    return vec4_smootherstep( edge0.pod, edge1.pod, x.pod );
+}
+attr_header
+Vector4CPP smootherstep( f32 edge0, f32 edge1, Vector4CPP x ) {
+    return vec4_smootherstep_scalar( edge0, edge1, x.pod );
 }
 attr_always_inline attr_header
 Vector4CPP radians( Vector4CPP degrees ) {

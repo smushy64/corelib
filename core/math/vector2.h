@@ -12,6 +12,8 @@
 #include "core/constants.h"
 #include "core/macros.h" // IWYU pragma: export
 #include "core/math/trig.h"
+#include "core/math/exponential.h"
+#include "core/math/common.h"
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
     #pragma clang diagnostic push
@@ -367,7 +369,10 @@ f32 vec2_length_sqr( struct Vector2 x ) {
 /// @brief Calculate magnitude of Vector.
 /// @param x Vector to get magnitude of.
 /// @return Magnitude.
-attr_core_api f32 vec2_length( struct Vector2 x );
+attr_always_inline attr_header
+f32 vec2_length( struct Vector2 x ) {
+    return f32_sqrt( vec2_length_sqr( x ) );
+}
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
 /// @return Distance squared.
@@ -385,7 +390,15 @@ f32 vec2_distance( struct Vector2 a, struct Vector2 b ) {
 /// @brief Normalize a Vector.
 /// @param x Vector to normalize.
 /// @return Normalized vector or zero vector if magnitude == 0.
-attr_core_api struct Vector2 vec2_normalize( struct Vector2 x );
+attr_always_inline attr_header
+struct Vector2 vec2_normalize( struct Vector2 x ) {
+    f32 length_sqr = vec2_length_sqr( x );
+    if( length_sqr == 0.0f ) {
+        return VEC2_ZERO;
+    } else {
+        return vec2_div( x, f32_sqrt( length_sqr ) );
+    }
+}
 /// @brief Reflect direction vector off surface.
 /// @param direction Direction vector to reflect.
 /// @param normal    Normal of the surface to reflect off of.
@@ -400,7 +413,18 @@ struct Vector2 vec2_reflect(
 /// @param v Vector to rotate.
 /// @param angle Angle to rotate by (in radians).
 /// @return Rotated vector.
-attr_core_api struct Vector2 vec2_rotate( struct Vector2 v, f32 angle );
+attr_always_inline attr_header
+struct Vector2 vec2_rotate( struct Vector2 v, f32 angle ) {
+    f32 sin = 0.0f, cos = 0.0f;
+    f32_sincos( angle, &sin, &cos );
+    struct Vector2 a = vec2_new( cos, sin );
+    struct Vector2 b = vec2_new( -sin, cos );
+
+    a = vec2_mul( a, v.x );
+    b = vec2_mul( b, v.y );
+
+    return vec2_add( a, b );
+}
 /// @brief Component-wise clamp.
 /// @param v        Vector.
 /// @param min, max Range.
@@ -432,7 +456,10 @@ struct Vector2 vec2_clamp_length(
 /// @brief Calculate the angle between two vectors.
 /// @param a, b Vectors to calculate angle of.
 /// @return Angle (in radians) between vectors.
-attr_core_api f32 vec2_angle( struct Vector2 a, struct Vector2 b );
+attr_always_inline attr_header
+f32 vec2_angle( struct Vector2 a, struct Vector2 b ) {
+    return f32_acos( vec2_dot( a, b ) );
+}
 /// @brief Component-wise abs.
 /// @param v Vector.
 /// @return Vector with absolute values.
@@ -504,36 +531,80 @@ struct Vector2 vec2_fract( struct Vector2 v ) {
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector2 vec2_lerp(
-    struct Vector2 a, struct Vector2 b, f32 t );
+attr_always_inline attr_header
+struct Vector2 vec2_lerp(
+    struct Vector2 a, struct Vector2 b, f32 t
+) {
+    return vec2_add( vec2_mul( a, 1.0f - t ), vec2_mul( b, t ) );
+}
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
 /// @return Vector in range a -> b.
-#define vec2_mix vec2_lerp
+attr_always_inline attr_header
+struct Vector2 vec2_mix(
+    struct Vector2 a, struct Vector2 b, f32 t
+) {
+    return vec2_lerp( a, b, t );
+}
 /// @brief Step function.
 /// @param edge Value to compare @c x to.
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
 struct Vector2 vec2_step( struct Vector2 edge, struct Vector2 x ) {
-    struct Vector2 result;
-    result.x = x.x < edge.x ? 0.0 : 1.0;
-    result.y = x.y < edge.y ? 0.0 : 1.0;
-    return result;
+    return vec2_new( f32_step( edge.x, x.x ), f32_step( edge.y, x.y ) );
+}
+/// @brief Step function.
+/// @param edge Value to compare @c x to.
+/// @param x    Value.
+/// @return 0 if x < edge, otherwise 1.
+attr_always_inline attr_header
+struct Vector2 vec2_step_scalar( f32 edge, struct Vector2 x ) {
+    return vec2_step( vec2_set( edge ), x );
 }
 /// @brief Smooth step interpolation.
-/// @param a, b Range of interpolation.
-/// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
-attr_core_api struct Vector2 vec2_smoothstep(
-    struct Vector2 a, struct Vector2 b, f32 t );
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_smoothstep(
+    struct Vector2 edge0, struct Vector2 edge1, struct Vector2 x
+) {
+    return vec2_new(
+        f32_smoothstep( edge0.x, edge1.x, x.x ),
+        f32_smoothstep( edge0.y, edge1.y, x.y ) );
+}
+/// @brief Smooth step interpolation.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_smoothstep_scalar( f32 edge0, f32 edge1, struct Vector2 x ) {
+    return vec2_smoothstep( vec2_set( edge0 ), vec2_set( edge1 ), x );
+}
 /// @brief Smoother step interpolation.
-/// @param a, b Range of interpolation.
-/// @param t Where to interpolate to.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
 /// @return Vector in range a -> b.
-attr_core_api struct Vector2 vec2_smootherstep(
-    struct Vector2 a, struct Vector2 b, f32 t );
+attr_always_inline attr_header
+struct Vector2 vec2_smootherstep(
+    struct Vector2 edge0, struct Vector2 edge1, struct Vector2 x
+) {
+    return vec2_new(
+        f32_smootherstep( edge0.x, edge1.x, x.x ),
+        f32_smootherstep( edge0.y, edge1.y, x.y ) );
+}
+/// @brief Smoother step interpolation.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Vector in range a -> b.
+attr_always_inline attr_header
+struct Vector2 vec2_smootherstep_scalar(
+    f32 edge0, f32 edge1, struct Vector2 x
+) {
+    return vec2_smootherstep( vec2_set( edge0 ), vec2_set( edge1 ), x );
+}
 /// @brief Convert degrees to radians.
 /// @param degrees Angles in degrees.
 /// @return Angles in radians.

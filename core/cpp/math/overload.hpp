@@ -17,8 +17,8 @@
 #include "core/defines.h"
 #include "core/types.h"
 #include "core/math/trig.h"
-#include "core/math/functions.h"
-#include "core/math/interpolation.h"
+#include "core/math/common.h"
+#include "core/math/exponential.h"
 // IWYU pragma: end_exports
 
 attr_always_inline attr_header
@@ -109,28 +109,28 @@ f32 inversesqrt( f32 x ) {
     return f32_inversesqrt( x );
 }
 attr_always_inline attr_header
-f32 nat_log( f32 x ) {
-    return f32_nat_log( x );
+f32 ln( f32 x ) {
+    return f32_ln( x );
 }
 attr_always_inline attr_header
-f32 log_2( f32 x ) {
-    return f32_log_2( x );
+f32 log2( f32 x ) {
+    return f32_log2( x );
 }
 attr_always_inline attr_header
-f32 log_10( f32 x ) {
-    return f32_log_10( x );
+f32 log10( f32 x ) {
+    return f32_log10( x );
 }
 attr_always_inline attr_header
 f32 pow( f32 base, f32 exp ) {
-    return f32_power( base, exp );
+    return f32_pow( base, exp );
 }
 attr_always_inline attr_header
-f32 pow( f32 base, i32 exp ) {
-    return f32_power_i32( base, exp );
+f32 powi( f32 base, i32 exp ) {
+    return f32_powi( base, exp );
 }
 attr_always_inline attr_header
-f32 e_pow( f32 x ) {
-    return f32_e_power( x );
+f32 exp( f32 x ) {
+    return f32_exp( x );
 }
 attr_always_inline attr_header
 f32 mod( f32 lhs, f32 rhs ) {

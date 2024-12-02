@@ -297,153 +297,165 @@ struct IVector3CPP {
         return array[idx];
     }
 };
-attr_always_inline
-attr_header Vector3CPP add( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP add( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_add( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector3CPP sub( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP sub( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_sub( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector3CPP mul( Vector3CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP mul( Vector3CPP lhs, f32 rhs ) {
     return vec3_mul( lhs.pod, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP mul( f32 lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP mul( f32 lhs, Vector3CPP rhs ) {
     return vec3_mul( rhs.pod, lhs );
 }
-attr_always_inline
-attr_header Vector3CPP mul( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP mul( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_mul_vec3( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector3CPP hadamard( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP hadamard( Vector3CPP lhs, Vector3CPP rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP div( Vector3CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP div( Vector3CPP lhs, f32 rhs ) {
     return vec3_div( lhs.pod, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP div( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP div( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_div_vec3( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector3CPP cross( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP cross( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_cross( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header f32 dot( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+f32 dot( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_dot( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector3CPP neg( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP neg( Vector3CPP x ) {
     return vec3_neg( x.pod );
 }
-attr_always_inline
-attr_header f32 hmax( Vector3CPP x ) {
+attr_always_inline attr_header
+f32 hmax( Vector3CPP x ) {
     return vec3_hmax( x.pod );
 }
-attr_always_inline
-attr_header f32 hmid( Vector3CPP x ) {
+attr_always_inline attr_header
+f32 hmid( Vector3CPP x ) {
     return vec3_hmid( x.pod );
 }
-attr_always_inline
-attr_header f32 hmin( Vector3CPP x ) {
+attr_always_inline attr_header
+f32 hmin( Vector3CPP x ) {
     return vec3_hmin( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP max( Vector3CPP x, Vector3CPP y ) {
+attr_always_inline attr_header
+Vector3CPP max( Vector3CPP x, Vector3CPP y ) {
     return vec3_max( x.pod, y.pod );
 }
-attr_always_inline
-attr_header Vector3CPP min( Vector3CPP x, Vector3CPP y ) {
+attr_always_inline attr_header
+Vector3CPP min( Vector3CPP x, Vector3CPP y ) {
     return vec3_min( x.pod, y.pod );
 }
-attr_always_inline
-attr_header f32 length_sqr( Vector3CPP x ) {
+attr_always_inline attr_header
+f32 length_sqr( Vector3CPP x ) {
     return vec3_length_sqr( x.pod );
 }
-attr_always_inline
-attr_header f32 length( Vector3CPP x ) {
+attr_always_inline attr_header
+f32 length( Vector3CPP x ) {
     return vec3_length( x.pod );
 }
-attr_always_inline
-attr_header f32 distance_sqr( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+f32 distance_sqr( Vector3CPP a, Vector3CPP b ) {
     return vec3_distance_sqr( a.pod, b.pod );
 }
-attr_always_inline
-attr_header f32 distance( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+f32 distance( Vector3CPP a, Vector3CPP b ) {
     return vec3_distance( a.pod, b.pod );
 }
-attr_always_inline
-attr_header Vector3CPP normalize( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP normalize( Vector3CPP x ) {
     return vec3_normalize( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP reflect( Vector3CPP direction, Vector3CPP normal ) {
+attr_always_inline attr_header
+Vector3CPP reflect( Vector3CPP direction, Vector3CPP normal ) {
     return vec3_reflect( direction.pod, normal.pod );
 }
-attr_always_inline
-attr_header Vector3CPP clamp( Vector3CPP v, Vector3CPP min, Vector3CPP max ) {
+attr_always_inline attr_header
+Vector3CPP clamp( Vector3CPP v, Vector3CPP min, Vector3CPP max ) {
     return vec3_clamp( v.pod, min.pod, max.pod );
 }
-attr_always_inline
-attr_header Vector3CPP clamp( Vector3CPP v, f32 min, f32 max ) {
+attr_always_inline attr_header
+Vector3CPP clamp( Vector3CPP v, f32 min, f32 max ) {
     return vec3_clamp_length( v.pod, min, max );
 }
-attr_always_inline
-attr_header f32 angle( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+f32 angle( Vector3CPP a, Vector3CPP b ) {
     return vec3_angle( a.pod, b.pod );
 }
-attr_always_inline
-attr_header Vector3CPP abs( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP abs( Vector3CPP x ) {
     return vec3_abs( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP sign( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP sign( Vector3CPP x ) {
     return vec3_sign( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP trunc( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP trunc( Vector3CPP x ) {
     return vec3_trunc( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP floor( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP floor( Vector3CPP x ) {
     return vec3_floor( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP ceil( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP ceil( Vector3CPP x ) {
     return vec3_ceil( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP round( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP round( Vector3CPP x ) {
     return vec3_round( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP fract( Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP fract( Vector3CPP x ) {
     return vec3_fract( x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP lerp( Vector3CPP a, Vector3CPP b, f32 t ) {
+attr_always_inline attr_header
+Vector3CPP lerp( Vector3CPP a, Vector3CPP b, f32 t ) {
     return vec3_lerp( a.pod, b.pod, t );
 }
-attr_always_inline
-attr_header Vector3CPP mix( Vector3CPP a, Vector3CPP b, f32 t ) {
+attr_always_inline attr_header
+Vector3CPP mix( Vector3CPP a, Vector3CPP b, f32 t ) {
     return lerp( a, b, t );
 }
-attr_always_inline
-attr_header Vector3CPP step( Vector3CPP edge, Vector3CPP x ) {
+attr_always_inline attr_header
+Vector3CPP step( Vector3CPP edge, Vector3CPP x ) {
     return vec3_step( edge.pod, x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP smoothstep( Vector3CPP a, Vector3CPP b, f32 t ) {
-    return vec3_smoothstep( a.pod, b.pod, t );
+attr_always_inline attr_header
+Vector3CPP step( f32 edge, Vector3CPP x ) {
+    return vec3_step_scalar( edge, x.pod );
 }
-attr_always_inline
-attr_header Vector3CPP smootherstep( Vector3CPP a, Vector3CPP b, f32 t ) {
-    return vec3_smootherstep( a.pod, b.pod, t );
+attr_always_inline attr_header
+Vector3CPP smoothstep( Vector3CPP edge0, Vector3CPP edge1, Vector3CPP x ) {
+    return vec3_smoothstep( edge0.pod, edge1.pod, x.pod );
+}
+attr_always_inline attr_header
+Vector3CPP smoothstep( f32 edge0, f32 edge1, Vector3CPP x ) {
+    return vec3_smoothstep_scalar( edge0, edge1, x.pod );
+}
+attr_always_inline attr_header
+Vector3CPP smootherstep( Vector3CPP edge0, Vector3CPP edge1, Vector3CPP x ) {
+    return vec3_smootherstep( edge0.pod, edge1.pod, x.pod );
+}
+attr_always_inline attr_header
+Vector3CPP smootherstep( f32 edge0, f32 edge1, Vector3CPP x ) {
+    return vec3_smootherstep_scalar( edge0, edge1, x.pod );
 }
 attr_always_inline attr_header
 Vector3CPP radians( Vector3CPP degrees ) {
@@ -477,73 +489,73 @@ attr_always_inline attr_header
 Vector3CPP atan2( Vector3CPP y, Vector3CPP x ) {
     return vec3_atan2( y.pod, x.pod );
 }
-attr_always_inline
-attr_header b32 cmp( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+b32 cmp( Vector3CPP a, Vector3CPP b ) {
     return vec3_cmp( a.pod, b.pod );
 }
 
-attr_always_inline
-attr_header Vector3CPP operator-( Vector3CPP v ) {
+attr_always_inline attr_header
+Vector3CPP operator-( Vector3CPP v ) {
     return neg( v );
 }
-attr_always_inline
-attr_header Vector3CPP& operator+=( Vector3CPP& lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator+=( Vector3CPP& lhs, Vector3CPP rhs ) {
     return lhs = add( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP& operator-=( Vector3CPP& lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator-=( Vector3CPP& lhs, Vector3CPP rhs ) {
     return lhs = sub( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP& operator*=( Vector3CPP& lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator*=( Vector3CPP& lhs, Vector3CPP rhs ) {
     return lhs = mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP& operator/=( Vector3CPP& lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator/=( Vector3CPP& lhs, Vector3CPP rhs ) {
     return lhs = div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP& operator*=( Vector3CPP& lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator*=( Vector3CPP& lhs, f32 rhs ) {
     return lhs = mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP& operator/=( Vector3CPP& lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP& operator/=( Vector3CPP& lhs, f32 rhs ) {
     return lhs = div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator+( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator+( Vector3CPP lhs, Vector3CPP rhs ) {
     return add( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator-( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator-( Vector3CPP lhs, Vector3CPP rhs ) {
     return sub( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator*( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator*( Vector3CPP lhs, Vector3CPP rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator/( Vector3CPP lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator/( Vector3CPP lhs, Vector3CPP rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator*( Vector3CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator*( Vector3CPP lhs, f32 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator*( f32 lhs, Vector3CPP  rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator*( f32 lhs, Vector3CPP  rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector3CPP operator/( Vector3CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector3CPP operator/( Vector3CPP lhs, f32 rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline
-attr_header b32 operator==( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+b32 operator==( Vector3CPP a, Vector3CPP b ) {
     return cmp( a, b );
 }
-attr_always_inline
-attr_header b32 operator!=( Vector3CPP a, Vector3CPP b ) {
+attr_always_inline attr_header
+b32 operator!=( Vector3CPP a, Vector3CPP b ) {
     return !(a == b);
 }
 

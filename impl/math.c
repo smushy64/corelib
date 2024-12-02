@@ -208,7 +208,7 @@ attr_core_api f32 f32_wrap_radians( f32 rad ) {
 
 attr_core_api f32 f32_sin( f32 x ) {
 #if defined(INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED)
-    x = wrap_rad(x);
+    x = f32_wrap_radians(x);
 
     f32 pow2  = x * x;
     f32 pow3  = pow2 * x;
@@ -231,7 +231,7 @@ attr_core_api f32 f32_sin( f32 x ) {
 }
 attr_core_api f32 f32_cos( f32 x ) {
 #if defined(INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED)
-    x = wrap_rad(x);
+    x = f32_wrap_radians(x);
 
     f32 pow2  = x * x;
     f32 pow4  = pow2 * pow2;
@@ -263,9 +263,9 @@ void internal_f32_sincos( f32 x, f32* out_sine, f32* out_cosine ) {
 #if defined(CORE_COMPILER_MSVC)
 
 #pragma message ("internal_f32_sincos_fsincos is not yet implemented in MASM!")
-// extern void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_f32_cos );
+// extern void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos );
 
-void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
+void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
     internal_f32_sincos( x, out_sine, out_f32_cos );
 }
 
@@ -273,11 +273,11 @@ void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
 
 attr_internal
 attr_always_inline inline attr_optimized
-void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
+void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
     f32 s, c;
     __asm__ inline ( "fsincos" : "=t"(c), "=u"(s) : "0"(x) );
-    *out_sine   = s;
-    *out_f32_cos = c;
+    *out_sine = s;
+    *out_cos  = c;
 }
 
 #endif /* GCC || CLANG */
@@ -1146,7 +1146,6 @@ attr_core_api struct Matrix4x4 mat4_transform_euler(
     return mat4_mul_mat4( &t, &temp );
 }
 
-
 attr_core_api struct Matrix2x2 mat2_from_array( const f32 array[4] ) {
     struct Matrix2x2 result;
     memory_copy( result.array, array, sizeof(f32) * 4 );
@@ -1170,134 +1169,5 @@ attr_core_api struct Matrix4x4 mat4_from_array( const f32 array[16] ) {
 }
 attr_core_api void mat4_to_array( const struct Matrix4x4* m, f32* out_array ) {
     memory_copy( out_array, m, sizeof(f32) * 16 );
-}
-attr_core_api f32 vec2_length( struct Vector2 x ) {
-    return f32_sqrt( vec2_length_sqr( x ) );
-}
-attr_core_api struct Vector2 vec2_normalize( struct Vector2 x ) {
-    f32 sqrm = vec2_length_sqr( x );
-    if( sqrm == 0.0f ) {
-        return VEC2_ZERO;
-    } else {
-        return vec2_div( x, f32_sqrt( sqrm ) );
-    }
-}
-attr_core_api struct Vector2 vec2_rotate( struct Vector2 v, f32 angle ) {
-    f32 sin = 0.0f, cos = 0.0f;
-    f32_sincos( angle, &sin, &cos );
-    struct Vector2 a = vec2( cos, sin );
-    struct Vector2 b = vec2( -sin, cos );
-
-    a = vec2_mul( a, v.x );
-    b = vec2_mul( b, v.y );
-
-    return vec2_add( a, b );
-}
-attr_core_api f32 vec2_angle( struct Vector2 a, struct Vector2 b ) {
-    return f32_acos( vec2_dot( a, b ) );
-}
-attr_core_api struct Vector2 vec2_lerp(
-    struct Vector2 a, struct Vector2 b, f32 t
-) {
-    return vec2( f32_lerp( a.x, b.x, t ), f32_lerp( a.y, b.y, t ) );
-}
-attr_core_api struct Vector2 vec2_smoothstep(
-    struct Vector2 a, struct Vector2 b, f32 t
-) {
-    return vec2( f32_smoothstep( a.x, b.x, t ), f32_smoothstep( a.y, b.y, t ) );
-}
-attr_core_api struct Vector2 vec2_smootherstep(
-    struct Vector2 a, struct Vector2 b, f32 t
-) {
-    return vec2( f32_smootherstep( a.x, b.x, t ), f32_smootherstep( a.y, b.y, t ) );
-}
-attr_core_api f32 vec3_length( struct Vector3 x ) {
-    return f32_sqrt( vec3_length_sqr( x ) );
-}
-attr_core_api struct Vector3 vec3_normalize( struct Vector3 x ) {
-    f32 m = vec3_length_sqr( x );
-    if( m == 0.0f ) {
-        return VEC3_ZERO;
-    } else {
-        return vec3_div( x, f32_sqrt( m ) );
-    }
-}
-attr_core_api f32 vec3_angle( struct Vector3 a, struct Vector3 b ) {
-    return f32_acos( vec3_dot( a, b ) );
-}
-attr_core_api struct Vector3 vec3_lerp(
-    struct Vector3 a, struct Vector3 b, f32 t
-) {
-    return vec3(
-        f32_lerp( a.x, b.x, t ),
-        f32_lerp( a.y, b.y, t ),
-        f32_lerp( a.z, b.z, t ) );
-}
-attr_core_api struct Vector3 vec3_smoothstep(
-    struct Vector3 a, struct Vector3 b, f32 t
-) {
-    return vec3(
-        f32_smoothstep( a.x, b.x, t ),
-        f32_smoothstep( a.y, b.y, t ),
-        f32_smoothstep( a.z, b.z, t ) );
-}
-attr_core_api struct Vector3 vec3_smootherstep(
-    struct Vector3 a, struct Vector3 b, f32 t
-) {
-    return vec3(
-        f32_smootherstep( a.x, b.x, t ),
-        f32_smootherstep( a.y, b.y, t ),
-        f32_smootherstep( a.z, b.z, t ) );
-}
-attr_core_api f32 vec4_length( struct Vector4 x ) {
-    return f32_sqrt( vec4_length_sqr( x ) );
-}
-attr_core_api struct Vector4 vec4_normalize( struct Vector4 x ) {
-    f32 m = vec4_length_sqr( x );
-    if( m == 0.0f ) {
-        return VEC4_ZERO;
-    } else {
-        return vec4_div( x, f32_sqrt( m ) );
-    }
-}
-attr_core_api struct Vector4 vec4_lerp(
-    struct Vector4 a, struct Vector4 b, f32 t
-) {
-    return vec4(
-        f32_lerp( a.x, b.x, t ),
-        f32_lerp( a.y, b.y, t ),
-        f32_lerp( a.z, b.z, t ),
-        f32_lerp( a.w, b.w, t ) );
-}
-attr_core_api struct Vector4 vec4_smoothstep(
-    struct Vector4 a, struct Vector4 b, f32 t
-) {
-    return vec4(
-        f32_smoothstep( a.x, b.x, t ),
-        f32_smoothstep( a.y, b.y, t ),
-        f32_smoothstep( a.z, b.z, t ),
-        f32_smoothstep( a.w, b.w, t ) );
-}
-attr_core_api struct Vector4 vec4_smootherstep(
-    struct Vector4 a, struct Vector4 b, f32 t
-) {
-    return vec4(
-        f32_smootherstep( a.x, b.x, t ),
-        f32_smootherstep( a.y, b.y, t ),
-        f32_smootherstep( a.z, b.z, t ),
-        f32_smootherstep( a.w, b.w, t ) );
-}
-attr_core_api f32 quat_length( struct Quaternion q ) {
-    return f32_sqrt( quat_length_sqr( q ) );
-}
-attr_core_api struct Quaternion quat_lerp(
-    struct Quaternion a, struct Quaternion b, f32 t
-) {
-    struct Quaternion l = quat_new(
-        f32_lerp( a.w, b.w, t ),
-        f32_lerp( a.x, b.y, t ),
-        f32_lerp( a.y, b.y, t ),
-        f32_lerp( a.z, b.z, t ) );
-    return quat_normalize( l );
 }
 
