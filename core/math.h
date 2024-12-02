@@ -8,10 +8,9 @@
 */
 // IWYU pragma: begin_exports
 #include "core/math/macros.h"
-#include "core/math/conversions.h"
 #include "core/math/trig.h"
-#include "core/math/interpolation.h"
-#include "core/math/functions.h"
+#include "core/math/exponential.h"
+#include "core/math/common.h"
 #include "core/math/vector2.h"
 #include "core/math/vector3.h"
 #include "core/math/vector4.h"

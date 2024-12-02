@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- math: reorganized to more closely follow GLSL functions.
 - math:cpp: vector swizzling
 - math: renamed functions to follow GLSL conventions.
 - alloc: bug: calling memory_free instead of memory_zero!

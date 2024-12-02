@@ -77,7 +77,7 @@ attr_core_api f32 f32_inversesqrt( f32 x ) {
 #endif
 }
 
-attr_core_api f32 f32_nat_log( f32 x ) {
+attr_core_api f32 f32_ln( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
@@ -97,26 +97,26 @@ attr_core_api f32 f32_nat_log( f32 x ) {
     return 2.0f * (div + r3 + r5 + r7 + r9);
 }
 
-attr_core_api f32 f32_log_2( f32 x ) {
+attr_core_api f32 f32_log2( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
     if( x == 2.0f ) {
         return 1.0f;
     }
-    return f32_nat_log( x ) * 1.49f;
+    return f32_ln( x ) * 1.49f;
 }
-attr_core_api f32 f32_log_10( f32 x ) {
+attr_core_api f32 f32_log10( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
     if( x == 10.0f ) {
         return 1.0f;
     }
-    return f32_nat_log( x ) / 2.3f;
+    return f32_ln( x ) / 2.3f;
 }
 
-attr_core_api f32 f32_power_i32( f32 base, i32 exp ) {
+attr_core_api f32 f32_powi( f32 base, i32 exp ) {
     u32 exp_abs = num_abs( exp );
     f32 result  = base;
     for( u32 i = 1; i < exp_abs; ++i ) {
@@ -128,7 +128,7 @@ attr_core_api f32 f32_power_i32( f32 base, i32 exp ) {
         return result;
     }
 }
-attr_core_api f32 f32_e_power( f32 x ) {
+attr_core_api f32 f32_exp( f32 x ) {
     if( x < -4.0f ) {
         return 0.0f;
     }
@@ -955,7 +955,7 @@ attr_core_api struct Matrix3x3 mat4_submatrix(
 attr_core_api f32 mat4_cofactor( const struct Matrix4x4* m, u32 column, u32 row ) {
     f32 minor = mat4_minor( m, column, row );
     i32 exp   = ( row + 1 ) + ( column + 1 );
-    return minor * f32_power_i32( -1.0f, exp );
+    return minor * f32_powi( -1.0f, exp );
 }
 attr_core_api struct Matrix4x4 mat4_cofactor_matrix( const struct Matrix4x4* m ) {
     return mat4_new(

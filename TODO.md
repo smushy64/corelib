@@ -1,7 +1,4 @@
 # Todo List
-- [x] math: vector2 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
-- [x] math: vector3 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
-- [x] math: vector4 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
 - [ ] math: quat_from_angle_axis_vec3, from_angle_axis_combined, from_angle_axis (scalars)
 - [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)
@@ -31,6 +28,9 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] math: vector2 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
+- [x] math: vector3 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
+- [x] math: vector4 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
 - [x] math: rewrite vec3/vec4 macro
 - [x] math: vector swizzling
 - [x] math: generics/function overloads(C++)

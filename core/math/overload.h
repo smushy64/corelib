@@ -69,22 +69,24 @@
 #define inversesqrt( x ) _Generic( (x),\
     default: f32_inversesqrt\
 )(x)
-#define nat_log( x ) _Generic( (x),\
-    default: f32_nat_log\
+#define ln( x ) _Generic( (x),\
+    default: f32_ln\
 )(x)
-#define log_2( x ) _Generic( (x),\
-    default: f32_log_2\
+#define log2( x ) _Generic( (x),\
+    default: f32_log2\
 )(x)
-#define log_10( x ) _Generic( (x),\
-    default: f32_log_10\
+#define log10( x ) _Generic( (x),\
+    default: f32_log10\
 )(x)
 #define pow( base, exp ) _Generic( (exp),\
-    double:  f32_power,\
-    float:   f32_power,\
-    default: f32_power_i32\
+    double:  f32_pow,\
+    default: f32_pow\
 )( base, exp )
-#define e_pow( x ) _Generic( (x),\
-    default: f32_e_power\
+#define powi( base, exp ) _Generic( (exp),\
+    default: f32_powi\
+)( base, exp )
+#define exp( x ) _Generic( (x),\
+    default: f32_exp\
 )(x)
 #define mod( lhs, rhs ) _Generic( (lhs),\
     default: f32_mod\
