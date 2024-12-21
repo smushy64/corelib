@@ -453,6 +453,7 @@
     quat:        quat_inverse_checked\
 )( x )
 #define slerp( a, b, t ) _Generic( (a),\
+    vec3: vec3_slerp,\
     quat: quat_slerp\
 )( a, b, t )
 #define transpose( x ) _Generic( (x),\

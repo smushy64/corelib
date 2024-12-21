@@ -628,6 +628,12 @@ struct Vector3 vec3_mix(
 ) {
     return vec3_lerp( a, b, t );
 }
+/// @brief Spherical interpolation from a to b.
+/// @param a, b Interpolation.
+/// @param t    Step of interpolation.
+/// @return Spherical interpolation.
+attr_core_api
+struct Vector3 vec3_slerp( struct Vector3 a, struct Vector3 b, f32 t );
 /// @brief Step function.
 /// @param edge Value to compare @c x to.
 /// @param x    Value.

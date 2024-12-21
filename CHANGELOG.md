@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- math: implemented vec3_slerp
 - math: fixed smoothstep/smootherstep functions for vectors
 - math: reorganized to more closely follow GLSL functions.
 - math:cpp: vector swizzling

@@ -413,6 +413,22 @@ attr_core_api struct Vector3 hsl_to_rgb( struct Vector3 _hsl ) {
     #undef k
     #undef f
 }
+attr_core_api
+struct Vector3 vec3_slerp( struct Vector3 a, struct Vector3 b, f32 t ) {
+    /*
+     * sin[(1 - t)omega]        sin[t * omega]
+     * ----------------- * a + ---------------- * p1
+     *     sin[omega]             sin[omega]
+     * */
+
+    f32 omega     = f32_acos( vec3_dot( a, b ) );
+    f32 sin_omega = f32_sin( omega );
+
+    vec3 quotient_1 = vec3_mul( a, f32_sin( (1.0f - t) * omega ) / sin_omega );
+    vec3 quotient_2 = vec3_mul( b, f32_sin( t * omega ) / sin_omega );
+
+    return vec3_add( quotient_1, quotient_2 );
+}
 
 attr_unused
 attr_always_inline inline

@@ -426,6 +426,10 @@ Vector3CPP fract( Vector3CPP x ) {
     return vec3_fract( x.pod );
 }
 attr_always_inline attr_header
+Vector3CPP slerp( Vector3CPP a, Vector3CPP b, f32 t ) {
+    return vec3_slerp( a.pod, b.pod, t );
+}
+attr_always_inline attr_header
 Vector3CPP lerp( Vector3CPP a, Vector3CPP b, f32 t ) {
     return vec3_lerp( a.pod, b.pod, t );
 }
