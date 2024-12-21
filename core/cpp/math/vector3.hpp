@@ -17,17 +17,64 @@ struct IVector3CPP;
 
 struct Vector3CPP {
     union {
-        struct { f32 x, y, z; };
-        struct { f32 r, g, b; };
-        struct { f32 h, s, l; };
+        /// @brief X, Y and Z components.
+        struct {
+            /// @brief X and Y components.
+            union {
+                /// @brief X and Y components.
+                struct {
+                    /// @brief X component.
+                    f32 x;
+                    /// @brief Y component.
+                    f32 y;
+                };
+                /// @brief Red and Green channels.
+                struct {
+                    /// @brief Red channel (X component).
+                    f32 r;
+                    /// @brief Green channel (Y component).
+                    f32 g;
+                };
+                /// @brief Hue and Saturation.
+                struct {
+                    /// @brief Hue (X component).
+                    f32 h;
+                    /// @brief Saturation (X component).
+                    f32 s;
+                };
+                /// @brief X and Y components as a #Vector2.
+                Vector2CPP xy;
+                /// @brief Red and Green channels as a #Vector2.
+                Vector2CPP rg;
+            };
+            /// @brief Z component.
+            union {
+                /// @brief Z component.
+                f32 z;
+                /// @brief Blue channel (Z component).
+                f32 b;
+                /// @brief Lightness (Z component).
+                f32 l;
+            };
+        };
+        /// @brief Swizzle yz.
+        struct {
+            f32 __unused0;
+            /// @brief Y and Z components as a #Vector2.
+            Vector2CPP yz;
+        };
+        /// @brief Swizzle gb.
+        struct {
+            f32 __unused1;
+            /// @brief Green and Blue channels as a #Vector2.
+            Vector2CPP gb;
+        };
         struct Vector3 pod;
 
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 0, 0> xx, rr;
-        SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 0, 1> xy, rg;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 0, 2> xz, rb;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 1, 0> yx, gr;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 1, 1> yy, gg;
-        SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 1, 2> yz, gb;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 2, 0> zx, br;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 2, 1> zy, bg;
         SwizzlerConvert<Vector3CPP, Vector2CPP, f32, 2, 2> zz, bb;
@@ -180,15 +227,37 @@ struct Vector3CPP {
 };
 struct IVector3CPP {
     union {
-        struct { i32 x, y, z; };
+        /// @brief X, Y and Z components.
+        struct {
+            /// @brief X and Y components.
+            union {
+                /// @brief X and Y components.
+                struct {
+                    /// @brief X component.
+                    i32 x;
+                    /// @brief Y component.
+                    i32 y;
+                };
+                /// @brief X and Y components as an #IVector2.
+                IVector2CPP xy;
+            };
+            /// @brief Z component.
+            i32 z;
+        };
+        /// @brief Swizzle yz.
+        struct {
+            i32 __unused0;
+            IVector2CPP yz;
+        };
+        // struct { i32 x, y, z; };
         struct IVector3 pod;
 
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 0, 0> xx;
-        SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 0, 1> xy;
+        // SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 0, 1> xy;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 0, 2> xz;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 1, 0> yx;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 1, 1> yy;
-        SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 1, 2> yz;
+        // SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 1, 2> yz;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 2, 0> zx;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 2, 1> zy;
         SwizzlerConvert<IVector3CPP, IVector2CPP, i32, 2, 2> zz;

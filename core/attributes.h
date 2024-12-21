@@ -22,6 +22,8 @@
     #define attr_header inline
     /// @brief Attribute for functions with C-linkage.
     #define attr_clink extern "C"
+    /// @brief Attribute for declaring values that are always readonly.
+    #define attr_readonly static constexpr const
 #else
     /// @brief C/C++ restrict keyword
     #define attr_restrict restrict
@@ -29,6 +31,8 @@
     #define attr_header static inline
     /// @brief Attribute for functions with C-linkage.
     #define attr_clink extern
+    /// @brief Attribute for declaring values that are always readonly.
+    #define attr_readonly static const
 #endif
 
 #if defined(CORE_PLATFORM_WINDOWS) || defined(CORE_COMPILER_MSVC)
