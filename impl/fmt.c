@@ -133,7 +133,7 @@ attr_core_api usize stream_fmt_bool(
             ( booleans[i] ? string_text( "true" ) : string_text( "false" ) );
 
         res += stream_padded(
-            stream, target, padding, ' ', message.len, message.cc );
+            stream, target, padding, ' ', message.len, message.cbuf );
 
         if( i + 1 != count ) {
             res += stream( target, 2, ", " );
@@ -230,7 +230,7 @@ attr_internal usize internal_stream_fmt_string(
             result += string_stream_to_lower( stream, target, string );
         } break;
         default: {
-            result += stream( target, string.len, string.v );
+            result += stream( target, string.len, string._void );
         } break;
     }
     return result;
@@ -366,7 +366,7 @@ attr_core_api usize stream_fmt_float(
         }
 
         res += stream_padded(
-            stream, target, pad, padding_c, buf.len, buf.cc );
+            stream, target, pad, padding_c, buf.len, buf.cbuf );
 
         if( vector_counter >= 0 ) {
             vector_counter++;
@@ -531,7 +531,7 @@ attr_core_api usize stream_fmt_int(
         }
 
         res += stream_padded(
-            stream, target, pad, padding_c, buf.len, buf.cc );
+            stream, target, pad, padding_c, buf.len, buf.cbuf );
 
         if( vector_counter >= 0 ) {
             vector_counter++;
@@ -619,11 +619,11 @@ attr_core_api usize stream_fmt_va(
         if( string_find( format, '{', &open ) ) {
             String args_text = string_advance_by( format, open );
 
-            res   += stream( target, args_text.cc - format.cc, format.cc );
-            format = string_advance_by( format, args_text.cc - format.cc );
+            res   += stream( target, args_text.cbuf - format.cbuf, format.cbuf );
+            format = string_advance_by( format, args_text.cbuf - format.cbuf );
 
             if( args_text.len >= 2 ) {
-                if( args_text.cc[1] == '{' ) {
+                if( args_text.cbuf[1] == '{' ) {
                     char c = '{';
                     res   += stream( target, 1, &c );
                     format = string_advance_by( format, 2 );
@@ -633,7 +633,7 @@ attr_core_api usize stream_fmt_va(
 
             usize close = 0;
             if( !string_find( args_text, '}', &close ) ) {
-                res += stream( target, args_text.len, args_text.cc );
+                res += stream( target, args_text.len, args_text.cbuf );
                 break;
             }
 
@@ -653,7 +653,7 @@ attr_core_api usize stream_fmt_va(
             }
             /* va_end( va2 ); */
         } else {
-            res += stream( target, format.len, format.cc );
+            res += stream( target, format.len, format.cbuf );
             break;
         }
     }
@@ -949,7 +949,7 @@ attr_internal b32 internal_fmt_parse_format_type(
     if( string_is_empty( spec ) ) {
         return false;
     }
-    switch( spec.cc[0] ) {
+    switch( spec.cbuf[0] ) {
         case 'b': {
             if( spec.len > 1 ) {
                 return false;
@@ -991,7 +991,7 @@ attr_internal b32 internal_fmt_parse_format_type(
         case 'v': {
             switch( spec.len ) {
                 case 2: {
-                    switch( spec.cc[1] ) {
+                    switch( spec.cbuf[1] ) {
                         case '2': {
                             out_args->floating.flags |= FMT_FLOAT_VECTOR2;
                             out_args->type            = FT_FLOAT;
@@ -1012,7 +1012,7 @@ attr_internal b32 internal_fmt_parse_format_type(
         } break;
         case 'i':
         case 'u': {
-            if( spec.cc[0] == 'i' ) {
+            if( spec.cbuf[0] == 'i' ) {
                 out_args->integer.flags |= FMT_INT_SIGNED;
             }
             switch( spec.len ) {
@@ -1021,7 +1021,7 @@ attr_internal b32 internal_fmt_parse_format_type(
                     out_args->type           = FT_INT;
                 } return true;
                 case 2: {
-                    if( spec.cc[1] != '8' ) {
+                    if( spec.cbuf[1] != '8' ) {
                         return false;
                     }
                     out_args->integer.flags |= FMT_INT_BITDEPTH_8;
@@ -1098,7 +1098,7 @@ attr_internal b32 internal_fmt_parse_args(
         return false;
     }
 
-    if( spec.cc[0] == 'p' ) {
+    if( spec.cbuf[0] == 'p' ) {
         args->string.flags |= FMT_STRING_IS_PATH;
     }
 
@@ -1114,7 +1114,7 @@ attr_internal b32 internal_fmt_parse_args(
             args->character.repeat = 1;
         } break;
         case FT_STRING: {
-            if( spec.cc[0] == 'c' ) {
+            if( spec.cbuf[0] == 'c' ) {
                 pointer = true;
             }
         } break;
@@ -1143,14 +1143,14 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_INT: case FT_FLOAT: case FT_STRING: case FT_CHAR:
             case FT_BOOL: {
-                if( arg.cc[0] == '*' ) {
-                    if( !(args->type == FT_STRING && spec.cc[0] == 's') ) {
+                if( arg.cbuf[0] == '*' ) {
+                    if( !(args->type == FT_STRING && spec.cbuf[0] == 's') ) {
                         pointer = true;
                     }
                     String arg_num = string_advance( arg );
 
                     if( arg_num.len ) {
-                        if( arg_num.cc[0] == '_' && arg_num.len == 1 ) {
+                        if( arg_num.cbuf[0] == '_' && arg_num.len == 1 ) {
                             count_by_value = true;
                         } else {
                             u64 count = 0;
@@ -1198,7 +1198,7 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_INT: case FT_BOOL: case FT_CHAR: case FT_STRING:
             case FT_TIME: {
-                if( arg.cc[0] == '-' || ascii_is_numeric( arg.cc[0] ) ) {
+                if( arg.cbuf[0] == '-' || ascii_is_numeric( arg.cbuf[0] ) ) {
                     i64 padding = 0;
                     if( !string_parse_int( arg, &padding ) ) {
                         return false;
@@ -1206,7 +1206,7 @@ attr_internal b32 internal_fmt_parse_args(
 
                     args->padding = padding;
 
-                    b32 start_zero = (arg.cc[0] == '0');
+                    b32 start_zero = (arg.cbuf[0] == '0');
                     if( args->type == FT_INT && start_zero ) {
                         args->integer.flags |= FMT_INT_ZERO_PAD;
                     }
@@ -1221,19 +1221,19 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_FLOAT: {
                 if(
-                    arg.cc[0] == '-' ||
-                    arg.cc[0] == '.' ||
-                    ascii_is_numeric( arg.cc[0] )
+                    arg.cbuf[0] == '-' ||
+                    arg.cbuf[0] == '.' ||
+                    ascii_is_numeric( arg.cbuf[0] )
                 ) {
                     String prec = string_empty();
-                    if( arg.cc[0] != '.' ) {
+                    if( arg.cbuf[0] != '.' ) {
                         i64 padding = 0;
                         if( !string_parse_int( arg, &padding ) ) {
                             return false;
                         }
                         args->padding = padding;
 
-                        b32 start_zero = (arg.cc[0] == '0');
+                        b32 start_zero = (arg.cbuf[0] == '0');
                         args->floating.flags |= start_zero ? FMT_FLOAT_ZERO_PAD : 0;
                     }
 
@@ -1261,7 +1261,7 @@ attr_internal b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_FLOAT:
             case FT_INT: {
-                switch( arg.cc[0] ) {
+                switch( arg.cbuf[0] ) {
                     case 'm': {
                         b32 mem = false;
                         b32 mib = false;
@@ -1310,10 +1310,10 @@ attr_internal b32 internal_fmt_parse_args(
         // int arguments only.
         switch( args->type ) {
             case FT_INT: {
-                switch( arg.cc[0] ) {
+                switch( arg.cbuf[0] ) {
                     case 'x': {
                         if( arg.len == 2 ) {
-                            switch( arg.cc[1] ) {
+                            switch( arg.cbuf[1] ) {
                                 case 'u': {
                                     args->integer.flags &=
                                         ~(FMT_INT_BINARY | FMT_INT_HEX_LOWER);
@@ -1365,13 +1365,13 @@ attr_internal b32 internal_fmt_parse_args(
                         String inline_fmt = arg;
                         if( inline_fmt.len > 2 ) {
                             if(
-                                inline_fmt.cc[0] == '\'' &&
-                                inline_fmt.cc[inline_fmt.len - 1] == '\''
+                                inline_fmt.cbuf[0] == '\'' &&
+                                inline_fmt.cbuf[inline_fmt.len - 1] == '\''
                             ) {
                                 inline_fmt =
                                     string_advance( string_trim( inline_fmt, 1 ) );
                                 args->time.fmt_len = inline_fmt.len;
-                                args->time.fmt     = inline_fmt.cc;
+                                args->time.fmt     = inline_fmt.cbuf;
                                 skip();
                             }
                         }
@@ -1397,9 +1397,9 @@ attr_internal b32 internal_fmt_parse_args(
         // path arguments only.
         switch( args->type ) {
             case FT_STRING: {
-                if( spec.cc[0] == 'p' ) {
+                if( spec.cbuf[0] == 'p' ) {
                     if( arg.len == 1 ) {
-                        switch( arg.cc[0] ) {
+                        switch( arg.cbuf[0] ) {
                             case 'p': {
                                 args->string.flags |= FMT_STRING_PATH_REPLACE_SEPARATORS;
                                 skip();
@@ -1419,7 +1419,7 @@ attr_internal b32 internal_fmt_parse_args(
         // char arguments only.
         switch( args->type ) {
             case FT_CHAR: {
-                if( arg.cc[0] == 'r' ) {
+                if( arg.cbuf[0] == 'r' ) {
                     String arg_num = string_advance( arg );
                     b32 parse_int  = false;
                     switch( arg_num.len ) {
@@ -1427,7 +1427,7 @@ attr_internal b32 internal_fmt_parse_args(
                             args->character.repeat = 2;
                         } break;
                         case 1: {
-                            if( arg_num.cc[0] == '_' ) {
+                            if( arg_num.cbuf[0] == '_' ) {
                                 repeat_by_value = true;
                             } else {
                                 parse_int = true;
@@ -1494,7 +1494,7 @@ internal_fmt_parse_args_skip:
                     args->count = str.len;
                 }
 
-                args->data = str.cc;
+                args->data = str.cbuf;
             } break;
             case FT_FLOAT: {
                 switch( args->floating.flags & FMT_FLOAT_VECTOR_MASK ) {

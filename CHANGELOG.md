@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- string: changed definition to struct _StringPOD
+- string:cpp: added C++ string/string buffer.
 - math:cpp:bug: vector in order swizzles were not reassignable, now they are
 - attributes: added attr_readonly
 - math: implemented vec3_slerp

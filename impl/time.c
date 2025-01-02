@@ -87,7 +87,7 @@ attr_core_api usize stream_fmt_time(
     int padding, usize opt_format_len, const char* opt_format
 ) {
     String format = string_new( opt_format_len, opt_format );
-    if( !format.len || !format.cc ) {
+    if( !format.len || !format.cbuf ) {
         format = DEFAULT_FORMAT;
     }
 
@@ -116,13 +116,13 @@ attr_core_api usize stream_fmt_time(
         usize open = 0;
         if( string_find( format, '[', &open ) ) {
             String arg = string_advance_by( format, open + 1 ); {
-                usize to_arg = arg.cc - format.cc;
-                res += stream( target, to_arg ? to_arg - 1 : 0, format.cc );
+                usize to_arg = arg.cbuf - format.cbuf;
+                res += stream( target, to_arg ? to_arg - 1 : 0, format.cbuf );
             }
 
             format = arg;
 
-            if( arg.cc[0] == '[' ) {
+            if( arg.cbuf[0] == '[' ) {
                 char c = '[';
                 res   += stream( target, 1, &c );
                 format = string_advance( format );
@@ -137,11 +137,11 @@ attr_core_api usize stream_fmt_time(
             arg.len = close;
             format  = string_advance_by( format, close + 1 );
 
-            switch( arg.cc[0] ) {
+            switch( arg.cbuf[0] ) {
                 case 'y': {
                     switch( arg.len ) {
                         case 2: {
-                            if( !memory_cmp( arg.cc, "yy", 2 ) ) {
+                            if( !memory_cmp( arg.cbuf, "yy", 2 ) ) {
                                 return res;
                             }
                             u32 year = ts->year % 100;
@@ -149,7 +149,7 @@ attr_core_api usize stream_fmt_time(
                                 stream, target, 2, 1, &year, &iargs );
                         } break;
                         case 4: {
-                            if( !memory_cmp( arg.cc, "yyyy", 4 ) ) {
+                            if( !memory_cmp( arg.cbuf, "yyyy", 4 ) ) {
                                 return false;
                             }
                             res += stream_fmt_int(
@@ -165,31 +165,31 @@ attr_core_api usize stream_fmt_time(
                                 stream, target, 2, 1, &ts->minute, &iargs );
                         } break;
                         case 2: {
-                            if( !memory_cmp( arg.cc, "mm", 2 ) ) {
+                            if( !memory_cmp( arg.cbuf, "mm", 2 ) ) {
                                 return res;
                             }
                             res += stream_fmt_int(
                                 stream, target, 2, 1, &ts->month, &iargs );
                         } break;
                         case 3: {
-                            if( !memory_cmp( arg.cc, "mmm", 3 ) ) {
+                            if( !memory_cmp( arg.cbuf, "mmm", 3 ) ) {
                                 return res;
                             }
                             String short_name;
-                            short_name.cc = time_month_to_string_short(
+                            short_name.cbuf = time_month_to_string_short(
                                 ts->month, &short_name.len );
 
-                            res += stream( target, short_name.len, short_name.cc );
+                            res += stream( target, short_name.len, short_name.cbuf );
                         } break;
                         case 4: {
-                            if( !memory_cmp( arg.cc, "mmmm", 4 ) ) {
+                            if( !memory_cmp( arg.cbuf, "mmmm", 4 ) ) {
                                 return res;
                             }
                             String name;
-                            name.cc = time_month_to_string(
+                            name.cbuf = time_month_to_string(
                                 ts->month, &name.len );
 
-                            res += stream( target, name.len, name.cc );
+                            res += stream( target, name.len, name.cbuf );
                         } break;
                         default: return res;
                     }
@@ -203,17 +203,17 @@ attr_core_api usize stream_fmt_time(
                                 stream, target, 2, 1, &day, &iargs );
                         } break;
                         case 2: {
-                            if( !memory_cmp( arg.cc, "dd", 2 ) ) {
+                            if( !memory_cmp( arg.cbuf, "dd", 2 ) ) {
                                 return res;
                             }
                             u32 day_num = time_day_month_to_day_week(
                                 ts->year, ts->month, ts->day );
                             String day;
-                            day.cc = time_day_week_to_string( day_num, &day.len );
-                            res   += stream( target, day.len, day.cc );
+                            day.cbuf = time_day_week_to_string( day_num, &day.len );
+                            res   += stream( target, day.len, day.cbuf );
                         } break;
                         case 3: {
-                            if( !memory_cmp( arg.cc, "ddd", 3 ) ) {
+                            if( !memory_cmp( arg.cbuf, "ddd", 3 ) ) {
                                 return res;
                             }
 
@@ -221,7 +221,7 @@ attr_core_api usize stream_fmt_time(
                                 stream, target, 2, 1, &ts->day, &iargs );
                         } break;
                         case 4: {
-                            if( !memory_cmp( arg.cc, "dddd", 4 ) ) {
+                            if( !memory_cmp( arg.cbuf, "dddd", 4 ) ) {
                                 return res;
                             }
 
@@ -266,7 +266,7 @@ attr_core_api usize stream_fmt_time(
             }
 
         } else {
-            res += stream( target, format.len, format.cc );
+            res += stream( target, format.len, format.cbuf );
             break;
         }
     }

@@ -331,7 +331,7 @@ attr_core_api usize path_buf_stream(
 ///     - @c true  : Successfully converted UTF-8 path to system path.
 ///     - @c false : Failed to convert UTF-8 path to system path.
 attr_core_api b32 path_buf_from_string(
-    String utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf );
+    struct _StringPOD utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf );
 /// @brief Copy UTF-8 path into path buffer.
 /// @param[in] buf       Pointer to path buffer to copy into.
 /// @param     utf8_path UTF-8 path to copy.
@@ -340,21 +340,21 @@ attr_core_api b32 path_buf_from_string(
 ///     - @c true  : Successfully converted UTF-8 path to system path.
 ///     - @c false : Failed to convert UTF-8 path to system path.
 attr_core_api b32 path_buf_copy_from_string(
-    PathBuf* buf, String utf8_path, struct AllocatorInterface* allocator );
+    PathBuf* buf, struct _StringPOD utf8_path, struct AllocatorInterface* allocator );
 /// @brief Try to copy UTF-8 path into existing path buffer.
 /// @param[in] buf       Pointer to write result of conversion.
 /// @param     utf8_path String containing UTF-8 encoded path.
 /// @return
 ///     - @c true  : Successfully converted UTF-8 path to system path.
 ///     - @c false : Failed to convert UTF-8 path to system path.
-attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, String utf8_path );
+attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, struct _StringPOD utf8_path );
 /// @brief Stream conversion UTF-8 path to system path.
 /// @param[in] stream    Pointer to streaming function.
 /// @param[in] target    (optional) Pointer to target to receive result.
 /// @param     utf8_path String containing UTF-8 encoded path.
 /// @return Number of bytes that could not be written to stream target.
 attr_core_api usize path_stream_convert_from_utf8(
-    StreamBytesFN* stream, void* target, String utf8_path );
+    StreamBytesFN* stream, void* target, struct _StringPOD utf8_path );
 
 /// @brief Create new path buffer.
 /// @param capacity (usize)          Size of path buffer.

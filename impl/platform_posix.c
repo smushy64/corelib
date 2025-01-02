@@ -378,7 +378,7 @@ b32 platform_semaphore_create(
 
     struct PosixSemaphore* s = (struct PosixSemaphore*)out_sem;
 
-    s->sem = sem_open( sem_name.cc, O_CREAT, S_IRWXU, init );
+    s->sem = sem_open( sem_name.cbuf, O_CREAT, S_IRWXU, init );
     if( s->sem == SEM_FAILED ) {
         core_error( 
             "failed to create named semaphore! reason: {cc}", strerror(errno) );
@@ -1163,7 +1163,7 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
             }
         }
 
-        Path chunk = path_new( chunk_str.len, chunk_str.cc );
+        Path chunk = path_new( chunk_str.len, chunk_str.cbuf );
         path_buf_try_push( buf, chunk );
         rem = string_advance_by( rem, chunk.len + 1 );
     }

@@ -58,10 +58,10 @@ attr_core_api usize path_stream_convert_to_utf8(
     return result;
 }
 attr_core_api usize path_stream_convert_from_utf8(
-    StreamBytesFN* stream, void* target, String utf8_path
+    StreamBytesFN* stream, void* target, struct _StringPOD utf8_path
 ) {
     usize result = 0;
-    String rem = utf8_path;
+    struct _StringPOD rem = utf8_path;
     while( !string_is_empty( rem ) ) {
         c32 codepoint = UTF32_REPLACEMENT_CHARACTER;
         rem = string_utf8_next( rem, &codepoint );
@@ -76,7 +76,7 @@ attr_core_api usize path_stream_convert_from_utf8(
     return result;
 }
 attr_core_api b32 path_buf_from_string(
-    String utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf 
+    struct _StringPOD utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf 
 ) {
     if( string_is_empty(utf8_path) ) {
         return false;
@@ -89,7 +89,7 @@ attr_core_api b32 path_buf_from_string(
     return true;
 }
 attr_core_api b32 path_buf_copy_from_string(
-    PathBuf* buf, String utf8_path, struct AllocatorInterface* allocator
+    PathBuf* buf, struct _StringPOD utf8_path, struct AllocatorInterface* allocator
 ) {
     if( string_is_empty( utf8_path ) ) {
         return false;
@@ -104,7 +104,7 @@ attr_core_api b32 path_buf_copy_from_string(
     path_stream_convert_from_utf8( path_buf_stream, buf, utf8_path );
     return true;
 }
-attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, String utf8_path ) {
+attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, struct _StringPOD utf8_path ) {
     if( string_is_empty( utf8_path ) ) {
         return false;
     }
@@ -124,41 +124,41 @@ attr_core_api usize path_stream_convert_to_utf8(
     return stream( target, path.len, path.const_raw );
 }
 attr_core_api usize path_stream_convert_from_utf8(
-    StreamBytesFN* stream, void* target, String utf8_path 
+    StreamBytesFN* stream, void* target, struct _StringPOD utf8_path 
 ) {
-    return stream( target, utf8_path.len, utf8_path.cc );
+    return stream( target, utf8_path.len, utf8_path.cbuf );
 }
 attr_core_api b32 path_buf_from_string(
-    String utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf 
+    struct _StringPOD utf8_path, struct AllocatorInterface* allocator, PathBuf* out_buf 
 ) {
     PathBuf result = {0};
     if( !path_buf_from_alloc( utf8_path.len, allocator, &result ) ) {
         return false;
     }
-    memory_copy( result.raw, utf8_path.cc, utf8_path.len );
+    memory_copy( result.raw, utf8_path.cbuf, utf8_path.len );
     result.len = utf8_path.len;
     *out_buf = result;
     return true;
 }
 attr_core_api b32 path_buf_copy_from_string(
-    PathBuf* buf, String utf8_path, AllocatorInterface* allocator
+    PathBuf* buf, struct _StringPOD utf8_path, AllocatorInterface* allocator
 ) {
     if( (buf->cap - 1) < utf8_path.len ) {
         if( !path_buf_grow( buf, utf8_path.len - (buf->cap - 1), allocator )) {
             return false;
         }
     }
-    memory_copy( buf->raw, utf8_path.cc, utf8_path.len );
+    memory_copy( buf->raw, utf8_path.cbuf, utf8_path.len );
     buf->len = utf8_path.len;
     buf->raw[buf->len] = 0;
 
     return true;
 }
-attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, String utf8_path ) {
+attr_core_api b32 path_buf_try_copy_from_string( PathBuf* buf, struct _StringPOD utf8_path ) {
     if( buf->cap < utf8_path.len ) {
         return false;
     }
-    memory_copy( buf->raw, utf8_path.cc, utf8_path.len );
+    memory_copy( buf->raw, utf8_path.cbuf, utf8_path.len );
     buf->len = utf8_path.len;
     buf->raw[buf->len] = 0;
     return true;
