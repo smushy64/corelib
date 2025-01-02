@@ -65,11 +65,25 @@ struct _StringCPP {
     attr_always_inline attr_header attr_optimized constexpr
     _StringCPP( const _StringPOD& pod ) : _StringCPP( pod.len, pod.cbuf ) {}
 
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringCPP( const Slice<char>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
+
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringCPP( const Slice<i8>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
+
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringCPP( const Slice<u8>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
+
     /// @brief Implicitly convert to POD string.
     /// @return POD string.
     attr_always_inline attr_header attr_optimized constexpr
     operator _StringPOD() const {
         return { .len=len, .cbuf=cbuf };
+    }
+
+    attr_always_inline attr_header attr_optimized constexpr
+    operator Slice<char>() const {
+        return Slice( len, cbuf );
     }
 
     GEN_RANGE_FOR( Type );
@@ -143,6 +157,15 @@ struct _StringBufCPP {
     attr_header constexpr
     _StringBufCPP( const _StringBufPOD& pod ) : _StringBufCPP( pod.cap, pod.len, pod.cbuf ) {}
 
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringBufCPP( const Buffer<char>& buf ) : _StringBufCPP( buf.cap, buf.len, buf.cbuf ) {}
+
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringBufCPP( const Buffer<u8>& buf ) : _StringBufCPP( buf.cap, buf.len, (char*)buf.cbuf ) {}
+
+    attr_always_inline attr_header attr_optimized constexpr
+    _StringBufCPP( const Buffer<i8>& buf ) : _StringBufCPP( buf.cap, buf.len, (char*)buf.cbuf ) {}
+
     /// @brief Implicitly convert to POD string buffer.
     /// @return String buffer POD.
     attr_header constexpr
@@ -169,6 +192,11 @@ struct _StringBufCPP {
     attr_header constexpr
     operator Slice<Type>() const {
         return _slice;
+    }
+
+    attr_always_inline attr_header attr_optimized constexpr
+    operator Buffer<char>() const {
+        return Buffer( cap, len, cbuf );
     }
 
     GEN_RANGE_FOR( Type );
