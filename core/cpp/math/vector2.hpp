@@ -29,43 +29,43 @@ struct Vector2CPP {
         f32 array[2];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector2CPP() : x(0), y(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector2CPP( const struct Vector2& v ) : x(v.x), y(v.y) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector2CPP( const struct IVector2& v ) : x(v.x), y(v.y) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector2CPP( f32 s ) : x(s), y(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector2CPP( f32 x, f32 y ) : x(x), y(y) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Vector2() const {
         return *(struct Vector2*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP zero() {
         return Vector2CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP one() {
         return Vector2CPP( 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP left() {
         return Vector2CPP( -1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP right() {
         return Vector2CPP( 1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP up() {
         return Vector2CPP( 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector2CPP down() {
         return Vector2CPP( 0.0, -1.0 );
     }
@@ -74,16 +74,16 @@ struct Vector2CPP {
     Vector2CPP from_array( const f32 array[2] ) {
         return *(Vector2CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32 out_array[2] ) const {
         out_array[0] = array[0]; out_array[1] = array[1];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32& operator[]( usize idx ) {
         return array[idx];
     }
@@ -101,61 +101,61 @@ struct IVector2CPP {
         i32 array[2];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector2CPP() : x(0), y(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector2CPP( const struct IVector2& v ) : x(v.x), y(v.y) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector2CPP( const struct Vector2& v ) : x(v.x), y(v.y) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector2CPP( i32 s ) : x(s), y(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector2CPP( i32 x, i32 y ) : x(x), y(y) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator IVector2() const {
         return *(struct IVector2*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP zero() {
         return IVector2CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP one() {
         return IVector2CPP( 1, 1 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP left() {
         return IVector2CPP( -1, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP right() {
         return IVector2CPP( 1, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP up() {
         return IVector2CPP( 0, 1 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP down() {
         return IVector2CPP( 0, -1 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector2CPP from_array( const i32 array[2] ) {
         return *(IVector2CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( i32 out_array[2] ) const {
         out_array[0] = array[0]; out_array[1] = array[1];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32& operator[]( usize idx ) {
         return array[idx];
     }

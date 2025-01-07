@@ -37,17 +37,17 @@ struct AngleAxisCPP {
         struct AngleAxis_ pod;
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     AngleAxisCPP() : angle(0), axis() {};
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     AngleAxisCPP( f32 angle, f32 x, f32 y, f32 z ) :
         angle(angle), axis(x, y, z) {};
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     AngleAxisCPP( f32 angle, Vector3CPP axis ) : angle(angle), axis(axis) {};
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     AngleAxisCPP( const struct AngleAxis_& aa ) : AngleAxisCPP( aa.angle, aa.axis ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator AngleAxis_() const {
         return *(struct AngleAxis_*)this;
     }
@@ -96,76 +96,76 @@ struct QuaternionCPP {
         struct Quaternion pod;
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     QuaternionCPP() : w(0), x(0), y(0), z(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     QuaternionCPP( const struct Quaternion& q ) : QuaternionCPP( q.w, q.x, q.y, q.z ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit QuaternionCPP( f32 w, f32 x, f32 y, f32 z ) : w(w), x(x), y(y), z(z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit QuaternionCPP( f32 real, Vector3CPP imaginary ) :
         QuaternionCPP( real, imaginary.x, imaginary.y, imaginary.z ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Quaternion() const {
         return *(struct Quaternion*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP zero() {
         return QuaternionCPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP identity() {
         return QuaternionCPP( 1.0, 0.0, 0.0, 0.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_array( const f32 array[4] ) {
         return *(QuaternionCPP*)array;
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_angle_axis( AngleAxisCPP angle_axis ) {
         return quat_from_angle_axis( angle_axis.pod );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_angle_axis( f32 angle, f32 x, f32 y, f32 z ) {
         return from_angle_axis( AngleAxisCPP( angle, x, y, z ) );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_angle_axis( f32 angle, Vector3CPP axis ) {
         return from_angle_axis( AngleAxisCPP( angle, axis ) );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_euler( f32 x, f32 y, f32 z ) {
         return quat_from_euler( x, y, z );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     QuaternionCPP from_euler( Vector3CPP euler ) {
         return from_euler( euler.x, euler.y, euler.z );
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32 out_array[4] ) const {
         out_array[0] = array[0];
         out_array[1] = array[1];
         out_array[2] = array[2];
         out_array[3] = array[3];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP to_euler() const {
         return quat_to_euler( pod );
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     AngleAxisCPP to_angle_axis() const {
         return quat_to_angle_axis( pod );
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32& operator[]( usize idx ) {
         return array[idx];
     }

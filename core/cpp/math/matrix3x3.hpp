@@ -35,9 +35,9 @@ struct Matrix3x3CPP {
         f32 array[9];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Matrix3x3CPP() : col0(), col1(), col2() {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Matrix3x3CPP(
         f32 m00, f32 m01, f32 m02,
         f32 m10, f32 m11, f32 m12,
@@ -46,23 +46,23 @@ struct Matrix3x3CPP {
     col0( m00, m01, m02 ),
     col1( m10, m11, m12 ),
     col2( m20, m21, m22 ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Matrix3x3CPP(
         Vector3CPP col0, Vector3CPP col1, Vector3CPP col2 ) :
     col0(col0), col1(col1), col2(col2) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Matrix3x3CPP( const struct Matrix3x3& m ) : pod(m) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Matrix3x3() const {
         return *(struct Matrix3x3*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix3x3CPP zero() {
         return Matrix3x3CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix3x3CPP identity() {
         return Matrix3x3CPP(
             1.0, 0.0, 0.0, 
@@ -70,22 +70,22 @@ struct Matrix3x3CPP {
             0.0, 0.0, 1.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix3x3CPP from_array( const f32 array[9] ) {
         return *(Matrix3x3CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32* out_array ) {
         for( usize i = 0; i < 9; ++i ) {
             out_array[i] = array[i];
         }
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     const Vector3CPP& operator[]( usize idx ) const {
         return col[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP& operator[]( usize idx ) {
         return col[idx];
     }

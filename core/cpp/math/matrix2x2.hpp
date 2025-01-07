@@ -30,42 +30,42 @@ struct Matrix2x2CPP {
         f32 array[4];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Matrix2x2CPP() : col0(), col1() {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Matrix2x2CPP(
         f32 m00, f32 m01,
         f32 m10, f32 m11
     ) :
     col0( m00, m01 ),
     col1( m10, m11 ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Matrix2x2CPP( Vector2CPP col0, Vector2CPP col1 ) :
         col0(col0), col1(col1) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Matrix2x2CPP( const struct Matrix2x2& m ) : pod(m) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Matrix2x2() const {
         return *(struct Matrix2x2*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix2x2CPP zero() {
         return Matrix2x2CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix2x2CPP identity() {
         return Matrix2x2CPP(
             1.0, 0.0,
             0.0, 1.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Matrix2x2CPP from_array( const f32 array[4] ) {
         return *(Matrix2x2CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32* out_array ) {
         out_array[0] = array[0];
         out_array[1] = array[1];
@@ -73,11 +73,11 @@ struct Matrix2x2CPP {
         out_array[3] = array[3];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     const Vector2CPP& operator[]( usize idx ) const {
         return col[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector2CPP& operator[]( usize idx ) {
         return col[idx];
     }

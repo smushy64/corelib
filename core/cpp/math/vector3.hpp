@@ -110,117 +110,117 @@ struct Vector3CPP {
         f32 array[3];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP() : x(0), y(0), z(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP( const struct Vector3& v ) : x(v.x), y(v.y), z(v.z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector3CPP( const struct IVector3& v ) : x(v.x), y(v.y), z(v.z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector3CPP( f32 s ) : x(s), y(s), z(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector3CPP( f32 x, f32 y, f32 z ) : x(x), y(y), z(z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector3CPP( Vector2CPP xy, f32 z ) : Vector3CPP( xy.x, xy.y, z ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector3CPP( f32 x, Vector2CPP yz ) : Vector3CPP( x, yz.x, yz.y ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Vector3() const {
         return *(struct Vector3*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP zero() {
         return Vector3CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP one() {
         return Vector3CPP( 1.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP left() {
         return Vector3CPP( -1.0, 0.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP right() {
         return Vector3CPP( 1.0, 0.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP up() {
         return Vector3CPP( 0.0, 1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP down() {
         return Vector3CPP( 0.0, -1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP forward() {
         return Vector3CPP( 0.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP back() {
         return Vector3CPP( 0.0, 0.0, -1.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP red() {
         return Vector3CPP( 1.0, 0.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP green() {
         return Vector3CPP( 0.0, 1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP blue() {
         return Vector3CPP( 0.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP yellow() {
         return Vector3CPP( 1.0, 1.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP magenta() {
         return Vector3CPP( 1.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP cyan() {
         return Vector3CPP( 0.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP black() {
         return Vector3CPP( 0.0, 0.0, 0.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP white() {
         return Vector3CPP( 1.0, 1.0, 1.0 );
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP to_hsl() const {
         return rgb_to_hsl( pod );
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector3CPP to_rgb() const {
         return hsl_to_rgb( pod );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector3CPP from_array( const f32 array[3] ) {
         return *(Vector3CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32 out_array[3] ) const {
         out_array[0] = array[0];
         out_array[1] = array[1];
         out_array[2] = array[2];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32& operator[]( usize idx ) {
         return array[idx];
     }
@@ -293,75 +293,75 @@ struct IVector3CPP {
         i32 array[3];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector3CPP() : x(0), y(0), z(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector3CPP( const struct IVector3& v ) : x(v.x), y(v.y), z(v.z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector3CPP( const Vector3CPP& v ) : x(v.x), y(v.y), z(v.z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector3CPP( i32 s ) : x(s), y(s), z(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector3CPP( i32 x, i32 y, i32 z ) : x(x), y(y), z(z) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector3CPP( IVector2CPP xy, i32 z ) : IVector3CPP( xy.x, xy.y, z ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector3CPP( i32 x, IVector2CPP yz ) : IVector3CPP( x, yz.x, yz.y ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator IVector3() const {
         return *(struct IVector3*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP zero() {
         return IVector3CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP one() {
         return IVector3CPP( 1, 1, 1 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP left() {
         return IVector3CPP( -1, 0, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP right() {
         return IVector3CPP( 1, 0, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP up() {
         return IVector3CPP( 0, 1, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP down() {
         return IVector3CPP( 0, -1, 0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP forward() {
         return IVector3CPP( 0, 0, 1 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP back() {
         return IVector3CPP( 0, 0, -1 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector3CPP from_array( const i32 array[3] ) {
         return *(IVector3CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( i32 out_array[3] ) const {
         out_array[0] = array[0];
         out_array[1] = array[1];
         out_array[2] = array[2];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32& operator[]( usize idx ) {
         return array[idx];
     }

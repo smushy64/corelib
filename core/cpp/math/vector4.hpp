@@ -446,85 +446,85 @@ struct Vector4CPP {
         f32 array[4];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector4CPP() : x(0), y(0), z(0), w(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     Vector4CPP( const struct Vector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( const struct IVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( f32 s ) : x(s), y(s), z(s), w(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( f32 x, f32 y, f32 z, f32 w ) : x(x), y(y), z(z), w(w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( Vector2CPP xy, f32 z, f32 w ) : Vector4CPP( xy.x, xy.y, z, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( f32 x, f32 y, Vector2CPP zw ) : Vector4CPP( x, y, zw.x, zw.y ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( f32 x, Vector2CPP yz, f32 w ) : Vector4CPP( x, yz.x, yz.y, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( Vector2CPP xy, Vector2CPP zw ) : Vector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( Vector3CPP xyz, f32 w ) : Vector4CPP( xyz.xy, xyz.z, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit Vector4CPP( f32 x, Vector3CPP yzw ) : Vector4CPP( x, yzw.xy, yzw.z ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator Vector4() const {
         return *(struct Vector4*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP zero() {
         return Vector4CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP one() {
         return Vector4CPP( 1.0, 1.0, 1.0, 1.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP red() {
         return Vector4CPP( 1.0, 0.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP green() {
         return Vector4CPP( 0.0, 1.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP blue() {
         return Vector4CPP( 0.0, 0.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP yellow() {
         return Vector4CPP( 1.0, 1.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP magenta() {
         return Vector4CPP( 1.0, 0.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP cyan() {
         return Vector4CPP( 0.0, 1.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP black() {
         return Vector4CPP( 0.0, 0.0, 0.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP white() {
         return Vector4CPP( 1.0, 1.0, 1.0, 1.0 );
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP clear() {
         return Vector4CPP( 0.0, 0.0, 0.0, 0.0 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     Vector4CPP from_array( const f32 array[4] ) {
         return *(Vector4CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( f32 out_array[4] ) const {
         out_array[0] = array[0];
         out_array[1] = array[1];
@@ -532,11 +532,11 @@ struct Vector4CPP {
         out_array[3] = array[3];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     f32& operator[]( usize idx ) {
         return array[idx];
     }
@@ -939,48 +939,48 @@ struct IVector4CPP {
         i32 array[4];
     };
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector4CPP() : x(0), y(0), z(0), w(0) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     IVector4CPP( const struct IVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( const Vector4CPP& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( i32 s ) : x(s), y(s), z(s), w(s) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( i32 x, i32 y, i32 z, i32 w ) : x(x), y(y), z(z), w(w) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( IVector2CPP xy, i32 z, i32 w ) : IVector4CPP( xy.x, xy.y, z, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( i32 x, i32 y, IVector2CPP zw ) : IVector4CPP( x, y, zw.x, zw.y ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( i32 x, IVector2CPP yz, i32 w ) : IVector4CPP( x, yz.x, yz.y, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( IVector2CPP xy, IVector2CPP zw ) : IVector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( IVector3CPP xyz, i32 w ) : IVector4CPP( xyz.xy, xyz.z, w ) {}
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     explicit IVector4CPP( i32 x, IVector3CPP yzw ) : IVector4CPP( x, yzw.xy, yzw.z ) {}
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     operator IVector4() const {
         return *(struct IVector4*)this;
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector4CPP zero() {
         return IVector4CPP();
     }
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector4CPP one() {
         return IVector4CPP( 1 );
     }
 
-    attr_always_inline attr_header static
+    attr_always_inline attr_header static constexpr
     IVector4CPP from_array( const i32 array[4] ) {
         return *(IVector4CPP*)array;
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     void to_array( i32 out_array[4] ) const {
         out_array[0] = array[0];
         out_array[1] = array[1];
@@ -988,11 +988,11 @@ struct IVector4CPP {
         out_array[3] = array[3];
     }
 
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32 operator[]( usize idx ) const {
         return array[idx];
     }
-    attr_always_inline attr_header
+    attr_always_inline attr_header constexpr
     i32& operator[]( usize idx ) {
         return array[idx];
     }
