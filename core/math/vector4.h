@@ -379,6 +379,30 @@ struct Vector4 vec4_div_vec4( struct Vector4 lhs, struct Vector4 rhs ) {
         lhs.x / rhs.x, lhs.y / rhs.y,
         lhs.z / rhs.z, lhs.w / rhs.w );
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector4 vec4_mod( struct Vector4 lhs, f32 rhs ) {
+    return vec4_new(
+        f32_mod( lhs.x, rhs ),
+        f32_mod( lhs.y, rhs ),
+        f32_mod( lhs.z, rhs ),
+        f32_mod( lhs.w, rhs ) );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector4 vec4_mod_vec4( struct Vector4 lhs, struct Vector4 rhs ) {
+    return vec4_new(
+        f32_mod( lhs.x, rhs.x ),
+        f32_mod( lhs.y, rhs.y ),
+        f32_mod( lhs.z, rhs.z ),
+        f32_mod( lhs.w, rhs.w ) );
+}
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -703,14 +727,14 @@ struct Vector4 vec4_smootherstep_scalar(
 /// @return Angles in radians.
 attr_always_inline attr_header
 struct Vector4 vec4_radians( struct Vector4 degrees ) {
-    return vec4_new( f32_radians(degrees.x), f32_radians(degrees.y), f32_radians(degrees.z), f32_radians(degrees.w) );
+    return vec4_mul( degrees, F32_TO_RAD );
 }
 /// @brief Convert radians to degrees.
 /// @param radians Angles in radians.
 /// @return Angles in degrees.
 attr_always_inline attr_header
 struct Vector4 vec4_degrees( struct Vector4 radians ) {
-    return vec4_new( f32_degrees(radians.x), f32_degrees(radians.y ), f32_degrees(radians.z), f32_degrees(radians.w) );
+    return vec4_mul( radians, F32_TO_DEG );
 }
 /// @brief Calculate sine of x.
 /// @param angle Value to get sine of.
@@ -766,6 +790,73 @@ struct Vector4 vec4_atan( struct Vector4 angle ) {
 attr_always_inline attr_header
 struct Vector4 vec4_atan2( struct Vector4 y, struct Vector4 x ) {
     return vec4_new( f32_atan2(y.x, x.x), f32_atan2(y.y, x.y), f32_atan2(y.z, x.z), f32_atan2(y.w, x.w) );
+}
+/// @brief Raise base to the power of exponent.
+/// @param base Number to raise.
+/// @param exp Power to raise to.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector4 vec4_pow( struct Vector4 base, struct Vector4 exp ) {
+    return vec4_new(
+        f32_pow( base.x, exp.x ),
+        f32_pow( base.y, exp.y ),
+        f32_pow( base.z, exp.z ),
+        f32_pow( base.w, exp.w ) );
+}
+/// @brief Raise e to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector4 vec4_exp( struct Vector4 x ) {
+    return vec4_new(
+        f32_exp( x.x ),
+        f32_exp( x.y ),
+        f32_exp( x.z ),
+        f32_exp( x.w ) );
+}
+/// @brief Calculate natural logarithm.
+/// @param x Value to get natural logarithm of.
+/// @return Natural logarithm.
+attr_always_inline attr_header
+struct Vector4 vec4_ln( struct Vector4 x ) {
+    return vec4_new(
+        f32_ln( x.x ),
+        f32_ln( x.y ),
+        f32_ln( x.z ),
+        f32_ln( x.w ) );
+}
+/// @brief Calculate logarithm base 2.
+/// @param x Value to get logarithm base 2 of.
+/// @return Logarithm base 2.
+attr_always_inline attr_header
+struct Vector4 vec4_log2( struct Vector4 x ) {
+    return vec4_new(
+        f32_log2( x.x ),
+        f32_log2( x.y ),
+        f32_log2( x.z ),
+        f32_log2( x.w ) );
+}
+/// @brief Calculate square root.
+/// @param x Value to get square root of.
+/// @return Square root.
+attr_always_inline attr_header
+struct Vector4 vec4_sqrt( struct Vector4 x ) {
+    return vec4_new(
+        f32_sqrt( x.x ),
+        f32_sqrt( x.y ),
+        f32_sqrt( x.z ),
+        f32_sqrt( x.w ) );
+}
+/// @brief Calculate reciprocal square root.
+/// @param x Value to get reciprocal square root of.
+/// @return Reciprocal square root.
+attr_always_inline attr_header
+struct Vector4 vec4_inversesqrt( struct Vector4 x ) {
+    return vec4_new(
+        f32_inversesqrt( x.x ),
+        f32_inversesqrt( x.y ),
+        f32_inversesqrt( x.z ),
+        f32_inversesqrt( x.w ) );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
@@ -855,6 +946,30 @@ struct IVector4 ivec4_div( struct IVector4 lhs, i32 rhs ) {
         lhs.x / rhs, lhs.y / rhs,
         lhs.z / rhs, lhs.w / rhs );
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector4 ivec4_mod( struct IVector4 lhs, i32 rhs ) {
+    return ivec4_new(
+        lhs.x % rhs,
+        lhs.y % rhs,
+        lhs.z % rhs,
+        lhs.w % rhs );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector4 ivec4_mod_ivec4( struct IVector4 lhs, struct IVector4 rhs ) {
+    return ivec4_new(
+        lhs.x % rhs.x,
+        lhs.y % rhs.y,
+        lhs.z % rhs.z,
+        lhs.w % rhs.w );
+}
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -928,6 +1043,54 @@ attr_always_inline attr_header
 f32 ivec4_length( struct IVector4 x ) {
     struct Vector4 _x = vec4_new( (f32)x.x, (f32)x.y, (f32)x.z, (f32)x.w );
     return vec4_length( _x );
+}
+/// @brief Component-wise minimum value.
+/// @param x, y Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline attr_header
+struct IVector4 ivec4_min( struct IVector4 x, struct IVector4 y ) {
+    struct IVector4 result;
+    result.x = x.x < y.x ? x.x : y.x;
+    result.y = x.y < y.y ? x.y : y.y;
+    result.z = x.z < y.z ? x.z : y.z;
+    result.w = x.w < y.w ? x.w : y.w;
+    return result;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline attr_header
+struct IVector4 ivec4_max( struct IVector4 x, struct IVector4 y ) {
+    struct IVector4 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
+    result.z = x.z < y.z ? y.z : x.z;
+    result.w = x.w < y.w ? y.w : x.w;
+    return result;
+}
+/// @brief Component-wise abs.
+/// @param v Vector.
+/// @return Vector with absolute values.
+attr_always_inline attr_header
+struct IVector4 ivec4_abs( struct IVector4 x ) {
+    struct IVector4 result;
+    result.x = x.x < 0 ? -x.x : x.x;
+    result.y = x.y < 0 ? -x.y : x.y;
+    result.z = x.z < 0 ? -x.z : x.z;
+    result.w = x.w < 0 ? -x.w : x.w;
+    return result;
+}
+/// @brief Component-wise sign.
+/// @param v Vector.
+/// @return Vector with sign values.
+attr_always_inline attr_header
+struct IVector4 ivec4_sign( struct IVector4 v ) {
+    struct IVector4 result;
+    result.x = (v.x > 0) - (v.x < 0);
+    result.y = (v.y > 0) - (v.y < 0);
+    result.z = (v.z > 0) - (v.z < 0);
+    result.w = (v.w > 0) - (v.w < 0);
+    return result;
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.

@@ -201,6 +201,14 @@ Vector2CPP div( Vector2CPP lhs, Vector2CPP rhs ) {
     return vec2_div_vec2( lhs.pod, rhs.pod );
 }
 attr_always_inline attr_header
+Vector2CPP mod( Vector2CPP lhs, f32 rhs ) {
+    return vec2_mod( lhs.pod, rhs );
+}
+attr_always_inline attr_header
+Vector2CPP mod( Vector2CPP lhs, Vector2CPP rhs ) {
+    return vec2_mod_vec2( lhs.pod, rhs.pod );
+}
+attr_always_inline attr_header
 Vector2CPP neg( Vector2CPP x ) {
     return vec2_neg( x.pod );
 }
@@ -387,6 +395,30 @@ Vector2CPP atan2( Vector2CPP y, Vector2CPP x ) {
     return vec2_atan2( y.pod, x.pod );
 }
 attr_always_inline attr_header
+Vector2CPP pow( Vector2CPP base, Vector2CPP exp ) {
+    return vec2_pow( base.pod, exp.pod );
+}
+attr_always_inline attr_header
+Vector2CPP exp( Vector2CPP x ) {
+    return vec2_exp( x.pod );
+}
+attr_always_inline attr_header
+Vector2CPP ln( Vector2CPP x ) {
+    return vec2_ln( x.pod );
+}
+attr_always_inline attr_header
+Vector2CPP log2( Vector2CPP x ) {
+    return vec2_log2( x.pod );
+}
+attr_always_inline attr_header
+Vector2CPP sqrt( Vector2CPP x ) {
+    return vec2_sqrt( x.pod );
+}
+attr_always_inline attr_header
+Vector2CPP inversesqrt( Vector2CPP x ) {
+    return vec2_inversesqrt( x.pod );
+}
+attr_always_inline attr_header
 b32 cmp( Vector2CPP a, Vector2CPP b ) {
     return vec2_cmp( a.pod, b.pod );
 }
@@ -489,6 +521,14 @@ IVector2CPP div( IVector2CPP lhs, i32 rhs ) {
     return ivec2_div( lhs.pod, rhs );
 }
 attr_always_inline attr_header
+IVector2CPP mod( IVector2CPP lhs, IVector2CPP rhs ) {
+    return ivec2_mod_ivec2( lhs.pod, rhs.pod );
+}
+attr_always_inline attr_header
+IVector2CPP mod( IVector2CPP lhs, i32 rhs ) {
+    return ivec2_mod( lhs.pod, rhs );
+}
+attr_always_inline attr_header
 IVector2CPP neg( IVector2CPP v ) {
     return ivec2_neg( v.pod );
 }
@@ -515,6 +555,22 @@ f32 length_sqr( IVector2CPP v ) {
 attr_always_inline attr_header
 f32 length( IVector2CPP v ) {
     return ivec2_length( v.pod );
+}
+attr_always_inline attr_header
+IVector2CPP min( IVector2CPP x, IVector2CPP y ) {
+    return ivec2_min( x.pod, y.pod );
+}
+attr_always_inline attr_header
+IVector2CPP max( IVector2CPP x, IVector2CPP y ) {
+    return ivec2_max( x.pod, y.pod );
+}
+attr_always_inline attr_header
+IVector2CPP abs( IVector2CPP v ) {
+    return ivec2_abs( v.pod );
+}
+attr_always_inline attr_header
+IVector2CPP sign( IVector2CPP v ) {
+    return ivec2_sign( v.pod );
 }
 attr_always_inline attr_header
 b32 cmp( IVector2CPP a, IVector2CPP b ) {
@@ -546,6 +602,14 @@ IVector2CPP& operator/=( IVector2CPP& lhs, i32 rhs ) {
     return lhs = div( lhs, rhs );
 }
 attr_always_inline attr_header
+IVector2CPP& operator%=( IVector2CPP& lhs, IVector2CPP rhs ) {
+    return lhs = mod( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector2CPP& operator%=( IVector2CPP& lhs, i32 rhs ) {
+    return lhs = mod( lhs, rhs );
+}
+attr_always_inline attr_header
 IVector2CPP operator+( IVector2CPP lhs, IVector2CPP rhs ) {
     return add( lhs, rhs );
 }
@@ -572,6 +636,14 @@ IVector2CPP operator/( IVector2CPP lhs, IVector2CPP rhs ) {
 attr_always_inline attr_header
 IVector2CPP operator/( IVector2CPP lhs, i32 rhs ) {
     return div( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector2CPP operator%( IVector2CPP lhs, IVector2CPP rhs ) {
+    return mod( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector2CPP operator%( IVector2CPP lhs, i32 rhs ) {
+    return mod( lhs, rhs );
 }
 attr_always_inline attr_header
 IVector2CPP operator-( IVector2CPP v ) {

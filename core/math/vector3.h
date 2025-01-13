@@ -369,6 +369,28 @@ attr_always_inline attr_header
 struct Vector3 vec3_div_vec3( struct Vector3 lhs, struct Vector3 rhs ) {
     return vec3_new( lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z );
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector3 vec3_mod( struct Vector3 lhs, f32 rhs ) {
+    return vec3_new(
+        f32_mod( lhs.x, rhs ),
+        f32_mod( lhs.y, rhs ),
+        f32_mod( lhs.z, rhs ) );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector3 vec3_mod_vec3( struct Vector3 lhs, struct Vector3 rhs ) {
+    return vec3_new(
+        f32_mod( lhs.x, rhs.x ),
+        f32_mod( lhs.y, rhs.y ),
+        f32_mod( lhs.z, rhs.z ) );
+}
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -460,6 +482,28 @@ f32 vec3_length_sqr( struct Vector3 x ) {
 attr_always_inline attr_header
 f32 vec3_length( struct Vector3 x ) {
     return f32_sqrt( vec3_length_sqr( x ) );
+}
+/// @brief Component-wise minimum value.
+/// @param x, y Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline attr_header
+struct IVector3 ivec3_min( struct IVector3 x, struct IVector3 y ) {
+    struct IVector3 result;
+    result.x = x.x < y.x ? x.x : y.x;
+    result.y = x.y < y.y ? x.y : y.y;
+    result.z = x.z < y.z ? x.z : y.z;
+    return result;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline attr_header
+struct IVector3 ivec3_max( struct IVector3 x, struct IVector3 y ) {
+    struct IVector3 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
+    result.z = x.z < y.z ? y.z : x.z;
+    return result;
 }
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
@@ -699,14 +743,14 @@ struct Vector3 vec3_smootherstep_scalar(
 /// @return Angles in radians.
 attr_always_inline attr_header
 struct Vector3 vec3_radians( struct Vector3 degrees ) {
-    return vec3_new( f32_radians(degrees.x), f32_radians(degrees.y), f32_radians(degrees.z) );
+    return vec3_mul( degrees, F32_TO_RAD );
 }
 /// @brief Convert radians to degrees.
 /// @param radians Angles in radians.
 /// @return Angles in degrees.
 attr_always_inline attr_header
 struct Vector3 vec3_degrees( struct Vector3 radians ) {
-    return vec3_new( f32_degrees(radians.x), f32_degrees(radians.y ), f32_degrees(radians.z) );
+    return vec3_mul( radians, F32_TO_DEG );
 }
 /// @brief Calculate sine of x.
 /// @param angle Value to get sine of.
@@ -762,6 +806,67 @@ struct Vector3 vec3_atan( struct Vector3 angle ) {
 attr_always_inline attr_header
 struct Vector3 vec3_atan2( struct Vector3 y, struct Vector3 x ) {
     return vec3_new( f32_atan2(y.x, x.x), f32_atan2(y.y, x.y), f32_atan2(y.z, x.z) );
+}
+/// @brief Raise base to the power of exponent.
+/// @param base Number to raise.
+/// @param exp Power to raise to.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector3 vec3_pow( struct Vector3 base, struct Vector3 exp ) {
+    return vec3_new(
+        f32_pow( base.x, exp.x ),
+        f32_pow( base.y, exp.y ),
+        f32_pow( base.z, exp.z ) );
+}
+/// @brief Raise e to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector3 vec3_exp( struct Vector3 x ) {
+    return vec3_new(
+        f32_exp( x.x ),
+        f32_exp( x.y ),
+        f32_exp( x.z ) );
+}
+/// @brief Calculate natural logarithm.
+/// @param x Value to get natural logarithm of.
+/// @return Natural logarithm.
+attr_always_inline attr_header
+struct Vector3 vec3_ln( struct Vector3 x ) {
+    return vec3_new(
+        f32_ln( x.x ),
+        f32_ln( x.y ),
+        f32_ln( x.z ) );
+}
+/// @brief Calculate logarithm base 2.
+/// @param x Value to get logarithm base 2 of.
+/// @return Logarithm base 2.
+attr_always_inline attr_header
+struct Vector3 vec3_log2( struct Vector3 x ) {
+    return vec3_new(
+        f32_log2( x.x ),
+        f32_log2( x.y ),
+        f32_log2( x.z ) );
+}
+/// @brief Calculate square root.
+/// @param x Value to get square root of.
+/// @return Square root.
+attr_always_inline attr_header
+struct Vector3 vec3_sqrt( struct Vector3 x ) {
+    return vec3_new(
+        f32_sqrt( x.x ),
+        f32_sqrt( x.y ),
+        f32_sqrt( x.z ) );
+}
+/// @brief Calculate reciprocal square root.
+/// @param x Value to get reciprocal square root of.
+/// @return Reciprocal square root.
+attr_always_inline attr_header
+struct Vector3 vec3_inversesqrt( struct Vector3 x ) {
+    return vec3_new(
+        f32_inversesqrt( x.x ),
+        f32_inversesqrt( x.y ),
+        f32_inversesqrt( x.z ) );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
@@ -838,6 +943,28 @@ attr_always_inline attr_header
 struct IVector3 ivec3_div( struct IVector3 lhs, i32 rhs ) {
     return ivec3_new( lhs.x / rhs, lhs.y / rhs, lhs.z / rhs );
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector3 ivec3_mod( struct IVector3 lhs, i32 rhs ) {
+    return ivec3_new(
+        lhs.x % rhs,
+        lhs.y % rhs,
+        lhs.z % rhs );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector3 ivec3_mod_ivec3( struct IVector3 lhs, struct IVector3 rhs ) {
+    return ivec3_new(
+        lhs.x % rhs.x,
+        lhs.y % rhs.y,
+        lhs.z % rhs.z );
+}
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -909,6 +1036,28 @@ attr_always_inline attr_header
 f32 ivec3_length( struct IVector3 x ) {
     struct Vector3 _x = vec3_new( (f32)x.x, (f32)x.y, (f32)x.z );
     return vec3_length( _x );
+}
+/// @brief Component-wise abs.
+/// @param v Vector.
+/// @return Vector with absolute values.
+attr_always_inline attr_header
+struct IVector3 ivec3_abs( struct IVector3 x ) {
+    struct IVector3 result;
+    result.x = x.x < 0 ? -x.x : x.x;
+    result.y = x.y < 0 ? -x.y : x.y;
+    result.z = x.z < 0 ? -x.z : x.z;
+    return result;
+}
+/// @brief Component-wise sign.
+/// @param v Vector.
+/// @return Vector with sign values.
+attr_always_inline attr_header
+struct IVector3 ivec3_sign( struct IVector3 v ) {
+    struct IVector3 result;
+    result.x = (v.x > 0) - (v.x < 0);
+    result.y = (v.y > 0) - (v.y < 0);
+    result.z = (v.z > 0) - (v.z < 0);
+    return result;
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.

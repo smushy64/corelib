@@ -1038,6 +1038,14 @@ attr_header Vector4CPP div( Vector4CPP lhs, Vector4CPP rhs ) {
     return vec4_div_vec4( lhs.pod, rhs.pod );
 }
 attr_always_inline
+attr_header Vector4CPP mod( Vector4CPP lhs, f32 rhs ) {
+    return vec4_mod( lhs.pod, rhs );
+}
+attr_always_inline
+attr_header Vector4CPP mod( Vector4CPP lhs, Vector4CPP rhs ) {
+    return vec4_mod_vec4( lhs.pod, rhs.pod );
+}
+attr_always_inline
 attr_header Vector4CPP neg( Vector4CPP x ) {
     return vec4_neg( x.pod );
 }
@@ -1197,6 +1205,30 @@ attr_always_inline attr_header
 Vector4CPP atan2( Vector4CPP y, Vector4CPP x ) {
     return vec4_atan2( y.pod, x.pod );
 }
+attr_always_inline attr_header
+Vector4CPP pow( Vector4CPP base, Vector4CPP exp ) {
+    return vec4_pow( base.pod, exp.pod );
+}
+attr_always_inline attr_header
+Vector4CPP exp( Vector4CPP x ) {
+    return vec4_exp( x.pod );
+}
+attr_always_inline attr_header
+Vector4CPP ln( Vector4CPP x ) {
+    return vec4_ln( x.pod );
+}
+attr_always_inline attr_header
+Vector4CPP log2( Vector4CPP x ) {
+    return vec4_log2( x.pod );
+}
+attr_always_inline attr_header
+Vector4CPP sqrt( Vector4CPP x ) {
+    return vec4_sqrt( x.pod );
+}
+attr_always_inline attr_header
+Vector4CPP inversesqrt( Vector4CPP x ) {
+    return vec4_inversesqrt( x.pod );
+}
 attr_always_inline
 attr_header b32 cmp( Vector4CPP a, Vector4CPP b ) {
     return vec4_cmp( a.pod, b.pod );
@@ -1300,6 +1332,14 @@ IVector4CPP div( IVector4CPP lhs, i32 rhs ) {
     return ivec4_div( lhs.pod, rhs );
 }
 attr_always_inline attr_header
+IVector4CPP mod( IVector4CPP lhs, IVector4CPP rhs ) {
+    return ivec4_mod_ivec4( lhs.pod, rhs.pod );
+}
+attr_always_inline attr_header
+IVector4CPP mod( IVector4CPP lhs, i32 rhs ) {
+    return ivec4_mod( lhs.pod, rhs );
+}
+attr_always_inline attr_header
 IVector4CPP neg( IVector4CPP v ) {
     return ivec4_neg( v.pod );
 }
@@ -1324,6 +1364,22 @@ f32 length( IVector4CPP v ) {
     return ivec4_length( v.pod );
 }
 attr_always_inline attr_header
+IVector4CPP min( IVector4CPP x, IVector4CPP y ) {
+    return ivec4_min( x.pod, y.pod );
+}
+attr_always_inline attr_header
+IVector4CPP max( IVector4CPP x, IVector4CPP y ) {
+    return ivec4_max( x.pod, y.pod );
+}
+attr_always_inline attr_header
+IVector4CPP abs( IVector4CPP v ) {
+    return ivec4_abs( v.pod );
+}
+attr_always_inline attr_header
+IVector4CPP sign( IVector4CPP v ) {
+    return ivec4_sign( v.pod );
+}
+attr_always_inline attr_header
 b32 cmp( IVector4CPP a, IVector4CPP b ) {
     return ivec4_cmp( a.pod, b.pod );
 }
@@ -1337,20 +1393,28 @@ IVector4CPP& operator-=( IVector4CPP& lhs, IVector4CPP rhs ) {
     return lhs = sub( lhs, rhs );
 }
 attr_always_inline attr_header
-IVector4CPP& operator*( IVector4CPP& lhs, IVector4CPP rhs ) {
+IVector4CPP& operator*=( IVector4CPP& lhs, IVector4CPP rhs ) {
     return lhs = mul( lhs, rhs );
 }
 attr_always_inline attr_header
-IVector4CPP& operator*( IVector4CPP& lhs, i32 rhs ) {
+IVector4CPP& operator*=( IVector4CPP& lhs, i32 rhs ) {
     return lhs = mul( lhs, rhs );
 }
 attr_always_inline attr_header
-IVector4CPP& operator/( IVector4CPP& lhs, IVector4CPP rhs ) {
+IVector4CPP& operator/=( IVector4CPP& lhs, IVector4CPP rhs ) {
     return lhs = div( lhs, rhs );
 }
 attr_always_inline attr_header
-IVector4CPP& operator/( IVector4CPP& lhs, i32 rhs ) {
+IVector4CPP& operator/=( IVector4CPP& lhs, i32 rhs ) {
     return lhs = div( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector4CPP& operator%=( IVector4CPP& lhs, IVector4CPP rhs ) {
+    return lhs = mod( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector4CPP& operator%=( IVector4CPP& lhs, i32 rhs ) {
+    return lhs = mod( lhs, rhs );
 }
 attr_always_inline attr_header
 IVector4CPP operator+( IVector4CPP lhs, IVector4CPP rhs ) {
@@ -1381,8 +1445,25 @@ IVector4CPP operator/( IVector4CPP lhs, i32 rhs ) {
     return div( lhs, rhs );
 }
 attr_always_inline attr_header
+IVector4CPP operator%( IVector4CPP lhs, IVector4CPP rhs ) {
+    return mod( lhs, rhs );
+}
+attr_always_inline attr_header
+IVector4CPP operator%( IVector4CPP lhs, i32 rhs ) {
+    return mod( lhs, rhs );
+}
+attr_always_inline attr_header
 IVector4CPP operator-( IVector4CPP v ) {
     return neg( v );
 }
+attr_always_inline attr_header
+b32 operator==( IVector4CPP a, IVector4CPP b ) {
+    return cmp( a, b );
+}
+attr_always_inline attr_header
+b32 operator!=( IVector4CPP a, IVector4CPP b ) {
+    return !( a == b );
+}
+
 
 #endif /* header guard */

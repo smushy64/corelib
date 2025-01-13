@@ -275,6 +275,22 @@ struct Vector2 vec2_div_vec2( struct Vector2 lhs, struct Vector2 rhs ) {
     result.y = lhs.y / rhs.y;
     return result;
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector2 vec2_mod( struct Vector2 lhs, f32 rhs ) {
+    return vec2_new( f32_mod( lhs.x, rhs ), f32_mod( lhs.y, rhs ) );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct Vector2 vec2_mod_vec2( struct Vector2 lhs, struct Vector2 rhs ) {
+    return vec2_new( f32_mod( lhs.x, rhs.x ), f32_mod( lhs.y, rhs.y ) );
+}
 /// @brief Negate components of a vector.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -610,14 +626,14 @@ struct Vector2 vec2_smootherstep_scalar(
 /// @return Angles in radians.
 attr_always_inline attr_header
 struct Vector2 vec2_radians( struct Vector2 degrees ) {
-    return vec2_new( f32_radians(degrees.x), f32_radians(degrees.y) );
+    return vec2_mul( degrees, F32_TO_RAD );
 }
 /// @brief Convert radians to degrees.
 /// @param radians Angles in radians.
 /// @return Angles in degrees.
 attr_always_inline attr_header
 struct Vector2 vec2_degrees( struct Vector2 radians ) {
-    return vec2_new( f32_degrees(radians.x), f32_degrees(radians.y) );
+    return vec2_mul( radians, F32_TO_DEG );
 }
 /// @brief Calculate sine of x.
 /// @param angle Value to get sine of.
@@ -673,6 +689,49 @@ struct Vector2 vec2_atan( struct Vector2 angle ) {
 attr_always_inline attr_header
 struct Vector2 vec2_atan2( struct Vector2 y, struct Vector2 x ) {
     return vec2_new( f32_atan2(y.x, x.x), f32_atan2(y.y, x.y) );
+}
+/// @brief Raise base to the power of exponent.
+/// @param base Number to raise.
+/// @param exp Power to raise to.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_pow( struct Vector2 base, struct Vector2 exp ) {
+    return vec2_new( f32_pow( base.x, exp.x ), f32_pow( base.y, exp.y ) );
+}
+/// @brief Raise e to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_exp( struct Vector2 x ) {
+    return vec2_new( f32_exp( x.x ), f32_exp( x.y ) );
+}
+/// @brief Calculate natural logarithm.
+/// @param x Value to get natural logarithm of.
+/// @return Natural logarithm.
+attr_always_inline attr_header
+struct Vector2 vec2_ln( struct Vector2 x ) {
+    return vec2_new( f32_ln( x.x ), f32_ln( x.y ) );
+}
+/// @brief Calculate logarithm base 2.
+/// @param x Value to get logarithm base 2 of.
+/// @return Logarithm base 2.
+attr_always_inline attr_header
+struct Vector2 vec2_log2( struct Vector2 x ) {
+    return vec2_new( f32_log2( x.x ), f32_log2( x.y ) );
+}
+/// @brief Calculate square root.
+/// @param x Value to get square root of.
+/// @return Square root.
+attr_always_inline attr_header
+struct Vector2 vec2_sqrt( struct Vector2 x ) {
+    return vec2_new( f32_sqrt( x.x ), f32_sqrt( x.y ) );
+}
+/// @brief Calculate reciprocal square root.
+/// @param x Value to get reciprocal square root of.
+/// @return Reciprocal square root.
+attr_always_inline attr_header
+struct Vector2 vec2_inversesqrt( struct Vector2 x ) {
+    return vec2_new( f32_inversesqrt( x.x ), f32_inversesqrt( x.y ) );
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
@@ -782,6 +841,22 @@ struct IVector2 ivec2_div_ivec2( struct IVector2 lhs, struct IVector2 rhs ) {
     result.y = lhs.y / rhs.y;
     return result;
 }
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector2 ivec2_mod( struct IVector2 lhs, i32 rhs ) {
+    return ivec2_new( lhs.x % rhs, lhs.y % rhs );
+}
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+attr_always_inline attr_header
+struct IVector2 ivec2_mod_ivec2( struct IVector2 lhs, struct IVector2 rhs ) {
+    return ivec2_new( lhs.x % rhs.x, lhs.y % rhs.y );
+}
 /// @brief Negate components of a Vector2.
 /// @param x Vector to negate.
 /// @return Result of negation.
@@ -850,6 +925,46 @@ attr_always_inline attr_header
 f32 ivec2_length( struct IVector2 x ) {
     struct Vector2 _x = vec2_new( (f32)x.x, (f32)x.y );
     return vec2_length( _x );
+}
+/// @brief Component-wise minimum value.
+/// @param x, y Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline attr_header
+struct IVector2 ivec2_min( struct IVector2 x, struct IVector2 y ) {
+    struct IVector2 result;
+    result.x = x.x < y.x ? x.x : y.x;
+    result.y = x.y < y.y ? x.y : y.y;
+    return result;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline attr_header
+struct IVector2 ivec2_max( struct IVector2 x, struct IVector2 y ) {
+    struct IVector2 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
+    return result;
+}
+/// @brief Component-wise abs.
+/// @param v Vector.
+/// @return Vector with absolute values.
+attr_always_inline attr_header
+struct IVector2 ivec2_abs( struct IVector2 x ) {
+    struct IVector2 result;
+    result.x = x.x < 0 ? -x.x : x.x;
+    result.y = x.y < 0 ? -x.y : x.y;
+    return result;
+}
+/// @brief Component-wise sign.
+/// @param v Vector.
+/// @return Vector with sign values.
+attr_always_inline attr_header
+struct IVector2 ivec2_sign( struct IVector2 v ) {
+    struct IVector2 result;
+    result.x = (v.x > 0) - (v.x < 0);
+    result.y = (v.y > 0) - (v.y < 0);
+    return result;
 }
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
