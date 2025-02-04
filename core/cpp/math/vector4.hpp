@@ -1214,12 +1214,20 @@ Vector4CPP exp( Vector4CPP x ) {
     return vec4_exp( x.pod );
 }
 attr_always_inline attr_header
+Vector4CPP exp2( Vector4CPP x ) {
+    return vec4_exp2( x.pod );
+}
+attr_always_inline attr_header
 Vector4CPP ln( Vector4CPP x ) {
     return vec4_ln( x.pod );
 }
 attr_always_inline attr_header
 Vector4CPP log2( Vector4CPP x ) {
     return vec4_log2( x.pod );
+}
+attr_always_inline attr_header
+Vector4CPP log10( Vector4CPP x ) {
+    return vec4_log10( x.pod );
 }
 attr_always_inline attr_header
 Vector4CPP sqrt( Vector4CPP x ) {

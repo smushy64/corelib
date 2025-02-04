@@ -579,12 +579,20 @@ Vector3CPP exp( Vector3CPP x ) {
     return vec3_exp( x.pod );
 }
 attr_always_inline attr_header
+Vector3CPP exp2( Vector3CPP x ) {
+    return vec3_exp2( x.pod );
+}
+attr_always_inline attr_header
 Vector3CPP ln( Vector3CPP x ) {
     return vec3_ln( x.pod );
 }
 attr_always_inline attr_header
 Vector3CPP log2( Vector3CPP x ) {
     return vec3_log2( x.pod );
+}
+attr_always_inline attr_header
+Vector3CPP log10( Vector3CPP x ) {
+    return vec3_log10( x.pod );
 }
 attr_always_inline attr_header
 Vector3CPP sqrt( Vector3CPP x ) {

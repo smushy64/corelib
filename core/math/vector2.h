@@ -705,6 +705,13 @@ attr_always_inline attr_header
 struct Vector2 vec2_exp( struct Vector2 x ) {
     return vec2_new( f32_exp( x.x ), f32_exp( x.y ) );
 }
+/// @brief Raise 2 to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_exp2( struct Vector2 x ) {
+    return vec2_new( f32_exp2( x.x ), f32_exp2( x.y ) );
+}
 /// @brief Calculate natural logarithm.
 /// @param x Value to get natural logarithm of.
 /// @return Natural logarithm.
@@ -718,6 +725,13 @@ struct Vector2 vec2_ln( struct Vector2 x ) {
 attr_always_inline attr_header
 struct Vector2 vec2_log2( struct Vector2 x ) {
     return vec2_new( f32_log2( x.x ), f32_log2( x.y ) );
+}
+/// @brief Calculate logarithm base 10.
+/// @param x Value to get logarithm base 10 of.
+/// @return Logarithm base 10.
+attr_always_inline attr_header
+struct Vector2 vec2_log10( struct Vector2 x ) {
+    return vec2_new( f32_log10( x.x ), f32_log10( x.y ) );
 }
 /// @brief Calculate square root.
 /// @param x Value to get square root of.

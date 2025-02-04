@@ -403,12 +403,20 @@ Vector2CPP exp( Vector2CPP x ) {
     return vec2_exp( x.pod );
 }
 attr_always_inline attr_header
+Vector2CPP exp2( Vector2CPP x ) {
+    return vec2_exp2( x.pod );
+}
+attr_always_inline attr_header
 Vector2CPP ln( Vector2CPP x ) {
     return vec2_ln( x.pod );
 }
 attr_always_inline attr_header
 Vector2CPP log2( Vector2CPP x ) {
     return vec2_log2( x.pod );
+}
+attr_always_inline attr_header
+Vector2CPP log10( Vector2CPP x ) {
+    return vec2_log10( x.pod );
 }
 attr_always_inline attr_header
 Vector2CPP sqrt( Vector2CPP x ) {

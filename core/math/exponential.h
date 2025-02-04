@@ -17,34 +17,41 @@
 /// @brief Calculate square root.
 /// @param x Value to get square root of.
 /// @return Square root.
-attr_core_api f32 f32_sqrt( f32 x );
+attr_core_api
+f32 f32_sqrt( f32 x );
 /// @brief Calculate reciprocal square root.
 /// @param x Value to get reciprocal square root of.
 /// @return Reciprocal square root.
-attr_core_api f32 f32_inversesqrt( f32 x );
+attr_core_api
+f32 f32_inversesqrt( f32 x );
 
 /// @brief Calculate natural logarithm.
 /// @param x Value to get natural logarithm of.
 /// @return Natural logarithm.
-attr_core_api f32 f32_ln( f32 x );
+attr_core_api
+f32 f32_ln( f32 x );
 /// @brief Calculate logarithm base 2.
 /// @param x Value to get logarithm base 2 of.
 /// @return Logarithm base 2.
-attr_core_api f32 f32_log2( f32 x );
+attr_core_api
+f32 f32_log2( f32 x );
 /// @brief Calculate logarithm base 10.
 /// @param x Value to get logarithm base 10 of.
 /// @return Logarithm base 10.
-attr_core_api f32 f32_log10( f32 x );
+attr_core_api
+f32 f32_log10( f32 x );
 
 /// @brief Raise base to the power of integer exponent.
 /// @param base Number to raise.
 /// @param exp Power to raise to.
 /// @return Result.
-attr_core_api f32 f32_powi( f32 base, i32 exp );
+attr_core_api
+f32 f32_powi( f32 base, i32 exp );
 /// @brief Raise e to the power of x.
 /// @param x Exponent.
 /// @return Result.
-attr_core_api f32 f32_exp( f32 x );
+attr_core_api
+f32 f32_exp( f32 x );
 /// @brief Raise base to the power of exponent.
 /// @param base Number to raise.
 /// @param exp Power to raise to.
@@ -52,6 +59,13 @@ attr_core_api f32 f32_exp( f32 x );
 attr_always_inline attr_header
 f32 f32_pow( f32 base, f32 exp ) {
     return f32_exp( f32_ln( base ) * exp );
+}
+/// @brief Raise 2 to the power of exponent.
+/// @param x Exponent.
+/// @return 2^x
+attr_always_inline attr_header
+f32 f32_exp2( f32 x ) {
+    return f32_pow( 2.0f, x );
 }
 
 #endif /* header guard */

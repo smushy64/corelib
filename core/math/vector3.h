@@ -267,11 +267,13 @@ void vec3_to_array( struct Vector3 v, f32* out_array ) {
 /// Convert RGB color to HSL color.
 /// @param _rgb RGB color to convert.
 /// @return HSL color.
-attr_core_api struct Vector3 rgb_to_hsl( struct Vector3 _rgb );
+attr_core_api
+struct Vector3 rgb_to_hsl( struct Vector3 _rgb );
 /// Convert HSL color to RGB color.
 /// @param _hsl HSL color to convert.
 /// @return RGB color.
-attr_core_api struct Vector3 hsl_to_rgb( struct Vector3 _hsl );
+attr_core_api
+struct Vector3 hsl_to_rgb( struct Vector3 _hsl );
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
@@ -828,6 +830,16 @@ struct Vector3 vec3_exp( struct Vector3 x ) {
         f32_exp( x.y ),
         f32_exp( x.z ) );
 }
+/// @brief Raise 2 to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector3 vec3_exp2( struct Vector3 x ) {
+    return vec3_new(
+        f32_exp2( x.x ),
+        f32_exp2( x.y ),
+        f32_exp2( x.z ) );
+}
 /// @brief Calculate natural logarithm.
 /// @param x Value to get natural logarithm of.
 /// @return Natural logarithm.
@@ -847,6 +859,16 @@ struct Vector3 vec3_log2( struct Vector3 x ) {
         f32_log2( x.x ),
         f32_log2( x.y ),
         f32_log2( x.z ) );
+}
+/// @brief Calculate logarithm base 10.
+/// @param x Value to get logarithm base 10 of.
+/// @return Logarithm base 10.
+attr_always_inline attr_header
+struct Vector3 vec3_log10( struct Vector3 x ) {
+    return vec3_new(
+        f32_log10( x.x ),
+        f32_log10( x.y ),
+        f32_log10( x.z ) );
 }
 /// @brief Calculate square root.
 /// @param x Value to get square root of.

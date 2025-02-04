@@ -814,6 +814,17 @@ struct Vector4 vec4_exp( struct Vector4 x ) {
         f32_exp( x.z ),
         f32_exp( x.w ) );
 }
+/// @brief Raise 2 to the power of x.
+/// @param x Exponent.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector4 vec4_exp2( struct Vector4 x ) {
+    return vec4_new(
+        f32_exp2( x.x ),
+        f32_exp2( x.y ),
+        f32_exp2( x.z ),
+        f32_exp2( x.w ) );
+}
 /// @brief Calculate natural logarithm.
 /// @param x Value to get natural logarithm of.
 /// @return Natural logarithm.
@@ -835,6 +846,17 @@ struct Vector4 vec4_log2( struct Vector4 x ) {
         f32_log2( x.y ),
         f32_log2( x.z ),
         f32_log2( x.w ) );
+}
+/// @brief Calculate logarithm base 10.
+/// @param x Value to get logarithm base 10 of.
+/// @return Logarithm base 10.
+attr_always_inline attr_header
+struct Vector4 vec4_log10( struct Vector4 x ) {
+    return vec4_new(
+        f32_log10( x.x ),
+        f32_log10( x.y ),
+        f32_log10( x.z ),
+        f32_log10( x.w ) );
 }
 /// @brief Calculate square root.
 /// @param x Value to get square root of.
