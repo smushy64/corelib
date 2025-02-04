@@ -107,10 +107,12 @@ struct BVector2 {
     /// @brief 2 Component 32-bit Signed Integer Vector.
     /// @see struct IVector2
     typedef struct IVector2 ivec2;
+    /// @brief 2 Component 32-bit Boolean Vector.
+    /// @see struct BVector2
+    typedef struct BVector2 bvec2;
 #endif
 typedef struct UVector2 uvec2;
 typedef struct DVector2 dvec2;
-typedef struct BVector2 bvec2;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
     /// @brief Construct a Vector2.
@@ -124,17 +126,22 @@ typedef struct BVector2 bvec2;
 #else
 
 #if defined(CORE_CPLUSPLUS)
-    #define vec2_new( _x, _y )\
+    #define vec2_new( _x, _y ) \
         Vector2{ .array={ (_x), (_y) } }
-    #define ivec2_new( _x, _y )\
+    #define ivec2_new( _x, _y ) \
         IVector2{ .array={ (_x), (_y) } }
+    #define bvec2_new( _x, _y ) \
+        BVector2{ .array={ (_x), (_y) } }
 #else /* C++ constructors */
-    #define vec2( x, y )\
+    #define vec2( x, y ) \
         (struct Vector2){ .array={ (x), (y) } }
-    #define ivec2( x, y )\
+    #define ivec2( x, y ) \
         (struct IVector2){ .array={ (x), (y) } }
+    #define bvec2( x, y ) \
+        (struct BVector2){ .array={ (x), (y) } }
     #define vec2_new(...)  vec2(__VA_ARGS__)
     #define ivec2_new(...) ivec2(__VA_ARGS__)
+    #define bvec2_new(...) bvec2(__VA_ARGS__)
 #endif /* C constructors */
 
 #endif /* Doxygen */
@@ -621,6 +628,20 @@ struct Vector2 vec2_smootherstep_scalar(
 ) {
     return vec2_smootherstep( vec2_set( edge0 ), vec2_set( edge1 ), x );
 }
+/// @brief Check if vector components are NaN.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_isnan( struct Vector2 x ) {
+    return bvec2_new( f32_isnan( x.x ), f32_isnan( x.y ) );
+}
+/// @brief Check if vector components are infinite.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_isinf( struct Vector2 x ) {
+    return bvec2_new( f32_isinf( x.x ), f32_isinf( x.y ) );
+}
 /// @brief Convert degrees to radians.
 /// @param degrees Angles in degrees.
 /// @return Angles in radians.
@@ -754,6 +775,48 @@ struct Vector2 vec2_inversesqrt( struct Vector2 x ) {
 attr_always_inline attr_header
 b32 vec2_cmp( struct Vector2 a, struct Vector2 b ) {
     return vec2_length_sqr( vec2_sub( a, b ) ) < F32_EPSILON;
+}
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_less_than( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( a.x < b.x, a.y < b.y );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_greater_than( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( a.x > b.x, a.y > b.y );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_less_than_equal( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( a.x <= b.x, a.y <= b.y );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_greater_than_equal( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( a.x >= b.x, a.y >= b.y );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_equal( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( f32_cmp( a.x, b.x ), f32_cmp( a.y, b.y ) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_not_equal( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( !f32_cmp( a.x, b.x ), !f32_cmp( a.y, b.y ) );
 }
 
 /// @brief Create vector from array.
@@ -989,6 +1052,88 @@ b32 ivec2_cmp( struct IVector2 a, struct IVector2 b ) {
         a.x == b.x &&
         a.y == b.y;
 }
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_less_than( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( a.x < b.x, a.y < b.y );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_greater_than( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( a.x > b.x, a.y > b.y );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_less_than_equal( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( a.x <= b.x, a.y <= b.y );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_greater_than_equal( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( a.x >= b.x, a.y >= b.y );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_equal( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( (a.x == b.x), (a.y == b.y) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 ivec2_not_equal( struct IVector2 a, struct IVector2 b ) {
+    return bvec2_new( !(a.x == b.x), !(a.y == b.y) );
+}
+
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 bvec2_equal( struct BVector2 a, struct BVector2 b ) {
+    return bvec2_new( (a.x == b.x), (a.y == b.y) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 bvec2_not_equal( struct BVector2 a, struct BVector2 b ) {
+    return bvec2_new( !(a.x == b.x), !(a.y == b.y) );
+}
+/// @brief Check if any component of vector is true.
+/// @param x Vector to check.
+/// @return
+///     - true  : Any component is true.
+///     - false : All components false.
+attr_always_inline attr_header
+b32 bvec2_any( struct BVector2 x ) {
+    return x.x || x.y;
+}
+/// @brief Check if all components of vector are true.
+/// @param x Vector to check.
+/// @return
+///     - true  : All components are true.
+///     - false : One or more components are false.
+attr_always_inline attr_header
+b32 bvec2_all( struct BVector2 x ) {
+    return x.x && x.y;
+}
+/// @brief Not components.
+/// @param x Vector to check.
+/// @return Booleans notted.
+attr_always_inline attr_header
+struct BVector2 bvec2_not( struct BVector2 x ) {
+    return bvec2_new( !x.x, !x.y );
+}
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
@@ -1001,6 +1146,7 @@ b32 ivec2_cmp( struct IVector2 a, struct IVector2 b ) {
     #endif
     typedef Vector2CPP  vec2;
     typedef IVector2CPP ivec2;
+    typedef BVector2CPP bvec2;
 #endif
 
 #endif /* header guard */

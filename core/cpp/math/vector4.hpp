@@ -9,6 +9,7 @@
 
 struct Vector4CPP;
 struct IVector4CPP;
+struct BVector4CPP;
 
 #if !defined(CORE_MATH_VECTOR4_H)
     #include "core/math/vector4.h"
@@ -997,114 +998,559 @@ struct IVector4CPP {
         return array[idx];
     }
 };
-attr_always_inline
-attr_header Vector4CPP add(
+struct BVector4CPP {
+    union {
+        /// @brief X, Y, Z and W components.
+        struct {
+            /// @brief X, Y and Z components.
+            union {
+                /// @brief X, Y and Z components.
+                struct {
+                    /// @brief X and Y components.
+                    union {
+                        /// @brief X and Y components.
+                        struct {
+                            /// @brief X component.
+                            b32 x;
+                            /// @brief Y component.
+                            b32 y;
+                        };
+                        /// @brief X and Y components as an #IVector2.
+                        BVector2CPP xy;
+                    };
+                    /// @brief Z component.
+                    union {
+                        /// @brief Z component.
+                        b32 z;
+                    };
+                };
+                /// @brief Swizzle yz.
+                struct {
+                    b32 __unused0;
+                    /// @brief Y and Z components as an #IVector2.
+                    BVector2CPP yz;
+                };
+                /// @brief X, Y and Z components as an #IVector3.
+                BVector3CPP xyz;
+            };
+            /// @brief W component.
+            union {
+                /// @brief W component.
+                b32 w;
+            };
+        };
+        /// @brief Swizzle yzw.
+        struct {
+            b32 __unused2;
+            /// @brief Y, Z and W components as an #IVector3.
+            BVector3CPP yzw;
+        };
+        /// @brief Swizzle zw.
+        struct {
+            BVector2CPP __unused4;
+            /// @brief Z and W components as an #IVector2.
+            BVector2CPP zw;
+        };
+        // struct { i32 x, y, z, w; };
+        struct BVector4 pod;
+
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 0> xx;
+        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 1> xy;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 2> xz;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 3> xw;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 0> yx;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 1> yy;
+        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 2> yz;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 3> yw;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 0> zx;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 1> zy;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 2> zz;
+        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 3> zw;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 0> wx;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 1> wy;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 2> wz;
+        SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 3> ww;
+
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 0, 0> xxx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 0, 1> xxy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 0, 2> xxz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 0, 3> xxw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 0> xyx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 1> xyy;
+        // SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 2> xyz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 3> xyw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 0> xzx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 1> xzy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 2> xzz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 3> xzw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 3, 0> xwx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 3, 1> xwy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 3, 2> xwz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 3, 3> xww;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 0, 0> yxx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 0, 1> yxy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 0, 2> yxz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 0, 3> yxw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 1, 0> yyx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 1, 1> yyy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 1, 2> yyz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 1, 3> yyw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 0> yzx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 1> yzy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 2> yzz;
+        // SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 3> yzw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 0> ywx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 1> ywy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 2> ywz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 3> yww;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 0, 0> zxx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 0, 1> zxy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 0, 2> zxz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 0, 3> zxw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 1, 0> zyx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 1, 1> zyy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 1, 2> zyz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 1, 3> zyw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 2, 0> zzx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 2, 1> zzy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 2, 2> zzz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 2, 3> zzw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 3, 0> zwx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 3, 1> zwy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 3, 2> zwz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 2, 3, 3> zww;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 0, 0> wxx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 0, 1> wxy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 0, 2> wxz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 0, 3> wxw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 1, 0> wyx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 1, 1> wyy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 1, 2> wyz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 1, 3> wyw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 2, 0> wzx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 2, 1> wzy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 2, 2> wzz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 2, 3> wzw;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 3, 0> wwx;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 3, 1> wwy;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 3, 2> wwz;
+        SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 3, 3, 3> www;
+
+        Swizzler<BVector4CPP, b32, 0, 0, 0, 0> xxxx;
+        Swizzler<BVector4CPP, b32, 0, 0, 0, 1> xxxy;
+        Swizzler<BVector4CPP, b32, 0, 0, 0, 2> xxxz;
+        Swizzler<BVector4CPP, b32, 0, 0, 0, 3> xxxw;
+        Swizzler<BVector4CPP, b32, 0, 0, 1, 0> xxyx;
+        Swizzler<BVector4CPP, b32, 0, 0, 1, 1> xxyy;
+        Swizzler<BVector4CPP, b32, 0, 0, 1, 2> xxyz;
+        Swizzler<BVector4CPP, b32, 0, 0, 1, 3> xxyw;
+        Swizzler<BVector4CPP, b32, 0, 0, 2, 0> xxzx;
+        Swizzler<BVector4CPP, b32, 0, 0, 2, 1> xxzy;
+        Swizzler<BVector4CPP, b32, 0, 0, 2, 2> xxzz;
+        Swizzler<BVector4CPP, b32, 0, 0, 2, 3> xxzw;
+        Swizzler<BVector4CPP, b32, 0, 0, 3, 0> xxwx;
+        Swizzler<BVector4CPP, b32, 0, 0, 3, 1> xxwy;
+        Swizzler<BVector4CPP, b32, 0, 0, 3, 2> xxwz;
+        Swizzler<BVector4CPP, b32, 0, 0, 3, 3> xxww;
+        Swizzler<BVector4CPP, b32, 0, 1, 0, 0> xyxx;
+        Swizzler<BVector4CPP, b32, 0, 1, 0, 1> xyxy;
+        Swizzler<BVector4CPP, b32, 0, 1, 0, 2> xyxz;
+        Swizzler<BVector4CPP, b32, 0, 1, 0, 3> xyxw;
+        Swizzler<BVector4CPP, b32, 0, 1, 1, 0> xyyx;
+        Swizzler<BVector4CPP, b32, 0, 1, 1, 1> xyyy;
+        Swizzler<BVector4CPP, b32, 0, 1, 1, 0> xyyz;
+        Swizzler<BVector4CPP, b32, 0, 1, 1, 3> xyyw;
+        Swizzler<BVector4CPP, b32, 0, 1, 2, 0> xyzx;
+        Swizzler<BVector4CPP, b32, 0, 1, 2, 1> xyzy;
+        Swizzler<BVector4CPP, b32, 0, 1, 2, 2> xyzz;
+        Swizzler<BVector4CPP, b32, 0, 1, 2, 3> xyzw;
+        Swizzler<BVector4CPP, b32, 0, 1, 3, 0> xywx;
+        Swizzler<BVector4CPP, b32, 0, 1, 3, 1> xywy;
+        Swizzler<BVector4CPP, b32, 0, 1, 3, 2> xywz;
+        Swizzler<BVector4CPP, b32, 0, 1, 3, 3> xyww;
+        Swizzler<BVector4CPP, b32, 0, 2, 0, 0> xzxx;
+        Swizzler<BVector4CPP, b32, 0, 2, 0, 1> xzxy;
+        Swizzler<BVector4CPP, b32, 0, 2, 0, 2> xzxz;
+        Swizzler<BVector4CPP, b32, 0, 2, 0, 3> xzxw;
+        Swizzler<BVector4CPP, b32, 0, 2, 1, 0> xzyx;
+        Swizzler<BVector4CPP, b32, 0, 2, 1, 1> xzyy;
+        Swizzler<BVector4CPP, b32, 0, 2, 1, 2> xzyz;
+        Swizzler<BVector4CPP, b32, 0, 2, 1, 3> xzyw;
+        Swizzler<BVector4CPP, b32, 0, 2, 2, 0> xzzx;
+        Swizzler<BVector4CPP, b32, 0, 2, 2, 1> xzzy;
+        Swizzler<BVector4CPP, b32, 0, 2, 2, 2> xzzz;
+        Swizzler<BVector4CPP, b32, 0, 2, 2, 3> xzzw;
+        Swizzler<BVector4CPP, b32, 0, 2, 3, 0> xzwx;
+        Swizzler<BVector4CPP, b32, 0, 2, 3, 1> xzwy;
+        Swizzler<BVector4CPP, b32, 0, 2, 3, 2> xzwz;
+        Swizzler<BVector4CPP, b32, 0, 2, 3, 3> xzww;
+        Swizzler<BVector4CPP, b32, 0, 3, 0, 0> xwxx;
+        Swizzler<BVector4CPP, b32, 0, 3, 0, 1> xwxy;
+        Swizzler<BVector4CPP, b32, 0, 3, 0, 2> xwxz;
+        Swizzler<BVector4CPP, b32, 0, 3, 0, 3> xwxw;
+        Swizzler<BVector4CPP, b32, 0, 3, 1, 0> xwyx;
+        Swizzler<BVector4CPP, b32, 0, 3, 1, 1> xwyy;
+        Swizzler<BVector4CPP, b32, 0, 3, 1, 2> xwyz;
+        Swizzler<BVector4CPP, b32, 0, 3, 1, 3> xwyw;
+        Swizzler<BVector4CPP, b32, 0, 3, 0, 3> xwzx;
+        Swizzler<BVector4CPP, b32, 0, 3, 2, 1> xwzy;
+        Swizzler<BVector4CPP, b32, 0, 3, 2, 2> xwzz;
+        Swizzler<BVector4CPP, b32, 0, 3, 2, 3> xwzw;
+        Swizzler<BVector4CPP, b32, 0, 3, 3, 0> xwwx;
+        Swizzler<BVector4CPP, b32, 0, 3, 3, 1> xwwy;
+        Swizzler<BVector4CPP, b32, 0, 3, 3, 2> xwwz;
+        Swizzler<BVector4CPP, b32, 0, 3, 3, 3> xwww;
+        Swizzler<BVector4CPP, b32, 1, 0, 0, 0> yxxx;
+        Swizzler<BVector4CPP, b32, 1, 0, 0, 1> yxxy;
+        Swizzler<BVector4CPP, b32, 1, 0, 0, 2> yxxz;
+        Swizzler<BVector4CPP, b32, 1, 0, 0, 3> yxxw;
+        Swizzler<BVector4CPP, b32, 1, 0, 1, 0> yxyx;
+        Swizzler<BVector4CPP, b32, 1, 0, 1, 1> yxyy;
+        Swizzler<BVector4CPP, b32, 1, 0, 1, 2> yxyz;
+        Swizzler<BVector4CPP, b32, 1, 0, 1, 3> yxyw;
+        Swizzler<BVector4CPP, b32, 1, 0, 2, 0> yxzx;
+        Swizzler<BVector4CPP, b32, 1, 0, 2, 1> yxzy;
+        Swizzler<BVector4CPP, b32, 1, 0, 2, 2> yxzz;
+        Swizzler<BVector4CPP, b32, 1, 0, 2, 3> yxzw;
+        Swizzler<BVector4CPP, b32, 1, 0, 3, 0> yxwx;
+        Swizzler<BVector4CPP, b32, 1, 0, 3, 1> yxwy;
+        Swizzler<BVector4CPP, b32, 1, 0, 3, 2> yxwz;
+        Swizzler<BVector4CPP, b32, 1, 0, 3, 3> yxww;
+        Swizzler<BVector4CPP, b32, 1, 1, 0, 0> yyxx;
+        Swizzler<BVector4CPP, b32, 1, 1, 0, 1> yyxy;
+        Swizzler<BVector4CPP, b32, 1, 1, 0, 2> yyxz;
+        Swizzler<BVector4CPP, b32, 1, 1, 0, 3> yyxw;
+        Swizzler<BVector4CPP, b32, 1, 1, 1, 0> yyyx;
+        Swizzler<BVector4CPP, b32, 1, 1, 1, 1> yyyy;
+        Swizzler<BVector4CPP, b32, 1, 1, 1, 2> yyyz;
+        Swizzler<BVector4CPP, b32, 1, 1, 1, 3> yyyw;
+        Swizzler<BVector4CPP, b32, 1, 1, 2, 0> yyzx;
+        Swizzler<BVector4CPP, b32, 1, 1, 2, 1> yyzy;
+        Swizzler<BVector4CPP, b32, 1, 1, 2, 2> yyzz;
+        Swizzler<BVector4CPP, b32, 1, 1, 2, 3> yyzw;
+        Swizzler<BVector4CPP, b32, 1, 1, 3, 0> yywx;
+        Swizzler<BVector4CPP, b32, 1, 1, 3, 1> yywy;
+        Swizzler<BVector4CPP, b32, 1, 1, 3, 2> yywz;
+        Swizzler<BVector4CPP, b32, 1, 1, 3, 3> yyww;
+        Swizzler<BVector4CPP, b32, 1, 2, 0, 0> yzxx;
+        Swizzler<BVector4CPP, b32, 1, 2, 0, 1> yzxy;
+        Swizzler<BVector4CPP, b32, 1, 2, 0, 2> yzxz;
+        Swizzler<BVector4CPP, b32, 1, 2, 0, 3> yzxw;
+        Swizzler<BVector4CPP, b32, 1, 2, 1, 0> yzyx;
+        Swizzler<BVector4CPP, b32, 1, 2, 1, 1> yzyy;
+        Swizzler<BVector4CPP, b32, 1, 2, 1, 2> yzyz;
+        Swizzler<BVector4CPP, b32, 1, 2, 1, 3> yzyw;
+        Swizzler<BVector4CPP, b32, 1, 2, 2, 0> yzzx;
+        Swizzler<BVector4CPP, b32, 1, 2, 2, 1> yzzy;
+        Swizzler<BVector4CPP, b32, 1, 2, 2, 2> yzzz;
+        Swizzler<BVector4CPP, b32, 1, 2, 2, 3> yzzw;
+        Swizzler<BVector4CPP, b32, 1, 2, 3, 0> yzwx;
+        Swizzler<BVector4CPP, b32, 1, 2, 3, 1> yzwy;
+        Swizzler<BVector4CPP, b32, 1, 2, 3, 2> yzwz;
+        Swizzler<BVector4CPP, b32, 1, 2, 3, 3> yzww;
+        Swizzler<BVector4CPP, b32, 1, 3, 0, 0> ywxx;
+        Swizzler<BVector4CPP, b32, 1, 3, 0, 1> ywxy;
+        Swizzler<BVector4CPP, b32, 1, 3, 0, 2> ywxz;
+        Swizzler<BVector4CPP, b32, 1, 3, 0, 3> ywxw;
+        Swizzler<BVector4CPP, b32, 1, 3, 1, 0> ywyx;
+        Swizzler<BVector4CPP, b32, 1, 3, 1, 1> ywyy;
+        Swizzler<BVector4CPP, b32, 1, 3, 1, 2> ywyz;
+        Swizzler<BVector4CPP, b32, 1, 3, 1, 3> ywyw;
+        Swizzler<BVector4CPP, b32, 1, 3, 2, 0> ywzx;
+        Swizzler<BVector4CPP, b32, 1, 3, 2, 1> ywzy;
+        Swizzler<BVector4CPP, b32, 1, 3, 2, 2> ywzz;
+        Swizzler<BVector4CPP, b32, 1, 3, 2, 3> ywzw;
+        Swizzler<BVector4CPP, b32, 1, 3, 3, 0> ywwx;
+        Swizzler<BVector4CPP, b32, 1, 3, 3, 1> ywwy;
+        Swizzler<BVector4CPP, b32, 1, 3, 3, 2> ywwz;
+        Swizzler<BVector4CPP, b32, 1, 3, 3, 3> ywww;
+        Swizzler<BVector4CPP, b32, 2, 0, 0, 0> zxxx;
+        Swizzler<BVector4CPP, b32, 2, 0, 0, 1> zxxy;
+        Swizzler<BVector4CPP, b32, 2, 0, 0, 2> zxxz;
+        Swizzler<BVector4CPP, b32, 2, 0, 0, 3> zxxw;
+        Swizzler<BVector4CPP, b32, 2, 0, 1, 0> zxyx;
+        Swizzler<BVector4CPP, b32, 2, 0, 1, 1> zxyy;
+        Swizzler<BVector4CPP, b32, 2, 0, 1, 2> zxyz;
+        Swizzler<BVector4CPP, b32, 2, 0, 1, 3> zxyw;
+        Swizzler<BVector4CPP, b32, 2, 0, 2, 0> zxzx;
+        Swizzler<BVector4CPP, b32, 2, 0, 2, 1> zxzy;
+        Swizzler<BVector4CPP, b32, 2, 0, 2, 2> zxzz;
+        Swizzler<BVector4CPP, b32, 2, 0, 2, 3> zxzw;
+        Swizzler<BVector4CPP, b32, 2, 0, 3, 0> zxwx;
+        Swizzler<BVector4CPP, b32, 2, 0, 3, 1> zxwy;
+        Swizzler<BVector4CPP, b32, 2, 0, 3, 2> zxwz;
+        Swizzler<BVector4CPP, b32, 2, 0, 3, 3> zxww;
+        Swizzler<BVector4CPP, b32, 2, 1, 0, 0> zyxx;
+        Swizzler<BVector4CPP, b32, 2, 1, 0, 1> zyxy;
+        Swizzler<BVector4CPP, b32, 2, 1, 0, 2> zyxz;
+        Swizzler<BVector4CPP, b32, 2, 1, 0, 3> zyxw;
+        Swizzler<BVector4CPP, b32, 2, 1, 1, 0> zyyx;
+        Swizzler<BVector4CPP, b32, 2, 1, 1, 1> zyyy;
+        Swizzler<BVector4CPP, b32, 2, 1, 1, 2> zyyz;
+        Swizzler<BVector4CPP, b32, 2, 1, 1, 3> zyyw;
+        Swizzler<BVector4CPP, b32, 2, 1, 2, 0> zyzx;
+        Swizzler<BVector4CPP, b32, 2, 1, 2, 1> zyzy;
+        Swizzler<BVector4CPP, b32, 2, 1, 2, 2> zyzz;
+        Swizzler<BVector4CPP, b32, 2, 1, 2, 3> zyzw;
+        Swizzler<BVector4CPP, b32, 2, 1, 3, 0> zywx;
+        Swizzler<BVector4CPP, b32, 2, 1, 3, 1> zywy;
+        Swizzler<BVector4CPP, b32, 2, 1, 3, 2> zywz;
+        Swizzler<BVector4CPP, b32, 2, 1, 3, 3> zyww;
+        Swizzler<BVector4CPP, b32, 2, 2, 0, 0> zzxx;
+        Swizzler<BVector4CPP, b32, 2, 2, 0, 1> zzxy;
+        Swizzler<BVector4CPP, b32, 2, 2, 0, 2> zzxz;
+        Swizzler<BVector4CPP, b32, 2, 2, 0, 3> zzxw;
+        Swizzler<BVector4CPP, b32, 2, 2, 1, 0> zzyx;
+        Swizzler<BVector4CPP, b32, 2, 2, 1, 1> zzyy;
+        Swizzler<BVector4CPP, b32, 2, 2, 1, 2> zzyz;
+        Swizzler<BVector4CPP, b32, 2, 2, 1, 3> zzyw;
+        Swizzler<BVector4CPP, b32, 2, 2, 2, 0> zzzx;
+        Swizzler<BVector4CPP, b32, 2, 2, 2, 1> zzzy;
+        Swizzler<BVector4CPP, b32, 2, 2, 2, 2> zzzz;
+        Swizzler<BVector4CPP, b32, 2, 2, 2, 3> zzzw;
+        Swizzler<BVector4CPP, b32, 2, 2, 3, 0> zzwx;
+        Swizzler<BVector4CPP, b32, 2, 2, 3, 1> zzwy;
+        Swizzler<BVector4CPP, b32, 2, 2, 3, 2> zzwz;
+        Swizzler<BVector4CPP, b32, 2, 2, 3, 3> zzww;
+        Swizzler<BVector4CPP, b32, 2, 3, 0, 0> zwxx;
+        Swizzler<BVector4CPP, b32, 2, 3, 0, 1> zwxy;
+        Swizzler<BVector4CPP, b32, 2, 3, 0, 2> zwxz;
+        Swizzler<BVector4CPP, b32, 2, 3, 0, 3> zwxw;
+        Swizzler<BVector4CPP, b32, 2, 3, 1, 0> zwyx;
+        Swizzler<BVector4CPP, b32, 2, 3, 1, 1> zwyy;
+        Swizzler<BVector4CPP, b32, 2, 3, 1, 2> zwyz;
+        Swizzler<BVector4CPP, b32, 2, 3, 1, 3> zwyw;
+        Swizzler<BVector4CPP, b32, 2, 3, 2, 0> zwzx;
+        Swizzler<BVector4CPP, b32, 2, 3, 2, 1> zwzy;
+        Swizzler<BVector4CPP, b32, 2, 3, 2, 2> zwzz;
+        Swizzler<BVector4CPP, b32, 2, 3, 2, 3> zwzw;
+        Swizzler<BVector4CPP, b32, 2, 3, 3, 0> zwwx;
+        Swizzler<BVector4CPP, b32, 2, 3, 3, 1> zwwy;
+        Swizzler<BVector4CPP, b32, 2, 3, 3, 2> zwwz;
+        Swizzler<BVector4CPP, b32, 2, 3, 3, 3> zwww;
+        Swizzler<BVector4CPP, b32, 3, 0, 0, 0> wxxx;
+        Swizzler<BVector4CPP, b32, 3, 0, 0, 1> wxxy;
+        Swizzler<BVector4CPP, b32, 3, 0, 0, 2> wxxz;
+        Swizzler<BVector4CPP, b32, 3, 0, 0, 3> wxxw;
+        Swizzler<BVector4CPP, b32, 3, 0, 1, 0> wxyx;
+        Swizzler<BVector4CPP, b32, 3, 0, 1, 1> wxyy;
+        Swizzler<BVector4CPP, b32, 3, 0, 1, 2> wxyz;
+        Swizzler<BVector4CPP, b32, 3, 0, 1, 3> wxyw;
+        Swizzler<BVector4CPP, b32, 3, 0, 2, 0> wxzx;
+        Swizzler<BVector4CPP, b32, 3, 0, 2, 1> wxzy;
+        Swizzler<BVector4CPP, b32, 3, 0, 2, 2> wxzz;
+        Swizzler<BVector4CPP, b32, 3, 0, 2, 3> wxzw;
+        Swizzler<BVector4CPP, b32, 3, 0, 3, 0> wxwx;
+        Swizzler<BVector4CPP, b32, 3, 0, 3, 1> wxwy;
+        Swizzler<BVector4CPP, b32, 3, 0, 3, 2> wxwz;
+        Swizzler<BVector4CPP, b32, 3, 0, 3, 3> wxww;
+        Swizzler<BVector4CPP, b32, 3, 1, 0, 0> wyxx;
+        Swizzler<BVector4CPP, b32, 3, 1, 0, 1> wyxy;
+        Swizzler<BVector4CPP, b32, 3, 1, 0, 2> wyxz;
+        Swizzler<BVector4CPP, b32, 3, 1, 0, 3> wyxw;
+        Swizzler<BVector4CPP, b32, 3, 1, 1, 0> wyyx;
+        Swizzler<BVector4CPP, b32, 3, 1, 1, 1> wyyy;
+        Swizzler<BVector4CPP, b32, 3, 1, 1, 2> wyyz;
+        Swizzler<BVector4CPP, b32, 3, 1, 1, 3> wyyw;
+        Swizzler<BVector4CPP, b32, 3, 1, 2, 0> wyzx;
+        Swizzler<BVector4CPP, b32, 3, 1, 2, 1> wyzy;
+        Swizzler<BVector4CPP, b32, 3, 1, 2, 2> wyzz;
+        Swizzler<BVector4CPP, b32, 3, 1, 2, 3> wyzw;
+        Swizzler<BVector4CPP, b32, 3, 1, 3, 0> wywx;
+        Swizzler<BVector4CPP, b32, 3, 1, 3, 1> wywy;
+        Swizzler<BVector4CPP, b32, 3, 1, 3, 2> wywz;
+        Swizzler<BVector4CPP, b32, 3, 1, 3, 3> wyww;
+        Swizzler<BVector4CPP, b32, 3, 2, 0, 0> wzxx;
+        Swizzler<BVector4CPP, b32, 3, 2, 0, 1> wzxy;
+        Swizzler<BVector4CPP, b32, 3, 2, 0, 2> wzxz;
+        Swizzler<BVector4CPP, b32, 3, 2, 0, 3> wzxw;
+        Swizzler<BVector4CPP, b32, 3, 2, 1, 0> wzyx;
+        Swizzler<BVector4CPP, b32, 3, 2, 1, 1> wzyy;
+        Swizzler<BVector4CPP, b32, 3, 2, 1, 2> wzyz;
+        Swizzler<BVector4CPP, b32, 3, 2, 1, 3> wzyw;
+        Swizzler<BVector4CPP, b32, 3, 2, 2, 0> wzzx;
+        Swizzler<BVector4CPP, b32, 3, 2, 2, 1> wzzy;
+        Swizzler<BVector4CPP, b32, 3, 2, 2, 2> wzzz;
+        Swizzler<BVector4CPP, b32, 3, 2, 2, 3> wzzw;
+        Swizzler<BVector4CPP, b32, 3, 2, 3, 0> wzwx;
+        Swizzler<BVector4CPP, b32, 3, 2, 3, 1> wzwy;
+        Swizzler<BVector4CPP, b32, 3, 2, 3, 2> wzwz;
+        Swizzler<BVector4CPP, b32, 3, 2, 3, 3> wzww;
+        Swizzler<BVector4CPP, b32, 3, 3, 0, 0> wwxx;
+        Swizzler<BVector4CPP, b32, 3, 3, 0, 1> wwxy;
+        Swizzler<BVector4CPP, b32, 3, 3, 0, 2> wwxz;
+        Swizzler<BVector4CPP, b32, 3, 3, 0, 3> wwxw;
+        Swizzler<BVector4CPP, b32, 3, 3, 1, 0> wwyx;
+        Swizzler<BVector4CPP, b32, 3, 3, 1, 1> wwyy;
+        Swizzler<BVector4CPP, b32, 3, 3, 1, 2> wwyz;
+        Swizzler<BVector4CPP, b32, 3, 3, 1, 3> wwyw;
+        Swizzler<BVector4CPP, b32, 3, 3, 2, 0> wwzx;
+        Swizzler<BVector4CPP, b32, 3, 3, 2, 1> wwzy;
+        Swizzler<BVector4CPP, b32, 3, 3, 2, 2> wwzz;
+        Swizzler<BVector4CPP, b32, 3, 3, 2, 3> wwzw;
+        Swizzler<BVector4CPP, b32, 3, 3, 3, 0> wwwx;
+        Swizzler<BVector4CPP, b32, 3, 3, 3, 1> wwwy;
+        Swizzler<BVector4CPP, b32, 3, 3, 3, 2> wwwz;
+        Swizzler<BVector4CPP, b32, 3, 3, 3, 3> wwww;
+
+        b32 array[4];
+    };
+
+    attr_always_inline attr_header constexpr
+    BVector4CPP() : x(0), y(0), z(0), w(0) {}
+    attr_always_inline attr_header constexpr
+    BVector4CPP( const struct BVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( b32 s ) : x(s), y(s), z(s), w(s) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( b32 x, b32 y, b32 z, b32 w ) : x(x), y(y), z(z), w(w) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( BVector2CPP xy, b32 z, b32 w ) : BVector4CPP( xy.x, xy.y, z, w ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( b32 x, b32 y, BVector2CPP zw ) : BVector4CPP( x, y, zw.x, zw.y ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( b32 x, BVector2CPP yz, b32 w ) : BVector4CPP( x, yz.x, yz.y, w ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( BVector2CPP xy, BVector2CPP zw ) : BVector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( BVector3CPP xyz, b32 w ) : BVector4CPP( xyz.xy, xyz.z, w ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector4CPP( b32 x, BVector3CPP yzw ) : BVector4CPP( x, yzw.xy, yzw.z ) {}
+
+    attr_always_inline attr_header constexpr
+    operator BVector4() const {
+        return *(struct BVector4*)this;
+    }
+
+    attr_always_inline attr_header static constexpr
+    BVector4CPP from_array( const b32 array[4] ) {
+        return *(BVector4CPP*)array;
+    }
+    attr_always_inline attr_header constexpr
+    void to_array( b32 out_array[4] ) const {
+        out_array[0] = array[0];
+        out_array[1] = array[1];
+        out_array[2] = array[2];
+        out_array[3] = array[3];
+    }
+
+    attr_always_inline attr_header constexpr
+    b32 operator[]( usize idx ) const {
+        return array[idx];
+    }
+    attr_always_inline attr_header constexpr
+    b32& operator[]( usize idx ) {
+        return array[idx];
+    }
+};
+attr_always_inline attr_header
+Vector4CPP add(
     Vector4CPP lhs, Vector4CPP rhs
 ) {
     return vec4_add( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector4CPP sub(
+attr_always_inline attr_header
+Vector4CPP sub(
     Vector4CPP lhs, Vector4CPP rhs
 ) {
     return vec4_sub( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector4CPP mul( Vector4CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP mul( Vector4CPP lhs, f32 rhs ) {
     return vec4_mul( lhs.pod, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP mul( f32 lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP mul( f32 lhs, Vector4CPP rhs ) {
     return vec4_mul( rhs.pod, lhs );
 }
-attr_always_inline
-attr_header Vector4CPP mul(
+attr_always_inline attr_header
+Vector4CPP mul(
     Vector4CPP lhs, Vector4CPP rhs
 ) {
     return vec4_mul_vec4( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector4CPP hadamard(
+attr_always_inline attr_header
+Vector4CPP hadamard(
     Vector4CPP lhs, Vector4CPP rhs
 ) {
     return mul(lhs, rhs);
 }
-attr_always_inline
-attr_header Vector4CPP div( Vector4CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP div( Vector4CPP lhs, f32 rhs ) {
     return vec4_div( lhs.pod, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP div( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP div( Vector4CPP lhs, Vector4CPP rhs ) {
     return vec4_div_vec4( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector4CPP mod( Vector4CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP mod( Vector4CPP lhs, f32 rhs ) {
     return vec4_mod( lhs.pod, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP mod( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP mod( Vector4CPP lhs, Vector4CPP rhs ) {
     return vec4_mod_vec4( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header Vector4CPP neg( Vector4CPP x ) {
+attr_always_inline attr_header
+Vector4CPP neg( Vector4CPP x ) {
     return vec4_neg( x.pod );
 }
-attr_always_inline
-attr_header f32 hadd( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 hadd( Vector4CPP x ) {
     return vec4_hadd( x.pod );
 }
-attr_always_inline
-attr_header f32 hmul( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 hmul( Vector4CPP x ) {
     return vec4_hmul( x.pod );
 }
-attr_always_inline
-attr_header f32 dot( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+f32 dot( Vector4CPP lhs, Vector4CPP rhs ) {
     return vec4_dot( lhs.pod, rhs.pod );
 }
-attr_always_inline
-attr_header f32 hmax( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 hmax( Vector4CPP x ) {
     return vec4_hmax( x.pod );
 }
-attr_always_inline
-attr_header Vector4CPP max( Vector4CPP x, Vector4CPP y ) {
+attr_always_inline attr_header
+Vector4CPP max( Vector4CPP x, Vector4CPP y ) {
     return vec4_max( x.pod, y.pod );
 }
-attr_always_inline
-attr_header f32 hmin( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 hmin( Vector4CPP x ) {
     return vec4_hmin( x.pod );
 }
-attr_always_inline
-attr_header Vector4CPP min( Vector4CPP x, Vector4CPP y ) {
+attr_always_inline attr_header
+Vector4CPP min( Vector4CPP x, Vector4CPP y ) {
     return vec4_min( x.pod, y.pod );
 }
-attr_always_inline
-attr_header f32 length_sqr( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 length_sqr( Vector4CPP x ) {
     return vec4_length_sqr( x.pod );
 }
-attr_always_inline
-attr_header f32 length( Vector4CPP x ) {
+attr_always_inline attr_header
+f32 length( Vector4CPP x ) {
     return vec4_length( x.pod );
 }
-attr_always_inline
-attr_header f32 distance_sqr( Vector4CPP a, Vector4CPP b ) {
+attr_always_inline attr_header
+f32 distance_sqr( Vector4CPP a, Vector4CPP b ) {
     return vec4_distance_sqr( a.pod, b.pod );
 }
-attr_always_inline
-attr_header f32 distance( Vector4CPP a, Vector4CPP b ) {
+attr_always_inline attr_header
+f32 distance( Vector4CPP a, Vector4CPP b ) {
     return vec4_distance( a.pod, b.pod );
 }
-attr_always_inline
-attr_header Vector4CPP normalize( Vector4CPP x ) {
+attr_always_inline attr_header
+Vector4CPP normalize( Vector4CPP x ) {
     return vec4_normalize( x.pod );
 }
-attr_always_inline
-attr_header Vector4CPP clamp(
+attr_always_inline attr_header
+Vector4CPP clamp(
     Vector4CPP v, Vector4CPP min, Vector4CPP max
 ) {
     return vec4_clamp( v.pod, min.pod, max.pod );
 }
-attr_always_inline
-attr_header Vector4CPP clamp(
+attr_always_inline attr_header
+Vector4CPP clamp(
     Vector4CPP v, f32 min, f32 max
 ) {
     return vec4_clamp_length( v.pod, min, max );
@@ -1137,41 +1583,49 @@ attr_header
 Vector4CPP fract( Vector4CPP v ) {
     return vec4_fract( v.pod );
 }
-attr_always_inline
-attr_header Vector4CPP lerp(
+attr_always_inline attr_header
+Vector4CPP lerp(
     Vector4CPP a, Vector4CPP b, f32 t
 ) {
     return vec4_lerp( a.pod, b.pod, t );
 }
-attr_always_inline
-attr_header Vector4CPP mix(
+attr_always_inline attr_header
+Vector4CPP mix(
     Vector4CPP a, Vector4CPP b, f32 t
 ) {
     return lerp( a, b, t );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP step( Vector4CPP edge, Vector4CPP x ) {
     return vec4_step( edge.pod, x.pod );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP step( f32 edge, Vector4CPP x ) {
     return vec4_step_scalar( edge, x.pod );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP smoothstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
     return vec4_smoothstep( edge0.pod, edge1.pod, x.pod );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP smoothstep( f32 edge0, f32 edge1, Vector4CPP x ) {
     return vec4_smoothstep_scalar( edge0, edge1, x.pod );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP smootherstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
     return vec4_smootherstep( edge0.pod, edge1.pod, x.pod );
 }
-attr_header
+attr_always_inline attr_header
 Vector4CPP smootherstep( f32 edge0, f32 edge1, Vector4CPP x ) {
     return vec4_smootherstep_scalar( edge0, edge1, x.pod );
+}
+attr_always_inline attr_header
+BVector4CPP isnan( Vector4CPP x ) {
+    return vec4_isnan( x.pod );
+}
+attr_always_inline attr_header
+BVector4CPP isinf( Vector4CPP x ) {
+    return vec4_isinf( x.pod );
 }
 attr_always_inline attr_header
 Vector4CPP radians( Vector4CPP degrees ) {
@@ -1237,73 +1691,97 @@ attr_always_inline attr_header
 Vector4CPP inversesqrt( Vector4CPP x ) {
     return vec4_inversesqrt( x.pod );
 }
-attr_always_inline
-attr_header b32 cmp( Vector4CPP a, Vector4CPP b ) {
+attr_always_inline attr_header
+b32 cmp( Vector4CPP a, Vector4CPP b ) {
     return vec4_cmp( a.pod, b.pod );
 }
+attr_always_inline attr_header
+BVector4 less_than( Vector4CPP a, Vector4CPP b ) {
+    return vec4_less_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 greater_than( Vector4CPP a, Vector4CPP b ) {
+    return vec4_greater_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 less_than_equal( Vector4CPP a, Vector4CPP b ) {
+    return vec4_less_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 greater_than_equal( Vector4CPP a, Vector4CPP b ) {
+    return vec4_greater_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 equal( Vector4CPP a, Vector4CPP b ) {
+    return vec4_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 not_equal( Vector4CPP a, Vector4CPP b ) {
+    return vec4_not_equal( a.pod, b.pod );
+}
 
-attr_always_inline
-attr_header Vector4CPP operator-( Vector4CPP v ) {
+attr_always_inline attr_header
+Vector4CPP operator-( Vector4CPP v ) {
     return neg( v );
 }
-attr_always_inline
-attr_header Vector4CPP& operator+=( Vector4CPP& lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator+=( Vector4CPP& lhs, Vector4CPP rhs ) {
     return lhs = add( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP& operator-=( Vector4CPP& lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator-=( Vector4CPP& lhs, Vector4CPP rhs ) {
     return lhs = sub( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP& operator*=( Vector4CPP& lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator*=( Vector4CPP& lhs, Vector4CPP rhs ) {
     return lhs = mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP& operator*=( Vector4CPP& lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator*=( Vector4CPP& lhs, f32 rhs ) {
     return lhs = mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP& operator/=( Vector4CPP& lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator/=( Vector4CPP& lhs, Vector4CPP rhs ) {
     return lhs = div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP& operator/=( Vector4CPP& lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP& operator/=( Vector4CPP& lhs, f32 rhs ) {
     return lhs = div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator+( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator+( Vector4CPP lhs, Vector4CPP rhs ) {
     return add( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator-( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator-( Vector4CPP lhs, Vector4CPP rhs ) {
     return sub( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator*( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator*( Vector4CPP lhs, Vector4CPP rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator*( Vector4CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator*( Vector4CPP lhs, f32 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator*( f32 lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator*( f32 lhs, Vector4CPP rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator/( Vector4CPP lhs, Vector4CPP rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator/( Vector4CPP lhs, Vector4CPP rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline
-attr_header Vector4CPP operator/( Vector4CPP lhs, f32 rhs ) {
+attr_always_inline attr_header
+Vector4CPP operator/( Vector4CPP lhs, f32 rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline
-attr_header b32 operator==( Vector4CPP a, Vector4CPP b ) {
+attr_always_inline attr_header
+b32 operator==( Vector4CPP a, Vector4CPP b ) {
     return cmp( a, b );
 }
-attr_always_inline
-attr_header b32 operator!=( Vector4CPP a, Vector4CPP b ) {
+attr_always_inline attr_header
+b32 operator!=( Vector4CPP a, Vector4CPP b ) {
     return !( a == b );
 }
 
@@ -1391,6 +1869,30 @@ attr_always_inline attr_header
 b32 cmp( IVector4CPP a, IVector4CPP b ) {
     return ivec4_cmp( a.pod, b.pod );
 }
+attr_always_inline attr_header
+BVector4 less_than( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_less_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 greater_than( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_greater_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 less_than_equal( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_less_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 greater_than_equal( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_greater_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 equal( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 not_equal( IVector4CPP a, IVector4CPP b ) {
+    return ivec4_not_equal( a.pod, b.pod );
+}
 
 attr_always_inline attr_header
 IVector4CPP& operator+=( IVector4CPP& lhs, IVector4CPP rhs ) {
@@ -1471,6 +1973,27 @@ b32 operator==( IVector4CPP a, IVector4CPP b ) {
 attr_always_inline attr_header
 b32 operator!=( IVector4CPP a, IVector4CPP b ) {
     return !( a == b );
+}
+
+attr_always_inline attr_header
+BVector4 equal( BVector4CPP a, BVector4CPP b ) {
+    return bvec4_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector4 not_equal( BVector4CPP a, BVector4CPP b ) {
+    return bvec4_not_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+b32 any( BVector4CPP x ) {
+    return bvec4_any( x.pod );
+}
+attr_always_inline attr_header
+b32 all( BVector4CPP x ) {
+    return bvec4_all( x.pod );
+}
+attr_always_inline attr_header
+BVector4 bnot( BVector4CPP x ) {
+    return bvec4_not( x.pod );
 }
 
 

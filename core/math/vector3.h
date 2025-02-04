@@ -148,10 +148,11 @@ struct BVector3 {
     typedef struct IVector3 ivec3;
     /// @brief 3 Component 32-bit Floating Point Vector.
     typedef struct Vector3 vec3;
+    /// @brief 3 Component 32-bit Boolean Vector.
+    typedef struct BVector3 bvec3;
 #endif
 typedef struct UVector3 uvec3;
 typedef struct DVector3 dvec3;
-typedef struct BVector3 bvec3;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
     /// @brief Construct a Vector3.
@@ -169,13 +170,18 @@ typedef struct BVector3 bvec3;
         Vector3{ .array={ (x), (y), (z) } }
     #define ivec3_new( x, y, z )\
         IVector3{ .array={ (x), (y), (z) } }
+    #define bvec3_new( x, y, z )\
+        BVector3{ .array={ (x), (y), (z) } }
 #else /* C++ constructors */
     #define vec3( x, y, z )\
         (struct Vector3){ .array={ (x), (y), (z) } }
     #define ivec3( x, y, z )\
         (struct IVector3){ .array={ (x), (y), (z) } }
+    #define bvec3( x, y, z )\
+        (struct BVector3){ .array={ (x), (y), (z) } }
     #define vec3_new(...)  vec3(__VA_ARGS__)
     #define ivec3_new(...) ivec3(__VA_ARGS__)
+    #define bvec3_new(...) bvec3(__VA_ARGS__)
 #endif /* C constructors */
 
 #endif /* Doxygen */
@@ -740,6 +746,26 @@ struct Vector3 vec3_smootherstep_scalar(
 ) {
     return vec3_smootherstep( vec3_set( edge0 ), vec3_set( edge1 ), x );
 }
+/// @brief Check if vector components are NaN.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_isnan( struct Vector3 x ) {
+    return bvec3_new(
+        f32_isnan( x.x ),
+        f32_isnan( x.y ),
+        f32_isnan( x.z ) );
+}
+/// @brief Check if vector components are infinite.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_isinf( struct Vector3 x ) {
+    return bvec3_new(
+        f32_isinf( x.x ), 
+        f32_isinf( x.y ),
+        f32_isinf( x.z ) );
+}
 /// @brief Convert degrees to radians.
 /// @param degrees Angles in degrees.
 /// @return Angles in radians.
@@ -897,6 +923,66 @@ struct Vector3 vec3_inversesqrt( struct Vector3 x ) {
 attr_always_inline attr_header
 b32 vec3_cmp( struct Vector3 a, struct Vector3 b ) {
     return vec3_length_sqr( vec3_sub( a, b ) ) < F32_EPSILON;
+}
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_less_than( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new(
+        a.x < b.x,
+        a.y < b.y,
+        a.z < b.z );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_greater_than( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new(
+        a.x > b.x,
+        a.y > b.y,
+        a.z > b.z );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_less_than_equal( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new(
+        a.x <= b.x,
+        a.y <= b.y,
+        a.z <= b.z );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_greater_than_equal( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new( 
+        a.x >= b.x,
+        a.y >= b.y,
+        a.z >= b.z );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_equal( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new(
+        f32_cmp( a.x, b.x ),
+        f32_cmp( a.y, b.y ),
+        f32_cmp( a.z, b.z ) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 vec3_not_equal( struct Vector3 a, struct Vector3 b ) {
+    return bvec3_new(
+        !f32_cmp( a.x, b.x ),
+        !f32_cmp( a.y, b.y ),
+        !f32_cmp( a.z, b.z ) );
 }
 
 /// @brief Create vector from array.
@@ -1091,6 +1177,106 @@ b32 ivec3_cmp( struct IVector3 a, struct IVector3 b ) {
         a.y == b.y &&
         a.z == b.z;
 }
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_less_than( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new(
+        a.x < b.x,
+        a.y < b.y,
+        a.z < b.z );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_greater_than( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new(
+        a.x > b.x,
+        a.y > b.y,
+        a.z > b.z );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_less_than_equal( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new(
+        a.x <= b.x,
+        a.y <= b.y,
+        a.z <= b.z );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_greater_than_equal( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new( 
+        a.x >= b.x,
+        a.y >= b.y,
+        a.z >= b.z );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_equal( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new(
+        a.x == b.x,
+        a.y == b.y,
+        a.z == b.z );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 ivec3_not_equal( struct IVector3 a, struct IVector3 b ) {
+    return bvec3_new(
+        a.x != b.x,
+        a.y != b.y,
+        a.z != b.z );
+}
+
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 bvec3_equal( struct BVector3 a, struct BVector3 b ) {
+    return bvec3_new( (a.x == b.x), (a.y == b.y), (a.z == b.z) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector3 bvec3_not_equal( struct BVector3 a, struct BVector3 b ) {
+    return bvec3_new( !(a.x == b.x), !(a.y == b.y), !(a.z == b.z) );
+}
+/// @brief Check if any component of vector is true.
+/// @param x Vector to check.
+/// @return
+///     - true  : Any component is true.
+///     - false : All components false.
+attr_always_inline attr_header
+b32 bvec3_any( struct BVector3 x ) {
+    return x.x || x.y || x.z;
+}
+/// @brief Check if all components of vector are true.
+/// @param x Vector to check.
+/// @return
+///     - true  : All components are true.
+///     - false : One or more components are false.
+attr_always_inline attr_header
+b32 bvec3_all( struct BVector3 x ) {
+    return x.x && x.y && x.z;
+}
+/// @brief Not components.
+/// @param x Vector to check.
+/// @return Booleans notted.
+attr_always_inline attr_header
+struct BVector3 bvec3_not( struct BVector3 x ) {
+    return bvec3_new( !x.x, !x.y, !x.z );
+}
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
@@ -1103,6 +1289,7 @@ b32 ivec3_cmp( struct IVector3 a, struct IVector3 b ) {
     #endif
     typedef Vector3CPP  vec3;
     typedef IVector3CPP ivec3;
+    typedef BVector3CPP bvec3;
 #endif
 
 typedef vec3 rgb;

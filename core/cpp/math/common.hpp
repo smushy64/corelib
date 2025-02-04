@@ -184,5 +184,13 @@ attr_header f64  normalize( i64 x ) {
     return x < 0 ? -( (f64)x / (f64)I64_MIN ) : (f64)x / (f64)I64_MAX;
 }
 
+/// @brief Compare two floating point numbers for equality.
+/// @param a, b (f32) Floats to compare for equality.
+/// @return True if a and b are equal.
+#define f32_cmp( a, b ) (abs((a) - (b)) <= F32_EPSILON)
+/// @brief Compare two floating point numbers for equality.
+/// @param a, b (f32) Floats to compare for equality.
+/// @return True if a and b are equal.
+#define f64_cmp( a, b ) (abs((a) - (b)) <= F64_EPSILON)
 
 #endif /* header guard */

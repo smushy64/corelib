@@ -213,10 +213,11 @@ struct BVector4 {
     typedef struct Vector4 vec4;
     /// @brief 4 Component 32-bit Signed Integer Vector.
     typedef struct IVector4 ivec4;
+    /// @brief 4 Component 32-bit Boolean Vector.
+    typedef struct BVector4 bvec4;
 #endif
 typedef struct UVector4 uvec4;
 typedef struct DVector4 dvec4;
-typedef struct BVector4 bvec4;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
     /// @brief Construct a Vector4.
@@ -234,13 +235,18 @@ typedef struct BVector4 bvec4;
         Vector4{ .array={ (x), (y), (z), (w) } }
     #define ivec4_new( x, y, z, w )\
         IVector4{ .array={ (x), (y), (z), (w) } }
+    #define bvec4_new( x, y, z, w )\
+        BVector4{ .array={ (x), (y), (z), (w) } }
 #else /* C++ constructors */
     #define vec4( x, y, z, w )\
         (struct Vector4){ .array={ (x), (y), (z), (w) } }
     #define ivec4( x, y, z, w )\
         (struct IVector4){ .array={ (x), (y), (z), (w) } }
+    #define bvec4( x, y, z, w )\
+        (struct BVector4){ .array={ (x), (y), (z), (w) } }
     #define vec4_new(...)  vec4(__VA_ARGS__)
     #define ivec4_new(...) ivec4(__VA_ARGS__)
+    #define bvec4_new(...) bvec4(__VA_ARGS__)
 #endif /* C constructors */ 
 
 #endif /* Doxygen */
@@ -722,6 +728,28 @@ struct Vector4 vec4_smootherstep_scalar(
 ) {
     return vec4_smootherstep( vec4_set( edge0 ), vec4_set( edge1 ), x );
 }
+/// @brief Check if vector components are NaN.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_isnan( struct Vector4 x ) {
+    return bvec4_new(
+        f32_isnan( x.x ),
+        f32_isnan( x.y ),
+        f32_isnan( x.z ),
+        f32_isnan( x.w ) );
+}
+/// @brief Check if vector components are infinite.
+/// @param x Vector.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_isinf( struct Vector4 x ) {
+    return bvec4_new(
+        f32_isinf( x.x ), 
+        f32_isinf( x.y ),
+        f32_isinf( x.z ),
+        f32_isinf( x.w ) );
+}
 /// @brief Convert degrees to radians.
 /// @param degrees Angles in degrees.
 /// @return Angles in radians.
@@ -887,6 +915,72 @@ struct Vector4 vec4_inversesqrt( struct Vector4 x ) {
 attr_always_inline attr_header
 b32 vec4_cmp( struct Vector4 a, struct Vector4 b ) {
     return vec4_length_sqr( vec4_sub( a, b ) ) < F32_EPSILON;
+}
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_less_than( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new(
+        a.x < b.x,
+        a.y < b.y,
+        a.z < b.z,
+        a.w < b.w );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_greater_than( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new(
+        a.x > b.x,
+        a.y > b.y,
+        a.z > b.z,
+        a.w > b.w );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_less_than_equal( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new(
+        a.x <= b.x,
+        a.y <= b.y,
+        a.z <= b.z,
+        a.w <= b.w );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_greater_than_equal( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new( 
+        a.x >= b.x,
+        a.y >= b.y,
+        a.z >= b.z,
+        a.w >= b.w );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_equal( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new(
+        f32_cmp( a.x, b.x ),
+        f32_cmp( a.y, b.y ),
+        f32_cmp( a.z, b.z ),
+        f32_cmp( a.w, b.w ) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 vec4_not_equal( struct Vector4 a, struct Vector4 b ) {
+    return bvec4_new(
+        !f32_cmp( a.x, b.x ),
+        !f32_cmp( a.y, b.y ),
+        !f32_cmp( a.z, b.z ),
+        !f32_cmp( a.w, b.w ) );
 }
 
 /// @brief Create vector from array.
@@ -1125,6 +1219,116 @@ b32 ivec4_cmp( struct IVector4 a, struct IVector4 b ) {
         a.z == b.z &&
         a.w == b.w;
 }
+/// @brief Check if less than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_less_than( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new(
+        a.x < b.x,
+        a.y < b.y,
+        a.z < b.z,
+        a.w < b.w );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_greater_than( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new(
+        a.x > b.x,
+        a.y > b.y,
+        a.z > b.z,
+        a.w > b.w );
+}
+/// @brief Check if less than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_less_than_equal( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new(
+        a.x <= b.x,
+        a.y <= b.y,
+        a.z <= b.z,
+        a.w <= b.w );
+}
+/// @brief Check if greater than or equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_greater_than_equal( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new( 
+        a.x >= b.x,
+        a.y >= b.y,
+        a.z >= b.z,
+        a.w >= b.w );
+}
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_equal( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new(
+        a.x == b.x,
+        a.y == b.y,
+        a.z == b.z,
+        a.w == b.w );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 ivec4_not_equal( struct IVector4 a, struct IVector4 b ) {
+    return bvec4_new(
+        a.x != b.x,
+        a.y != b.y,
+        a.z != b.z,
+        a.w != b.w );
+}
+
+/// @brief Check if equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 bvec4_equal( struct BVector4 a, struct BVector4 b ) {
+    return bvec4_new(
+        (a.x == b.x), (a.y == b.y),
+        (a.z == b.z), (a.w == b.w) );
+}
+/// @brief Check if not equals, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector4 bvec4_not_equal( struct BVector4 a, struct BVector4 b ) {
+    return bvec4_new(
+        !(a.x == b.x), !(a.y == b.y),
+        !(a.z == b.z), !(a.w == b.w) );
+}
+/// @brief Check if any component of vector is true.
+/// @param x Vector to check.
+/// @return
+///     - true  : Any component is true.
+///     - false : All components false.
+attr_always_inline attr_header
+b32 bvec4_any( struct BVector4 x ) {
+    return x.x || x.y || x.z || x.w;
+}
+/// @brief Check if all components of vector are true.
+/// @param x Vector to check.
+/// @return
+///     - true  : All components are true.
+///     - false : One or more components are false.
+attr_always_inline attr_header
+b32 bvec4_all( struct BVector4 x ) {
+    return x.x && x.y && x.z && x.w;
+}
+/// @brief Not components.
+/// @param x Vector to check.
+/// @return Booleans notted.
+attr_always_inline attr_header
+struct BVector4 bvec4_not( struct BVector4 x ) {
+    return bvec4_new( !x.x, !x.y, !x.z, !x.w );
+}
 
 #if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
     #pragma clang diagnostic pop
@@ -1137,6 +1341,7 @@ b32 ivec4_cmp( struct IVector4 a, struct IVector4 b ) {
     #endif
     typedef Vector4CPP  vec4;
     typedef IVector4CPP ivec4;
+    typedef BVector4CPP bvec4;
 #endif
 
 typedef vec4 rgba;

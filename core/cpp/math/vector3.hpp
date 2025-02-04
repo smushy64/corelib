@@ -10,6 +10,7 @@
 
 struct Vector3CPP;
 struct IVector3CPP;
+struct BVector3CPP;
 
 #if !defined(CORE_MATH_VECTOR3_H)
     #include "core/math/vector3.h"
@@ -366,6 +367,110 @@ struct IVector3CPP {
         return array[idx];
     }
 };
+struct BVector3CPP {
+    union {
+        /// @brief X, Y and Z components.
+        struct {
+            /// @brief X and Y components.
+            union {
+                /// @brief X and Y components.
+                struct {
+                    /// @brief X component.
+                    b32 x;
+                    /// @brief Y component.
+                    b32 y;
+                };
+                /// @brief X and Y components as an #IVector2.
+                BVector2CPP xy;
+            };
+            /// @brief Z component.
+            b32 z;
+        };
+        /// @brief Swizzle yz.
+        struct {
+            b32 __unused0;
+            BVector2CPP yz;
+        };
+        // struct { i32 x, y, z; };
+        struct BVector3 pod;
+
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 0, 0> xx;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 0, 2> xz;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 1, 0> yx;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 1, 1> yy;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 2, 0> zx;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 2, 1> zy;
+        SwizzlerConvert<BVector3CPP, BVector2CPP, b32, 2, 2> zz;
+
+        Swizzler<BVector3CPP, b32, 0, 0, 0> xxx;
+        Swizzler<BVector3CPP, b32, 0, 0, 1> xxy;
+        Swizzler<BVector3CPP, b32, 0, 0, 2> xxz;
+        Swizzler<BVector3CPP, b32, 0, 1, 0> xyx;
+        Swizzler<BVector3CPP, b32, 0, 1, 1> xyy;
+        Swizzler<BVector3CPP, b32, 0, 1, 2> xyz;
+        Swizzler<BVector3CPP, b32, 0, 2, 0> xzx;
+        Swizzler<BVector3CPP, b32, 0, 2, 1> xzy;
+        Swizzler<BVector3CPP, b32, 0, 2, 2> xzz;
+        Swizzler<BVector3CPP, b32, 1, 0, 0> yxx;
+        Swizzler<BVector3CPP, b32, 1, 0, 1> yxy;
+        Swizzler<BVector3CPP, b32, 1, 0, 2> yxz;
+        Swizzler<BVector3CPP, b32, 1, 1, 0> yyx;
+        Swizzler<BVector3CPP, b32, 1, 1, 1> yyy;
+        Swizzler<BVector3CPP, b32, 1, 1, 2> yyz;
+        Swizzler<BVector3CPP, b32, 1, 2, 0> yzx;
+        Swizzler<BVector3CPP, b32, 1, 2, 1> yzy;
+        Swizzler<BVector3CPP, b32, 1, 2, 2> yzz;
+        Swizzler<BVector3CPP, b32, 2, 0, 0> zxx;
+        Swizzler<BVector3CPP, b32, 2, 0, 1> zxy;
+        Swizzler<BVector3CPP, b32, 2, 0, 2> zxz;
+        Swizzler<BVector3CPP, b32, 2, 1, 0> zyx;
+        Swizzler<BVector3CPP, b32, 2, 1, 1> zyy;
+        Swizzler<BVector3CPP, b32, 2, 1, 2> zyz;
+        Swizzler<BVector3CPP, b32, 2, 2, 0> zzx;
+        Swizzler<BVector3CPP, b32, 2, 2, 1> zzy;
+        Swizzler<BVector3CPP, b32, 2, 2, 2> zzz;
+
+        b32 array[3];
+    };
+
+    attr_always_inline attr_header constexpr
+    BVector3CPP() : x(0), y(0), z(0) {}
+    attr_always_inline attr_header constexpr
+    BVector3CPP( const struct BVector3& v ) : x(v.x), y(v.y), z(v.z) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector3CPP( b32 s ) : x(s), y(s), z(s) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector3CPP( b32 x, b32 y, b32 z ) : x(x), y(y), z(z) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector3CPP( BVector2CPP xy, b32 z ) : BVector3CPP( xy.x, xy.y, z ) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector3CPP( b32 x, BVector2CPP yz ) : BVector3CPP( x, yz.x, yz.y ) {}
+
+    attr_always_inline attr_header constexpr
+    operator BVector3() const {
+        return *(struct BVector3*)this;
+    }
+
+    attr_always_inline attr_header static constexpr
+    BVector3CPP from_array( const b32 array[3] ) {
+        return *(BVector3CPP*)array;
+    }
+    attr_always_inline attr_header constexpr
+    void to_array( b32 out_array[3] ) const {
+        out_array[0] = array[0];
+        out_array[1] = array[1];
+        out_array[2] = array[2];
+    }
+
+    attr_always_inline attr_header constexpr
+    b32 operator[]( usize idx ) const {
+        return array[idx];
+    }
+    attr_always_inline attr_header constexpr
+    b32& operator[]( usize idx ) {
+        return array[idx];
+    }
+};
 attr_always_inline attr_header
 Vector3CPP add( Vector3CPP lhs, Vector3CPP rhs ) {
     return vec3_add( lhs.pod, rhs.pod );
@@ -539,6 +644,14 @@ Vector3CPP smootherstep( f32 edge0, f32 edge1, Vector3CPP x ) {
     return vec3_smootherstep_scalar( edge0, edge1, x.pod );
 }
 attr_always_inline attr_header
+BVector3CPP isnan( Vector3CPP x ) {
+    return vec3_isnan( x.pod );
+}
+attr_always_inline attr_header
+BVector3CPP isinf( Vector3CPP x ) {
+    return vec3_isinf( x.pod );
+}
+attr_always_inline attr_header
 Vector3CPP radians( Vector3CPP degrees ) {
     return vec3_radians( degrees.pod );
 }
@@ -605,6 +718,30 @@ Vector3CPP inversesqrt( Vector3CPP x ) {
 attr_always_inline attr_header
 b32 cmp( Vector3CPP a, Vector3CPP b ) {
     return vec3_cmp( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP less_than( Vector3CPP a, Vector3CPP b ) {
+    return vec3_less_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP greater_than( Vector3CPP a, Vector3CPP b ) {
+    return vec3_greater_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP less_than_equal( Vector3CPP a, Vector3CPP b ) {
+    return vec3_less_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP greater_than_equal( Vector3CPP a, Vector3CPP b ) {
+    return vec3_greater_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP equal( Vector3CPP a, Vector3CPP b ) {
+    return vec3_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP not_equal( Vector3CPP a, Vector3CPP b ) {
+    return vec3_not_equal( a.pod, b.pod );
 }
 
 attr_always_inline attr_header
@@ -756,6 +893,30 @@ attr_always_inline attr_header
 f32 cmp( IVector3CPP a, IVector3CPP b ) {
     return ivec3_cmp( a.pod, b.pod );
 }
+attr_always_inline attr_header
+BVector3CPP less_than( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_less_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP greater_than( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_greater_than( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP less_than_equal( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_less_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP greater_than_equal( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_greater_than_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP equal( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP not_equal( IVector3CPP a, IVector3CPP b ) {
+    return ivec3_not_equal( a.pod, b.pod );
+}
 
 attr_always_inline attr_header
 IVector3CPP& operator+=( IVector3CPP& lhs, IVector3CPP rhs ) {
@@ -836,6 +997,27 @@ b32 operator==( IVector3CPP a, IVector3CPP b ) {
 attr_always_inline attr_header
 b32 operator!=( IVector3CPP a, IVector3CPP b ) {
     return !( a == b );
+}
+
+attr_always_inline attr_header
+BVector3CPP equal( BVector3CPP a, BVector3CPP b ) {
+    return bvec3_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector3CPP not_equal( BVector3CPP a, BVector3CPP b ) {
+    return bvec3_not_equal( a.pod, b.pod );
+}
+attr_always_inline attr_header
+b32 any( BVector3CPP x ) {
+    return bvec3_any( x );
+}
+attr_always_inline attr_header
+b32 all( BVector3CPP x ) {
+    return bvec3_all( x );
+}
+attr_always_inline attr_header
+BVector3CPP bnot( BVector3CPP x ) {
+    return bvec3_not( x.pod );
 }
 
 #endif /* header guard */

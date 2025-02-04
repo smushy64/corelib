@@ -10,6 +10,7 @@
 
 struct Vector2CPP;
 struct IVector2CPP;
+struct BVector2CPP;
 
 #if !defined(CORE_MATH_VECTOR2_H)
     #include "core/math/vector2.h"
@@ -160,6 +161,52 @@ struct IVector2CPP {
         return array[idx];
     }
 };
+struct BVector2CPP {
+    union {
+        struct { b32 x, y; };
+        struct { b32 w, h; };
+        struct BVector2 pod;
+
+        Swizzler<BVector2CPP, b32, 0, 0> xx, ww;
+        Swizzler<BVector2CPP, b32, 1, 1> yy, hh;
+        Swizzler<BVector2CPP, b32, 1, 0> yx, hw;
+
+        b32 array[2];
+    };
+
+    attr_always_inline attr_header constexpr
+    BVector2CPP() : x(0), y(0) {}
+    attr_always_inline attr_header constexpr
+    BVector2CPP( const struct BVector2& v ) : x(v.x), y(v.y) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector2CPP( b32 s ) : x(s), y(s) {}
+    attr_always_inline attr_header constexpr
+    explicit BVector2CPP( b32 x, b32 y ) : x(x), y(y) {}
+
+    attr_always_inline attr_header constexpr
+    operator BVector2() const {
+        return *(struct BVector2*)this;
+    }
+
+    attr_always_inline attr_header static constexpr
+    BVector2CPP from_array( const b32 array[2] ) {
+        return *(BVector2CPP*)array;
+    }
+    attr_always_inline attr_header constexpr
+    void to_array( b32 out_array[2] ) const {
+        out_array[0] = array[0]; out_array[1] = array[1];
+    }
+
+    attr_always_inline attr_header constexpr
+    b32 operator[]( usize idx ) const {
+        return array[idx];
+    }
+    attr_always_inline attr_header constexpr
+    b32& operator[]( usize idx ) {
+        return array[idx];
+    }
+};
+
 attr_always_inline attr_header
 Vector2CPP add(
     Vector2CPP lhs, Vector2CPP rhs
@@ -363,6 +410,14 @@ Vector2CPP smootherstep(
     return vec2_smootherstep_scalar( edge0, edge1, x );
 }
 attr_always_inline attr_header
+BVector2CPP isnan( Vector2CPP x ) {
+    return vec2_isnan( x.pod );
+}
+attr_always_inline attr_header
+BVector2CPP isinf( Vector2CPP x ) {
+    return vec2_isinf( x.pod );
+}
+attr_always_inline attr_header
 Vector2CPP radians( Vector2CPP degrees ) {
     return vec2_radians( degrees.pod );
 }
@@ -429,6 +484,30 @@ Vector2CPP inversesqrt( Vector2CPP x ) {
 attr_always_inline attr_header
 b32 cmp( Vector2CPP a, Vector2CPP b ) {
     return vec2_cmp( a.pod, b.pod );
+}
+attr_always_inline attr_header
+BVector2CPP less_than( Vector2CPP a, Vector2CPP b ) {
+    return vec2_less_than( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP greater_than( Vector2CPP a, Vector2CPP b ) {
+    return vec2_greater_than( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP less_than_equal( Vector2CPP a, Vector2CPP b ) {
+    return vec2_less_than_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP greater_than_equal( Vector2CPP a, Vector2CPP b ) {
+    return vec2_greater_than_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP equal( Vector2CPP a, Vector2CPP b ) {
+    return vec2_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP not_equal( Vector2CPP a, Vector2CPP b ) {
+    return vec2_not_equal( a, b );
 }
 
 attr_always_inline attr_header
@@ -584,6 +663,30 @@ attr_always_inline attr_header
 b32 cmp( IVector2CPP a, IVector2CPP b ) {
     return ivec2_cmp( a.pod, b.pod );
 }
+attr_always_inline attr_header
+BVector2CPP less_than( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_less_than( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP greater_than( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_greater_than( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP less_than_equal( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_less_than_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP greater_than_equal( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_greater_than_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP equal( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP not_equal( IVector2CPP a, IVector2CPP b ) {
+    return ivec2_not_equal( a, b );
+}
 
 attr_always_inline attr_header
 IVector2CPP& operator+=( IVector2CPP& lhs, IVector2CPP rhs ) {
@@ -664,6 +767,27 @@ b32 operator==( IVector2CPP a, IVector2CPP b ) {
 attr_always_inline attr_header
 b32 operator!=( IVector2CPP a, IVector2CPP b ) {
     return !( a == b );
+}
+
+attr_always_inline attr_header
+BVector2CPP equal( BVector2CPP a, BVector2CPP b ) {
+    return bvec2_equal( a, b );
+}
+attr_always_inline attr_header
+BVector2CPP not_equal( BVector2CPP a, BVector2CPP b ) {
+    return bvec2_not_equal( a, b );
+}
+attr_always_inline attr_header
+b32 any( BVector2CPP x ) {
+    return bvec2_any( x.pod );
+}
+attr_always_inline attr_header
+b32 all( BVector2CPP x ) {
+    return bvec2_all( x.pod );
+}
+attr_always_inline attr_header
+BVector2CPP bnot( BVector2CPP x ) {
+    return bvec2_not( x.pod );
 }
 
 #endif /* header guard */
