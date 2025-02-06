@@ -9,7 +9,6 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/assertions.h"
-#include "core/macros.h"
 #include "core/stream.h"
 
 // forward declaration.

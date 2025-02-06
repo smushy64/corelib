@@ -849,7 +849,7 @@ DirectoryWalk* platform_directory_walk_begin(
         return NULL;
     }
 
-    DirectoryWalk* walk = allocator->alloc( sizeof(*walk), 0, allocator->ctx );
+    DirectoryWalk* walk = allocator_alloc( allocator, sizeof(*walk) );
     if( !walk ) {
         core_error( "posix: directory_walk_begin: failed to allocate directory walk!" );
         return NULL;
@@ -864,7 +864,7 @@ DirectoryWalk* platform_directory_walk_begin(
         pb.raw = platform_heap_alloc( path.len + 1 );
         if( !pb.raw ) {
             core_error( "posix: failed to allocate path buffer!" );
-            allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
+            allocator_free( allocator, walk, sizeof(*walk) );
             return NULL;
         }
         memory_copy( pb.raw, path.const_raw, path.len );
@@ -884,7 +884,7 @@ DirectoryWalk* platform_directory_walk_begin(
             "posix: directory_walk_begin: "
             "failed to open directory '{p}'! reason: {cc}",
             path, strerror(errnum) );
-        allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
+        allocator_free( allocator, walk, sizeof(*walk) );
         return NULL;
     }
 
@@ -939,7 +939,7 @@ void platform_directory_walk_end(
     }
 
     closedir( walk->dp );
-    allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
+    allocator_free( allocator, walk, sizeof(*walk) );
 }
 
 b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write ) {

@@ -11,7 +11,7 @@
 attr_core_api b32 generic_array_from_alloc(
     usize stride, usize cap, void** buf, struct AllocatorInterface* allocator
 ) {
-    void* _buf = allocator->alloc( stride * cap, 0, allocator->ctx );
+    void* _buf = allocator_alloc( allocator, stride * cap );
     if( !_buf ) {
         return false;
     }
@@ -75,7 +75,7 @@ attr_core_api b32 generic_array_grow(
     }
     usize old_size = stride * *cap;
     usize new_size = old_size + (stride * amount);
-    void* new_buf  = allocator->realloc( *buf, old_size, new_size, 0, allocator->ctx );
+    void* new_buf  = allocator_realloc( allocator, *buf, old_size, new_size );
     if( !new_buf ) {
         return false;
     }
@@ -186,7 +186,7 @@ attr_core_api b32 generic_array_clone(
     usize dst_cap  = len + 8;
     usize src_size = stride * len;
     usize dst_size = stride * dst_cap;
-    void* dst_buf  = allocator->alloc( dst_size, 0, allocator->ctx );
+    void* dst_buf  = allocator_alloc( allocator, dst_size );
     if( !dst_buf ) {
         return false;
     }
@@ -201,7 +201,7 @@ attr_core_api b32 generic_array_clone(
 attr_core_api b32 queue_from_alloc(
     usize stride, usize cap, Queue* out_queue, struct AllocatorInterface* allocator
 ) {
-    void* buf = allocator->alloc( stride * cap, 0, allocator->ctx );
+    void* buf = allocator_alloc( allocator, stride * cap );
     if( !buf ) {
         return false;
     }
@@ -216,7 +216,7 @@ attr_core_api b32 queue_from_alloc(
 }
 attr_core_api void queue_free( Queue* queue, struct AllocatorInterface* allocator ) {
     if( queue && queue->buf ) {
-        allocator->free( queue->buf, queue->stride * queue->cap, 0, allocator->ctx );
+        allocator_free( allocator, queue, queue->stride * queue->cap );
         memory_zero( queue, sizeof(*queue) );
     }
 }
@@ -297,8 +297,7 @@ attr_core_api b32 hashmap_from_alloc(
     usize stride, usize cap, Hashmap* out_map,
     struct AllocatorInterface* allocator
 ) {
-    void* buf = allocator->alloc(
-        (stride * cap) + (sizeof(hash64) * cap), 0, allocator->ctx );
+    void* buf = allocator_alloc( allocator, (stride * cap) + (sizeof(hash64) * cap) );
     if( !buf ) {
         return false;
     }
@@ -309,9 +308,8 @@ attr_core_api void hashmap_free(
     Hashmap* map, struct AllocatorInterface* allocator
 ) {
     if( map && map->buf ) {
-        allocator->free(
-            map->buf, (map->stride * map->cap) + (sizeof(hash64) * map->cap),
-            0, allocator->ctx );
+        allocator_free(
+            allocator, map->buf, (map->stride * map->cap) + (sizeof(hash64) * map->cap) );
         memory_zero( map, sizeof(*map) );
     }
 }
@@ -324,7 +322,7 @@ attr_core_api b32 hashmap_grow(
 ) {
     usize old_size = (map->stride * map->cap) + (sizeof(hash64) * map->cap);
     usize new_size = old_size + ( (map->stride * amount) + (sizeof(hash64) * amount) );
-    void* buf = allocator->realloc( map->buf, old_size, new_size, 0, allocator->ctx );
+    void* buf = allocator_realloc( allocator, map->buf, old_size, new_size );
     if( !buf ) {
         return false;
     }

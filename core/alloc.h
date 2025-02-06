@@ -8,185 +8,221 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/macros.h"
-#include "core/slice.h"
+#include "core/string.h"
+#include "core/memory.h"
 
-/// @brief Function prototype for allocator alloc function.
-/// @details
-/// All allocators must returned zeroed memory.
-/// @param     size      Size of allocation.
-/// @param     alignment Alignment of allocation. Some allocators may not support alignment. Must be a power of 2.
-/// @param[in] ctx       (optional) Allocator context.
-/// @return
-///     - NULL    : Failed to allocate memory from allocator.
-///     - Pointer : Pointer to allocated memory.
-typedef void* AllocatorAllocFN( usize size, usize alignment, void* ctx );
-/// @brief Function prototype for allocator realloc function.
+/// @brief Function prototype for allocator allocation function.
 /// @details
 /// All allocators must return zeroed memory. (Only newly allocated space)
-/// @param[in] memory    Pointer to memory to reallocate.
-/// @param     old_size  Size of @c memory.
-/// @param     new_size  Reallocation size of @c memory. Must be >= @c old_size.
-/// @param     alignment Alignment of allocation. Must match original alignment. Some allocators may not support alignment. Must be a power of 2.
-/// @param[in] ctx       (optional) Allocator context.
+/// @param[in] ctx          (optional) Allocator context.
+/// @param[in] memory       (nullable) Pointer to memory to reallocate. If null, @c old_size is ignored.
+/// @param     old_size     Size of @c memory. If @c memory is null, ignored.
+/// @param     new_size     New size of @c memory. Must be >= @c old_size.
+/// @param     opt_name     (optional) Name of allocator.
+/// @param[in] opt_file     (optional) Name of file where function was called.
+/// @param     opt_line     (optional) Line where function was called.
+/// @param[in] opt_function (optional) Name of function where this function was called.
 /// @return
 ///     - NULL    : Failed to reallocate buffer. @c memory is still valid.
 ///     - Pointer : Pointer to new buffer. @c memory is no longer valid.
-typedef void* AllocatorReallocFN(
-    void* memory, usize old_size, usize new_size, usize alignment, void* ctx );
+typedef void* AllocatorAllocFN(
+    void* ctx, void* memory, usize old_size, usize new_size, struct _StringPOD opt_name,
+    const char* opt_file, int opt_line, const char* opt_function );
 /// @brief Function prototype for allocator free function.
-/// @param[in] memory    Pointer to memory to free.
-/// @param     size      Size of @c memory.
-/// @param     alignment Alignment of @c memory.
-/// @param[in] ctx       (optional) Allocator context.
-typedef void AllocatorFreeFN( void* memory, usize size, usize alignment, void* ctx );
+/// @param[in] ctx          (optional) Allocator context.
+/// @param[in] memory       Pointer to memory to free.
+/// @param     size         Size of @c memory.
+/// @param     opt_name     (optional) Name of allocator.
+/// @param[in] opt_file     (optional) Name of file where function was called.
+/// @param     opt_line     (optional) Line where function was called.
+/// @param[in] opt_function (optional) Name of function where this function was called.
+typedef void AllocatorFreeFN(
+    void* ctx, void* memory, usize size, struct _StringPOD opt_name,
+    const char* opt_file, int opt_line, const char* opt_function );
 
 /// @brief Interface for memory allocators.
+/// @note
+/// Allocator interfaces are meant to be defined
+/// before your interface. As an example:
+///
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
+///
+/// struct StackAllocator {
+///     struct AllocatorInterface interface;
+///     usize cap;
+///     usize len;
+///     void* base;
+/// };
+///
+/// struct StackAllocator stack;
+///
+/// allocator_alloc( (struct AllocatorInterface*)&stack, 10 );
+///
+/// // OR
+///
+/// allocator_alloc( &stack.interface, 10 );
+///
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+///
+/// That way, when you call allocator_alloc, you can just rcast the
+/// allocator or take a pointer to the interface itself. allocator_alloc
+/// passes one past the pointer provided as the context.
+///
 typedef struct AllocatorInterface {
-    /// @brief Function for allocating memory from this allocator.
-    /// @details
-    /// All allocators must returned zeroed memory.
-    /// @param     size      Size of allocation.
-    /// @param     alignment Alignment of allocation. Some allocators may not support alignment. Must be a power of 2.
-    /// @param[in] ctx       (optional) Allocator context.
-    /// @return
-    ///     - NULL    : Failed to allocate memory from allocator.
-    ///     - Pointer : Pointer to allocated memory.
-    AllocatorAllocFN*   alloc;
-    /// @brief Function for reallocating memory from this allocator.
+
+    /// @brief String identifying this allocator.
+    struct _StringPOD name;
+
+    /// @brief Function prototype for allocator allocation function.
     /// @details
     /// All allocators must return zeroed memory. (Only newly allocated space)
-    /// @param[in] memory    Pointer to memory to reallocate.
-    /// @param     old_size  Size of @c memory.
-    /// @param     new_size  Reallocation size of @c memory. Must be >= @c old_size.
-    /// @param     alignment Alignment of allocation. Must match original alignment. Some allocators may not support alignment. Must be a power of 2.
-    /// @param[in] ctx       (optional) Allocator context.
+    /// @param[in] ctx          (optional) Allocator context.
+    /// @param[in] memory       (nullable) Pointer to memory to reallocate. If null, @c old_size is ignored.
+    /// @param     old_size     Size of @c memory. If @c memory is null, ignored.
+    /// @param     new_size     New size of @c memory. Must be >= @c old_size.
+    /// @param     opt_name     (optional) Name of allocator.
+    /// @param[in] opt_file     (optional) Name of file where function was called.
+    /// @param     opt_line     (optional) Line where function was called.
+    /// @param[in] opt_function (optional) Name of function where this function was called.
     /// @return
     ///     - NULL    : Failed to reallocate buffer. @c memory is still valid.
     ///     - Pointer : Pointer to new buffer. @c memory is no longer valid.
-    AllocatorReallocFN* realloc;
-    /// @brief Function for freeing memory from this allocator.
-    /// @param[in] memory    Pointer to memory to free.
-    /// @param     size      Size of @c memory.
-    /// @param     alignment Alignment of @c memory.
-    /// @param[in] ctx       (optional) Allocator context.
-    AllocatorFreeFN*    free;
-    /// @brief Pointer to allocator context.
-    /// @details
-    /// Some allocators (such as heap allocator) don't require a context.
-    void*               ctx;
+    AllocatorAllocFN* alloc;
+    /// @brief Function prototype for allocator free function.
+    /// @param[in] ctx          (optional) Allocator context.
+    /// @param[in] memory       Pointer to memory to free.
+    /// @param     size         Size of @c memory.
+    /// @param     opt_name     (optional) Name of allocator.
+    /// @param[in] opt_file     (optional) Name of file where function was called.
+    /// @param     opt_line     (optional) Line where function was called.
+    /// @param[in] opt_function (optional) Name of function where this function was called.
+    AllocatorFreeFN* free;
 
-    /// @brief String identifying this allocator.
-    struct ByteSlice name;
 } AllocatorInterface;
-/// @brief Create a new allocator interface.
-/// @param[in] _alloc   (AllocatorAllocFN*)   Function for allocating memory.
-/// @param[in] _realloc (AllocatorReallocFN*) Function for reallocating memory.
-/// @param[in] _free    (AllocatorFreeFN*)    Function for freeing memory.
-/// @param[in] opt_ctx  (void*,optional)      Pointer to allocator context.
-/// @return Allocator interface.
-#define allocator_interface_new( _alloc, _realloc, _free, opt_ctx )\
-    struct_literal( AllocatorInterface ) {\
-        .alloc=_alloc, .realloc=_realloc, .free=_free, .ctx=opt_ctx,\
-        .name={ .len=0,.cc="" } }
-/// @brief Create allocator interface for default heap allocator.
-/// @return Allocator interface.
-#define allocator_interface_from_heap()\
-    allocator_interface_new( ___internal_memory_alloc_,\
-        ___internal_memory_realloc_, ___internal_memory_free_, 0 )
 
-/// @brief Stack allocator context.
-typedef struct StackAllocator {
-    /// @brief If allocator should use atomic operations.
-    bsize is_atomic;
-    /// @brief Total size of allocator memory.
-    usize size;
-    /// @brief Stack pointer.
-    volatile usize at;
-    /// @brief Pointer to start of stack buffer.
-    void* start;
-} StackAllocator;
-/// @brief Create allocator interface from StackAllocator.
-/// @param[in] stack (StackAllocator*) Pointer to stack allocator.
-/// @return Allocator interface.
-#define allocator_interface_from_stack( stack )\
-    allocator_interface_new( stack_allocator_alloc,\
-        stack_allocator_realloc, stack_allocator_free, stack )
-/// @brief Create new stack allocator.
-/// @param     size   Total size of stack allocator buffer.
-/// @param[in] buf    Pointer to start of stack allocator buffer.
-/// @param     atomic If allocator should use atomic operations when allocating.
-/// @return Stack allocator.
-attr_always_inline
-attr_header StackAllocator stack_allocator_new( usize size, void* buf, b32 atomic ) {
-    StackAllocator stack;
-    stack.size      = size;
-    stack.at        = 0;
-    stack.start     = buf;
-    stack.is_atomic = atomic;
-    return stack;
+/// @brief Fill in an allocator interface that uses heap allocation functions.
+/// @param[out] out_interface Pointer to interface to fill out.
+attr_core_api
+void allocator_interface_from_heap( AllocatorInterface* out_interface );
+
+/// @brief Call allocator interface allocate function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param     size      Size of allocation.
+/// @return
+///     - NULL    : Failed to allocate buffer.
+///     - Pointer : Pointer to new buffer.
+#define allocator_alloc( allocator, size ) \
+    (allocator)->alloc( \
+        (void*)((allocator) + 1), NULL, 0, size, (allocator)->name, \
+        __FILE__, __LINE__, __func__ )
+
+/// @brief Call allocator interface reallocate function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] memory    Pointer to start of buffer.
+/// @param     old_size  Size of @c memory.
+/// @param     new_size  New size of @c memory.
+/// @return
+///     - NULL    : Failed to reallocate buffer.
+///     - Pointer : Pointer to new buffer.
+#define allocator_realloc( allocator, memory, old_size, new_size ) \
+    (allocator)->alloc( \
+        (void*)((allocator) + 1), memory, old_size, new_size, (allocator)->name, \
+        __FILE__, __LINE__, __func__ )
+
+/// @brief Call allocator interface free function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @parma[in] memory    Pointer to start of buffer to free.
+/// @param     size      Size of @c memory.
+#define allocator_free( allocator, memory, size ) \
+    (allocator)->free( \
+        (void*)((allocator) + 1), memory, size, (allocator)->name, \
+        __FILE__, __LINE__, __func__ )
+
+/// @brief Call allocator interface allocate function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param     size      Size of allocation.
+/// @param     alignment Alignment of memory.
+/// @return
+///     - NULL    : Failed to allocate buffer.
+///     - Pointer : Pointer to new buffer.
+#define allocator_alloc_aligned( allocator, size, alignment ) \
+    __allocator_interface_alloc_aligned__( \
+        (allocator), NULL, 0, size, alignment, __FILE__, __LINE__, __func__ )
+
+/// @brief Call allocator interface reallocate function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] memory    Pointer to start of buffer.
+/// @param     old_size  Size of @c memory.
+/// @param     new_size  New size of @c memory.
+/// @param     alignment Alignment of memory.
+/// @return
+///     - NULL    : Failed to reallocate buffer.
+///     - Pointer : Pointer to new buffer.
+#define allocator_realloc_aligned( allocator, memory, old_size, new_size, alignment ) \
+    __allocator_interface_alloc_aligned__( \
+        (allocator), memory, old_size, new_size, alignment, __FILE__, __LINE__, __func__ )
+
+/// @brief Call allocator interface free function.
+/// @param[in] allocator Pointer to allocator interface.
+/// @parma[in] memory    Pointer to start of buffer to free.
+/// @param     size      Size of @c memory.
+/// @param     alignment Alignment of memory.
+#define allocator_free_aligned( allocator, memory, size, alignment ) \
+    __allocator_interface_free_aligned__( \
+        (allocator), memory, size, alignment, __FILE__, __LINE__, __func__ )
+
+attr_always_inline attr_header attr_optimized
+void* __allocator_interface_alloc_aligned__(
+    AllocatorInterface* allocator, void* memory,
+    usize old_size, usize new_size, usize alignment,
+    const char* file, int line, const char* function 
+) {
+    if( memory ) {
+        void* base = ((void**)memory)[-1];
+        usize off  = (usize)memory - (usize)base;
+
+        void* new_buffer = allocator->alloc(
+            (void*)(allocator + 1), base,
+            old_size + alignment + sizeof(void*),
+            new_size + alignment + sizeof(void*),
+            allocator->name, file, line, function );
+
+        if( !new_buffer ) {
+            return NULL;
+        }
+
+        void* aligned = (void*)((u8*)new_buffer + off);
+        ((void**)aligned)[-1] = new_buffer;
+
+        return aligned;
+    } else {
+        void* ptr = allocator->alloc(
+            (void*)(allocator + 1), NULL, 0,
+            new_size, allocator->name, file, line, function );
+        if( !ptr ) {
+            return NULL;
+        }
+
+        void* aligned = memory_align( (u8*)ptr + sizeof(void*), alignment );
+        ((void**)aligned)[-1] = ptr;
+
+        return aligned;
+    }
 }
-/// @brief Push new memory to the top of stack allocator.
-/// @param[in] stack Pointer to stack allocator.
-/// @param     size  Size of allocation.
-/// @param     alignment Desired alignment of memory. Zero means no particular alignment. Must be a power of 2.
-/// @return
-///     - NULL    : Stack allocator does not have space for allocation.
-///     - Pointer : Pointer to start of allocation.
-attr_core_api void* stack_allocator_push(
-    StackAllocator* stack, usize size, usize alignment );
-/// @brief Pop bytes from top of stack allocator.
-/// @warning This function does not check if memory being popped should be popped.
-/// @param[in] stack     Pointer to stack allocator.
-/// @param     size      Size of allocation to pop.
-/// @param     alignment Alignment of memory being popped. Zero means no particular alignment. Must be a power of 2.
-attr_core_api void stack_allocator_pop(
-    StackAllocator* stack, usize size, usize alignment );
-/// @brief Clear stack. Resets stack pointer and zeroes memory.
-/// @param[in] stack Pointer to stack to clear.
-attr_core_api void stack_allocator_clear( StackAllocator* stack );
-
-/// @brief Stack allocator alloc function for allocator interface.
-/// @param     size           Size of allocation.
-/// @param     alignment      Alignment of allocation. Must be a power of 2.
-/// @param[in] StackAllocator Pointer to stack.
-/// @return
-///     - NULL    : Failed to allocate memory from stack.
-///     - Pointer : Pointer to allocated memory.
-attr_core_api void* stack_allocator_alloc(
-    usize size, usize alignment, void* StackAllocator );
-/// @brief Stack allocator realloc function for allocator interface.
-/// @warning
-/// This function probably shouldn't be used as stack allocator
-/// doesn't really support reallocating.
-/// @param[in] memory         Pointer to memory to reallocate.
-/// @param     old_size       Size of @c memory.
-/// @param     new_size       Reallocation size of @c memory. Must be >= @c old_size.
-/// @param     alignment      Alignment of allocation. Must match original alignment. Must be a power of 2.
-/// @param[in] StackAllocator Pointer to stack.
-/// @return
-///     - NULL    : Failed to reallocate buffer. @c memory is still valid.
-///     - Pointer : Pointer to new buffer. @c memory is no longer valid.
-attr_core_api void* stack_allocator_realloc(
-    void* memory, usize old_size, usize new_size,
-    usize alignment, void* StackAllocator );
-/// @brief Stack allocator free function for allocator interface.
-/// @warning
-/// This function probably shouldn't be used as stack allocator
-/// doesn't really support freeing.
-/// Memory is popped from top of stack but that may not be where @c memory points to.
-/// @param[in] memory         Pointer to memory to free.
-/// @param     size           Size of @c memory.
-/// @param     alignment      Alignment of @c memory.
-/// @param[in] StackAllocator Pointer to stack.
-attr_core_api void  stack_allocator_free(
-    void* memory, usize size, usize alignment, void* StackAllocator );
-
-attr_core_api void* ___internal_memory_alloc_(
-    usize size, usize alignment, void* ctx );
-attr_core_api void* ___internal_memory_realloc_(
-    void* memory, usize old_size, usize new_size, usize alignment, void* ctx );
-attr_core_api void ___internal_memory_free_(
-    void* memory, usize size, usize alignment, void* ctx );
+attr_always_inline attr_header attr_optimized
+void __allocator_interface_free_aligned__(
+    AllocatorInterface* allocator, void* memory,
+    usize size, usize alignment,
+    const char* file, int line, const char* function
+) {
+    if( !memory ) {
+        return;
+    }
+    void* base = ((void**)memory)[-1];
+    allocator->free(
+        (void*)(allocator + 1), base,
+        size + alignment + sizeof(void*),
+        allocator->name, file, line, function );
+}
 
 #endif /* header guard */

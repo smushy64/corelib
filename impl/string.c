@@ -515,7 +515,7 @@ attr_core_api b32 string_buf_from_alloc(
 ) {
     // for null-terminator.
     usize _size = size + 1;
-    void* ptr = allocator->alloc( _size, 0, allocator->ctx );
+    void* ptr = allocator_alloc( allocator, _size );
     if( !ptr ) {
         return false;
     }
@@ -537,8 +537,7 @@ attr_core_api b32 string_buf_from_string_alloc(
 attr_core_api b32 string_buf_grow(
     StringBuf* buf, usize amount, struct AllocatorInterface* allocator
 ) {
-    void* ptr = allocator->realloc(
-        buf->_void, buf->cap, buf->cap + amount, 0, allocator->ctx );
+    void* ptr = allocator_realloc( allocator, buf->_void, buf->cap, buf->cap + amount );
     if( !ptr ) {
         return false;
     }
@@ -550,7 +549,7 @@ attr_core_api void string_buf_free(
     StringBuf* buf, struct AllocatorInterface* allocator
 ) {
     if( buf && buf->_void ) {
-        allocator->free( buf->_void, buf->cap, 0, allocator->ctx );
+        allocator_free( allocator, buf->_void, buf->cap );
         memory_zero( buf, sizeof(*buf) );
     }
 }

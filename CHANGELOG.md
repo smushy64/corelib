@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- allocator: removed stack allocator, completely rewrote allocator interface to be smaller and more useful
 - string: changed definition to struct _StringPOD
 - string:cpp: added C++ string/string buffer.
 - math:cpp:bug: vector in order swizzles were not reassignable, now they are

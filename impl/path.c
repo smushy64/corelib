@@ -8,7 +8,10 @@
 #include "core/memory.h"
 #include "core/alloc.h"
 #include "core/internal/platform.h"
-#include "core/unicode.h"
+
+#if defined(CORE_PLATFORM_WINDOWS)
+    #include "core/unicode.h"
+#endif
 
 attr_core_api usize path_raw_len( const PathCharacter* raw ) {
     if( !raw ) {
@@ -435,7 +438,7 @@ attr_core_api b32 path_buf_from_alloc(
     usize capacity, struct AllocatorInterface* allocator, PathBuf* out_buf
 ) {
     usize _size = capacity + 1;
-    void* ptr   = allocator->alloc( sizeof(PathCharacter) * _size, 0, allocator->ctx );
+    void* ptr   = allocator_alloc( allocator, sizeof(PathCharacter) * _size );
     if( !ptr ) {
         return false;
     }
@@ -484,7 +487,7 @@ attr_core_api b32 path_buf_grow(
 ) {
     usize old_size = sizeof(PathCharacter) * buf->cap;
     usize new_size = sizeof(PathCharacter) * (buf->cap + amount);
-    void* ptr = allocator->realloc( buf->raw, old_size, new_size, 0, allocator->ctx );
+    void* ptr = allocator_realloc( allocator, buf->raw, old_size, new_size );
     if( !ptr ) {
         return false;
     }
@@ -496,7 +499,7 @@ attr_core_api void path_buf_free(
     PathBuf* buf, struct AllocatorInterface* allocator
 ) {
     if( buf && buf->raw ) {
-        allocator->free( buf->raw, sizeof(PathCharacter) * buf->cap, 0, allocator->ctx );
+        allocator_free( allocator, buf->raw, sizeof(PathCharacter) * buf->cap );
         memory_zero( buf, sizeof(*buf) );
     }
 }
