@@ -7,7 +7,7 @@
 #include "core/thread.h"
 #include "core/memory.h"
 
-#include "core/internal/platform.h"
+#include "core/internal/platform/thread.h"
 
 attr_core_api void thread_sleep( u32 ms ) {
     platform_sleep( ms );

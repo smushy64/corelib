@@ -387,6 +387,7 @@ b32 mode_build( struct BuildArguments* args ) {
     def( "CORE_LIB_VERSION_MAJOR=", macro_value_to_string(CORE_LIB_VERSION_MAJOR) );
     def( "CORE_LIB_VERSION_MINOR=", macro_value_to_string(CORE_LIB_VERSION_MINOR) );
     def( "CORE_LIB_VERSION_PATCH=", macro_value_to_string(CORE_LIB_VERSION_PATCH) );
+    def( "CORE_ENABLE_INTERNAL" );
 
     if( args->static_build ) {
         def( "CORE_ENABLE_STATIC_BUILD" );

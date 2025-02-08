@@ -22,6 +22,26 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- posix: updated to reflect changes to platform headers and path/fs
+- linux: updated to reflect changes to platform headers
+- win32: only updated to reflect changes to platform headers, changes to path/fs not yet applied
+- memory: updated to reflect changes to platform headers
+- internal/platform/memory: changed definition of heap_alloc to include alloc and realloc
+- sync: updated to reflect changes to platform headers
+- system: updated to reflect changes to platform headers
+- thread: updated to reflect changes to platform headers
+- time: updated to reflect changes to platform headers
+- library: updated to reflect changes to platform headers
+- internal/platform: split into various headers
+- fmt: updated to reflect changes to path
+- types/time: moved TimePosix to types.h
+- print: updated to reflect changes made in fs
+- fs: renamed fd_* functions back to file_*, functions that operate on paths are now suffixed with *_by_path
+- fs: completely rewrote directory_walk to be one function that calls a callback for every item in directory
+- fs: updated to reflect new path definition
+- path: changed path to always be a UTF-8 encoded string slice.
+- string/ascii: moved ascii functions to its own header
+- cbuild: added CORE_ENABLE_INTERNAL flag for compiling corelib
 - allocator: removed stack allocator, completely rewrote allocator interface to be smaller and more useful
 - string: changed definition to struct _StringPOD
 - string:cpp: added C++ string/string buffer.

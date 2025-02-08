@@ -8,7 +8,7 @@
 #include "core/memory.h"
 #include "core/macros.h"
 
-#include "core/internal/platform.h"
+#include "core/internal/platform/memory.h"
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
     #include "core/internal/sse.h"
@@ -169,12 +169,12 @@ attr_core_api b32 memory_cmp( const void* a, const void* b, usize size ) {
 }
 
 attr_core_api void* memory_alloc( usize size ) {
-    return platform_heap_alloc( (usize)size );
+    return platform_heap_alloc( 0, 0, (usize)size );
 }
 attr_core_api void* memory_realloc(
     void* old_buffer, usize old_size, usize new_size
 ) {
-    return platform_heap_realloc( old_buffer, (usize)old_size, (usize)new_size );
+    return platform_heap_alloc( old_buffer, (usize)old_size, (usize)new_size );
 }
 attr_core_api void memory_free( void* buffer, usize size ) {
     if( buffer ) {

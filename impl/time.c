@@ -8,8 +8,9 @@
 #include "core/string.h"
 #include "core/fmt.h"
 #include "core/memory.h"
-#include "core/internal/platform.h"
 #include "core/math/common.h"
+
+#include "core/internal/platform/time.h"
 
 attr_global u8 global_day_month_table[] = {
     31,// jan

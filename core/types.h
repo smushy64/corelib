@@ -114,6 +114,9 @@ typedef u16 c16;
 /// @brief UTF-32 character.
 typedef u32 c32;
 
+/// @brief Same as time_t.
+typedef isize TimePosix;
+
 #if !defined(TRUE)
     #define TRUE (1)
 #endif

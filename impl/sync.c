@@ -11,7 +11,7 @@
 
 #include "core/memory.h" // IWYU pragma: keep
 
-#include "core/internal/platform.h"
+#include "core/internal/platform/thread.h"
 
 attr_core_api b32 named_semaphore_open(
     const char* name, u32 initial_value, struct NamedSemaphore* out_sem

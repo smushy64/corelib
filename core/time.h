@@ -10,8 +10,6 @@
 #include "core/attributes.h"
 #include "core/stream.h"
 
-/// @brief Same as time_t.
-typedef usize TimePosix;
 /// @brief Unsigned int representing a year.
 typedef u32 TimeYear;
 /// @brief Unsigned int representing a month (1-12).

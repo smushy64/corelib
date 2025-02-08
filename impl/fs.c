@@ -6,27 +6,135 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/fs.h"
-#include "core/internal/platform.h"
-#include "core/internal/logging.h"
 #include "core/fmt.h"
-#include "core/sync.h"
-#include "core/alloc.h"
 
-volatile b32 global_void_pipes_created = false;
-attr_global FD global_void_pipes[2];
+#include "core/internal/platform/fs.h"
+#include "core/internal/logging.h"
 
-attr_core_api b32 fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
+attr_internal
+b32 internal_file_copy( FD* dst, FD* src ) {
+    char buffer[CORE_FILE_COPY_BUFFER] = {};
+
+    usize remaining = file_query_size( src );
+
+    while( remaining ) {
+        usize copy_size = remaining;
+        if( copy_size > CORE_FILE_COPY_BUFFER ) {
+            copy_size = CORE_FILE_COPY_BUFFER;
+        }
+
+        if( !file_read( src, copy_size, buffer, NULL ) ) {
+            return false;
+        }
+        if( !file_write( dst, copy_size, buffer, NULL ) ) {
+            return false;
+        }
+
+        remaining -= copy_size;
+    }
+    return true;
+}
+
+attr_core_api
+b32 file_copy_by_path( _PathPOD dst, _PathPOD src, b32 create_dst ) {
+    FileOpenFlags dst_flags, src_flags;
+    src_flags = FOPEN_READ | FOPEN_SHARE_READ;
+    dst_flags = FOPEN_WRITE;
+
+    if( create_dst ) {
+        if( file_query_type_by_path( dst ) != FTYPE_NULL ) {
+            core_error(
+                "core/fs:file_copy_by_path(): "
+                "attempted to copy {p} to {p} but {p} "
+                "already exists and create_dst flag is true!", src, dst, dst );
+            return false;
+        }
+
+        dst_flags |= FOPEN_CREATE;
+    } else {
+        if( file_query_type_by_path( dst ) == FTYPE_NULL ) {
+            dst_flags |= FOPEN_CREATE;
+        } else {
+            dst_flags |= FOPEN_TRUNCATE;
+        }
+    }
+
+    FD d, s;
+    if( !file_open( dst, dst_flags, &d ) ) {
+        return false;
+    }
+    if( !file_open( src, src_flags, &s ) ) {
+        file_close( &d );
+        return false;
+    }
+
+    b32 result = internal_file_copy( &d, &s );
+
+    file_close( &d );
+    file_close( &s );
+    return result;
+}
+attr_core_api
+b32 file_move_by_path( _PathPOD dst, _PathPOD src, b32 create_dst ) {
+    if( !file_copy_by_path( dst, src, create_dst ) ) {
+        return false;
+    }
+    return file_remove_by_path( src );
+}
+attr_core_api
+b32 file_remove_by_path( _PathPOD path ) {
+    if( path_is_empty( path ) ) {
+        core_error( "core/fs:file_remove(): path is empty!" );
+        return false;
+    }
+    return platform_file_remove_by_path( path );
+}
+b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info ) {
+    if( path_is_empty( path ) ) {
+        core_error( "core/fs:file_query_info_by_path(): path is empty!" );
+        return false;
+    }
+    return platform_file_query_info_by_path( path, out_info );
+}
+FileType file_query_type_by_path( _PathPOD path ) {
+    if( path_is_empty( path ) ) {
+        core_error( "core/fs:file_query_type_by_path(): path is empty!" );
+        return FTYPE_NULL;
+    }
+    return platform_file_query_type_by_path( path );
+}
+TimePosix file_query_time_create_by_path( _PathPOD path ) {
+    if( path_is_empty( path ) ) {
+        core_error( "core/fs:file_query_time_create_by_path(): path is empty!" );
+        return 0;
+    }
+    return platform_file_query_time_create_by_path( path );
+}
+TimePosix file_query_time_modify_by_path( _PathPOD path ) {
+    if( path_is_empty( path ) ) {
+        core_error( "core/fs:file_query_time_modify_by_path(): path is empty!" );
+        return 0;
+    }
+    return platform_file_query_time_modify_by_path( path );
+}
+
+attr_core_api
+b32 file_open( _PathPOD path, FileOpenFlags flags, FD* out_fd ) {
+    if( path_is_empty(path) ) {
+        core_error( "core/fs:file_open(): path is empty!" );
+        return false;
+    }
     if( bitfield_check( flags, FOPEN_CREATE ) ) {
         if( bitfield_check( flags, FOPEN_TRUNCATE ) ) {
-            core_error( "fd_open: flags create and truncate cannot be combined!" );
+            core_error( "core/fs:file_open(): flags CREATE and TRUNCATE cannot be combined!" );
             return false;
         }
         if( bitfield_check( flags, FOPEN_APPEND ) ) {
-            core_error( "fd_open: flags create and append cannot be combined!" );
+            core_error( "core/fs:file_open(): flags CREATE and APPEND cannot be combined!" );
             return false;
         }
         if( bitfield_check( flags, FOPEN_TEMP ) ) {
-            core_error( "fd_open: flags create and temp cannot be combined!" );
+            core_error( "core/fs:file_open(): flags CREATE and TEMP cannot be combined!" );
             return false;
         }
     }
@@ -35,211 +143,202 @@ attr_core_api b32 fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
         bitfield_check( flags, FOPEN_APPEND ) &&
         bitfield_check( flags, FOPEN_TRUNCATE )
     ) {
-        core_error( "fd_open: flags append and truncate cannot be combined!" );
+        core_error( "core/fs:file_open(): flags APPEND and TRUNCATE cannot be combined!" );
         return false;
     }
 
-    return platform_fd_open( path, flags, out_fd );
+    return platform_file_open( path, flags, out_fd );
 }
-attr_core_api void fd_close( FD* fd ) {
-    platform_fd_close( fd );
+attr_core_api
+void file_close( FD* fd ) {
+    platform_file_close( fd );
 }
-attr_core_api usize fd_query_size( FD* fd ) {
-    return platform_fd_query_size( fd );
+b32 file_query_info( FD* fd, FileInfo* out_info ) {
+    return platform_file_query_info( fd, out_info );
 }
-attr_core_api void fd_truncate( FD* fd ) {
-    platform_fd_truncate( fd );
+FileType file_query_type( FD* fd ) {
+    return platform_file_query_type( fd );
 }
-attr_core_api usize fd_seek( FD* fd, FileSeek type, isize seek ) {
-    return platform_fd_seek( fd, type, seek );
+TimePosix file_query_time_create( FD* fd ) {
+    return platform_file_query_time_create( fd );
 }
-attr_core_api b32 fd_write(
+TimePosix file_query_time_modify( FD* fd ) {
+    return platform_file_query_time_modify( fd );
+}
+attr_core_api
+usize file_query_size( FD* fd ) {
+    return platform_file_query_size( fd );
+}
+attr_core_api
+usize file_query_offset( FD* fd ) {
+    return platform_file_query_offset( fd );
+}
+attr_core_api
+void file_truncate( FD* fd ) {
+    platform_file_truncate( fd );
+}
+attr_core_api
+usize file_seek( FD* fd, FileSeek type, isize seek ) {
+    return platform_file_seek( fd, type, seek );
+}
+attr_core_api
+b32 file_write(
     FD* fd, usize bytes, const void* buf, usize* opt_out_write
 ) {
-    return platform_fd_write( fd, bytes, buf, opt_out_write );
+    usize write;
+    usize* write_ptr = opt_out_write;
+    if( !write_ptr ) {
+        write_ptr = &write;
+    }
+    return platform_file_write( fd, bytes, buf, write_ptr );
 }
-attr_core_api b32 fd_read(
+attr_core_api
+b32 file_read(
     FD* fd, usize buf_size, void* buf, usize* opt_out_read
 ) {
-    return platform_fd_read( fd, buf_size, buf, opt_out_read );
+    usize read;
+    usize* read_ptr = opt_out_read;
+    if( !read_ptr ) {
+        read_ptr = &read;
+    }
+    return platform_file_read( fd, buf_size, buf, read_ptr );
 }
-attr_core_api b32 fd_write_fmt_va(
-    FD* fd, usize* opt_out_write, usize format_len, const char* format, va_list va
+attr_core_api
+usize internal_file_write_fmt_va(
+    FD* fd, usize format_len, const char* format, va_list va
 ) {
-    usize write = stream_fmt_va( fd_stream_write, fd, format_len, format, va );
-    if( opt_out_write ) {
-        *opt_out_write = format_len - write;
-    }
-    return write == 0;
+    return stream_fmt_va( file_stream_write, fd, format_len, format, va );
 }
-attr_core_api usize fd_stream_write(
-    void* struct_FD, usize count, const void* buf
+attr_core_api
+usize internal_file_write_fmt(
+    FD* fd, usize format_len, const char* format, ...
 ) {
-    FD* fd = struct_FD;
+    va_list va;
+    va_start( va, format );
 
-    usize write_size = 0;
-    if( fd_write( fd, count, buf, &write_size ) ) {
-        return count - write_size;
-    } else {
-        return count;
-    }
-}
+    usize result = stream_fmt_va( file_stream_write, fd, format_len, format, va );
 
-attr_core_api b32 file_copy( Path dst, Path src, b32 create_dst ) {
-    return platform_file_copy( dst, src, create_dst );
-}
-attr_core_api b32 file_move( Path dst, Path src, b32 create_dst ) {
-    return platform_file_move( dst, src, create_dst );
-}
-attr_core_api b32 file_remove( Path path ) {
-    return platform_file_remove( path );
-}
-attr_core_api b32 file_exists( Path path ) {
-    return platform_file_exists( path );
-}
-
-attr_core_api Path directory_query_cwd(void) {
-    return platform_directory_query_cwd();
-}
-attr_core_api b32 directory_set_cwd( Path path ) {
-    return platform_directory_set_cwd( path );
-}
-attr_core_api b32 directory_create( Path path ) {
-    return platform_directory_create( path );
-}
-attr_core_api b32 directory_remove( Path path ) {
-    return platform_directory_remove( path );
-}
-attr_internal b32 internal_directory_remove_recursive(
-    PathBuf* buf, struct AllocatorInterface* allocator
-) {
-    usize original_len = buf->len;
-    DirectoryWalk* walk = directory_walk_begin( buf->slice, allocator );
-    if( !walk ) {
-        core_error( "directory_remove_recursive: failed to walk '{p}'!", buf->slice );
-        return false;
-    }
-
-    Path path = path_empty();
-    b32 is_dir = false;
-    b32 result = true;
-    while( directory_walk_next( walk, &path, &is_dir )) {
-        if( !path_buf_push( buf, path, allocator ) ) {
-            core_error( "directory_remove_recursive: "
-               "failed to push new path to path buffer!");
-            result = false;
-            goto internal_directory_remove_recursive_end;
-        }
-
-        if( is_dir ) {
-            if( !internal_directory_remove_recursive( buf, allocator ) ) {
-                result = false;
-                goto internal_directory_remove_recursive_end;
-            }
-            if( !directory_remove( buf->slice ) ) {
-                result = false;
-                goto internal_directory_remove_recursive_end;
-            }
-            continue;
-        }
-
-        if( !file_remove( buf->slice ) ) {
-            result = false;
-            goto internal_directory_remove_recursive_end;
-        }
-
-        buf->len = original_len;
-        buf->raw[buf->len] = 0;
-    }
-
-internal_directory_remove_recursive_end:
-    directory_walk_end( walk, allocator );
-    buf->len = original_len;
-    buf->raw[buf->len] = 0;
+    va_end( va );
     return result;
 }
-attr_core_api b32 directory_remove_recursive(
-    Path path, struct AllocatorInterface* allocator
-) {
-    PathBuf buf = path_buf_empty();
-    if( !path_buf_from_path( path, allocator, &buf ) ) {
-        core_error( "directory_remove_recursive: failed to create path buffer!" );
-        return false;
-    }
-    b32 result = internal_directory_remove_recursive( &buf, allocator );
-
-    path_buf_free( &buf, allocator );
-
-    if( result ) {
-        return directory_remove( path );
-    } else {
-        return false;
-    }
-}
-attr_core_api b32 directory_exists( Path path ) {
-    return platform_directory_exists( path );
-}
-attr_core_api DirectoryWalk* directory_walk_begin(
-    Path path, struct AllocatorInterface* allocator
-) {
-    return platform_directory_walk_begin( path, allocator );
-}
-attr_core_api b32 directory_walk_next(
-    DirectoryWalk* walk, Path* out_path, b32* opt_out_is_directory
-) {
-    return platform_directory_walk_next( walk, out_path, opt_out_is_directory );
-}
-attr_core_api void directory_walk_end(
-    DirectoryWalk* walk, struct AllocatorInterface* allocator
-) {
-    platform_directory_walk_end( walk, allocator );
-}
-
-attr_core_api PipeRead* pipe_stdin(void) {
-    return platform_stdin();
-}
-attr_core_api PipeWrite* pipe_stdout(void) {
-    return platform_stdout();
-}
-attr_core_api PipeWrite* pipe_stderr(void) {
-    return platform_stderr();
-}
-attr_internal void internal_check_pipes(void) {
-    if( !global_void_pipes_created ) {
-        PipeRead  r;
-        PipeWrite w;
-        pipe_open( &r, &w );
-        global_void_pipes[0] = r.fd;
-        global_void_pipes[1] = w.fd;
-        atomic_add32( &global_void_pipes_created, 1 );
-    }
-}
-attr_core_api PipeRead pipe_read_void(void) {
-    internal_check_pipes();
-    PipeRead r;
-    r.fd = global_void_pipes[0];
-    return r;
-}
-attr_core_api PipeWrite pipe_write_void(void) {
-    internal_check_pipes();
-    PipeWrite w;
-    w.fd = global_void_pipes[1];
-    return w;
-}
-
-attr_core_api b32 pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
-    return platform_pipe_open( out_read, out_write );
-}
-attr_core_api usize pipe_stream_write(
-    void* struct_PipeWrite, usize count, const void* buf
-) {
-    PipeWrite* pw = struct_PipeWrite;
-
-    usize write_size = 0;
-    if( pipe_write( pw, count, buf, &write_size ) ) {
-        return count - write_size;
-    } else {
+attr_core_api
+usize file_stream_write( void* struct_FD, usize count, const void* buf ) {
+    FD* fd = (FD*)struct_FD;
+    usize written = 0;
+    if( !platform_file_write( fd, count, buf, &written ) ) {
         return count;
     }
+    return count - written;
+}
+
+attr_core_api
+b32 directory_create( _PathPOD path ) {
+    if( path_is_empty(path) ) {
+        core_error( "core/fs:directory_create(): path is empty!" );
+        return false;
+    }
+    return platform_directory_create( path );
+}
+attr_core_api
+b32 directory_remove( _PathPOD path, b32 recursive ) {
+    if( path_is_empty(path) ) {
+        core_error( "core/fs:directory_remove(): path is empty!" );
+        return false;
+    }
+    return platform_directory_remove( path, recursive );
+}
+attr_core_api
+b32 directory_walk( _PathPOD path, DirectoryWalkFN* callback, void* params ) {
+    if( path_is_empty(path) ) {
+        core_error( "core/fs:directory_walk(): path is empty!" );
+        return false;
+    }
+    return platform_directory_walk( path, callback, params );
+}
+
+attr_core_api
+_PathPOD directory_current_query(void) {
+    return platform_directory_current_query();
+}
+attr_core_api
+b32 directory_current_set( _PathPOD path ) {
+    if( path_is_empty(path) ) {
+        core_error( "core/fs:directory_current_set(): path is empty!" );
+        return false;
+    }
+    return platform_directory_current_set( path );
+}
+
+attr_core_api
+PipeRead* pipe_stdin(void) {
+    return platform_pipe_stdin();
+}
+attr_core_api
+PipeWrite* pipe_stdout(void) {
+    return platform_pipe_stdout();
+}
+attr_core_api
+PipeWrite* pipe_stderr(void) {
+    return platform_pipe_stderr();
+}
+
+attr_core_api
+b32 pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
+    return platform_pipe_open( out_read, out_write );
+}
+attr_core_api
+void pipe_close( const void* pipe ) {
+    platform_pipe_close( pipe );
+}
+attr_core_api
+b32 pipe_write(
+    PipeWrite* pipe, usize bytes, const void* buf, usize* opt_out_write
+) {
+    usize write;
+    usize* write_ptr = opt_out_write;
+    if( !write_ptr ) {
+        write_ptr = &write;
+    }
+    return platform_pipe_write( pipe, bytes, buf, write_ptr );
+}
+attr_core_api
+b32 pipe_read(
+    PipeRead* pipe, usize bytes, void* buf, usize* opt_out_read
+) {
+    usize read;
+    usize* read_ptr = opt_out_read;
+    if( !read_ptr ) {
+        read_ptr = &read;
+    }
+    return platform_pipe_read( pipe, bytes, buf, read_ptr );
+}
+attr_core_api
+usize internal_pipe_write_fmt_va(
+    PipeWrite* pipe, usize format_len, const char* format, va_list va
+) {
+    return stream_fmt_va( pipe_stream_write, pipe, format_len, format, va );
+}
+attr_core_api
+usize internal_pipe_write_fmt(
+    PipeWrite* pipe, usize format_len, const char* format, ... 
+) {
+    va_list va;
+    va_start( va, format );
+
+    usize result = stream_fmt_va( pipe_stream_write, pipe, format_len, format, va );
+
+    va_end( va );
+    return result;
+}
+attr_core_api
+usize pipe_stream_write(
+    void* struct_PipeWrite, usize count, const void* buf
+) {
+    PipeWrite* fd = (PipeWrite*)struct_PipeWrite;
+    usize written = 0;
+    if( !platform_pipe_write( fd, count, buf, &written ) ) {
+        return count;
+    }
+    return count - written;
 }
 

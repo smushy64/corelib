@@ -21,7 +21,8 @@
 
 #define VECTOR_MIN_LEN (256)
 
-attr_core_api usize cstr_len( const cstr* c_string ) {
+attr_core_api
+usize cstr_len( const cstr* c_string ) {
     if( !c_string ) {
         return 0;
     }
@@ -32,10 +33,12 @@ attr_core_api usize cstr_len( const cstr* c_string ) {
     }
     return res;
 }
-attr_core_api usize cstr_len_utf8( const cstr* c_string ) {
+attr_core_api
+usize cstr_len_utf8( const cstr* c_string ) {
     return string_len_utf8( string_from_cstr( c_string ) );
 }
-attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b ) {
+attr_core_api
+b32 cstr_cmp( const cstr* a, const cstr* b ) {
     loop() {
         if( *a != *b ) {
             return false;
@@ -48,7 +51,8 @@ attr_core_api b32 cstr_cmp( const cstr* a, const cstr* b ) {
     }
 }
 
-attr_core_api usize string_len_utf8( String str ) {
+attr_core_api
+usize string_len_utf8( struct _StringPOD str ) {
     usize res = 0;
     for( usize i = 0; i < str.len; ++i ) {
         if( (str.bytes[i] & 0xC0) != 0x80 ) {
@@ -57,7 +61,8 @@ attr_core_api usize string_len_utf8( String str ) {
     }
     return res;
 }
-attr_core_api c32 string_index_utf8( String str, usize index ) {
+attr_core_api
+c32 string_index_utf8( struct _StringPOD str, usize index ) {
     debug_assert( index < str.len, "string_index_utf8: index is out of bounds!" );
 
     b32   found      = false;
@@ -78,14 +83,14 @@ attr_core_api c32 string_index_utf8( String str, usize index ) {
         return UTF32_REPLACEMENT_CHARACTER;
     }
 
-    String remaining = string_advance_by( str, byte_index );
+    struct _StringPOD remaining = string_advance_by( str, byte_index );
     UTF8 utf8;
     utf8.len = remaining.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : remaining.len;
     if( utf8.len ) {
         memory_copy( utf8.bytes, remaining.cbuf, utf8.len );
     }
     return utf8_to_codepoint( utf8, NULL );
-    /* String rem    = str; */
+    /* struct _StringPOD rem    = str; */
     /* usize i       = 0; */
     /* c32 result    = UTF_32_REPLACEMENT_CHARACTER; */
     /* while( !string_is_empty(rem) ) { */
@@ -96,7 +101,8 @@ attr_core_api c32 string_index_utf8( String str, usize index ) {
     /* } */
     /* return result; */
 }
-attr_core_api String string_utf8_next( String src, c32* out_codepoint ) {
+attr_core_api
+struct _StringPOD string_utf8_next( struct _StringPOD src, c32* out_codepoint ) {
     usize read_count = 0;
     UTF8 utf8;
     utf8.len = src.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : src.len;
@@ -108,7 +114,8 @@ attr_core_api String string_utf8_next( String src, c32* out_codepoint ) {
     *out_codepoint = codepoint;
     return string_advance_by( src, read_count ? read_count : 1 );
 }
-attr_core_api b32 string_cmp( String a, String b ) {
+attr_core_api
+b32 string_cmp( struct _StringPOD a, struct _StringPOD b ) {
     if( a.len != b.len ) {
         return false;
     }
@@ -118,7 +125,8 @@ attr_core_api b32 string_cmp( String a, String b ) {
     return memory_cmp( a._void, b._void, a.len );
 }
 
-attr_core_api b32 string_find( String str, char c, usize* opt_out_index ) {
+attr_core_api
+b32 string_find( struct _StringPOD str, char c, usize* opt_out_index ) {
     for( usize i = 0; i < str.len; ++i ) {
         if( str.cbuf[i] == c ) {
             if( opt_out_index ) {
@@ -129,8 +137,9 @@ attr_core_api b32 string_find( String str, char c, usize* opt_out_index ) {
     }
     return false;
 }
-attr_core_api usize string_find_count( String str, char c ) {
-    String substr = str;
+attr_core_api
+usize string_find_count( struct _StringPOD str, char c ) {
+    struct _StringPOD substr = str;
     usize  res    = 0;
     while( !string_is_empty( substr ) ) {
         usize idx = 0;
@@ -143,7 +152,8 @@ attr_core_api usize string_find_count( String str, char c ) {
     }
     return res;
 }
-attr_core_api b32 string_find_rev( String str, char c, usize* opt_out_index ) {
+attr_core_api
+b32 string_find_rev( struct _StringPOD str, char c, usize* opt_out_index ) {
     for( usize i = str.len; i-- > 0; ) {
         if( str.cbuf[i] == c ) {
             if( opt_out_index ) {
@@ -154,7 +164,8 @@ attr_core_api b32 string_find_rev( String str, char c, usize* opt_out_index ) {
     }
     return false;
 }
-attr_core_api b32 string_find_set( String str, String set, usize* opt_out_index ) {
+attr_core_api
+b32 string_find_set( struct _StringPOD str, struct _StringPOD set, usize* opt_out_index ) {
     for( usize i = 0; i < str.len; ++i ) {
         for( usize j = 0; j < set.len; ++j ) {
             if( str.cbuf[i] == set.cbuf[j] ) {
@@ -167,8 +178,9 @@ attr_core_api b32 string_find_set( String str, String set, usize* opt_out_index 
     }
     return false;
 }
-attr_core_api b32 string_find_set_rev(
-    String str, String set, usize* opt_out_index
+attr_core_api
+b32 string_find_set_rev(
+    struct _StringPOD str, struct _StringPOD set, usize* opt_out_index
 ) {
     for( usize i = str.len; i-- > 0; ) {
         for( usize j = 0; j < set.len; ++j ) {
@@ -182,8 +194,9 @@ attr_core_api b32 string_find_set_rev(
     }
     return false;
 }
-attr_core_api usize string_find_set_count( String str, String set ) {
-    String substr = str;
+attr_core_api
+usize string_find_set_count( struct _StringPOD str, struct _StringPOD set ) {
+    struct _StringPOD substr = str;
     usize  res    = 0;
     while( !string_is_empty( substr ) ) {
         usize idx = 0;
@@ -196,17 +209,18 @@ attr_core_api usize string_find_set_count( String str, String set ) {
     }
     return res;
 }
-attr_core_api b32 string_find_phrase(
-    String str, String phrase, usize* opt_out_index
+attr_core_api
+b32 string_find_phrase(
+    struct _StringPOD str, struct _StringPOD phrase, usize* opt_out_index
 ) {
     if( str.len < phrase.len ) {
         return false;
     }
-    String substr = str;
+    struct _StringPOD substr = str;
     while( !string_is_empty( substr ) ) {
         usize start = 0;
         if( string_find( substr, phrase.cbuf[0], &start ) ) {
-            String cmp = substr;
+            struct _StringPOD cmp = substr;
             cmp.len    = phrase.len;
             if( string_cmp( cmp, phrase ) ) {
                 if( opt_out_index ) {
@@ -226,17 +240,18 @@ attr_core_api b32 string_find_phrase(
     }
     return false;
 }
-attr_core_api b32 string_find_phrase_rev(
-    String str, String phrase, usize* opt_out_index
+attr_core_api
+b32 string_find_phrase_rev(
+    struct _StringPOD str, struct _StringPOD phrase, usize* opt_out_index
 ) {
-    String substr = str;
+    struct _StringPOD substr = str;
     while( !string_is_empty( substr ) ) {
         if( substr.len < phrase.len ) {
             break;
         }
         usize start = 0;
         if( string_find_rev( substr, phrase.cbuf[0], &start ) ) {
-            String potential = string_advance_by( substr, start );
+            struct _StringPOD potential = string_advance_by( substr, start );
             if( potential.len < phrase.len ) {
                 substr = string_truncate( substr, start );
                 continue;
@@ -255,8 +270,9 @@ attr_core_api b32 string_find_phrase_rev(
     }
     return false;
 }
-attr_core_api usize string_find_phrase_count( String str, String phrase ) {
-    String substr = str;
+attr_core_api
+usize string_find_phrase_count( struct _StringPOD str, struct _StringPOD phrase ) {
+    struct _StringPOD substr = str;
     usize  res    = 0;
     while( !string_is_empty( substr ) ) {
         usize idx = 0;
@@ -269,8 +285,9 @@ attr_core_api usize string_find_phrase_count( String str, String phrase ) {
     }
     return res;
 }
-attr_core_api String string_trim_leading_whitespace( String str ) {
-    String res = str;
+attr_core_api
+struct _StringPOD string_trim_leading_whitespace( struct _StringPOD str ) {
+    struct _StringPOD res = str;
     while( !string_is_empty( res ) ) {
         if( ascii_is_whitespace( res.cbuf[0] ) ) {
             res = string_advance( res );
@@ -281,8 +298,9 @@ attr_core_api String string_trim_leading_whitespace( String str ) {
     }
     return res;
 }
-attr_core_api String string_trim_trailing_whitespace( String str ) {
-    String res = str;
+attr_core_api
+struct _StringPOD string_trim_trailing_whitespace( struct _StringPOD str ) {
+    struct _StringPOD res = str;
     while( !string_is_empty( res ) ) {
         char last = *string_last( res );
         if( ascii_is_whitespace( last ) ) {
@@ -294,7 +312,8 @@ attr_core_api String string_trim_trailing_whitespace( String str ) {
     }
     return res;
 }
-attr_core_api void string_mut_reverse( String str ) {
+attr_core_api
+void string_mut_reverse( struct _StringPOD str ) {
     char* begin = str.buf;
     char* end   = begin + str.len - 1;
 
@@ -309,21 +328,25 @@ attr_core_api void string_mut_reverse( String str ) {
         }
     }
 }
-attr_core_api void string_mut_set( String str, char c ) {
+attr_core_api
+void string_mut_set( struct _StringPOD str, char c ) {
     memory_set( str._void, rcast( u8, &c ), str.len );
 }
-attr_core_api void string_mut_to_upper( String str ) {
+attr_core_api
+void string_mut_to_upper( struct _StringPOD str ) {
     for( usize i = 0; i < str.len; ++i ) {
         str.buf[i] = ascii_to_upper( str.buf[i] );
     }
 }
-attr_core_api void string_mut_to_lower( String str ) {
+attr_core_api
+void string_mut_to_lower( struct _StringPOD str ) {
     for( usize i = 0; i < str.len; ++i ) {
         str.buf[i] = ascii_to_lower( str.buf[i] );
     }
 }
-attr_core_api usize string_stream_to_upper(
-    StreamBytesFN* stream, void* target, String str
+attr_core_api
+usize string_stream_to_upper(
+    StreamBytesFN* stream, void* target, struct _StringPOD str
 ) {
     usize res = 0;
     for( usize i = 0; i < str.len; ++i ) {
@@ -332,8 +355,9 @@ attr_core_api usize string_stream_to_upper(
     }
     return res;
 }
-attr_core_api usize string_stream_to_lower(
-    StreamBytesFN* stream, void* target, String str
+attr_core_api
+usize string_stream_to_lower(
+    StreamBytesFN* stream, void* target, struct _StringPOD str
 ) {
     usize res = 0;
     for( usize i = 0; i < str.len; ++i ) {
@@ -352,7 +376,8 @@ attr_internal b32 internal_string_read_increment( usize* value, usize max ) {
     *value = increment_result;
     return true;
 }
-attr_core_api b32 string_parse_int( String str, i64* out_int ) {
+attr_core_api
+b32 string_parse_int( struct _StringPOD str, i64* out_int ) {
     if( !str.len ) {
         return false;
     }
@@ -384,7 +409,8 @@ attr_core_api b32 string_parse_int( String str, i64* out_int ) {
     return true;
 
 }
-attr_core_api b32 string_parse_uint( String str, u64* out_uint ) {
+attr_core_api
+b32 string_parse_uint( struct _StringPOD str, u64* out_uint ) {
     if( !str.len ) {
         return false;
     }
@@ -451,7 +477,8 @@ u64 internal_string_places( u64 i ) {
 
     return 0;
 }
-attr_core_api b32 string_parse_float( String str, f64* out_float ) {
+attr_core_api
+b32 string_parse_float( struct _StringPOD str, f64* out_float ) {
     // f64 result = 0.0;
     i64 whole_part      = 0;
     u64 fractional_part = 0;
@@ -461,7 +488,7 @@ attr_core_api b32 string_parse_float( String str, f64* out_float ) {
         string_find( str, '.', &dot_position ) &&
         dot_position + 1 < str.len
     ) {
-        String first = string_empty(), last = string_empty();
+        struct _StringPOD first = string_empty(), last = string_empty();
         string_split( str, dot_position, &first, &last );
         if( !string_parse_int( first, &whole_part ) ) {
             return false;
@@ -510,8 +537,9 @@ attr_core_api b32 string_parse_float( String str, f64* out_float ) {
     }
 }
 
-attr_core_api b32 string_buf_from_alloc(
-    usize size, struct AllocatorInterface* allocator, StringBuf* out_buf
+attr_core_api
+b32 string_buf_from_alloc(
+    struct AllocatorInterface* allocator, usize size, struct _StringBufPOD* out_buf
 ) {
     // for null-terminator.
     usize _size = size + 1;
@@ -524,18 +552,20 @@ attr_core_api b32 string_buf_from_alloc(
     out_buf->_void   = ptr;
     return true;
 }
-attr_core_api b32 string_buf_from_string_alloc(
-    String str, struct AllocatorInterface* allocator, StringBuf* out_buf
+attr_core_api
+b32 string_buf_from_string_alloc(
+    struct AllocatorInterface* allocator, struct _StringPOD str, struct _StringBufPOD* out_buf
 ) {
-    if( !string_buf_from_alloc( str.len + 16, allocator, out_buf ) ) {
+    if( !string_buf_from_alloc( allocator, str.len + 16, out_buf ) ) {
         return false;
     }
     memory_copy( out_buf->_void, str.cbuf, str.len );
     out_buf->len = str.len;
     return true;
 }
-attr_core_api b32 string_buf_grow(
-    StringBuf* buf, usize amount, struct AllocatorInterface* allocator
+attr_core_api
+b32 string_buf_grow(
+    struct AllocatorInterface* allocator, struct _StringBufPOD* buf, usize amount
 ) {
     void* ptr = allocator_realloc( allocator, buf->_void, buf->cap, buf->cap + amount );
     if( !ptr ) {
@@ -545,55 +575,62 @@ attr_core_api b32 string_buf_grow(
     buf->cap += amount;
     return true;
 }
-attr_core_api void string_buf_free(
-    StringBuf* buf, struct AllocatorInterface* allocator
+attr_core_api
+void string_buf_free(
+    struct AllocatorInterface* allocator, struct _StringBufPOD* buf
 ) {
     if( buf && buf->_void ) {
         allocator_free( allocator, buf->_void, buf->cap );
         memory_zero( buf, sizeof(*buf) );
     }
 }
-attr_core_api b32 string_buf_clone(
-    StringBuf* dst, const StringBuf* src, struct AllocatorInterface* allocator
+attr_core_api
+b32 string_buf_clone(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD* dst, struct _StringPOD src
 ) {
-    if( dst->cap != src->len + 1 ) {
+    if( dst->cap != src.len + 1 ) {
         if( dst->_void ) {
-            usize diff = (src->len + 1) - dst->cap;
-            if( !string_buf_grow( dst, diff, allocator ) ) {
+            usize diff = (src.len + 1) - dst->cap;
+            if( !string_buf_grow( allocator, dst, diff ) ) {
                 return false;
             }
         } else {
-            if( !string_buf_from_alloc( src->len + 1, allocator, dst ) ) {
+            if( !string_buf_from_alloc( allocator, src.len + 1, dst ) ) {
                 return false;
             }
         }
     }
 
-    memory_copy( dst->_void, src->_void, src->len );
-    dst->len = src->len;
+    memory_copy( dst->_void, src._void, src.len );
+    dst->len = src.len;
     return true;
 }
-attr_core_api b32 string_buf_try_push( StringBuf* buf, char c ) {
-    if( string_buf_is_full( buf ) ) {
+attr_core_api
+b32 string_buf_try_push( struct _StringBufPOD* buf, char c ) {
+    if( string_buf_is_full( *buf ) ) {
         return false;
     }
     buf->buf[buf->len++] = c;
     buf->buf[buf->len]   = 0;
     return true;
 }
-attr_core_api b32 string_buf_push(
-    StringBuf* buf, char c, struct AllocatorInterface* allocator
+attr_core_api
+b32 string_buf_push(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD* buf, char c
 ) {
     if( string_buf_try_push( buf, c ) ) {
         return true;
     }
-    if( !string_buf_grow( buf, 16, allocator ) ) {
+    if( !string_buf_grow( allocator, buf, 16 ) ) {
         return false;
     }
     return string_buf_try_push( buf, c );
 }
-attr_core_api b32 string_buf_try_emplace( StringBuf* buf, char c, usize at ) {
-    if( string_buf_is_full( buf ) ) {
+attr_core_api
+b32 string_buf_try_emplace( struct _StringBufPOD* buf, char c, usize at ) {
+    if( string_buf_is_full( *buf ) ) {
         return false;
     }
     usize move = (buf->len - at) + 1;
@@ -602,19 +639,22 @@ attr_core_api b32 string_buf_try_emplace( StringBuf* buf, char c, usize at ) {
     buf->len++;
     return true;
 }
-attr_core_api b32 string_buf_emplace(
-    StringBuf* buf, char c, usize at, struct AllocatorInterface* allocator
+attr_core_api
+b32 string_buf_emplace(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD* buf, char c, usize at
 ) {
     if( string_buf_try_emplace( buf, c, at ) ) {
         return true;
     }
-    if( !string_buf_grow( buf, 16, allocator ) ) {
+    if( !string_buf_grow( allocator, buf, 16 ) ) {
         return false;
     }
     return string_buf_try_emplace( buf, c, at );
 }
-attr_core_api b32 string_buf_pop( StringBuf* buf, char* opt_out_c ) {
-    if( string_buf_is_empty( buf ) ) {
+attr_core_api
+b32 string_buf_pop( struct _StringBufPOD* buf, char* opt_out_c ) {
+    if( string_buf_is_empty( *buf ) ) {
         return false;
     }
     char c = buf->buf[buf->len--];
@@ -623,7 +663,8 @@ attr_core_api b32 string_buf_pop( StringBuf* buf, char* opt_out_c ) {
     }
     return true;
 }
-attr_core_api b32 string_buf_try_insert( StringBuf* buf, String insert, usize at ) {
+attr_core_api
+b32 string_buf_try_insert( struct _StringBufPOD* buf, struct _StringPOD insert, usize at ) {
     if( !buf->cap || ( (buf->len + insert.len) > (buf->cap - 1) ) ) {
         return false;
     }
@@ -633,27 +674,31 @@ attr_core_api b32 string_buf_try_insert( StringBuf* buf, String insert, usize at
     buf->len += insert.len;
     return true;
 }
-attr_core_api b32 string_buf_insert(
-    StringBuf* buf, String insert, usize at, struct AllocatorInterface* allocator
+attr_core_api
+b32 string_buf_insert(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD* buf, struct _StringPOD insert, usize at
 ) {
     if( string_buf_try_insert( buf, insert, at ) ) {
         return true;
     }
-    if( !string_buf_grow( buf, insert.len + 16, allocator ) ) {
+    if( !string_buf_grow( allocator, buf, insert.len + 16 ) ) {
         return false;
     }
     return string_buf_try_insert( buf, insert, at );
 }
-attr_core_api void string_buf_remove( StringBuf* buf, usize at ) {
-    if( string_buf_is_empty( buf ) ) {
+attr_core_api
+void string_buf_remove( struct _StringBufPOD* buf, usize at ) {
+    if( string_buf_is_empty( *buf ) ) {
         return;
     }
     usize move = (buf->len - at) + 1;
     memory_move( buf->buf + at, buf->buf + at + 1, move );
     buf->len--;
 }
-attr_core_api void string_buf_remove_range(
-    StringBuf* buf, usize from_inclusive, usize to_exclusive
+attr_core_api
+void string_buf_remove_range(
+    struct _StringBufPOD* buf, usize from_inclusive, usize to_exclusive
 ) {
     debug_assert(
         to_exclusive < from_inclusive,
@@ -671,46 +716,50 @@ attr_core_api void string_buf_remove_range(
         buf->buf + to_exclusive, (buf->len + 1) - span );
     buf->len -= span;
 }
-attr_core_api usize string_buf_try_stream(
-    void* target, usize count, const void* bytes
+
+attr_core_api
+usize string_buf_try_stream(
+    void* StringBuf, usize count, const void* bytes
 ) {
-    StringBuf* buf = target;
-    usize max_copy = count;
-    usize rem      = string_buf_remaining( buf );
-    if( !rem ) {
-        return count;
-    }
-    if( max_copy > rem ) {
-        max_copy = rem;
+    struct _StringBufPOD* buf = (struct _StringBufPOD*)StringBuf;
+    usize rem        = string_buf_remaining( *buf );
+    usize copy_count = count;
+    if( rem < copy_count ) {
+        copy_count = rem;
     }
 
-    memory_copy( buf->buf + buf->len, bytes, max_copy );
-    buf->len        += max_copy;
-    buf->buf[buf->len] = 0;
+    memory_copy( buf->buf, bytes, copy_count );
+    buf->len += copy_count;
 
-    return count - max_copy;
+    return count - copy_count;
 }
-attr_core_api bsize string_buf_stream(
+
+attr_core_api
+bsize string_buf_stream(
     void* target, usize count, const void* bytes
 ) {
-    StringBufStreamTarget* t = target;
-    String append = string_new( count, bytes );
-    return string_buf_append( t->buf, append, t->allocator );
+    StringBufStreamTarget* t = (StringBufStreamTarget*)target;
+    struct _StringPOD str;
+    str.len  = count;
+    str.cbuf = (const char*)bytes;
+
+    return string_buf_append( t->allocator, t->buf, str );
 }
-attr_core_api usize string_buf_try_fmt_buffer_va(
-    StringBuf* buf, usize format_len, const char* format, va_list va
+
+attr_core_api
+usize internal_string_buf_try_fmt_va(
+    struct _StringBufPOD* buf, usize format_len, const char* format, va_list va
 ) {
     return stream_fmt_va( string_buf_try_stream, buf, format_len, format, va );
 }
-attr_core_api b32 string_buf_fmt_buffer_va(
-    StringBuf* buf, struct AllocatorInterface* allocator,
+attr_core_api
+b32 internal_string_buf_fmt_va(
+    struct AllocatorInterface* allocator, struct _StringBufPOD* buf,
     usize format_len, const char* format, va_list va
 ) {
     StringBufStreamTarget target;
-    target.allocator = allocator;
     target.buf       = buf;
-
-    usize res = stream_fmt_va( string_buf_stream, &target, format_len, format, va );
-    return res ? true : false;
+    target.allocator = allocator;
+    return stream_fmt_va( string_buf_stream, &target, format_len, format, va ) != 0;
 }
 

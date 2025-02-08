@@ -210,9 +210,9 @@ attr_internal usize internal_stream_fmt_path(
 ) {
     usize result = 0;
     if( args->flags & FMT_STRING_PATH_CANONICALIZE ) {
-        result += path_stream_canonicalize_utf8( stream, target, path );
+        result += path_stream_canonicalize( stream, target, path );
     } else {
-        result += path_stream_convert_to_utf8( stream, target, path );
+        result += stream( target, path.len, path.cbuf );
     }
     return result;
 }
@@ -259,7 +259,7 @@ attr_core_api usize stream_fmt_string(
 
     if( args->flags & FMT_STRING_IS_PATH ) {
         res += internal_stream_fmt_path(
-            stream, target, path_new( string_len, (PathCharacter*)string ), args );
+            stream, target, path_new( string_len, string ), args );
     } else {
         res += internal_stream_fmt_string(
             stream, target, string_new( string_len, string ), args );

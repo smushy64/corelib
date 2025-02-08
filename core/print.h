@@ -8,18 +8,16 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/stream.h"
 
-// forward declaration 
-struct Mutex;
+// forward declarations
 struct PipeWrite;
-attr_core_api usize pipe_stream_write(
-    void* struct_PipeWrite, usize count, const void* buf );
-attr_core_api struct PipeWrite* pipe_stdout(void);
-attr_core_api struct PipeWrite* pipe_stderr(void);
-attr_core_api usize stream_fmt(
-    StreamBytesFN* stream, void* target,
-    usize format_len, const char* format, ... );
+attr_core_api
+struct PipeWrite* pipe_stdout(void);
+attr_core_api
+struct PipeWrite* pipe_stderr(void);
+attr_core_api
+usize internal_pipe_write_fmt(
+    struct PipeWrite* pipe, usize format_len, const char* format, ... );
 
 /// @brief Color codes for printing to the console.
 ///
@@ -48,20 +46,20 @@ typedef const char AnsiColor;
 /// @param[in] color   (AnsiColor)      Color code to wrap text with.
 /// @param[in] literal (string literal) Text to wrap with color.
 /// @return (string literal) Text wrapped with given color.
-#define color_text( color, literal ) color literal ANSI_COLOR_RESET
+#define ansi_color( color, literal ) ANSI_COLOR_##color literal ANSI_COLOR_RESET
 
 /// @brief Print message to stdout.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
-#define print( format, ... )\
-    stream_fmt( pipe_stream_write, pipe_stdout(),\
-        sizeof(format) - 1, format, ##__VA_ARGS__ )
+#define print( format, ... ) \
+    internal_pipe_write_fmt( pipe_stdout(), sizeof(format) - 1, format, ##__VA_ARGS__ )
+
 /// @brief Print message to stderr.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
 #define print_err( format, ... )\
-    stream_fmt( pipe_stream_write, pipe_stderr(),\
-        sizeof(format) - 1, format, ##__VA_ARGS__ )
+    internal_pipe_write_fmt( pipe_stderr(), sizeof(format) - 1, format, ##__VA_ARGS__ )
+
 /// @brief Print message to stdout. Adds new line after message.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.

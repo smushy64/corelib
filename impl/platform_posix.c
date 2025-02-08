@@ -7,14 +7,22 @@
 #include "core/defines.h"
 
 #if defined(CORE_PLATFORM_POSIX)
-#include "core/internal/platform.h"
+#include "core/internal/platform/path.h"
+#include "core/internal/platform/time.h"
+#include "core/internal/platform/memory.h"
+#include "core/internal/platform/thread.h"
+#include "core/internal/platform/fs.h"
+#include "core/internal/platform/misc.h"
+
 #include "core/internal/logging.h"
+
 #include "core/memory.h"
 #include "core/sync.h"
-#include "core/alloc.h"
+#include "core/fs.h"
+#include "core/system.h"
 
 #if defined(CORE_PLATFORM_LINUX)
-#include "impl/platform_linux.c"
+    #include "impl/platform_linux.c"
 #endif
 
 #if !defined(_LARGEFILE64_SOURCE)
@@ -40,6 +48,7 @@
 #include <cpuid.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ftw.h>
 
 attr_global PipeRead  global_posix_stdin_fd  = (PipeRead){.fd=(FD){0}};
 attr_global PipeWrite global_posix_stdout_fd = (PipeWrite){.fd=(FD){1}};
@@ -47,12 +56,6 @@ attr_global PipeWrite global_posix_stderr_fd = (PipeWrite){.fd=(FD){2}};
 
 attr_global atomic32 global_running_thread_id = 1;
 _Thread_local u32 tls_global_thread_id = 0;
-
-struct DirectoryWalk {
-    usize len;
-    DIR* dp;
-    char buffer[CORE_MAX_PATH_NAME];
-};
 
 struct PosixThreadParams {
     ThreadMainFN* main;
@@ -81,13 +84,19 @@ static_assert(
 #endif
 
 struct PosixGlobal {
-    char cwd_buf[CORE_MAX_PATH_NAME];
+    char cwd_buf[CORE_PATH_NAME_LEN];
     u32  cwd_len;
 
     char cpu_name_buf[255];
     u32  cpu_name_len;
 };
 attr_global struct PosixGlobal global_posix;
+_Thread_local char* tls_global_posix_path_buf;
+struct FTWState {
+    DirectoryWalkFN* function;
+    void*            params;
+}; 
+_Thread_local struct FTWState tls_global_ftw_state;
 
 void internal_posix_get_cpu_name(void);
 
@@ -95,19 +104,29 @@ b32 posix_init(void) {
     memory_zero( &global_posix, sizeof(global_posix) );
     internal_posix_get_cpu_name();
 
-    if( !getcwd( global_posix.cwd_buf, CORE_MAX_PATH_NAME ) ) {
+    if( !getcwd( global_posix.cwd_buf, CORE_PATH_NAME_LEN ) ) {
         return false;
     }
-    global_posix.cwd_len = strlen( global_posix.cwd_buf );
+    global_posix.cwd_len  = strlen( global_posix.cwd_buf );
+    tls_global_posix_path_buf = (char*)calloc( 1, CORE_PATH_NAME_LEN );
 
-    return true;
+    return tls_global_posix_path_buf != NULL;
 }
 void posix_shutdown(void) {
 
 }
 
-void* platform_heap_alloc( const usize size ) {
-    return calloc( 1, size );
+void* platform_heap_alloc( void* opt_old_ptr, usize opt_old_size, usize new_size ) {
+    if( opt_old_ptr ) {
+        u8* result = (u8*)realloc( opt_old_ptr, new_size );
+        if( !result ) {
+            return NULL;
+        }
+        memory_set( result + opt_old_size, 0, new_size - opt_old_size );
+        return result;
+    } else {
+        return calloc( 1, new_size );
+    }
 #if 0
     void* result = mmap(
         0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0 );
@@ -117,29 +136,30 @@ void* platform_heap_alloc( const usize size ) {
     return result;
 #endif
 }
-#if !defined(CORE_PLATFORM_LINUX)
-void* platform_heap_realloc(
-    void* old_buffer, const usize old_size, const usize new_size
-) {
-    u8* result = (u8*)realloc( old_buffer, new_size );
-    if( !result ) {
-        return NULL;
-    }
-    memory_set( result + old_size, 0, new_size - old_size );
-    return result;
-#if 0
-    void* new_buffer = platform_heap_alloc( new_size );
-    if( !new_buffer ) {
-        return NULL;
-    }
-    memory_copy( new_buffer, old_buffer, old_size );
-    platform_heap_free( old_buffer, old_size );
+/* #if !defined(CORE_PLATFORM_LINUX) */
+/* void* platform_heap_realloc( */
+/*     void* old_buffer, const usize old_size, const usize new_size */
+/* ) { */
+/*     u8* result = (u8*)realloc( old_buffer, new_size ); */
+/*     if( !result ) { */
+/*         return NULL; */
+/*     } */
+/*     memory_set( result + old_size, 0, new_size - old_size ); */
+/*     return result; */
+/* #if 0 */
+/*     void* new_buffer = platform_heap_alloc( new_size ); */
+/*     if( !new_buffer ) { */
+/*         return NULL; */
+/*     } */
+/*     memory_copy( new_buffer, old_buffer, old_size ); */
+/*     platform_heap_free( old_buffer, old_size ); */
+/**/
+/*     return new_buffer; */
+/* #endif */
+/* } */
+/* #endif */
 
-    return new_buffer;
-#endif
-}
-#endif
-void platform_heap_free( void* buffer, const usize size ) {
+void platform_heap_free( void* buffer, usize size ) {
     unused(size);
     free( buffer );
 #if 0
@@ -148,7 +168,7 @@ void platform_heap_free( void* buffer, const usize size ) {
 }
 
 TimePosix platform_time_posix(void) {
-    return time( NULL );
+    return time(NULL);
 }
 TimeSplit platform_time_split(void) {
     time_t t = time(NULL);
@@ -220,6 +240,9 @@ void platform_yield(void) {
 void* posix_thread_main( void* in_params ) {
     atomic32 finished = 0;
 
+    // TODO(alicia): what to do if this fails?
+    tls_global_posix_path_buf = calloc( 1, CORE_PATH_NAME_LEN );
+
     struct PosixThreadParams* params = in_params;
     ThreadMainFN* main       = params->main;
     void*         usr_params = params->params;
@@ -235,6 +258,8 @@ void* posix_thread_main( void* in_params ) {
 
     read_write_barrier();
     atomic_exchange32( &finished, 1 );
+
+    free( tls_global_posix_path_buf );
 
     pthread_exit( (void*)(isize)result );
 }
@@ -368,11 +393,11 @@ b32 platform_semaphore_create(
     const char* name, u32 init, struct NamedSemaphore* out_sem
 ) {
     String name_string = string_from_cstr( name );
-    string_buf_create_from_stack( sem_name, CORE_NAMED_SYNC_NAME_CAP + 16 );
+    string_buf_from_stack( sem_name, CORE_NAMED_SYNC_NAME_CAP + 16 );
     string_buf_try_append( &sem_name, string_text("./corelib_sem_") );
-    if( name_string.len > string_buf_remaining( &sem_name ) ) {
+    if( name_string.len > string_buf_remaining( sem_name ) ) {
         name_string = string_truncate(
-            name_string, string_buf_remaining( &sem_name ) );
+            name_string, string_buf_remaining( sem_name ) );
     }
     string_buf_try_append( &sem_name, name_string );
 
@@ -471,7 +496,137 @@ void platform_mutex_unlock( struct OSMutex* mutex ) {
     }
 }
 
-b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
+const char* internal_posix_create_path( struct _StringPOD p ) {
+    if( path_is_null_terminated( p ) ) {
+        return p.cbuf;
+    }
+
+    char* buf = tls_global_posix_path_buf;
+
+    memory_copy( buf, p.cbuf, p.len );
+    buf[p.len] = 0;
+
+    return buf;
+}
+
+b32 platform_file_remove_by_path( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+
+    int result = unlink( p );
+    int errnum = errno;
+    if( result ) {
+        core_error( 
+            "POSIX: file_remove(): failed to remove '{p}'! reason: {cc}",
+            path, strerror(errnum) );
+        return false;
+    }
+    return true;
+}
+
+FileType internal_posix_file_type_from_stat( const struct stat* st ) {
+    if( S_ISREG( st->st_mode ) ) {
+        return FTYPE_FILE;
+    } else if( S_ISDIR( st->st_mode ) ) {
+        return FTYPE_DIRECTORY;
+    } else {
+        return FTYPE_UNKNOWN;
+    }
+}
+
+b32 platform_file_query_info_by_path( struct _StringPOD path, struct FileInfo* out_info ) {
+    const char* p = internal_posix_create_path( path );
+    struct stat st;
+    if( stat( p, &st ) != 0 ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_info(): failed to stat '{p}'! reason: {cc}",
+            path, strerror(errnum) );
+        return false;
+    }
+
+    out_info->size        = st.st_size;
+    out_info->time.create = st.st_ctime;
+    out_info->time.modify = st.st_mtime;
+    out_info->type        = internal_posix_file_type_from_stat( &st );
+
+    out_info->permissions = 0;
+    if( access( p, R_OK ) == 0 ) {
+        out_info->permissions |= FPERM_READ;
+    } else {
+        int errnum = errno;
+        if( errnum != EACCES ) {
+            core_warn(
+                "POSIX: file_query_info(): "
+                "failed to query file access for '{p}'! reason: {cc}",
+                path, strerror(errnum) );
+        }
+    }
+    if( access( p, W_OK ) == 0 ) {
+        out_info->permissions |= FPERM_WRITE;
+    } else {
+        int errnum = errno;
+        if( errnum != EACCES ) {
+            core_warn(
+                "POSIX: file_query_info(): "
+                "failed to query file access for '{p}'! reason: {cc}",
+                path, strerror(errnum) );
+        }
+    }
+    if( access( p, X_OK ) == 0 ) {
+        out_info->permissions |= FPERM_EXECUTE;
+    } else {
+        int errnum = errno;
+        if( errnum != EACCES ) {
+            core_warn(
+                "POSIX: file_query_info(): "
+                "failed to query file access for '{p}'! reason: {cc}",
+                path, strerror(errnum) );
+        }
+    }
+
+    return true;
+}
+enum FileType platform_file_query_type_by_path( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+    struct stat st;
+    if( stat( p, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_type_by_path(): failed to stat '{p}'! reason: {cc}",
+            path, strerror(errnum) );
+        return FTYPE_NULL;
+    }
+
+    return internal_posix_file_type_from_stat( &st );
+}
+TimePosix platform_file_query_time_create_by_path( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+    struct stat st;
+    if( stat( p, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_time_create_by_path(): failed to stat '{p}'! reason: {cc}",
+            path, strerror(errnum) );
+        return 0;
+    }
+    return st.st_ctime;
+}
+TimePosix platform_file_query_time_modify_by_path( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+    struct stat st;
+    if( stat( p, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_time_create_by_path(): failed to stat '{p}'! reason: {cc}",
+            path, strerror(errnum) );
+        return 0;
+    }
+    return st.st_mtime;
+}
+
+b32 platform_file_open(
+    struct _StringPOD path, enum FileOpenFlags flags, struct FD* out_fd 
+) {
     int    oflag = 0;
     mode_t mode  = S_IRWXU;
     if( bitfield_check( flags, FOPEN_READ | FOPEN_WRITE ) ) {
@@ -496,53 +651,91 @@ b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
         oflag |= O_TRUNC;
     }
 
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            return false;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int fd = open( pb.const_raw, oflag, mode );
+    const char* p = internal_posix_create_path( path );
+    int fd     = open( p, oflag, mode );
     int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
 
     if( fd < 0 ) {
         core_error(
-            "posix: fd_open: "
+            "POSIX: file_open(): "
             "failed to open '{p}'! reason: {cc}", path, strerror(errnum));
         return false;
     }
     out_fd->opaque = fd;
     return true;
 }
-void platform_fd_close( FD* fd ) {
+void platform_file_close( struct FD* fd ) {
     close( fd->opaque );
-    memory_zero( fd, sizeof( *fd ) );
+    memory_zero( fd, sizeof(*fd) );
 }
-usize platform_fd_query_size( FD* fd ) {
-    usize current = lseek64( fd->opaque, 0, SEEK_CUR );
-    usize result  = lseek64( fd->opaque, 0, SEEK_END );
-    lseek64( fd->opaque, current, SEEK_SET );
+b32 platform_file_query_info( struct FD* fd, struct FileInfo* out_info ) {
+    struct stat st;
+    if( fstat( fd->opaque, &st ) != 0 ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_info(): failed to stat! reason: {cc}",
+            strerror(errnum) );
+        return false;
+    }
+
+    out_info->size        = st.st_size;
+    out_info->time.create = st.st_ctime;
+    out_info->time.modify = st.st_mtime;
+    out_info->type        = internal_posix_file_type_from_stat( &st );
+
+    // TODO(alicia): 
+    out_info->permissions = 0;
+
+    return true;
+
+}
+enum FileType platform_file_query_type( struct FD* fd ) {
+    struct stat st;
+    if( fstat( fd->opaque, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_type(): failed to stat! reason: {cc}",
+            strerror(errnum) );
+        return FTYPE_NULL;
+    }
+    return internal_posix_file_type_from_stat( &st );
+}
+TimePosix platform_file_query_time_create( struct FD* fd ) {
+    struct stat st;
+    if( fstat( fd->opaque, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_time_create(): failed to stat! reason: {cc}",
+            strerror(errnum) );
+        return 0;
+    }
+    return st.st_ctime;
+}
+TimePosix platform_file_query_time_modify( struct FD* fd ) {
+    struct stat st;
+    if( fstat( fd->opaque, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: file_query_time_modify(): failed to stat! reason: {cc}",
+            strerror(errnum) );
+        return 0;
+    }
+    return st.st_mtime;
+}
+usize platform_file_query_size( struct FD* fd ) {
+    usize offset = platform_file_query_offset( fd );
+    usize result = platform_file_seek( fd, FSEEK_END, 0 );
+    platform_file_seek( fd, FSEEK_SET, offset );
     return result;
 }
-void platform_fd_truncate( FD* fd ) {
-    ftruncate64( fd->opaque, lseek64( fd->opaque, 0, SEEK_CUR ) );
+usize platform_file_query_offset( struct FD* fd ) {
+    return platform_file_seek( fd, FSEEK_CURRENT, 0 );
 }
-usize platform_fd_seek( FD* fd, FileSeek type, isize seek ) {
-    int whence;
+void platform_file_truncate( struct FD* fd ) {
+    ftruncate64( fd->opaque, platform_file_query_offset( fd ) );
+}
+usize platform_file_seek( struct FD* fd, enum FileSeek type, isize seek ) {
+    int whence = SEEK_CUR;
     switch( type ) {
         case FSEEK_CURRENT: {
             whence = SEEK_CUR;
@@ -556,415 +749,143 @@ usize platform_fd_seek( FD* fd, FileSeek type, isize seek ) {
     }
     return lseek64( fd->opaque, seek, whence );
 }
-b32 platform_fd_write(
-    FD* fd, usize bytes, const void* buf, usize* opt_out_write
-) {
+b32 platform_file_write( struct FD* fd, usize bytes, const void* buf, usize* out_write ) {
     isize result = write( fd->opaque, buf, bytes );
     if( result < 0 ) {
         core_error(
-            "posix: failed to write {usize,mib}! reason: {cc}",
+            "POSIX: failed to write {usize,mib}! reason: {cc}",
             bytes, strerror(errno) );
         return false;
     }
-    if( opt_out_write ) {
-        *opt_out_write = (usize)result;
-    }
+    *out_write = (usize)result;
     return true;
 }
-b32 platform_fd_read(
-    FD* fd, usize buf_size, void* buf, usize* opt_out_read
-) {
-    isize result = read( fd->opaque, buf, buf_size );
+b32 platform_file_read( struct FD* fd, usize bytes, void* buf, usize* out_read ) {
+    isize result = read( fd->opaque, buf, bytes );
     if( result < 0 ) {
         core_error(
-            "posix: failed to read {usize,mib}! reason: {cc}",
-            buf_size, strerror(errno) );
+            "POSIX: failed to read {usize,mib}! reason: {cc}",
+            bytes, strerror(errno) );
         return false;
     }
-    if( opt_out_read ) {
-        *opt_out_read = (usize)result;
-    }
+    *out_read = (usize)result;
     return true;
 }
-#define FCOPY_MAX 255
-b32 platform_file_copy( Path dst, Path src, b32 create_dst ) {
-    FileOpenFlags dst_flags = FOPEN_TRUNCATE | FOPEN_WRITE;
-    FileOpenFlags src_flags = FOPEN_WRITE;
-    if( create_dst ) {
-        if( file_exists( dst ) ) {
-            core_error( "posix: file_copy: dst '{p}' already exists!", dst );
-            return false;
-        }
 
-        dst_flags = FOPEN_CREATE | FOPEN_WRITE;
-    }
-
-    FD fd_dst, fd_src;
-    if( !fd_open( dst, dst_flags, &fd_dst ) ) {
-        core_error( "posix: file_copy: failed to open dst!" );
-        return false;
-    }
-    if( !fd_open( src, src_flags, &fd_src ) ) {
-        fd_close( &fd_dst );
-        core_error( "posix: file_copy: failed to open src!" );
-        return false;
-    }
-
-    u8  buf[FCOPY_MAX];
-    usize copy_count = fd_query_size( &fd_src );
-
-    while( copy_count ) {
-        usize max_copy = copy_count;
-        if( max_copy > FCOPY_MAX) {
-            max_copy = FCOPY_MAX;
-        }
-        if( !fd_read( &fd_src, max_copy, buf, NULL ) ) {
-            core_error( "posix: file_copy: failed to read from src!" );
-            fd_close( &fd_src );
-            fd_close( &fd_dst );
-            return false;
-        }
-        if( !fd_write( &fd_dst, max_copy, buf, NULL ) ) {
-            core_error( "posix: file_copy: failed to write to dst!" );
-            fd_close( &fd_src );
-            fd_close( &fd_dst );
-            return false;
-        }
-        copy_count -= max_copy;
-    }
-
-    fd_close( &fd_src );
-    fd_close( &fd_dst );
-    return true;
-}
-#undef FCOPY_MAX
-
-b32 platform_file_move( Path dst, Path src, b32 create_dst ) {
-    if( !platform_file_copy( dst, src, create_dst ) ) {
-        return false;
-    }
-    return platform_file_remove( src );
-}
-b32 platform_file_remove( Path path ) {
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            return false;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int res = unlink( pb.const_raw );
-    int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-
-    if( res ) {
+b32 platform_directory_create( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+    if( mkdir( p, S_IRWXU ) ) {
+        int errnum = errno;
         core_error(
-            "posix: file_remove: failed to remove '{p}'! reason: {cc}",
-            path, strerror(errnum));
-        return false;
-    }
-
-    return true;
-}
-int internal_posix_stat( Path path, struct stat* out_st ) {
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            return false;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int res = stat( pb.const_raw, out_st );
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-    return res;
-}
-b32 platform_file_exists( Path path ) {
-    struct stat st;
-    memory_zero( &st, sizeof(st) );
-
-    int res = internal_posix_stat( path, &st );
-
-    if( res ) {
-        return false;
-    }
-
-    return !S_ISDIR( st.st_mode );
-}
-
-b32 platform_directory_create( Path path ) {
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            return false;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int res = mkdir( pb.raw, S_IRWXU );
-    int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-
-    if( res ) {
-        core_error(
-            "posix: directory_create: "
-            "failed to create directory at path '{p}'! reason: {cc}",
+            "POSIX: directory_create(): failed to create '{p}'! reason: {cc}",
             path, strerror(errnum) );
         return false;
     }
-
     return true;
 }
-b32 platform_directory_remove( Path path ) {
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
+b32 platform_directory_remove( struct _StringPOD path, b32 recursive ) {
+    if( recursive ) {
+        // TODO(alicia): 
+        return false;
     } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
+        const char* p = internal_posix_create_path( path );
+        if( rmdir( p ) ) {
+            int errnum = errno;
+            core_error(
+                "POSIX: directory_remove(): "
+                "failed to remove directory '{p}'! reason: {cc}",
+                path, strerror(errnum));
             return false;
         }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int res = rmdir( pb.const_raw );
-    int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-
-    if( res ) {
-        core_error(
-            "posix: directory_remove: "
-            "failed to remove directory '{p}'! reason: {cc}", path, strerror(errnum) );
-        return false;
-    }
-
-    return true;
-}
-b32 platform_directory_exists( Path path ) {
-    struct stat st;
-    memory_zero( &st, sizeof(st) );
-
-    int res = internal_posix_stat( path, &st );
-
-    if( res ) {
-        return false;
-    }
-
-    return S_ISDIR( st.st_mode );
-}
-Path platform_directory_query_cwd(void) {
-    return path_new( global_posix.cwd_len, global_posix.cwd_buf );
-}
-b32 platform_directory_set_cwd( Path path ) {
-    if( path.len >= kibibytes(4) ) {
-        core_error( "posix: cannot set cwd to a path longer than CORE_MAX_PATH_NAME!" );
-        return false;
-    }
-
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            return false;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    int res = chdir( pb.const_raw );
-    int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-
-    if( res ) {
-        core_error(
-            "posix: directory_set_cwd: "
-            "failed to set cwd to '{p}'! reason: {cc}", path, strerror(errnum) );
-        return false;
-    }
-
-    memory_zero( global_posix.cwd_buf, global_posix.cwd_len );
-
-    getcwd( global_posix.cwd_buf, CORE_MAX_PATH_NAME );
-
-    global_posix.cwd_len = strlen( global_posix.cwd_buf );
-    return true;
-}
-
-DirectoryWalk* platform_directory_walk_begin(
-    Path path, struct AllocatorInterface* allocator
-) {
-    if( path.len >= CORE_MAX_PATH_NAME ) {
-        core_error(
-            "posix: directory_walk_begin: path is longer than CORE_MAX_PATH_NAME!" );
-        return NULL;
-    }
-
-    DirectoryWalk* walk = allocator_alloc( allocator, sizeof(*walk) );
-    if( !walk ) {
-        core_error( "posix: directory_walk_begin: failed to allocate directory walk!" );
-        return NULL;
-    }
-
-    PathBuf pb;
-    if( path_is_null_terminated( path ) ) {
-        pb.len = path.len;
-        pb.cap = 0;
-        pb.raw = path.raw;
-    } else {
-        pb.raw = platform_heap_alloc( path.len + 1 );
-        if( !pb.raw ) {
-            core_error( "posix: failed to allocate path buffer!" );
-            allocator_free( allocator, walk, sizeof(*walk) );
-            return NULL;
-        }
-        memory_copy( pb.raw, path.const_raw, path.len );
-        pb.cap = path.len + 1;
-        pb.len = path.len;
-    }
-
-    walk->dp = opendir( pb.const_raw );
-    int errnum = errno;
-
-    if( pb.cap ) {
-        platform_heap_free( pb.raw, pb.cap );
-    }
-
-    if( !walk->dp ) {
-        core_error(
-            "posix: directory_walk_begin: "
-            "failed to open directory '{p}'! reason: {cc}",
-            path, strerror(errnum) );
-        allocator_free( allocator, walk, sizeof(*walk) );
-        return NULL;
-    }
-
-    memory_copy( walk->buffer, path.const_raw, path.len );
-    walk->len = path.len;
-
-    return walk;
-}
-b32 platform_directory_walk_next(
-    DirectoryWalk* walk, Path* out_path, b32* opt_out_is_directory
-) {
-    struct dirent* entry = readdir( (DIR*)walk );
-    if( !entry ) {
-        return false;
-    }
-
-    usize entry_len = strlen( entry->d_name );
-    Path entry_path = path_new( entry_len, entry->d_name );
-    *out_path = entry_path;
-
-    if( !opt_out_is_directory ) {
         return true;
     }
+}
+int internal_posix_nftw(
+    const char* filename, const struct stat* st, int flag, struct FTW* _info
+) {
+    unused(flag);
 
-    PathBuf walk_buf = (PathBuf){
-        .cap = CORE_MAX_PATH_NAME,
-        .len = walk->len,
-        .raw = walk->buffer
-    };
+    DirectoryWalkInfo info = {};
+    info.type             = internal_posix_file_type_from_stat( st );
+    info.size             = st->st_size;
+    info.path             = filename;
+    info.path_len         = strlen( filename );
+    info.path_name_offset = _info->base;
+    info.level            = _info->level;
 
-    path_buf_try_push( &walk_buf, entry_path );
-
-    struct stat st;
-    memory_zero( &st, sizeof(st) );
-
-    if( stat( walk_buf.const_raw, &st ) ) {
-        core_warn( "posix: directory_walk_next: "
-            "failed to query if entry is a directory! entry: {p} reason: {cc}",
-            walk_buf.slice, strerror(errno) );
-    } else {
-        *opt_out_is_directory = S_ISDIR( st.st_mode );
+    switch( tls_global_ftw_state.function( &info, tls_global_ftw_state.params ) ) {
+        case DWC_CONTINUE: return 0;
+        case DWC_STOP:     return 1;
+        case DWC_SKIP:     return 2;
     }
-
-    walk->buffer[walk->len] = 0;
+    return 1;
+}
+b32 platform_directory_walk(
+    struct _StringPOD path,
+    enum DirectoryWalkControl (callback)( const struct DirectoryWalkInfo* info, void* params ),
+    void* params
+) {
+    // TODO(alicia): 
+    const char* p = internal_posix_create_path( path );
+    tls_global_ftw_state.function = callback;
+    tls_global_ftw_state.params   = params;
+    nftw( p, internal_posix_nftw, 5, 0 );
     return true;
 }
-void platform_directory_walk_end(
-    DirectoryWalk* walk, struct AllocatorInterface* allocator
-) {
-    if( !walk ) {
-        return;
-    }
-
-    closedir( walk->dp );
-    allocator_free( allocator, walk, sizeof(*walk) );
+struct _StringPOD platform_directory_current_query(void) {
+    return string_new( global_posix.cwd_len, global_posix.cwd_buf );
 }
-
-b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
-    int pd[2];
-    memory_zero( pd, sizeof(pd) );
-    int res = pipe( pd );
-    if( res ) {
+b32 platform_directory_current_set( struct _StringPOD path ) {
+    const char* p = internal_posix_create_path( path );
+    if( chdir( p ) ) {
+        int errnum = errno;
         core_error(
-            "posix: pipe_open: failed to open pipes! reason: {cc}",
-            strerror(errno) );
+            "POSIX: directory_current_set(): failed to change to '{p}'! reason: {cc}",
+            path, strerror(errnum) );
         return false;
     }
-    out_read->fd.opaque  = pd[0];
-    out_write->fd.opaque = pd[1];
+
+    memory_copy( global_posix.cwd_buf, path.cbuf, path.len );
+    global_posix.cwd_len           = path.len;
+    global_posix.cwd_buf[path.len] = 0;
+
     return true;
 }
 
-PipeRead* platform_stdin(void) {
+struct PipeRead*  platform_pipe_stdin(void) {
     return &global_posix_stdin_fd;
 }
-PipeWrite* platform_stdout(void) {
+struct PipeWrite* platform_pipe_stdout(void) {
     return &global_posix_stdout_fd;
 }
-PipeWrite* platform_stderr(void) {
+struct PipeWrite* platform_pipe_stderr(void) {
     return &global_posix_stderr_fd;
+}
+
+b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write ) {
+    int fd[2];
+    if( pipe( fd ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: pipe_open(): failed to open pipes! reason: {cc}", strerror(errnum) );
+        return false;
+    }
+    out_read->fd.opaque  = fd[0];
+    out_write->fd.opaque = fd[1];
+    return true;
+}
+void platform_pipe_close( const void* pipe ) {
+    PipeRead* read = (PipeRead*)pipe;
+    close( read->fd.opaque );
+    memory_zero( read, sizeof(*read) );
+}
+b32 platform_pipe_write(
+    struct PipeWrite* pipe, usize bytes, const void* buf, usize* out_write
+) {
+    return platform_file_write( &pipe->fd, bytes, buf, out_write );
+}
+b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read ) {
+    return platform_file_read( &pipe->fd, bytes, buf, out_read );
 }
 
 #if defined(CORE_ARCH_X86)
@@ -1068,7 +989,7 @@ void* platform_library_load( void* lib, const char* function ) {
     return dlsym( lib, function );
 }
 
-void posix_canonicalize( PathBuf* buf, Path path ) {
+void posix_canonicalize( _PathBufPOD* buf, _PathPOD path ) {
     enum {
         POSIX_PATH_REL,
         POSIX_PATH_HOME,
@@ -1077,9 +998,9 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
 
     if( path_is_absolute( path ) ) {
         type = POSIX_PATH_ABS;
-    } else if( path.const_raw[0] == '~' ) {
+    } else if( path.cbuf[0] == '~' ) {
         if( path.len >= 2 ) {
-            if( path.const_raw[1] == '/' ) {
+            if( path.cbuf[1] == '/' ) {
                 type = POSIX_PATH_HOME;
             }
         } else {
@@ -1087,21 +1008,21 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
         }
     }
 
-    String rem = string_new( path.len, path.const_raw );
+    String rem = string_new( path.len, path.cbuf );
     switch( type ) {
         case POSIX_PATH_REL: {
             usize max_copy = global_posix.cwd_len;
             if( max_copy > buf->cap - 1 ) {
                 max_copy = buf->cap - 1;
             }
-            memory_copy( buf->raw, global_posix.cwd_buf, max_copy );
+            memory_copy( buf->buf, global_posix.cwd_buf, max_copy );
             buf->len = max_copy;
         } break;
         case POSIX_PATH_HOME: {
             char* home = getenv( "HOME" );
             if( home ) {
                 usize home_len = strlen( home );
-                memory_copy( buf->raw, home, home_len );
+                memory_copy( buf->buf, home, home_len );
                 buf->len += home_len;
 
                 if( path.len >= 2 ) {
@@ -1111,8 +1032,8 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
                 }
             } else {
                 core_warn( "posix: canonicalize: getenv(\"HOME\") returned NULL!" );
-                buf->raw[buf->len++] = '~';
-                buf->raw[buf->len++] = '/';
+                buf->buf[buf->len++] = '~';
+                buf->buf[buf->len++] = '/';
 
                 if( path.len >= 2 ) {
                     rem = string_advance_by( rem, 2 );
@@ -1122,7 +1043,7 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
             }
         } break;
         case POSIX_PATH_ABS: {
-            buf->raw[buf->len++] = '/';
+            buf->buf[buf->len++] = '/';
         } break;
     }
 
@@ -1147,7 +1068,7 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
             }
             if( string_cmp( chunk_str, string_text(".."))) {
                 for( usize i = buf->len; i-- > 0; ) {
-                    if( buf->const_raw[i] == '/' ) {
+                    if( buf->cbuf[i] == '/' ) {
                         buf->len = i;
                         break;
                     }
@@ -1157,32 +1078,201 @@ void posix_canonicalize( PathBuf* buf, Path path ) {
                     buf->len = min;
                 }
 
-                buf->raw[buf->len] = 0;
+                buf->buf[buf->len] = 0;
                 rem = string_advance_by( rem, chunk_str.len + 1 );
                 continue;
             }
         }
 
-        Path chunk = path_new( chunk_str.len, chunk_str.cbuf );
-        path_buf_try_push( buf, chunk );
+        _PathPOD chunk = path_new( chunk_str.len, chunk_str.cbuf );
+        path_buf_try_push_chunk( buf, chunk );
         rem = string_advance_by( rem, chunk.len + 1 );
     }
 }
 
-usize platform_path_stream_canonicalize(
-    StreamBytesFN* stream, void* target, Path path 
-) {
-    if( !path.len ) {
+usize platform_path_chunk_count( _PathPOD path ) {
+    struct _StringPOD remaining = path;
+    if( !remaining.len ) {
         return 0;
     }
-    Path p = path_new(
-        path.len >= CORE_MAX_PATH_NAME ? CORE_MAX_PATH_NAME - 1 : path.len,
-        path.const_raw );
 
-    path_buf_create_from_stack( buffer, CORE_MAX_PATH_NAME );
-    posix_canonicalize( &buffer, p );
+    if( remaining.buf[0] == '/' ) {
+        remaining = string_advance( remaining );
+    }
 
-    return stream( target, buffer.len, buffer.const_raw );
+    usize result = 0;
+    while( !string_is_empty( remaining ) ) {
+        struct _StringPOD chunk = remaining;
+        string_find( chunk, '/', &chunk.len );
+
+        if( chunk.len > 0 ) {
+            result++;
+        }
+        remaining = string_advance_by( remaining, chunk.len + 1 );
+    }
+
+    return result;
+}
+
+_PathPOD platform_path_clip_chunk( _PathPOD path ) {
+    if( !path.len ) {
+        return path;
+    }
+    _PathPOD result = path;
+    if( path.buf[0] == '/' ) {
+        if( path.len == 1 ) {
+            return result;
+        } else {
+            string_find( string_advance( result ), '/', &result.len );
+        }
+    } else {
+        string_find( result, '/', &result.len );
+    }
+    return result;
+}
+
+_PathPOD platform_path_clip_chunk_last( _PathPOD path ) {
+    if( !path.len ) {
+        return path;
+    }
+
+    _PathPOD result = path;
+    if( string_last_unchecked( result ) == '/' ) {
+        result = string_trim( result, 1 );
+
+        if( !result.len ) {
+            return result;
+        }
+    }
+
+    usize previous_separator = 0;
+    if( string_find_rev( result, '/', &previous_separator ) ) {
+        result = string_advance_by( result, previous_separator + 1 );
+    }
+    return result;
+}
+
+_PathPOD platform_path_advance_chunk( _PathPOD path ) {
+    if( !path.len ) {
+        return path;
+    }
+
+    _PathPOD first_chunk = path_clip_chunk( path );
+    if( first_chunk.len ) {
+        return string_advance_by( path, first_chunk.len + 1 );
+    } else {
+        return path_empty();
+    }
+}
+
+_PathPOD platform_path_pop_chunk( _PathPOD path ) {
+    _PathPOD last = path_clip_chunk_last( path );
+    if( last.len ) {
+        return string_trim( path, last.len + 1 );
+    } else {
+        return path;
+    }
+}
+
+b32 platform_path_is_absolute( _PathPOD path ) {
+    return path.buf[0] == '/';
+}
+
+b32 platform_path_parent( _PathPOD path, _PathPOD* out_parent ) {
+    _PathPOD parent = path_pop_chunk( path );
+    if( !parent.len ) {
+        return false;
+    }
+    *out_parent = path_clip_chunk_last( parent );
+    return true;
+}
+
+b32 platform_path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
+    if( !path.len ) {
+        return false;
+    }
+
+    if( string_last_unchecked( path ) == '/' ) {
+        return false;
+    }
+
+    *out_file_name = path_clip_chunk_last( path );
+    return true;
+}
+
+b32 platform_path_stream_set_native_separators(
+    StreamBytesFN* stream, void* target, _PathPOD path
+) {
+    return path_stream_set_posix_separators( stream, target, path );
+}
+
+void platform_path_set_native_separators( _PathPOD path ) {
+    path_set_posix_separators( path );
+}
+
+usize platform_path_stream_canonicalize(
+    StreamBytesFN* stream, void* target, _PathPOD path
+) {
+    path_buf_from_stack( buffer, CORE_PATH_NAME_LEN );
+    posix_canonicalize( &buffer, path );
+    return stream( target, buffer.len, buffer.cbuf );
+}
+
+b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
+    if( !chunk.len ) {
+        return true;
+    }
+
+    b32 chunk_has_separator = string_first_unchecked( chunk ) == '/';
+    if( chunk_has_separator && chunk.len == 1 ) {
+        return true;
+    }
+
+    b32 buf_has_separator = false;
+    if( !path_buf_is_empty( *buf ) ) {
+        buf_has_separator = string_last_unchecked( buf->slice ) == '/';
+    }
+
+    if(
+        path_buf_remaining( *buf ) <
+        (chunk.len + !(chunk_has_separator || buf_has_separator))
+    ) {
+        return false;
+    }
+
+    if( chunk_has_separator ) {
+        chunk = string_advance( chunk );
+    }
+
+    if( !buf_has_separator ) {
+        string_buf_try_push( buf, '/' );
+    }
+    string_buf_try_append( buf, chunk );
+
+    return true;
+}
+
+b32 platform_path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension ) {
+    if( !extension.len ) {
+        return true;
+    }
+
+    _PathPOD exisiting_extension = {};
+    if( path_extension( buf->slice, &exisiting_extension ) ) {
+        buf->len -= exisiting_extension.len;
+    }
+
+    b32 has_dot = string_first_unchecked( extension ) == '.';
+
+    if( path_buf_remaining( *buf ) < (extension.len + !has_dot) ) {
+        return false;
+    }
+
+    if( !has_dot ) {
+        string_buf_try_push( buf, '.' );
+    }
+    string_buf_try_append( buf, extension );
+    return true;
 }
 
 #endif /* Platform POSIX */

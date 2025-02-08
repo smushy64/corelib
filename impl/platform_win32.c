@@ -13,7 +13,13 @@
 #include "core/memory.h"
 #include "core/alloc.h"
 
-#include "core/internal/platform.h"
+#include "core/internal/platform/path.h"
+#include "core/internal/platform/time.h"
+#include "core/internal/platform/memory.h"
+#include "core/internal/platform/thread.h"
+#include "core/internal/platform/fs.h"
+#include "core/internal/platform/misc.h"
+
 #include "core/internal/logging.h"
 
 #define NOMINMAX
@@ -696,7 +702,7 @@ void win32_canonicalize( PathBuf* buf, Path path ) {
 usize platform_path_stream_canonicalize(
     StreamBytesFN* stream, void* target, Path path
 ) {
-    path_buf_create_from_stack( buffer, kibibytes(4) );
+    path_buf_from_stack( buffer, kibibytes(4) );
     win32_canonicalize( &buffer, path );
 
     return stream(
@@ -712,7 +718,7 @@ usize platform_path_stream_canonicalize_utf8(
     } type = WIN32_PATH_REL;
     usize result = 0;
 
-    string_buf_create_from_stack( buffer, kibibytes(4) );
+    string_buf_from_stack( buffer, kibibytes(4) );
 
     Path rem = path;
 
@@ -1103,7 +1109,7 @@ DirectoryWalk* platform_directory_walk_begin(
         core_error( "failed to allocate directory walk!");
         return NULL;
     }
-    path_buf_create_from_stack( buf, kibibytes(4) );
+    path_buf_from_stack( buf, kibibytes(4) );
     win32_canonicalize( &buf, path );
     if( !path_buf_try_push( &buf, path_text( "*" ) ) ) {
         allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
