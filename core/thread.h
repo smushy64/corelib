@@ -25,6 +25,7 @@ typedef int ThreadMainFN( u32 thread_id, void* params );
 typedef struct ThreadHandle {
 #if defined(CORE_PLATFORM_WINDOWS)
     void* opaque;
+    void* opaque2;
 #else
     struct {
         void*     handle;
