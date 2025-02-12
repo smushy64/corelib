@@ -9,6 +9,10 @@
 */
 #include "core/defines.h"
 
+#if !defined(CORE_ENABLE_STDLIB)
+    #include "impl/cstdlib.c"
+#endif
+
 #if defined(CORE_PLATFORM_WINDOWS)
     #include "impl/platform_win32.c"
 #endif
@@ -20,10 +24,6 @@
     #include "impl/platform_staticmain.c"
 #else
     #include "impl/platform_sharedmain.c"
-#endif
-
-#if !defined(CORE_ENABLE_STDLIB)
-    #include "impl/cstdlib.c"
 #endif
 
 #include "impl/alloc.c"

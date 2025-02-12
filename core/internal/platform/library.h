@@ -7,9 +7,11 @@
  * @date   February 06, 2025
 */
 
-void* platform_library_open( const char* name );
-void* platform_library_get( const char* name );
+struct _StringPOD;
+
+void* platform_library_open( struct _StringPOD name );
+void* platform_library_get( struct _StringPOD name );
 void platform_library_close( void* lib );
-void* platform_library_load( void* lib, const char* function );
+void* platform_library_load( void* lib, struct _StringPOD function );
 
 #endif /* header guard */

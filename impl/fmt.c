@@ -592,7 +592,7 @@ attr_core_api usize stream_fmt_args(
     unreachable();
 }
 attr_internal b32 internal_fmt_parse_args(
-    String text, FormatArguments* args, union FmtValue* out_val, va_list va );
+    String text, FormatArguments* args, union FmtValue* out_val, va_list* va );
 attr_core_api usize stream_fmt(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ...
@@ -643,7 +643,7 @@ attr_core_api usize stream_fmt_va(
 
             /* va_list va2; */
             /* va_copy( va2, va ); */
-            if( internal_fmt_parse_args( args_text, &args, &val, va ) ) {
+            if( internal_fmt_parse_args( args_text, &args, &val, &va ) ) {
                 if( !args.data ) {
                     args.data = &val;
                 }
@@ -1077,7 +1077,8 @@ attr_internal b32 internal_fmt_parse_format_type(
     return false;
 }
 attr_internal b32 internal_fmt_parse_args(
-    String text, FormatArguments* args, union FmtValue* out_val, va_list va
+    String text, FormatArguments* args,
+    union FmtValue* out_val, va_list* in_va
 ) {
 
     #define skip()\
@@ -1459,6 +1460,14 @@ internal_fmt_parse_args_skip:
         rem = string_advance_by( rem, arg.len + 1 );
     }
 
+    // FIXME(alicia): 
+    // Not sure what to do about this.
+    // I want to pop arguments from va list 
+    // but last time I tested this on Linux,
+    // it didn't work? Will have to investigate exactly
+    // what to do.
+    #define va *in_va
+
     if( count_by_value ) {
         if( !repeat_by_value ) {
             args->count = va_arg( va, u32 );
@@ -1571,6 +1580,7 @@ internal_fmt_parse_args_skip:
 
     return true;
 
+    #undef va
     #undef skip
 }
 

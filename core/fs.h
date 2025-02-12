@@ -173,6 +173,12 @@ typedef struct DirectoryWalkInfo {
 /// @return Control flow. @see DirectoryWalkControl.
 typedef DirectoryWalkControl DirectoryWalkFN( const DirectoryWalkInfo* info, void* params );
 
+/// @brief Convert file type to string.
+/// @param ft File type.
+/// @return String.
+attr_always_inline attr_header
+struct _StringPOD file_type_to_string( FileType ft );
+
 /// @brief Get path from directory walk info.
 /// @param[in] walk_info (const DirectoryWalkInfo*) Pointer to directory walk.
 /// @return (Path) Path to current item.
@@ -505,5 +511,17 @@ usize internal_pipe_write_fmt(
 attr_core_api
 usize pipe_stream_write(
     void* struct_PipeWrite, usize count, const void* buf );
+
+attr_always_inline attr_header
+struct _StringPOD file_type_to_string( FileType ft ) {
+    switch( ft ) {
+        case FTYPE_NULL:      return string_text( "NULL" );
+        case FTYPE_FILE:      return string_text( "File" );
+        case FTYPE_DIRECTORY: return string_text( "Directory" );
+        case FTYPE_PIPE:      return string_text( "Pipe" );
+        case FTYPE_UNKNOWN:   return string_text( "Unknown" );
+    }
+    unreachable();
+}
 
 #endif /* header guard */

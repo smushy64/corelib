@@ -22,6 +22,9 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- win32: added fs functions
+- library: no longer uses const char*, uses String instead
+- fs: added file_type_to_string()
 - posix: updated to reflect changes to platform headers and path/fs
 - linux: updated to reflect changes to platform headers
 - win32: only updated to reflect changes to platform headers, changes to path/fs not yet applied

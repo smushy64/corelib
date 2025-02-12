@@ -23,6 +23,7 @@
 #include "core/internal/platform/memory.h"
 #include "core/internal/platform/thread.h"
 #include "core/internal/platform/fs.h"
+#include "core/internal/platform/library.h"
 #include "core/internal/platform/misc.h"
 
 #include "core/internal/logging.h"
@@ -37,7 +38,7 @@
 
 struct Win32Tls {
     u32  thread_id;
-    char text_buffer[CORE_PATH_NAME_LEN * 2];
+    char text_buffer[CORE_PATH_NAME_LEN * 3];
 };
 
 struct Win32Thread {
@@ -60,6 +61,12 @@ struct Win32Mutex {
     HANDLE handle;
 };
 
+enum Win32DirectoryWalkResult {
+    WIN32_DWR_ERROR,
+    WIN32_DWR_OK,
+    WIN32_DWR_STOP,
+};
+
 struct Win32Platform {
     DWORD         tls;
     atomic32      running_thread_id;
@@ -75,6 +82,7 @@ struct Win32Platform {
     struct Win32Tls main_tls_storage;
 
     struct {
+        u32   cap;
         u32   len;
         char* buf;
     } cwd;
@@ -88,10 +96,19 @@ attr_global struct Win32Platform* global_win32 = NULL;
 attr_internal
 char* win32_get_local_buffer(void);
 attr_internal
-wchar_t* win32_make_path( _PathPOD path );
+void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path );
+attr_internal
+usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path );
+attr_internal
+wchar_t* win32_canonical_from_path_ucs2_local( _PathPOD path );
 attr_internal
 void win32_path_buf_push_chunk(
     usize buffer_cap, usize* buffer_len, wchar_t* buffer, _PathPOD chunk );
+
+attr_internal
+b32 win32_ucs2_cmp( wchar_t* a, wchar_t* b );
+attr_internal
+usize win32_ucs2_len( wchar_t* p );
 
 attr_internal
 void win32_log_error( DWORD error_code );
@@ -101,6 +118,9 @@ usize win32_get_error_message(
 
 attr_internal
 TimePosix win32_filetime_to_time_posix( FILETIME ft );
+
+attr_internal
+b32 win32_directory_remove( usize* path_len, wchar_t* path, WIN32_FIND_DATAW* data );
 
 attr_internal 
 void win32_get_cpu_name( char* buffer );
@@ -215,39 +235,540 @@ f64 platform_timer_seconds(void) {
 }
 
 b32 platform_file_remove_by_path( struct _StringPOD in_path ) {
-    wchar_t* path = win32_make_path( in_path );
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
     return DeleteFileW( path ) != FALSE;
+}
+enum FileType win32_file_attrib_to_file_type( DWORD attrib ) {
+    if( attrib == INVALID_FILE_ATTRIBUTES ) {
+        return FTYPE_NULL;
+    }
+
+    if( attrib & FILE_ATTRIBUTE_DIRECTORY ) {
+        return FTYPE_DIRECTORY;
+    } else {
+        return FTYPE_FILE;
+    }
+
+    return FTYPE_UNKNOWN;
 }
 b32 platform_file_query_info_by_path(
     struct _StringPOD in_path, struct FileInfo* out_info
 ) {
-    wchar_t* path = win32_make_path( in_path );
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    if( !GetFileAttributesExW( path, GetFileExInfoStandard, &data ) ) {
+        return false;
+    }
+
+#if defined(CORE_ARCH_64_BIT)
+    /* Read file size */ {
+        LARGE_INTEGER li;
+        li.LowPart  = data.nFileSizeLow;
+        li.HighPart = *(LONG*)&data.nFileSizeHigh;
+
+        out_info->size = *(usize*)&li.HighPart;
+    }
+#else
+    out_info->size = data.nFileSizeLow;
+#endif
+    
+    out_info->type        = win32_file_attrib_to_file_type( data.dwFileAttributes );
+    out_info->time.create = win32_filetime_to_time_posix( data.ftCreationTime );
+    out_info->time.modify = win32_filetime_to_time_posix( data.ftLastWriteTime );
+
+    HANDLE pseudo = NULL;
+    out_info->permissions = 0;
+
+    pseudo = CreateFileW(
+        path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+    if( pseudo ) {
+        out_info->permissions |= FPERM_READ;
+        CloseHandle( pseudo );
+        pseudo = NULL;
+    }
+    pseudo = CreateFileW(
+        path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+    if( pseudo ) {
+        out_info->permissions |= FPERM_WRITE;
+        CloseHandle( pseudo );
+        pseudo = NULL;
+    }
+    pseudo = CreateFileW(
+        path, GENERIC_EXECUTE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+    if( pseudo ) {
+        out_info->permissions |= FPERM_EXECUTE;
+        CloseHandle( pseudo );
+        pseudo = NULL;
+    }
+
+    return true;
 }
-enum FileType platform_file_query_type_by_path( struct _StringPOD in_path );
-TimePosix platform_file_query_time_create_by_path( struct _StringPOD in_path );
-TimePosix platform_file_query_time_modify_by_path( struct _StringPOD in_path );
+enum FileType platform_file_query_type_by_path( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    DWORD attrib  = GetFileAttributesW( path );
+    
+    return win32_file_attrib_to_file_type( attrib );
+}
+TimePosix platform_file_query_time_create_by_path( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    if( !GetFileAttributesExW( path, GetFileExInfoStandard, &data ) ) {
+        return 0;
+    }
 
-b32 platform_file_open( struct _StringPOD in_path, enum FileOpenFlags flags, struct FD* out_fd );
-void platform_file_close( struct FD* fd );
-b32 platform_file_query_info( struct FD* fd, struct FileInfo* out_info );
-enum FileType platform_file_query_type( struct FD* fd );
-TimePosix platform_file_query_time_create( struct FD* fd );
-TimePosix platform_file_query_time_modify( struct FD* fd );
-usize platform_file_query_size( struct FD* fd );
-usize platform_file_query_offset( struct FD* fd );
-void platform_file_truncate( struct FD* fd );
-usize platform_file_seek( struct FD* fd, enum FileSeek type, isize seek );
-b32 platform_file_write( struct FD* fd, usize bytes, const void* buf, usize* out_write );
-b32 platform_file_read( struct FD* fd, usize bytes, void* buf, usize* out_read );
+    return win32_filetime_to_time_posix( data.ftCreationTime );
+}
+TimePosix platform_file_query_time_modify_by_path( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    if( !GetFileAttributesExW( path, GetFileExInfoStandard, &data ) ) {
+        return 0;
+    }
 
-b32 platform_directory_create( struct _StringPOD in_path );
-b32 platform_directory_remove( struct _StringPOD in_path, b32 recursive );
+    return win32_filetime_to_time_posix( data.ftLastWriteTime );
+}
+
+b32 platform_file_open(
+    struct _StringPOD in_path, enum FileOpenFlags flags, struct FD* out_fd
+) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+
+    DWORD dwDesiredAccess       = 0;
+    DWORD dwShareMode           = 0;
+    DWORD dwCreationDisposition = OPEN_EXISTING;
+    DWORD dwFlagsAndAttributes  = 0;
+
+    if( bitfield_check( flags, FOPEN_READ ) ) {
+        dwDesiredAccess |= GENERIC_READ;
+    }
+    if( bitfield_check( flags, FOPEN_WRITE ) ) {
+        dwDesiredAccess |= GENERIC_WRITE;
+    }
+
+    if( bitfield_check( flags, FOPEN_SHARE_READ ) ) {
+        dwShareMode |= FILE_SHARE_READ;
+    }
+    if( bitfield_check( flags, FOPEN_SHARE_WRITE ) ) {
+        dwShareMode |= FILE_SHARE_WRITE;
+    }
+
+    if( bitfield_check( flags, FOPEN_CREATE ) ) {
+        dwCreationDisposition = OPEN_ALWAYS;
+    } else if( bitfield_check( flags, FOPEN_TRUNCATE ) ) {
+        dwCreationDisposition = TRUNCATE_EXISTING;
+    } else if( bitfield_check( flags, FOPEN_TEMP ) ) {
+        dwCreationDisposition = CREATE_ALWAYS;
+        dwFlagsAndAttributes  = FILE_ATTRIBUTE_TEMPORARY;
+    }
+
+    b32 append = bitfield_check( flags, FOPEN_APPEND );
+
+    HANDLE handle = CreateFileW(
+        path, dwDesiredAccess, dwShareMode, 0,
+        dwCreationDisposition, dwFlagsAndAttributes, 0 );
+
+    if( !handle || handle == INVALID_HANDLE_VALUE ) {
+        win32_log_error( GetLastError() );
+        core_error( "WIN32: failed to open '{p}'", in_path );
+        return false;
+    }
+
+    out_fd->opaque = handle;
+
+    if( append ) {
+        file_seek( out_fd, FSEEK_END, 0 );
+    }
+
+    return true;
+}
+void platform_file_close( struct FD* fd ) {
+    if( fd && fd->opaque ) {
+        CloseHandle( fd->opaque );
+        fd->opaque = NULL;
+    }
+}
+b32 platform_file_query_info( struct FD* fd, struct FileInfo* out_info ) {
+    BY_HANDLE_FILE_INFORMATION data = {};
+    if( !GetFileInformationByHandle( fd->opaque, &data ) ) {
+        return false;
+    }
+
+#if defined(CORE_ARCH_64_BIT)
+    /* Read file size */ {
+        LARGE_INTEGER li;
+        li.LowPart  = data.nFileSizeLow;
+        li.HighPart = *(LONG*)&data.nFileSizeHigh;
+
+        out_info->size = *(usize*)&li.HighPart;
+    }
+#else
+    out_info->size = data.nFileSizeLow;
+#endif
+    
+    out_info->type        = win32_file_attrib_to_file_type( data.dwFileAttributes );
+    out_info->time.create = win32_filetime_to_time_posix( data.ftCreationTime );
+    out_info->time.modify = win32_filetime_to_time_posix( data.ftLastWriteTime );
+
+    // TODO(alicia): 
+
+    /* HANDLE pseudo = NULL; */
+    /* out_info->permissions = 0; */
+    /**/
+    /* pseudo = CreateFileW( */
+    /*     path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 ); */
+    /* if( pseudo ) { */
+    /*     out_info->permissions |= FPERM_READ; */
+    /*     CloseHandle( pseudo ); */
+    /*     pseudo = NULL; */
+    /* } */
+    /* pseudo = CreateFileW( */
+    /*     path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 ); */
+    /* if( pseudo ) { */
+    /*     out_info->permissions |= FPERM_WRITE; */
+    /*     CloseHandle( pseudo ); */
+    /*     pseudo = NULL; */
+    /* } */
+    /* pseudo = CreateFileW( */
+    /*     path, GENERIC_EXECUTE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 ); */
+    /* if( pseudo ) { */
+    /*     out_info->permissions |= FPERM_EXECUTE; */
+    /*     CloseHandle( pseudo ); */
+    /*     pseudo = NULL; */
+    /* } */
+
+    return true;
+}
+enum FileType platform_file_query_type( struct FD* fd ) {
+    BY_HANDLE_FILE_INFORMATION info = {};
+    if( !GetFileInformationByHandle( fd->opaque, &info ) ) {
+        return FTYPE_NULL;
+    }
+    return win32_file_attrib_to_file_type( info.dwFileAttributes );
+}
+TimePosix platform_file_query_time_create( struct FD* fd ) {
+    FILETIME ft = {};
+    if( !GetFileTime( fd->opaque, &ft, NULL, NULL ) ) {
+        return 0;
+    }
+    return win32_filetime_to_time_posix( ft );
+}
+TimePosix platform_file_query_time_modify( struct FD* fd ) {
+    FILETIME ft = {};
+    if( !GetFileTime( fd->opaque, NULL, NULL, &ft ) ) {
+        return 0;
+    }
+    return win32_filetime_to_time_posix( ft );
+}
+usize platform_file_query_size( struct FD* fd ) {
+#if defined(CORE_ARCH_64_BIT)
+    LARGE_INTEGER result = {};
+    GetFileSizeEx( fd->opaque, &result );
+    return result.QuadPart;
+#else
+    DWORD result = 0;
+    GetFileSize( fd->opaque, &result );
+    return result;
+#endif
+}
+usize platform_file_query_offset( struct FD* fd ) {
+    return platform_file_seek( fd, FSEEK_CURRENT, 0 );
+}
+void platform_file_truncate( struct FD* fd ) {
+    SetEndOfFile( fd->opaque );
+}
+usize platform_file_seek( struct FD* fd, enum FileSeek type, isize seek ) {
+    DWORD dwMoveMethod = FILE_BEGIN;
+    switch( type ) {
+        case FSEEK_CURRENT: {
+            dwMoveMethod = FILE_CURRENT;
+        } break;
+        case FSEEK_SET: {
+            dwMoveMethod = FILE_BEGIN;
+        } break;
+        case FSEEK_END: {
+            dwMoveMethod = FILE_END;
+        } break;
+    }
+#if defined(CORE_ARCH_64_BIT)
+    LARGE_INTEGER move = { .QuadPart = seek }, new_pointer = {};
+    SetFilePointerEx( fd->opaque, move, &new_pointer, dwMoveMethod );
+    return new_pointer.QuadPart;
+#else
+    return SetFilePointer( fd->opaque, seek, NULL, dwMoveMethod );
+#endif
+}
+b32 win32_write32( HANDLE handle, u32 bytes, const void* buf, u32* out_write ) {
+    DWORD bytes_written = 0;
+    BOOL  result        = false;
+
+    if( GetFileType( handle ) == FILE_TYPE_CHAR ) {
+        result = WriteConsoleA( handle, buf, bytes, &bytes_written, NULL );
+    } else {
+        result = WriteFile( handle, buf, bytes, &bytes_written, NULL );
+    }
+
+    *out_write = bytes_written;
+    return result != FALSE;
+}
+b32 platform_file_write(
+    struct FD* fd, usize bytes, const void* buf, usize* out_write
+) {
+#if defined(CORE_ARCH_64_BIT)
+    u32         part_a_size = bytes > U32_MAX ? U32_MAX : bytes;
+    const void* part_a      = buf;
+    u32         part_b_size = part_a_size == U32_MAX ? bytes - part_a_size : 0;
+    const void* part_b      = (const u8*)buf + part_a_size;
+
+    u32 written = 0;
+    if( !win32_write32( fd->opaque, part_a_size, part_a, &written ) ) {
+        return false;
+    }
+    if( !part_b_size ) {
+        return true;
+    }
+
+    *out_write += written;
+    written = 0;
+    if( !win32_write32( fd->opaque, part_b_size, part_b, &written ) ) {
+        return false;
+    }
+    *out_write += written;
+    return true;
+#else
+    return win32_write32( fd->opaque, bytes, buf, out_write );
+#endif
+}
+b32 win32_read32( HANDLE handle, u32 bytes, void* buf, u32* out_read ) {
+    DWORD read = 0;
+    if( !ReadFile( handle, buf, bytes, &read, NULL ) ) {
+        return false;
+    }
+    *out_read = read;
+    return true;
+}
+b32 platform_file_read( struct FD* fd, usize bytes, void* buf, usize* out_read ) {
+#if defined(CORE_ARCH_64_BIT)
+    u32   part_a_size = bytes > U32_MAX ? U32_MAX : bytes;
+    void* part_a      = buf;
+    u32   part_b_size = part_a_size == U32_MAX ? bytes - part_a_size : 0;
+    void* part_b      = (u8*)buf + part_a_size;
+
+    u32 read = 0;
+    if( !win32_read32( fd->opaque, part_a_size, part_a, &read ) ) {
+        return false;
+    }
+    if( !part_b_size ) {
+        return true;
+    }
+
+    *out_read += read;
+    read = 0;
+    if( !win32_read32( fd->opaque, part_b_size, part_b, &read ) ) {
+        return false;
+    }
+    *out_read += read;
+    return true;
+#else
+    return win32_read32( fd->opaque, bytes, buf, out_read );
+#endif
+}
+
+b32 platform_directory_create( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    return CreateDirectoryW( path, NULL ) == TRUE;
+}
+b32 platform_directory_remove( struct _StringPOD in_path, b32 recursive ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    if( recursive ) {
+        usize path_len = win32_ucs2_len( path );
+        path[path_len++] = '\\';
+        path[path_len++] = '*';
+        path[path_len]   = 0;
+        WIN32_FIND_DATAW data;
+        return win32_directory_remove( &path_len, path, &data );
+    } else {
+        return RemoveDirectoryW( path ) == TRUE;
+    }
+}
+enum Win32DirectoryWalkResult win32_directory_walk(
+    enum DirectoryWalkControl (callback)( const struct DirectoryWalkInfo* info, void* params ),
+    void* params, DirectoryWalkInfo* info,
+    char* utf8_buf,
+    usize* ucs2_len, wchar_t* ucs2_buf,
+    WIN32_FIND_DATAW* data
+) {
+    HANDLE handle = FindFirstFileExW(
+        ucs2_buf, FindExInfoBasic, data, FindExSearchNameMatch, 0, 0 );
+    if( handle == INVALID_HANDLE_VALUE ) {
+        win32_log_error( GetLastError() );
+        core_error( "WIN32: failed to open directory!" );
+        return WIN32_DWR_ERROR;
+    }
+
+    *ucs2_len           -= 2;
+    ucs2_buf[*ucs2_len]  = 0;
+
+    usize original_len = *ucs2_len;
+
+    for( ;; ) {
+        if(
+            win32_ucs2_cmp(  L".", data->cFileName ) ||
+            win32_ucs2_cmp( L"..", data->cFileName )
+        ) {
+            if( FindNextFileW( handle, data ) ) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        *ucs2_len           = original_len;
+        ucs2_buf[*ucs2_len] = '\\';
+        *ucs2_len += 1;
+
+        usize file_name_len = win32_ucs2_len( data->cFileName );
+        memory_copy( ucs2_buf + *ucs2_len, data->cFileName, sizeof(wchar_t) * file_name_len );
+
+        *ucs2_len           += file_name_len;
+        ucs2_buf[*ucs2_len]  = 0;
+
+        usize len = (usize)WideCharToMultiByte(
+            CP_UTF8, 0, ucs2_buf + sizeof("\\\\?"),
+            *ucs2_len - sizeof("\\\\?"), utf8_buf, CORE_PATH_NAME_LEN, 0, 0 );
+
+        info->path             = utf8_buf;
+        info->path_len         = len;
+        info->path_name_offset = len - file_name_len;
+#if defined(CORE_ARCH_64_BIT)
+        /* Read file size */ {
+            LARGE_INTEGER li;
+            li.LowPart  = data->nFileSizeLow;
+            li.HighPart = *(LONG*)&data->nFileSizeHigh;
+
+            info->size = *(usize*)&li.HighPart;
+        }
+#else
+        info->size = data->nFileSizeLow;
+#endif
+
+        info->type = win32_file_attrib_to_file_type( data->dwFileAttributes );
+
+        enum DirectoryWalkControl control = callback( info, params );
+
+        switch( control ) {
+            case DWC_CONTINUE: {
+                if( info->type == FTYPE_DIRECTORY ) {
+                    ucs2_buf[*ucs2_len] = '\\';
+                    *ucs2_len += 1;
+                    ucs2_buf[*ucs2_len] = '*';
+                    *ucs2_len += 1;
+                    ucs2_buf[*ucs2_len] = 0;
+
+                    info->level++;
+
+                    switch( win32_directory_walk(
+                        callback, params, info,
+                        utf8_buf, ucs2_len, ucs2_buf, data
+                    ) ) {
+                        case WIN32_DWR_OK: break;
+
+                        case WIN32_DWR_ERROR: {
+                            CloseHandle( handle );
+                        } return WIN32_DWR_ERROR;
+
+                        case WIN32_DWR_STOP: {
+                            CloseHandle( handle );
+                        } return WIN32_DWR_STOP;
+                    }
+
+                    info->level--;
+                }
+            } break;
+
+            case DWC_STOP: {
+                CloseHandle( handle );
+            } return WIN32_DWR_STOP;
+
+            case DWC_SKIP:
+                break;
+        }
+
+        if( !FindNextFileW( handle, data ) ) {
+            break;
+        }
+    }
+
+    CloseHandle( handle );
+    return WIN32_DWR_OK;
+}
 b32 platform_directory_walk(
     struct _StringPOD in_path,
     enum DirectoryWalkControl (callback)( const struct DirectoryWalkInfo* info, void* params ),
-    void* params );
-struct _StringPOD platform_directory_current_query(void);
-b32 platform_directory_current_set( struct _StringPOD in_path );
+    void* params
+) {
+    char*    utf8_buf = win32_get_local_buffer();
+    wchar_t* ucs2_buf = (wchar_t*)(utf8_buf + CORE_PATH_NAME_LEN);
+
+    usize buffer_len = win32_canonical_from_path_ucs2( CORE_PATH_NAME_LEN, ucs2_buf, in_path );
+    ucs2_buf[buffer_len++] = '\\';
+    ucs2_buf[buffer_len++] = '*';
+    ucs2_buf[buffer_len]   = 0;
+
+    WIN32_FIND_DATAW  data = {};
+    DirectoryWalkInfo info = {};
+
+    switch( win32_directory_walk(
+        callback, params, &info, utf8_buf, &buffer_len, ucs2_buf, &data
+    ) ) {
+        case WIN32_DWR_ERROR: return false;
+        default:              return true;
+    }
+}
+
+void win32_get_cwd(void) {
+    wchar_t* ucs2_buf = (wchar_t*)win32_get_local_buffer();
+    char*    utf8_buf = (char*)(ucs2_buf + CORE_PATH_NAME_LEN);
+
+    DWORD ucs2_len = GetCurrentDirectoryW( CORE_PATH_NAME_LEN, ucs2_buf );
+    if(
+        ucs2_len >= 4 &&
+        memory_cmp( ucs2_buf, L"\\\\?\\", sizeof(wchar_t) * 4 ) 
+    ) {
+        ucs2_buf += 4;
+        ucs2_len -= 4;
+    }
+
+    u32 utf8_len = (u32)WideCharToMultiByte(
+        CP_UTF8, 0, ucs2_buf, ucs2_len, utf8_buf, CORE_PATH_NAME_LEN, 0, 0 );
+
+    if( !global_win32->cwd.buf ) {
+        global_win32->cwd.buf = (char*)HeapAlloc(
+            GetProcessHeap(), HEAP_ZERO_MEMORY, utf8_len + 1 );
+        global_win32->cwd.cap = utf8_len + 1;
+    } else if( global_win32->cwd.cap < (utf8_len + 1) ) {
+        global_win32->cwd.buf = (char*)HeapReAlloc(
+            GetProcessHeap(), HEAP_ZERO_MEMORY, global_win32->cwd.buf, utf8_len + 1 );
+        global_win32->cwd.cap = utf8_len + 1;
+    }
+
+    global_win32->cwd.len = 0;
+    memory_copy( global_win32->cwd.buf, utf8_buf, utf8_len );
+    global_win32->cwd.len = utf8_len;
+}
+struct _StringPOD platform_directory_current_query(void) {
+    if( !global_win32->cwd.buf ) {
+        win32_get_cwd();
+    }
+    return string_new( global_win32->cwd.len, global_win32->cwd.buf );
+}
+b32 platform_directory_current_set( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    if( !SetCurrentDirectoryW( path ) ) {
+        return false;
+    }
+    win32_get_cwd();
+    return true;
+}
 
 struct PipeRead* platform_pipe_stdin(void) {
     return &global_win32->stdin;
@@ -285,7 +806,9 @@ b32 platform_pipe_write(
 ) {
     return platform_file_write( &pipe->fd, bytes, buf, out_write );
 }
-b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read );
+b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read ) {
+    return platform_file_read( &pipe->fd, bytes, buf, out_read );
+}
 
 usize platform_path_chunk_count( _PathPOD path ) {
     struct _StringPOD remaining = path;
@@ -415,7 +938,7 @@ void platform_path_set_native_separators( _PathPOD path ) {
     path_set_windows_separators( path );
 }
 attr_internal
-void win32_canonicalize( _PathBufPOD* buf, _PathPOD path ) {
+void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
@@ -486,7 +1009,7 @@ usize platform_path_stream_canonicalize(
     StreamBytesFN* stream, void* target, _PathPOD path
 ) {
     _PathBufPOD buffer = path_buf_new( CORE_PATH_NAME_LEN * 2, win32_get_local_buffer() );
-    win32_canonicalize( &buffer, path );
+    win32_canonical_from_path( &buffer, path );
     return stream( target, buffer.len, buffer.buf );
 }
 b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
@@ -637,7 +1160,6 @@ DWORD win32_thread_proc( void* in ) {
 
     ExitThread( ret );
 }
-
 b32 platform_thread_create(
     ThreadMainFN* main, void* params,
     usize stack_size, ThreadHandle* out_handle
@@ -733,26 +1255,37 @@ b32 platform_thread_exit_code( ThreadHandle* handle, int* out_exit_code ) {
     *out_exit_code = *(int*)&exit_code;
     return true;
 }
+void* platform_library_open( struct _StringPOD name ) {
+    wchar_t* buf = (wchar_t*)win32_get_local_buffer();
+    int len      = MultiByteToWideChar(
+        CP_UTF8, 0, name.buf, name.len, buf, CORE_PATH_NAME_LEN );
+    buf[len] = 0;
 
-void* platform_library_open( const char* name ) {
-    return (void*)LoadLibraryA( name );
+    return (void*)LoadLibraryW( buf );
 }
-void* platform_library_get( const char* name ) {
-    return (void*)GetModuleHandleA( name );
+void* platform_library_get( struct _StringPOD name ) {
+    wchar_t* buf = (wchar_t*)win32_get_local_buffer();
+    int len      = MultiByteToWideChar(
+        CP_UTF8, 0, name.buf, name.len, buf, CORE_PATH_NAME_LEN );
+    buf[len] = 0;
+
+    return (void*)GetModuleHandleW( buf );
 }
 void platform_library_close( void* lib ) {
     FreeLibrary( (HMODULE)lib );
 }
-void* platform_library_load( void* lib, const char* function ) {
-    void* proc = (void*)GetProcAddress( lib, function );
+void* platform_library_load( void* lib, struct _StringPOD function ) {
+    char* buf = win32_get_local_buffer();
+    memory_copy( buf, function.cbuf, function.len );
+    buf[function.len] = 0;
+
+    void* proc = (void*)GetProcAddress( lib, buf );
     if( !proc ) {
         win32_log_error( GetLastError() );
-        core_error( "WIN32: failed to load function '{cc}'!", function );
+        core_error( "WIN32: failed to load function '{s}'!", function );
     }
     return proc;
 }
-
-
 void platform_system_query_info( struct SystemInfo* out_info ) {
     SYSTEM_INFO info = {0};
     GetSystemInfo( &info );
@@ -816,6 +1349,78 @@ void platform_system_query_info( struct SystemInfo* out_info ) {
     out_info->gpu_name = string_from_cstr( global_win32->gpu_name );
 }
 
+b32 win32_directory_remove( usize* path_len, wchar_t* path, WIN32_FIND_DATAW* data ) {
+    HANDLE handle = FindFirstFileExW(
+        path, FindExInfoBasic, data, FindExSearchNameMatch, 0, 0 );
+    if( handle == INVALID_HANDLE_VALUE ) {
+        win32_log_error( GetLastError() );
+        core_error( "WIN32: failed to open directory!" );
+        return false;
+    }
+    *path_len       -= 2;
+    path[*path_len]  = 0;
+
+    usize original_len = *path_len;
+    for( ;; ) {
+        if(
+            win32_ucs2_cmp(  L".", data->cFileName ) ||
+            win32_ucs2_cmp( L"..", data->cFileName )
+        ) {
+            if( FindNextFileW( handle, data ) ) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        *path_len        = original_len;
+        path[*path_len]  = '\\';
+        *path_len       += 1;
+
+        usize file_name_len = win32_ucs2_len( data->cFileName );
+        memory_copy( path + *path_len, data->cFileName, sizeof(wchar_t) * file_name_len );
+
+        *path_len       += file_name_len;
+        path[*path_len]  = 0;
+
+        if( data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ) {
+            path[*path_len] = '\\';
+            *path_len += 1;
+            path[*path_len] = '*';
+            *path_len += 1;
+            path[*path_len] = 0;
+
+            if( win32_directory_remove( path_len, path, data ) ) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        if( !DeleteFileW( path ) ) {
+            break;
+        }
+    }
+
+    CloseHandle( handle );
+    return RemoveDirectoryW( path ) == TRUE;
+}
+usize win32_ucs2_len( wchar_t* p ) {
+    usize result = 0;
+    while( *p++ ) {
+        result++;
+    }
+    return result;
+}
+b32 win32_ucs2_cmp( wchar_t* a, wchar_t* b ) {
+    while( *a && *b ) {
+        if( *a != *b ) {
+            return false;
+        }
+        a++; b++;
+    }
+    return *a == *b;
+}
 attr_internal
 char* win32_get_local_buffer(void) {
     struct Win32Tls* tls = (struct Win32Tls*)TlsGetValue( global_win32->tls );
@@ -825,7 +1430,7 @@ char* win32_get_local_buffer(void) {
     return tls->text_buffer;
 }
 attr_internal
-void win32_canonicalize_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path ) {
+usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
@@ -834,24 +1439,7 @@ void win32_canonicalize_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path 
 
     usize buffer_len = 0;
 
-    _PathPOD rem = path; {
-        _PathPOD prefix = path_text("\\\\?\\");
-        b32 prefix_required = true;
-        if( rem.len >= prefix.len ) {
-            _PathPOD potential_prefix = path_new( prefix.len, rem.cbuf );
-            if( path_cmp( potential_prefix, prefix ) ) {
-                prefix_required = false;
-            }
-        }
-        if( prefix_required ) {
-            memory_copy(
-                buffer, L"\\\\?\\",
-                sizeof(wchar_t) * prefix.len );
-            buffer_len += prefix.len;
-        } else {
-            rem = string_advance_by( rem, prefix.len + 1 );
-        }
-    }
+    _PathPOD rem = path;
 
     if( path_is_absolute( path ) ) {
         type = WIN32_PATH_ABS;
@@ -861,17 +1449,34 @@ void win32_canonicalize_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path 
 
     switch( type ) {
         case WIN32_PATH_REL: {
-            _PathPOD cwd = directory_current_query();
-            buffer_len  += MultiByteToWideChar(
-                CP_UTF8, 0, cwd.buf, cwd.len, buffer + buffer_len, buffer_size - buffer_len );
+            buffer_len += GetCurrentDirectoryW( buffer_size, buffer );
         } break;
         case WIN32_PATH_HOME: {
-            _PathPOD home = path_new( global_win32->home.len, global_win32->home.buf );
-            buffer_len   += MultiByteToWideChar(
-                CP_UTF8, 0, home.buf, home.len, buffer + buffer_len, buffer_size - buffer_len );
-            rem = string_advance_by( rem, 2 );
+            buffer_len += GetEnvironmentVariableW(
+                L"HOMEDRIVE", buffer + buffer_len, buffer_size - buffer_len );
+            buffer_len += GetEnvironmentVariableW(
+                L"HOMEPATH", buffer + buffer_len, buffer_size - buffer_len );
+            if( buffer[buffer_len - 1] != L'\\' ) {
+                buffer[buffer_len++] = L'\\';
+            }
         } break;
         case WIN32_PATH_ABS: break;
+    }
+
+    // NOTE(alicia): Check if path already has "\\?\" prepended
+    // and if it doesn't, prepend it. This is so that
+    // the path will still work even if it's longer than MAX_PATH.
+    if(
+        ( buffer_len >= sizeof( "\\\\?") &&
+            !memory_cmp( buffer, L"\\\\?\\", sizeof(L"\\\\?") ) ) ||
+        ( buffer_len < sizeof("\\\\?") )
+    ) {
+        memory_move(
+            buffer + sizeof("\\\\?"), buffer, sizeof(wchar_t) * buffer_len );
+
+        memory_copy( buffer, L"\\\\?\\", sizeof(L"\\\\?") );
+
+        buffer_len += sizeof("\\\\?");
     }
 
     usize min = path_text("\\\\?\\A:\\").len;
@@ -914,6 +1519,7 @@ void win32_canonicalize_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path 
         rem = string_advance_by( rem, chunk.len + 1 );
     }
     buffer[buffer_len] = 0;
+    return buffer_len;
 }
 attr_internal
 void win32_path_buf_push_chunk(
@@ -946,9 +1552,9 @@ void win32_path_buf_push_chunk(
         buffer + *buffer_len, buffer_cap - *buffer_len );
 }
 attr_internal
-wchar_t* win32_make_path( _PathPOD path ) {
+wchar_t* win32_canonical_from_path_ucs2_local( _PathPOD path ) {
     wchar_t* buffer = (wchar_t*)win32_get_local_buffer();
-    win32_canonicalize_ucs2( CORE_PATH_NAME_LEN, buffer, path );
+    win32_canonical_from_path_ucs2( CORE_PATH_NAME_LEN, buffer, path );
     return buffer;
 }
 
@@ -1116,28 +1722,6 @@ b32 internal_path_find_rev( Path path, PathCharacter pc, usize* out_index );
 b32 internal_path_find( Path path, PathCharacter pc, usize* out_index );
 
 
-void platform_fd_close( FD* fd ) {
-    if( fd && fd->opaque ) {
-        CloseHandle( fd->opaque );
-        memory_zero( fd, sizeof(*fd) );
-    }
-}
-usize platform_fd_query_size( FD* fd ) {
-    // TODO(alicia): error checking?
-#if defined(CORE_ARCH_64_BIT)
-    LARGE_INTEGER li;
-    li.QuadPart = 0;
-    GetFileSizeEx( fd->opaque, &li );
-    return li.QuadPart;
-#else
-    DWORD res = 0;
-    GetFileSize( fd->opaque, &res );
-    return res;
-#endif
-}
-void platform_fd_truncate( FD* fd ) {
-    SetEndOfFile( fd->opaque );
-}
 usize platform_fd_seek( FD* fd, FileSeek type, isize seek ) {
     DWORD dwMoveMethod = FILE_BEGIN;
     switch( type ) {
@@ -1160,118 +1744,6 @@ usize platform_fd_seek( FD* fd, FileSeek type, isize seek ) {
     return SetFilePointer( fd->opaque, seek, NULL, dwMoveMethod );
 #endif
 }
-attr_internal b32 win32_fd_write32(
-    HANDLE handle, u32 bytes, const void* buf, u32* opt_out_write
-) {
-    DWORD bytes_written = 0;
-    BOOL  res           = FALSE;
-
-    if( GetFileType( handle ) == FILE_TYPE_CHAR ) {
-        res = WriteConsoleA( handle, buf, bytes, &bytes_written, NULL );
-    } else {
-        res = WriteFile( handle, buf, bytes, &bytes_written, NULL );
-    }
-
-    if( opt_out_write ) {
-        *opt_out_write = res ? bytes_written : 0;
-    }
-
-    return res != FALSE;
-}
-b32 platform_fd_write(
-    FD* fd, usize bytes, const void* buf, usize* opt_out_write
-) {
-#if defined(CORE_ARCH_64_BIT)
-    if( bytes > U32_MAX ) {
-        u32 lo = U32_MAX;
-        u32 hi = bytes - lo;
-
-        u32 written = 0;
-        if( !win32_fd_write32( fd->opaque, lo, buf, &written ) ) {
-            *opt_out_write = 0;
-            return false;
-        }
-
-        if( opt_out_write ) {
-            *opt_out_write = written;
-        }
-        written = 0;
-
-        if( !win32_fd_write32( fd->opaque, hi, (const u8*)buf + lo, &written ) ) {
-            return false;
-        }
-
-        if( opt_out_write ) {
-            *opt_out_write += written;
-        }
-        return true;
-    } else {
-        u32 written = 0;
-        b32 res = win32_fd_write32( fd->opaque, bytes, buf, &written );
-        if( opt_out_write ) {
-            *opt_out_write = written;
-        }
-        return res;
-    }
-#else
-    return win32_fd_write32( fd->opaque, bytes, buf, opt_out_write );
-#endif
-}
-attr_internal b32 win32_fd_read(
-    HANDLE handle, u32 buf_size, void* buf, u32* opt_out_read
-) {
-    DWORD read = 0;
-    if( ReadFile( handle, buf, buf_size, &read, NULL ) ) {
-        if( opt_out_read ) {
-            *opt_out_read = read;
-        }
-        return true;
-    } else {
-        if( opt_out_read ) {
-            *opt_out_read = 0;
-        }
-        return false;
-    }
-}
-b32 platform_fd_read(
-    FD* fd, usize buf_size, void* buf, usize* opt_out_read
-) {
-#if defined(CORE_ARCH_64_BIT)
-    if( buf_size > U32_MAX ) {
-        u32 lo = U32_MAX;
-        u32 hi = buf_size - lo;
-
-        u32 read = 0;
-        if( !win32_fd_read( fd->opaque, lo, buf, &read ) ) {
-            *opt_out_read = 0;
-            return false;
-        }
-
-        if( opt_out_read ) {
-            *opt_out_read = read;
-        }
-        read = 0;
-
-        if( !win32_fd_read( fd->opaque, hi, (u8*)buf + lo, &read ) ) {
-            return false;
-        }
-
-        if( opt_out_read ) {
-            *opt_out_read += read;
-        }
-        return true;
-    } else {
-        u32 read = 0;
-        b32 res = win32_fd_read( fd->opaque, buf_size, buf, &read );
-        if( opt_out_read ) {
-            *opt_out_read = read;
-        }
-        return res;
-    }
-#else
-    return win32_fd_read( fd->opaque, buf_size, buf, opt_out_read );
-#endif
-}
 
 b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
     HANDLE read, write;
@@ -1291,30 +1763,7 @@ b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
     return true;
 }
 
-PipeRead* platform_stdin(void) {
-    return &global_win32.in;
-}
-PipeWrite* platform_stdout(void) {
-    return &global_win32.out;
-}
-PipeWrite* platform_stderr(void) {
-    return &global_win32.err;
-}
-
-attr_unused
-attr_internal u32 win32_utf8_to_wide(
-    u32 utf8_len, const char* utf8, u32 wide_cap, wchar_t* wide_buf
-) {
-    return MultiByteToWideChar(
-        CP_UTF8, 0, utf8, utf8_len, wide_buf, wide_cap );
-}
-attr_internal u32 win32_wide_to_utf8(
-    u32 wide_len, const wchar_t* wide, u32 utf8_cap, char* utf8_buf
-) {
-    return WideCharToMultiByte(
-        CP_UTF8, 0, wide, wide_len, utf8_buf, utf8_cap, 0, 0 );
-}
-void win32_canonicalize( PathBuf* buf, Path path ) {
+void win32_canonical_from_path( PathBuf* buf, Path path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
@@ -1398,386 +1847,9 @@ void win32_canonicalize( PathBuf* buf, Path path ) {
         rem = internal_path_advance_by( rem, chunk.len + 1 );
     }
 }
-usize platform_path_stream_canonicalize(
-    StreamBytesFN* stream, void* target, Path path
-) {
-    path_buf_from_stack( buffer, kibibytes(4) );
-    win32_canonicalize( &buffer, path );
 
-    return stream(
-        target, sizeof(PathCharacter) * buffer.len, buffer.const_raw );
-}
-usize platform_path_stream_canonicalize_utf8(
-    StreamBytesFN* stream, void* target, Path path
-) {
-    enum {
-        WIN32_PATH_REL,
-        WIN32_PATH_HOME,
-        WIN32_PATH_ABS,
-    } type = WIN32_PATH_REL;
-    usize result = 0;
-
-    string_buf_from_stack( buffer, kibibytes(4) );
-
-    Path rem = path;
-
-    if( path_is_absolute( path ) ) {
-        type = WIN32_PATH_ABS;
-    } else if( rem.len && rem.const_raw[0] == '~' ) {
-        type = WIN32_PATH_HOME;
-    }
-
-    switch( type ) {
-        case WIN32_PATH_REL: {
-            buffer.len += win32_wide_to_utf8(
-                global_win32.buf_cwd.len, global_win32.buf_cwd.const_raw,
-                string_buf_remaining(&buffer), buffer.c + buffer.len );
-        } break;
-        case WIN32_PATH_HOME: {
-            buffer.len += win32_wide_to_utf8(
-                global_win32.home_len, global_win32.home,
-                string_buf_remaining(&buffer), buffer.c + buffer.len );
-            rem = internal_path_advance_by( rem, 2 );
-        } break;
-        case WIN32_PATH_ABS: break;
-    }
-
-    usize min = string_text("\\\\?\\A:").len;
-
-    while( !path_is_empty( rem ) ) {
-        Path chunk = rem;
-        usize sep = 0;
-        if( internal_path_find_sep( rem, &sep ) ) {
-            if( !sep ) {
-                rem = internal_path_advance( rem );
-                continue;
-            }
-            chunk.len = sep;
-        }
-
-        if( chunk.len < 3 ) {
-            if( path_cmp( chunk, path_text(".") )) {
-                rem = internal_path_advance_by( rem, chunk.len + 1 );
-                continue;
-            }
-            if( path_cmp( chunk, path_text(".."))) {
-                for( usize i = buffer.len; i-- > 0; ) {
-                    if( buffer.cc[i] == '\\' ) {
-                        buffer.len = i;
-                        break;
-                    }
-                }
-
-                if( buffer.len < min ) {
-                    buffer.len = min;
-                }
-
-                buffer.c[buffer.len] = 0;
-                rem = internal_path_advance_by( rem, chunk.len + 1 );
-                continue;
-            }
-        }
-
-        string_buf_try_push( &buffer, PATH_SEPARATOR );
-
-        buffer.len += win32_wide_to_utf8(
-            chunk.len, chunk.const_raw,
-            string_buf_remaining( &buffer ), buffer.c + buffer.len );
-        rem = internal_path_advance_by( rem, chunk.len + 1 );
-    }
-    result += stream( target, buffer.len, buffer.cc );
-
-    return result;
-
-}
-usize win32_path_memory_requirement( Path path ) {
-    Path prefix = path_text( "\\\\?\\" );
-    b32 prefix_required = false;
-
-    if( path.const_raw[0] == path_raw_char('~') ) {
-        prefix_required = true;
-    } else {
-        if( path.len >= prefix.len ) {
-            Path potential_prefix = path;
-            potential_prefix.len  = prefix.len;
-            if( !path_cmp( prefix, potential_prefix ) ) {
-                prefix_required = true;
-            }
-        } else {
-            prefix_required = true;
-        }
-    }
-
-    usize memory_requirement = prefix_required ? prefix.len : 0;
-    if( global_win32.buf_cwd.len > global_win32.home_len ) {
-        memory_requirement += global_win32.buf_cwd.len;
-    } else {
-        memory_requirement += global_win32.home_len;
-    }
-    memory_requirement += path.len + 1;
-    memory_requirement *= sizeof(wchar_t);
-
-    return memory_requirement;
-}
-PathBuf win32_make_path( Path path ) {
-    Path prefix = path_text("\\\\?\\");
-
-    b32 prefix_required = false;
-    b32 alloc_required  = false;
-    if( path.const_raw[0] == '~' ) {
-        prefix_required = alloc_required = true;
-    } else {
-        if( !path_is_null_terminated( path ) ) {
-            alloc_required = true;
-
-            if( path.len >= prefix.len ) {
-                Path potential_prefix = path;
-                potential_prefix.len  = prefix.len;
-                if( !path_cmp( prefix, potential_prefix ) ) {
-                    prefix_required = true;
-                }
-            } else {
-                prefix_required = true;
-            }
-        } else if( path.len >= MAX_PATH ) {
-            Path potential_prefix = path;
-            potential_prefix.len  = prefix.len;
-            if( !path_cmp( prefix, potential_prefix ) ) {
-                alloc_required  = true;
-                prefix_required = true;
-            }
-        }
-    }
-
-    usize memory_requirement = prefix_required ? prefix.len : 0;
-    if( global_win32.buf_cwd.len > global_win32.home_len ) {
-        memory_requirement += global_win32.buf_cwd.len;
-    } else {
-        memory_requirement += global_win32.home_len;
-    }
-    memory_requirement += path.len + 1;
-    memory_requirement *= sizeof(wchar_t);
-
-    PathBuf buf = path_buf_empty();
-    buf.cap = memory_requirement;
-
-    if( !alloc_required ) {
-        PathBuf result = {0};
-        result.slice   = path;
-        return result;
-    }
-
-    void* ptr = HeapAlloc(
-        GetProcessHeap(), HEAP_ZERO_MEMORY, memory_requirement );
-    if( !ptr ) {
-        core_error( "win32: failed to allocate long path buffer!" );
-        return path_buf_empty();
-    }
-    buf.raw = ptr;
-
-    platform_path_stream_canonicalize( path_buf_stream, &buf, path );
-    return buf;
-}
-b32 platform_fd_open( Path path, FileOpenFlags flags, FD* out_fd ) {
-    DWORD dwDesiredAccess       = 0;
-    DWORD dwShareMode           = 0;
-    DWORD dwCreationDisposition = OPEN_EXISTING;
-    DWORD dwFlagsAndAttributes  = 0;
-
-    if( bitfield_check( flags, FOPEN_READ ) ) {
-        dwDesiredAccess |= GENERIC_READ;
-    }
-    if( bitfield_check( flags, FOPEN_WRITE ) ) {
-        dwDesiredAccess |= GENERIC_WRITE;
-    }
-
-    if( bitfield_check( flags, FOPEN_SHARE_READ ) ) {
-        dwShareMode |= FILE_SHARE_READ;
-    }
-    if( bitfield_check( flags, FOPEN_SHARE_WRITE ) ) {
-        dwShareMode |= FILE_SHARE_WRITE;
-    }
-
-    if( bitfield_check( flags, FOPEN_CREATE ) ) {
-        dwCreationDisposition = OPEN_ALWAYS;
-    } else if( bitfield_check( flags, FOPEN_TRUNCATE ) ) {
-        dwCreationDisposition = TRUNCATE_EXISTING;
-    } else if( bitfield_check( flags, FOPEN_TEMP ) ) {
-        dwCreationDisposition = CREATE_ALWAYS;
-        dwFlagsAndAttributes  = FILE_ATTRIBUTE_TEMPORARY;
-    }
-
-    b32 append = bitfield_check( flags, FOPEN_APPEND );
-
-    PathBuf p = win32_make_path( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-
-    HANDLE handle = CreateFileW(
-        p.const_raw, dwDesiredAccess, dwShareMode, 0,
-        dwCreationDisposition, dwFlagsAndAttributes, 0 );
-
-    DWORD last_error = 0;
-    if( !handle || handle == INVALID_HANDLE_VALUE ) {
-        last_error = GetLastError();
-        core_error( "win32: failed to open '{p}'", p.slice );
-    }
-
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-
-    if( !handle || handle == INVALID_HANDLE_VALUE ) {
-        win32_log_error( last_error );
-        return false;
-    }
-
-    out_fd->opaque = handle;
-
-    if( append ) {
-        fd_seek( out_fd, FSEEK_END, 0 );
-    }
-
-    return true;
-}
-b32 platform_file_copy( Path dst, Path src, b32 create_dst ) {
-    PathBuf d = win32_make_path( dst );
-    if( path_buf_is_empty( &d ) ) {
-        return false;
-    }
-    PathBuf s = win32_make_path( src );
-    if( path_buf_is_empty( &s ) ) {
-        if( d.cap ) {
-            HeapFree( GetProcessHeap(), 0, d.raw );
-        }
-        return false;
-    }
-
-    b32 res = CopyFileW( d.const_raw, s.const_raw, create_dst );
-    if( !res ) {
-        win32_log_error( GetLastError() );
-    }
-
-    if( d.cap ) {
-        HeapFree( GetProcessHeap(), 0, d.raw );
-    }
-    if( s.cap ) {
-        HeapFree( GetProcessHeap(), 0, s.raw );
-    }
-
-    return res;
-}
-b32 platform_file_move( Path dst, Path src, b32 create_dst ) {
-    PathBuf d = win32_make_path( dst );
-    if( path_buf_is_empty( &d ) ) {
-        return false;
-    }
-
-    if( create_dst ) {
-        if( platform_file_exists( d.slice ) ) {
-            if( d.cap ) {
-                HeapFree( GetProcessHeap(), 0, d.raw );
-            }
-            core_error(
-                "win32: file move: attempted to move "
-                "{p} to {p} when destination already exists!", src, dst );
-            return false;
-        }
-    }
-
-    PathBuf s = win32_make_path( src );
-    if( path_buf_is_empty( &s ) ) {
-        if( d.cap ) {
-            HeapFree( GetProcessHeap(), 0, d.raw );
-        }
-        return false;
-    }
-
-    b32 res = MoveFileW( d.const_raw, s.const_raw );
-    if( !res ) {
-        win32_log_error( GetLastError() );
-    }
-
-    if( d.cap ) {
-        HeapFree( GetProcessHeap(), 0, d.raw );
-    }
-    if( s.cap ) {
-        HeapFree( GetProcessHeap(), 0, s.raw );
-    }
-
-    return res;
-}
-b32 platform_file_remove( Path path ) {
-    PathBuf p = win32_make_path( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-    b32 res = DeleteFileW( p.const_raw ) != FALSE;
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-    return res;
-}
-b32 platform_file_exists( Path path ) {
-    PathBuf p = win32_make_path( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-    DWORD attr = GetFileAttributesW( p.const_raw );
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-    return (attr != INVALID_FILE_ATTRIBUTES) && !(attr & FILE_ATTRIBUTE_DIRECTORY);
-}
-Path platform_directory_query_cwd(void) {
-    return global_win32.buf_cwd.slice;
-}
-b32 platform_directory_set_cwd( Path path ) {
-    usize canonical_len = path_stream_canonicalize( path_buf_stream, NULL, path );
-    PathBuf new_path_buf = {0};
-    new_path_buf.cap = canonical_len + 1;
-    new_path_buf.raw = LocalAlloc( 0, sizeof(wchar_t) * (canonical_len + 1));
-    memory_zero( new_path_buf.raw, new_path_buf.cap );
-
-    if( !new_path_buf.raw ) {
-        core_error( "win32: set_cwd: failed to allocate new path buffer!" );
-        return false;
-    }
-    path_stream_canonicalize( path_buf_stream, &new_path_buf, path );
-
-    usize advance_count = sizeof("\\\\?");
-    memory_move(
-        new_path_buf.raw, new_path_buf.raw + advance_count,
-        new_path_buf.cap - advance_count );
-    new_path_buf.len -= advance_count;
-    new_path_buf.raw[new_path_buf.len] = 0;
-
-    if( !SetCurrentDirectoryW( new_path_buf.const_raw ) ) {
-        win32_log_error( GetLastError() );
-        LocalFree( new_path_buf.raw );
-        return false;
-    }
-
-    void* old_path_buf = global_win32.buf_cwd.raw;
-    global_win32.buf_cwd = new_path_buf;
-
-    LocalFree( old_path_buf );
-    return true;
-}
-b32 platform_directory_create( Path path ) {
-    PathBuf p = win32_make_path( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-    b32 res = CreateDirectoryW( p.const_raw, 0 ) != FALSE;
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-    return res;
-}
 b32 platform_directory_remove( Path path ) {
-    PathBuf p = win32_make_path( path );
+    PathBuf p = win32_canonical_from_path_ucs2_local( path );
     if( path_buf_is_empty( &p ) ) {
         return false;
     }
@@ -1786,19 +1858,6 @@ b32 platform_directory_remove( Path path ) {
         HeapFree( GetProcessHeap(), 0, p.raw );
     }
     return result;
-}
-b32 platform_directory_exists( Path path ) {
-    PathBuf p = win32_make_path( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-    DWORD attr = GetFileAttributesW( p.const_raw );
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-    return
-        (attr != INVALID_FILE_ATTRIBUTES) &&
-        (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 DirectoryWalk* platform_directory_walk_begin(
     Path path, struct AllocatorInterface* allocator
@@ -1809,7 +1868,7 @@ DirectoryWalk* platform_directory_walk_begin(
         return NULL;
     }
     path_buf_from_stack( buf, kibibytes(4) );
-    win32_canonicalize( &buf, path );
+    win32_canonical_from_path( &buf, path );
     if( !path_buf_try_push( &buf, path_text( "*" ) ) ) {
         allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
         core_error( "win32: path too long!" );
