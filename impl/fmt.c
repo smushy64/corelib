@@ -10,7 +10,6 @@
 #include "core/memory.h"
 #include "core/string.h"
 #include "core/path.h"
-#include "core/print.h"
 
 #include "core/time.h"
 #include "core/macros.h"
@@ -591,8 +590,19 @@ attr_core_api usize stream_fmt_args(
     }
     unreachable();
 }
-attr_internal b32 internal_fmt_parse_args(
-    String text, FormatArguments* args, union FmtValue* out_val, va_list* va );
+
+#if defined(CORE_PLATFORM_WINDOWS)
+attr_internal
+b32 internal_fmt_parse_args(
+    String text, FormatArguments* args,
+    union FmtValue* out_val, va_list* in_va );
+#else
+attr_internal
+b32 internal_fmt_parse_args(
+    String text, FormatArguments* args,
+    union FmtValue* out_val, va_list va );
+#endif
+
 attr_core_api usize stream_fmt(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ...
@@ -643,7 +653,11 @@ attr_core_api usize stream_fmt_va(
 
             /* va_list va2; */
             /* va_copy( va2, va ); */
+#if defined(CORE_PLATFORM_WINDOWS)
             if( internal_fmt_parse_args( args_text, &args, &val, &va ) ) {
+#else
+            if( internal_fmt_parse_args( args_text, &args, &val, va ) ) {
+#endif
                 if( !args.data ) {
                     args.data = &val;
                 }
@@ -1076,10 +1090,18 @@ attr_internal b32 internal_fmt_parse_format_type(
     }
     return false;
 }
-attr_internal b32 internal_fmt_parse_args(
+#if defined(CORE_PLATFORM_WINDOWS)
+attr_internal
+b32 internal_fmt_parse_args(
     String text, FormatArguments* args,
-    union FmtValue* out_val, va_list* in_va
-) {
+    union FmtValue* out_val, va_list* in_va )
+#else
+attr_internal
+b32 internal_fmt_parse_args(
+    String text, FormatArguments* args,
+    union FmtValue* out_val, va_list va )
+#endif
+{
 
     #define skip()\
         goto internal_fmt_parse_args_skip
@@ -1466,7 +1488,9 @@ internal_fmt_parse_args_skip:
     // but last time I tested this on Linux,
     // it didn't work? Will have to investigate exactly
     // what to do.
+#if defined(CORE_PLATFORM_WINDOWS)
     #define va *in_va
+#endif
 
     if( count_by_value ) {
         if( !repeat_by_value ) {
@@ -1580,7 +1604,9 @@ internal_fmt_parse_args_skip:
 
     return true;
 
+#if defined(CORE_PLATFORM_WINDOWS)
     #undef va
+#endif
     #undef skip
 }
 
