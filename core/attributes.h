@@ -111,12 +111,12 @@
 #define attr_no_return __declspec( noreturn )
 
 /// @brief Mark switch case that falls through as intentional.
-#define attr_explicit_fallthrough() [[fallthrough]]
+#define attr_fallthrough() [[fallthrough]]
 
 #else /* MSVC */
 
 /// @brief Mark switch case that falls through as intentional.
-#define attr_explicit_fallthrough() __attribute__ ((fallthrough))
+#define attr_fallthrough() __attribute__ ((fallthrough))
 
 /// @brief Attribute for forcing optimizations for function.
 #define attr_hot __attribute__((__hot__))

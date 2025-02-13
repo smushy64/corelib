@@ -47,20 +47,20 @@ hash64 hash_murmur2_64( usize len, const void* buf ) {
 
     switch( len & 7 ) {
         case 7: h ^= (u64)(data2[6]) << 48;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 6: h ^= (u64)(data2[5]) << 40;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 5: h ^= (u64)(data2[4]) << 32;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 4: h ^= (u64)(data2[3]) << 24;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 3: h ^= (u64)(data2[2]) << 16;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 2: h ^= (u64)(data2[1]) << 8;
-            attr_explicit_fallthrough();
+            attr_fallthrough();
         case 1: h ^= (u64)(data2[0]);
-                h *= M;
-                break;
+            h *= M;
+            break;
     }
 
     h ^= h >> R;
