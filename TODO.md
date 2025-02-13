@@ -1,20 +1,20 @@
 # Todo List
+- [ ] fmt: custom formatter
+- [ ] process.h: API for creating processes and pipes
+- [ ] unicode: more functions (like what ascii.h provides)
+- [ ] hash: continuous hashing function
+- [ ] math: noise functions
+- [ ] get rid of job_queue, collections
+- [ ] search.h: search algorithms
+- [ ] time: rename timer_* to time_*
+- [ ] slice: rewrite to match slice.hpp and strings
 - [ ] math: quat_from_angle_axis_vec3, from_angle_axis_combined, from_angle_axis (scalars)
 - [ ] math: simd (trig, linear algebra)
 - [ ] math: sine_cosine MASM (for compiling with MSVC)
 - [ ] math: saturating,wrapping,checked add/sub/mul/div
 - [ ] math: RGB <-> HEX conversions
-- [ ] math: uvec2/3/4 bvec2/3/4 dvec2/3/4
+- [ ] math: uvec2/3/4 dvec2/3/4
 - [ ] math:docs: write docs for overloads and C++ vector/matrix/quaternion
-- [ ] remove alloc, it's too generic for any particular project.
-- [ ] fmt: path to upper/lower.
-- [ ] fmt: path convert separators.
-- [ ] collections: swap insert, swap remove etc.
-- [ ] collections: queue atomic functions.
-- [ ] collections: allocating functions with alignment.
-- [ ] alloc: Block allocator.
-- [ ] process.h: API for creating processes and pipes.
-- [ ] platform: linux support
 - [ ] simd abstractions
 - [ ] msvc: no cstdlib
 - [ ] memory: more memory allocation functions
@@ -22,12 +22,16 @@
 - [ ] fs: memory mapped file?
 - [ ] fmt: more accurate float formatting (grisu3 or errol?)
 ## Bugs
-- [ ] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
-- [ ] console: win32: SetConsoleOutputCP( CP_UTF8 ) for UTF-8 support.
 ## unlikely
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] platform: linux support
+- [x] fmt: path to upper/lower.
+- [x] fmt: path convert separators.
+- [x] math: boolean vectors (bvec2/3/4)
+- [x] fs: win32: always convert path to wide path. (or enable UTF-8? but that requires specific Win10 version)
+- [x] console: win32: SetConsoleOutputCP( CP_UTF8 ) for UTF-8 support.
 - [x] math: vector2 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
 - [x] math: vector3 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
 - [x] math: vector4 trig (radians/degrees/sin/cos/tan/asin/acos/atan/atan2)
