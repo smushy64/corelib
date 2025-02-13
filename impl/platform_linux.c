@@ -10,7 +10,9 @@
 #if defined(CORE_PLATFORM_LINUX)
 #include "core/types.h"
 #include "core/internal/logging.h"
+#include "core/string.h"
 
+#include "core/internal/platform/library.h"
 #include "core/internal/platform/thread.h"
 
 #define _GNU_SOURCE
@@ -18,6 +20,8 @@
 #include <pthread.h>
 #include <dlfcn.h>
 #include <errno.h>
+
+const char* posix_path_null_terminated( struct _StringPOD path );
 
 void ms_to_ts( u32 ms, struct timespec* out_ts );
 void ms_to_ts_abs( u32 ms, struct timespec* out_ts );
@@ -64,14 +68,9 @@ b32 posix_thread_join_timed( ThreadHandle* handle, u32 ms, int* opt_out_exit_cod
     return true;
 }
 
-void* platform_library_open( const char* name ) {
-    return dlopen( name, RTLD_GLOBAL | RTLD_LAZY );
-}
-void* platform_library_get( const char* name ) {
+void* platform_library_get( struct _StringPOD in_name ) {
+    const char* name = posix_path_null_terminated( in_name );
     return dlopen( name, RTLD_NOLOAD );
-}
-void platform_library_close( void* lib ) {
-    dlclose( lib );
 }
 
 #define FD_OPEN_TMP_FLAG (O_TMPFILE)

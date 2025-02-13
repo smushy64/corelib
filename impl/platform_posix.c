@@ -7,6 +7,7 @@
 #include "core/defines.h"
 
 #if defined(CORE_PLATFORM_POSIX)
+#include "core/internal/platform/library.h"
 #include "core/internal/platform/path.h"
 #include "core/internal/platform/time.h"
 #include "core/internal/platform/memory.h"
@@ -20,6 +21,8 @@
 #include "core/sync.h"
 #include "core/fs.h"
 #include "core/system.h"
+#include "core/time.h"
+#include "core/thread.h"
 
 #if defined(CORE_PLATFORM_LINUX)
     #include "impl/platform_linux.c"
@@ -496,12 +499,15 @@ void platform_mutex_unlock( struct OSMutex* mutex ) {
     }
 }
 
-const char* internal_posix_create_path( struct _StringPOD p ) {
+char* posix_get_local_buffer(void) {
+    return tls_global_posix_path_buf;
+}
+const char* posix_path_null_terminated( struct _StringPOD p ) {
     if( path_is_null_terminated( p ) ) {
         return p.cbuf;
     }
 
-    char* buf = tls_global_posix_path_buf;
+    char* buf = posix_get_local_buffer();
 
     memory_copy( buf, p.cbuf, p.len );
     buf[p.len] = 0;
@@ -510,7 +516,7 @@ const char* internal_posix_create_path( struct _StringPOD p ) {
 }
 
 b32 platform_file_remove_by_path( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
 
     int result = unlink( p );
     int errnum = errno;
@@ -534,7 +540,7 @@ FileType internal_posix_file_type_from_stat( const struct stat* st ) {
 }
 
 b32 platform_file_query_info_by_path( struct _StringPOD path, struct FileInfo* out_info ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     struct stat st;
     if( stat( p, &st ) != 0 ) {
         int errnum = errno;
@@ -587,7 +593,7 @@ b32 platform_file_query_info_by_path( struct _StringPOD path, struct FileInfo* o
     return true;
 }
 enum FileType platform_file_query_type_by_path( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     struct stat st;
     if( stat( p, &st ) ) {
         int errnum = errno;
@@ -600,7 +606,7 @@ enum FileType platform_file_query_type_by_path( struct _StringPOD path ) {
     return internal_posix_file_type_from_stat( &st );
 }
 TimePosix platform_file_query_time_create_by_path( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     struct stat st;
     if( stat( p, &st ) ) {
         int errnum = errno;
@@ -612,7 +618,7 @@ TimePosix platform_file_query_time_create_by_path( struct _StringPOD path ) {
     return st.st_ctime;
 }
 TimePosix platform_file_query_time_modify_by_path( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     struct stat st;
     if( stat( p, &st ) ) {
         int errnum = errno;
@@ -651,7 +657,7 @@ b32 platform_file_open(
         oflag |= O_TRUNC;
     }
 
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     int fd     = open( p, oflag, mode );
     int errnum = errno;
 
@@ -773,7 +779,7 @@ b32 platform_file_read( struct FD* fd, usize bytes, void* buf, usize* out_read )
 }
 
 b32 platform_directory_create( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     if( mkdir( p, S_IRWXU ) ) {
         int errnum = errno;
         core_error(
@@ -788,7 +794,7 @@ b32 platform_directory_remove( struct _StringPOD path, b32 recursive ) {
         // TODO(alicia): 
         return false;
     } else {
-        const char* p = internal_posix_create_path( path );
+        const char* p = posix_path_null_terminated( path );
         if( rmdir( p ) ) {
             int errnum = errno;
             core_error(
@@ -826,7 +832,7 @@ b32 platform_directory_walk(
     void* params
 ) {
     // TODO(alicia): 
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     tls_global_ftw_state.function = callback;
     tls_global_ftw_state.params   = params;
     nftw( p, internal_posix_nftw, 5, 0 );
@@ -836,7 +842,7 @@ struct _StringPOD platform_directory_current_query(void) {
     return string_new( global_posix.cwd_len, global_posix.cwd_buf );
 }
 b32 platform_directory_current_set( struct _StringPOD path ) {
-    const char* p = internal_posix_create_path( path );
+    const char* p = posix_path_null_terminated( path );
     if( chdir( p ) ) {
         int errnum = errno;
         core_error(
@@ -972,21 +978,24 @@ void platform_system_query_info( SystemInfo* out_info ) {
 }
 
 #if !defined(CORE_PLATFORM_LINUX)
-void* platform_library_open( const char* name ) {
-    return dlopen( name, RTLD_GLOBAL | RTLD_LAZY );
-}
-void* platform_library_get( const char* name ) {
+void* platform_library_get( struct _StringPOD in_name ) {
+    const char* name = posix_path_null_terminated( in_name );
     // TODO(alicia): this is linux only!
     // implement library reference counting for non-linux posix!
     return dlopen( name, RTLD_NOLOAD );
 }
-void platform_library_close( void* lib ) {
-    dlclose( lib );
-}
 #endif
 
-void* platform_library_load( void* lib, const char* function ) {
-    return dlsym( lib, function );
+void* platform_library_open( struct _StringPOD in_name ) {
+    const char* name = posix_path_null_terminated( in_name );
+    return dlopen( name, RTLD_GLOBAL | RTLD_LAZY );
+}
+void* platform_library_load( void* lib, struct _StringPOD in_fn_name ) {
+    const char* fn_name = posix_path_null_terminated( in_fn_name );
+    return dlsym( lib, fn_name );
+}
+void platform_library_close( void* lib ) {
+    dlclose( lib );
 }
 
 void posix_canonicalize( _PathBufPOD* buf, _PathPOD path ) {
