@@ -7,13 +7,13 @@ It's a cross-platform library that provides math types & functions
 (suitable for game development), string functions, io and multi-threading functions.
 
 ## Requirements
-- clang, gcc or Visual Studio(cl and MASM)
-- [MinGW](https://www.mingw-w64.org/) (only on Windows or if cross-compiling to it, when using clang or gcc)
+- clang or gcc
+- [MinGW](https://www.mingw-w64.org/) (only on Windows or if cross-compiling to it)
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
 ## Limitations
-- currently only win32 and linux are supported.
-- wasm support is planned but not yet implemented.
+- currently only Windows and GNU/Linux are supported.
+- WASM32 and WASM64 support is planned but not yet implemented.
 
 ## Links
 - [Source Code.](https://github.com/smushy64/corelib)

@@ -5,13 +5,12 @@ Build from Source
 
 ### General
 
-- clang, gcc or msvc(Windows only)
+- clang or gcc
 - [Doxygen >= 1.9.7](https://www.doxygen.nl/) (for generating documentation)
 
 ### Windows
 
 - [MinGW](https://www.mingw-w64.org/)
-- [Visual Studio](https://visualstudio.microsoft.com/) (for MSVC compiler and MASM, optional)
 - [Latest Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
 
 ## Dependencies
@@ -40,9 +39,7 @@ to compile using a compiler different from the one used to compile cbuild:
 ```console
 ./cbuild build --compiler=gcc
 ```
-**compiler** being clang, gcc, cc(for default compiler, usually gcc) or msvc on windows.
-
-@note if compiling with msvc, you need to run vcvarsall.bat before running cbuild to have cl and masm in PATH.
+**compiler** being clang, gcc or cc(for default compiler, usually gcc).
 
 to compile and run tests:
 ```console
