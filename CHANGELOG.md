@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- attributes: renamed attr_optimized to attr_hot, attr_optnone to attr_cold
 - win32: added fs functions
 - library: no longer uses const char*, uses String instead
 - fs: added file_type_to_string()

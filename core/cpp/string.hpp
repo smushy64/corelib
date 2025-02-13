@@ -15,7 +15,7 @@ struct _StringBufCPP;
     #include "core/string.h"
 #endif
 
-attr_always_inline attr_header attr_optimized constexpr
+attr_always_inline attr_header attr_hot constexpr
 usize __strlen( const char* cstr ) {
     usize result = 0;
     while( *cstr++ ) {
@@ -46,13 +46,13 @@ struct _StringCPP {
     };
 
     /// @brief Create empty string.
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP() : len(0), buf(nullptr) {}
 
     /// @brief Create string.
     /// @param     len Byte length of string.
     /// @param[in] buf Pointer to start of string.
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( usize len, const Type* buf ) : len(len), cbuf(buf) {}
 
     /// @brief Create string from static character array.
@@ -62,31 +62,31 @@ struct _StringCPP {
 
     /// @brief Create string from string literal.
     /// @param[in] cstr String literal.
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( const char* cstr ) : _StringCPP( __strlen( cstr ), cstr ) {}
 
     /// @brief Implicitly convert POD string.
     /// @param[in] pod POD string.
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( const _StringPOD& pod ) : _StringCPP( pod.len, pod.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( const Slice<char>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( const Slice<i8>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringCPP( const Slice<u8>& slice ) : _StringCPP( slice.len, (char*)slice.cbuf ) {}
 
     /// @brief Implicitly convert to POD string.
     /// @return POD string.
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     operator _StringPOD() const {
         return { .len=len, .cbuf=cbuf };
     }
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     operator Slice<char>() const {
         return Slice( len, cbuf );
     }
@@ -177,13 +177,13 @@ struct _StringBufCPP {
     attr_header constexpr
     _StringBufCPP( const _StringBufPOD& pod ) : _StringBufCPP( pod.cap, pod.len, pod.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringBufCPP( const Buffer<char>& buf ) : _StringBufCPP( buf.cap, buf.len, buf.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringBufCPP( const Buffer<u8>& buf ) : _StringBufCPP( buf.cap, buf.len, (char*)buf.cbuf ) {}
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     _StringBufCPP( const Buffer<i8>& buf ) : _StringBufCPP( buf.cap, buf.len, (char*)buf.cbuf ) {}
 
     /// @brief Implicitly convert to POD string buffer.
@@ -214,7 +214,7 @@ struct _StringBufCPP {
         return slice;
     }
 
-    attr_always_inline attr_header attr_optimized constexpr
+    attr_always_inline attr_header attr_hot constexpr
     operator Buffer<char>() const {
         return Buffer( cap, len, cbuf );
     }

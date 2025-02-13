@@ -281,7 +281,7 @@ void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
 
 #else /* MSVC */
 
-attr_internal attr_always_inline inline attr_optimized
+attr_internal attr_always_inline inline attr_hot
 void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
     f32 s, c;
     __asm__ inline ( "fsincos" : "=t"(c), "=u"(s) : "0"(x) );
@@ -609,7 +609,7 @@ struct AngleAxis_ quat_to_angle_axis( struct Quaternion q ) {
     return result;
 }
 
-attr_unused attr_optimized attr_internal attr_always_inline inline
+attr_unused attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_mat4_scalar( const struct Matrix4x4* lhs, const struct Matrix4x4* rhs ) {
     return mat4_new(
         // column - 0
@@ -634,7 +634,7 @@ struct Matrix4x4 internal_mat4_mul_mat4_scalar( const struct Matrix4x4* lhs, con
         ( lhs->array[3] * rhs->array[12] ) + ( lhs->array[7] * rhs->array[13] ) + ( lhs->array[11] * rhs->array[14] ) + ( lhs->array[15] * rhs->array[15] ) );
 }
 
-attr_unused attr_optimized attr_internal attr_always_inline inline
+attr_unused attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_add_scalar(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -645,7 +645,7 @@ struct Matrix4x4 internal_mat4_add_scalar(
     res.col3 = vec4_add( lhs->col3, rhs->col3 );
     return res;
 }
-attr_unused attr_optimized attr_internal attr_always_inline inline
+attr_unused attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_sub_scalar(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -656,7 +656,7 @@ struct Matrix4x4 internal_mat4_sub_scalar(
     res.col3 = vec4_sub( lhs->col3, rhs->col3 );
     return res;
 }
-attr_unused attr_optimized attr_internal attr_always_inline inline
+attr_unused attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_scalar(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -667,7 +667,7 @@ struct Matrix4x4 internal_mat4_mul_scalar(
     res.col3 = vec4_mul( lhs->col3, rhs );
     return res;
 }
-attr_unused attr_optimized attr_internal attr_always_inline inline
+attr_unused attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_div_scalar(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -681,7 +681,7 @@ struct Matrix4x4 internal_mat4_div_scalar(
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
 
-attr_optimized attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_add_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -708,7 +708,7 @@ struct Matrix4x4 internal_mat4_add_sse(
 
     return res;
 }
-attr_optimized attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_sub_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -735,7 +735,7 @@ struct Matrix4x4 internal_mat4_sub_sse(
 
     return res;
 }
-attr_optimized attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_sse(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -759,7 +759,7 @@ struct Matrix4x4 internal_mat4_mul_sse(
 
     return res;
 }
-attr_optimized attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_div_sse(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -784,7 +784,7 @@ struct Matrix4x4 internal_mat4_div_sse(
     return res;
 }
 
-attr_optimized attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_mat4_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {

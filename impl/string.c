@@ -434,8 +434,7 @@ b32 string_parse_uint( struct _StringPOD str, u64* out_uint ) {
     return true;
 
 }
-attr_optimized
-attr_internal attr_always_inline inline
+attr_hot attr_internal attr_always_inline inline
 u64 internal_string_places( u64 i ) {
     if( i < 10 ) {
         return 1;

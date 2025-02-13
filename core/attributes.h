@@ -78,10 +78,10 @@
 
 /// @brief Attribute for forcing optimizations for function.
 /// @warning does not do anything on MSVC
-#define attr_optimized
+#define attr_hot
 /// @brief Attribute for forcing optimizations off for function.
 /// @warning does not do anything on MSVC
-#define attr_optnone
+#define attr_cold
 
 /// @brief Attribute for forcing function to be inlined.
 #define attr_always_inline __forceinline
@@ -119,9 +119,9 @@
 #define attr_explicit_fallthrough() __attribute__ ((fallthrough))
 
 /// @brief Attribute for forcing optimizations for function.
-#define attr_optimized __attribute__((__hot__))
+#define attr_hot __attribute__((__hot__))
 /// @brief Attribute for forcing optimizations off for function.
-#define attr_optnone __attribute__((__optnone__))
+#define attr_cold __attribute__((__optnone__))
 
 /// @brief Attribute for forcing function to be inlined.
 #define attr_always_inline __attribute__((__always_inline__))

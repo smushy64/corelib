@@ -13,7 +13,7 @@ struct Swizzler {
     static const int Count = sizeof...(Indexes);
     T v[Count];
 
-    attr_always_inline attr_header attr_optimized
+    attr_always_inline attr_header attr_hot
     constexpr V& operator=( const V& rhs ) {
         int indexes[] = { Indexes... };
         for( int i = 0; i < Count; ++i ) {
@@ -21,7 +21,7 @@ struct Swizzler {
         }
         return *(V*)this;
     }
-    attr_always_inline attr_header attr_optimized
+    attr_always_inline attr_header attr_hot
     constexpr operator V() const {
         return V{ v[Indexes]... };
     }
@@ -32,7 +32,7 @@ struct SwizzlerConvert {
     static const int Count = sizeof...(Indexes);
     T v[Count];
 
-    attr_always_inline attr_header attr_optimized
+    attr_always_inline attr_header attr_hot
     constexpr DST& operator=( const SRC& rhs ) {
         int indexes[] = { Indexes... };
         for( int i = 0; i < Count; ++i ) {
@@ -40,7 +40,7 @@ struct SwizzlerConvert {
         }
         return *(DST*)this;
     }
-    attr_always_inline attr_header attr_optimized
+    attr_always_inline attr_header attr_hot
     constexpr operator DST() const {
         DST result;
         int indexes[] = { Indexes... };

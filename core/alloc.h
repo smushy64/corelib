@@ -171,7 +171,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
     __allocator_interface_free_aligned__( \
         (allocator), memory, size, alignment, __FILE__, __LINE__, __func__ )
 
-attr_always_inline attr_header attr_optimized
+attr_always_inline attr_header attr_hot
 void* __allocator_interface_alloc_aligned__(
     AllocatorInterface* allocator, void* memory,
     usize old_size, usize new_size, usize alignment,
@@ -209,7 +209,7 @@ void* __allocator_interface_alloc_aligned__(
         return aligned;
     }
 }
-attr_always_inline attr_header attr_optimized
+attr_always_inline attr_header attr_hot
 void __allocator_interface_free_aligned__(
     AllocatorInterface* allocator, void* memory,
     usize size, usize alignment,

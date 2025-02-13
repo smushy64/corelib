@@ -19,7 +19,7 @@
     #define struct_literal( identifier ) (identifier)
 #endif
 
-attr_header attr_always_inline attr_optimized
+attr_header attr_always_inline attr_hot
 void _unused(int a, ...) { (void)(a); }
 
 /// @brief Mark values as unused.
