@@ -287,3 +287,91 @@ When no time formatting is provided, uses default time formatting.
 | <tt><i>+int</i></tt>              | Left side padding.                                                                       |
 | <tt><i>-int</i></tt>              | Right side padding.                                                                      |
 
+Any Formatter
+----------------
+
+```
+{a,...}
+```
+
+### Description
+
+Format anything.
+
+Requires function pointer and void pointer to be passed in.
+
+Arguments are passed to formatter with surrounding \{\} and 'a' stripped.
+
+Example of how arguments are passed:
+```
+{a,b,400,87}
+```
+becomes:
+```
+b,400,87
+```
+
+Full example:
+
+```cpp
+struct Foo {
+    int bar;
+};
+struct Foo foo = { .bar = 10 };
+
+usize foo_formatter(
+    StreamBytesFN* stream, void* target,
+    usize args_len, const char* args_ptr, const void* param
+) {
+    /* 'b,f' */
+    String args = string_new( args_len, args_ptr );
+
+    b32 binary = false, full_width = false;
+
+    while( !string_is_empty( args ) ) {
+        String argument = args;
+        string_find( argument, ',', &argument.len );
+        args = string_advance_by( args, argument.len + 1 );
+
+        argument = string_trim_surrounding_whitespace( argument );
+        if( string_is_empty( argument ) || argument.len > 1 ) {
+            continue;
+        }
+
+        switch( argument.cbuf[0] ) {
+            case 'b': {
+                binary = true;
+            } break;
+            case 'f': {
+                full_width = true;
+            } break;
+            default:
+                continue;
+        }
+    }
+
+    struct Foo* foo_ptr = (struct Foo*)param;
+    usize result = 0;
+
+    struct IntFormatArguments args = {};
+    args.flags = FMT_INT_BITDEPTH_32;
+
+    if( binary ) {
+        args.flags |= FMT_INT_BINARY;
+    }
+    if( full_width ) {
+        args.flags |= FMT_INT_FULL_WIDTH;
+    }
+
+    result += stream_fmt_int( stream, target, 0, 1, &foo_ptr->bar, &args );
+
+    return result;
+}
+
+println( "{a,b,f}", foo_formatter, &foo );
+```
+
+### Arguments
+
+Arguments are passed to formatter function.
+

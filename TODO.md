@@ -1,5 +1,4 @@
 # Todo List
-- [ ] fmt: custom formatter
 - [ ] process.h: API for creating processes and pipes
 - [ ] unicode: more functions (like what ascii.h provides)
 - [ ] hash: continuous hashing function
@@ -26,6 +25,7 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] fmt: custom formatter
 - [x] platform: linux support
 - [x] fmt: path to upper/lower.
 - [x] fmt: path convert separators.

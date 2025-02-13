@@ -19,6 +19,17 @@ usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
     int padding, usize opt_format_len, const char* opt_format );
 
+/// @brief Formatter function for any type.
+/// @param[in] stream   Streaming function.
+/// @param[in] target   Pointer to streaming target.
+/// @param     args_len Length of format arguments.
+/// @param[in] args     Pointer to format arguments.
+/// @param[in] params   Pointer to format parameters.
+/// @return Number of bytes that could not be streamed to target.
+typedef usize AnyFormatterFN(
+    StreamBytesFN* stream, void* target,
+    usize args_len, const char* args, const void* params );
+
 /// @brief Char formatting case.
 typedef enum FormatCharCasing {
     /// @brief Do not convert characters.
@@ -140,12 +151,16 @@ typedef enum FormatType {
     FT_INT,
     /// @brief Type to format is time split.
     FT_TIME,
+    /// @brief Type to format is any.
+    FT_ANY,
 } FormatType;
+
 /// @brief Boolean format arguments.
 typedef struct BoolFormatArguments {
     /// @brief If boolean should be formatted as binary.
     b32 binary;
 } BoolFormatArguments;
+
 /// @brief Character format arguments.
 typedef struct CharFormatArguments {
     /// @brief How many times to repeat character.
@@ -153,11 +168,13 @@ typedef struct CharFormatArguments {
     /// @brief What casing should character be printed in.
     FormatCharCasing casing;
 } CharFormatArguments;
+
 /// @brief String format arguments.
 typedef struct StringFormatArguments {
     /// @brief String format flags.
     FormatStringFlags flags;
 } StringFormatArguments;
+
 /// @brief Float format arguments.
 typedef struct FloatFormatArguments {
     /// @brief How much precision to print with.
@@ -165,11 +182,13 @@ typedef struct FloatFormatArguments {
     /// @brief Float formatting flags.
     enum FormatFloatFlags flags;
 } FloatFormatArguments;
+
 /// @brief Integer format arguments.
 typedef struct IntFormatArguments {
     /// @brief Integer formatting flags.
     enum FormatIntFlags flags;
 } IntFormatArguments;
+
 /// @brief Time format arguments.
 typedef struct TimeFormatArguments {
     /// @brief Size of format string.
@@ -177,16 +196,30 @@ typedef struct TimeFormatArguments {
     /// @brief Pointer to time format string.
     const char* fmt;
 } TimeFormatArguments;
+
+/// @brief Any format arguments.
+typedef struct AnyFormatArguments {
+    /// @brief Parameters to any formatter.
+    const void* params;
+    /// @brief Arguments to any formatter.
+    struct {
+        /// @brief Length of any formatter arguments.
+        u32         len;
+        /// @brief Pointer to start of any formatter arguments.
+        const char* cbuf;
+    } args;
+} AnyFormatArguments;
+
 /// @brief Arguments for formatter.
 typedef struct FormatArguments {
     /// @brief Type of data to format.
     enum FormatType type;
-    /// @brief Number of items to format.
-    u32             count;
     /// @brief Pointer to start of data to format buffer.
     const void*     data;
     /// @brief Number of padding characters to include in formatted string.
     int             padding;
+    /// @brief Number of items to format.
+    u32             count;
     /// @brief Anonymous union of format arguments.
     union {
         /// @brief Boolean format arguments.
@@ -201,6 +234,8 @@ typedef struct FormatArguments {
         IntFormatArguments integer;
         /// @brief Time format arguments.
         TimeFormatArguments time;
+        /// @brief Any format arguments.
+        AnyFormatArguments any;
     };
 } FormatArguments;
 

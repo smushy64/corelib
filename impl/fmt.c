@@ -606,6 +606,13 @@ usize stream_fmt_args(
                 args->padding, args->time.fmt_len,
                 args->time.fmt );
         } break;
+        case FT_ANY: {
+            AnyFormatterFN* formatter = (AnyFormatterFN*)args->data;
+            return formatter(
+                stream, target,
+                args->any.args.len, args->any.args.cbuf,
+                args->any.params );
+        } break;
     }
     unreachable();
 }
@@ -991,6 +998,12 @@ b32 internal_fmt_parse_format_type(
         return false;
     }
     switch( spec.cbuf[0] ) {
+        case 'a': {
+            if( spec.len > 1 ) {
+                return false;
+            }
+            out_args->type = FT_ANY;
+        } return true;
         case 'b': {
             if( spec.len > 1 ) {
                 return false;
@@ -1160,6 +1173,10 @@ b32 internal_fmt_parse_args(
 
     // initialize arguments
     switch( args->type ) {
+        case FT_ANY: {
+            args->any.args.len  = rem.len;
+            args->any.args.cbuf = rem.cbuf;
+        } break;
         case FT_CHAR: {
             args->character.repeat = 1;
         } break;
@@ -1178,7 +1195,7 @@ b32 internal_fmt_parse_args(
         case FT_TIME: break;
     }
 
-    while( !string_is_empty( rem ) ) {
+    while( args->type != FT_ANY && !string_is_empty( rem ) ) {
         String arg = rem;
         usize comma = 0;
         if( string_find( rem, ',', &comma ) ) {
@@ -1217,7 +1234,7 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_TIME:
+            case FT_ANY: case FT_TIME:
                 break;
         }
         // string and char arguments
@@ -1240,7 +1257,7 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_BOOL: case FT_FLOAT: case FT_INT: case FT_TIME:
+            case FT_ANY: case FT_BOOL: case FT_FLOAT: case FT_INT: case FT_TIME:
                 break;
         }
 
@@ -1263,7 +1280,7 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_FLOAT: 
+            case FT_ANY: case FT_FLOAT: 
                 break;
         }
 
@@ -1303,7 +1320,8 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_INT: case FT_TIME:
+            case FT_ANY: case FT_BOOL: case FT_CHAR:
+            case FT_STRING: case FT_INT: case FT_TIME:
                 break;
         }
 
@@ -1353,7 +1371,7 @@ b32 internal_fmt_parse_args(
                     default: break;
                 }
             } break;
-            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_TIME:
+            case FT_ANY: case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_TIME:
                 break;
         }
 
@@ -1400,7 +1418,8 @@ b32 internal_fmt_parse_args(
                     default: break;
                 }
             } break;
-            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_TIME:
+            case FT_ANY: case FT_BOOL: case FT_CHAR:
+            case FT_STRING: case FT_FLOAT: case FT_TIME:
                 break;
         }
 
@@ -1428,7 +1447,8 @@ b32 internal_fmt_parse_args(
                     }
                 }
             } break;
-            case FT_BOOL: case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_INT:
+            case FT_ANY: case FT_BOOL: case FT_CHAR:
+            case FT_STRING: case FT_FLOAT: case FT_INT:
                 break;
         }
 
@@ -1440,7 +1460,8 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_CHAR: case FT_STRING: case FT_FLOAT: case FT_INT: case FT_TIME:
+            case FT_ANY: case FT_CHAR: case FT_STRING:
+            case FT_FLOAT: case FT_INT: case FT_TIME:
                 break;
         }
 
@@ -1462,7 +1483,8 @@ b32 internal_fmt_parse_args(
                     }
                 }
             } break;
-            case FT_CHAR: case FT_FLOAT: case FT_INT: case FT_TIME: case FT_BOOL:
+            case FT_ANY: case FT_CHAR: case FT_FLOAT:
+            case FT_INT: case FT_TIME: case FT_BOOL:
                 break;
         }
 
@@ -1498,7 +1520,8 @@ b32 internal_fmt_parse_args(
                     skip();
                 }
             } break;
-            case FT_BOOL: case FT_STRING: case FT_FLOAT: case FT_INT: case FT_TIME:
+            case FT_ANY: case FT_BOOL: case FT_STRING:
+            case FT_FLOAT: case FT_INT: case FT_TIME:
                 break;
         }
 
@@ -1625,6 +1648,10 @@ internal_fmt_parse_args_skip:
                     args->time.fmt_len = cstr_len( args->time.fmt );
                 }
                 out_val->ts = va_arg( va, TimeSplit );
+            } break;
+            case FT_ANY: {
+                args->data       = (void*)va_arg( va, AnyFormatterFN* );
+                args->any.params = va_arg( va, const void* );
             } break;
         }
     }
