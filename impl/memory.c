@@ -14,13 +14,13 @@
     #include "core/internal/sse.h"
 #endif
 
-attr_clink attr_export
+attr_c_call attr_export
 void* memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
 
-attr_clink attr_export 
+attr_c_call attr_export 
 void* memset( void* dst, int val, usize size );
 
-attr_clink attr_export
+attr_c_call attr_export
 void* memmove( void* str1, const void* str2, usize n );
 
 attr_internal

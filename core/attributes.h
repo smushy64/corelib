@@ -21,7 +21,7 @@
     /// @brief Attribute for header-only functions.
     #define attr_header inline
     /// @brief Attribute for functions with C-linkage.
-    #define attr_clink extern "C"
+    #define attr_c_call extern "C"
     /// @brief Attribute for declaring values that are always readonly.
     #define attr_readonly static constexpr const
 #else
@@ -30,7 +30,7 @@
     /// @brief Attribute for header-only functions.
     #define attr_header static inline
     /// @brief Attribute for functions with C-linkage.
-    #define attr_clink extern
+    #define attr_c_call extern
     /// @brief Attribute for declaring values that are always readonly.
     #define attr_readonly static const
 #endif
@@ -39,17 +39,17 @@
     /// @brief Attribute for functions to be exported by dll.
     #define attr_export __declspec(dllexport)
     /// @brief Attribute for functions to be imported from dll.
-    #define attr_import __declspec(dllimport) attr_clink
+    #define attr_import __declspec(dllimport) attr_c_call
 #else
     /// @brief Attribute for functions to be exported by dll.
     #define attr_export __attribute__((visibility("default")))
     /// @brief Attribute for functions to be imported from dll.
-    #define attr_import attr_clink
+    #define attr_import attr_c_call
 #endif
 
 #if !defined(attr_core_api)
     #if defined(CORE_ENABLE_STATIC_BUILD)
-        #define attr_core_api attr_clink
+        #define attr_core_api attr_c_call
     #else
         #if defined(CORE_ENABLE_EXPORT)
             #define attr_core_api attr_export

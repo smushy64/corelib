@@ -204,7 +204,7 @@
 /// @note Defined by compiler.
 #define CORE_ENABLE_EXPORT
 
-/// @brief Defines #attr_core_api as #attr_clink.
+/// @brief Defines #attr_core_api as #attr_c_call.
 ///
 /// Default = disabled.
 ///

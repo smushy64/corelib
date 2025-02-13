@@ -19,10 +19,10 @@ extern void win32_deinit(void);
 typedef LPWSTR* CommandLineToArgvWFN( LPCWSTR lpCmdLine, int* pNumArgs );
 
 #if defined(CORE_WIN32_SUBSYSTEM_WINDOWS)
-attr_no_return attr_clink
+attr_no_return attr_c_call
 void __stdcall WinMainCRTStartup(void) {
 #else
-attr_no_return attr_clink
+attr_no_return attr_c_call
 void __stdcall mainCRTStartup(void) {
 #endif
     HMODULE shell_api = LoadLibraryA( "SHELL32.DLL" );

@@ -13,8 +13,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-attr_clink b32 win32_init(void);
-attr_clink void win32_deinit(void);
+attr_c_call
+b32 win32_init(void);
+attr_c_call
+void win32_deinit(void);
 
 BOOL WINAPI
 #if defined( CORE_COMPILER_MSVC )
