@@ -7,7 +7,8 @@
 #include "core/sort.h"
 #include "core/memory.h"
 
-attr_internal isize quicksort_partition_i32(
+attr_internal
+isize quicksort_partition_i32(
     isize low, isize high, i32* buffer, b32 reverse
 ) {
     i32* pivot = buffer + high;
@@ -33,7 +34,8 @@ attr_internal isize quicksort_partition_i32(
 
     return i + 1;
 }
-attr_core_api void quicksort_i32(
+attr_core_api
+void quicksort_i32(
     isize from_inclusive, isize to_inclusive, i32* buffer, b32 reverse
 ) {
 
@@ -54,8 +56,8 @@ attr_core_api void quicksort_i32(
     }
 }
 
-attr_always_inline inline
-attr_internal void internal_sort_swap(
+attr_always_inline inline attr_internal
+void internal_sort_swap(
     void* a, void* b, void* swap_buffer, usize size
 ) {
     memory_copy( swap_buffer, a, size );
@@ -63,7 +65,8 @@ attr_internal void internal_sort_swap(
     memory_copy( b, swap_buffer, size );
 }
 
-attr_internal isize quicksort_generic_partition(
+attr_internal
+isize quicksort_generic_partition(
     isize low, isize high, usize stride, void* buffer,
     SortCmpFN* cmp_fn, void* cmp_params, void* swap_buffer
 ) {
@@ -87,7 +90,8 @@ attr_internal isize quicksort_generic_partition(
         buf + (i * stride), buf + (high * stride), swap_buffer, stride );
     return i;
 }
-attr_core_api void quicksort_generic(
+attr_core_api
+void quicksort_generic(
     isize from_inclusive, isize to_inclusive,
     usize stride, void* buffer,
     SortCmpFN* cmp, void* cmp_params, void* swap_buffer
@@ -111,7 +115,8 @@ attr_core_api void quicksort_generic(
     }
 }
 
-attr_internal isize quicksort_partition_u32(
+attr_internal
+isize quicksort_partition_u32(
     isize low, isize high, u32* buffer, b32 reverse
 ) {
     u32* pivot = buffer + high;
@@ -137,7 +142,8 @@ attr_internal isize quicksort_partition_u32(
 
     return i + 1;
 }
-attr_core_api void quicksort_u32(
+attr_core_api
+void quicksort_u32(
     isize from_inclusive, isize to_inclusive, u32* buffer, b32 reverse
 ) {
 
@@ -158,7 +164,8 @@ attr_core_api void quicksort_u32(
     }
 }
 
-attr_internal isize quicksort_partition_f32(
+attr_internal
+isize quicksort_partition_f32(
     isize low, isize high, f32* buffer, b32 reverse
 ) {
     f32* pivot = buffer + high;
@@ -184,7 +191,8 @@ attr_internal isize quicksort_partition_f32(
 
     return i + 1;
 }
-attr_core_api void quicksort_f32(
+attr_core_api
+void quicksort_f32(
     isize from_inclusive, isize to_inclusive, f32* buffer, b32 reverse
 ) {
 
@@ -205,7 +213,8 @@ attr_core_api void quicksort_f32(
     }
 }
 
-attr_core_api void sort_reverse(
+attr_core_api
+void sort_reverse(
     usize len, usize stride, void* buffer, void* swap_buffer
 ) {
     u8* bytes = buffer;

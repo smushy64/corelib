@@ -90,13 +90,15 @@ typedef struct TimeSplit {
 /// @details
 /// Time is always in UTC.
 /// @return Seconds since 00:00:00 UTC January 1, 1970.
-attr_core_api TimePosix time_posix(void);
+attr_core_api
+TimePosix time_posix(void);
 /// @brief Get split local time.
 /// @details
 /// Time is always in the system's current timezone.
 /// @return Split time.
 /// @see #TimeSplit
-attr_core_api TimeSplit time_split(void);
+attr_core_api
+TimeSplit time_split(void);
 /// @brief Stream formatted time split.
 /// @param[in] stream         Pointer to streaming function.
 /// @param[in] target         Pointer to streaming target.
@@ -106,7 +108,8 @@ attr_core_api TimeSplit time_split(void);
 /// @param[in] opt_format     (optional) Pointer to start of format string.
 /// @see FORMAT_TIME.md
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_time(
+attr_core_api
+usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
     int padding, usize opt_format_len, const char* opt_format );
 /// @brief Convert 24 hour to 12 hour.
@@ -115,32 +118,38 @@ attr_core_api usize stream_fmt_time(
 /// @return
 ///     - @c true  : Time is AM.
 ///     - @c false : Time is PM.
-attr_core_api b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 );
+attr_core_api
+b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 );
 /// @brief Convert day of the month to day of the week.
 /// @param year      Year.
 /// @param month     Month (1-12).
 /// @param day_month Day of the month (1-31).
 /// @return Day of the week (0-6 with 0=Sunday).
-attr_core_api u32 time_day_month_to_day_week( u32 year, u32 month, u32 day_month );
+attr_core_api
+u32 time_day_month_to_day_week( u32 year, u32 month, u32 day_month );
 /// @brief Convert day of month to day of year.
 /// @param year      Year.
 /// @param month     Month (1-12).
 /// @param day_month Day of the month (1-31).
 /// @return Day of the year.
-attr_core_api u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month );
+attr_core_api
+u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month );
 /// @brief Check if year is leap year.
 /// @param year Year.
 /// @return
 ///     - @c true  : @c year is a leap year.
 ///     - @c false : @c year is not a leap year.
-attr_core_api b32 time_year_is_leap( u32 year );
+attr_core_api
+b32 time_year_is_leap( u32 year );
 
 /// @brief Get high resolution time in milliseconds.
 /// @return Time in milliseconds.
-attr_core_api f64 timer_milliseconds(void);
+attr_core_api
+f64 timer_milliseconds(void);
 /// @brief Get high resolution time in seconds.
 /// @return Time in seconds.
-attr_core_api f64 timer_seconds(void);
+attr_core_api
+f64 timer_seconds(void);
 
 #if defined(CORE_ENABLE_DEBUG_TIMER_BLOCK)
     /// @brief Create a debug timer block.
@@ -170,7 +179,8 @@ attr_core_api f64 timer_seconds(void);
 /// @param      month       Month to convert.
 /// @param[out] opt_out_len (optional) Pointer to write length of string.
 /// @return Month short name read-only string.
-attr_header const cstr* time_month_to_string_short(
+attr_header
+const cstr* time_month_to_string_short(
     TimeMonth month, usize* opt_out_len
 ) {
     #define res( literal )\
@@ -198,7 +208,8 @@ attr_header const cstr* time_month_to_string_short(
 /// @param      month       Month to convert.
 /// @param[out] opt_out_len (optional) Pointer to write length of string.
 /// @return Month name read-only string.
-attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
+attr_header
+const cstr* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
     #define res( literal )\
         if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
 
@@ -223,7 +234,8 @@ attr_header const cstr* time_month_to_string( TimeMonth month, usize* opt_out_le
 /// @param      day_week    Day of the week to convert (0-6, 0 == Sunday).
 /// @param[out] opt_out_len (optional) Pointer to write length of string.
 /// @return Day name read-only string.
-attr_header const char* time_day_week_to_string( u32 day_week, usize* opt_out_len ) {
+attr_header
+const char* time_day_week_to_string( u32 day_week, usize* opt_out_len ) {
     #define res( literal )\
         if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
     switch( day_week ) {

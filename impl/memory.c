@@ -14,16 +14,17 @@
     #include "core/internal/sse.h"
 #endif
 
-attr_clink attr_export void*
-memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
+attr_clink attr_export
+void* memcpy( void* attr_restrict dst, const void* attr_restrict src, usize size );
 
-attr_clink attr_export void*
-memset( void* dst, int val, usize size );
+attr_clink attr_export 
+void* memset( void* dst, int val, usize size );
 
-attr_clink attr_export void*
-memmove( void* str1, const void* str2, usize n );
+attr_clink attr_export
+void* memmove( void* str1, const void* str2, usize n );
 
-attr_internal void internal_memory_set_word( void* dst, u8 val, usize size ) {
+attr_internal
+void internal_memory_set_word( void* dst, u8 val, usize size ) {
 
     usize sizeptr = size / sizeof(usize);
     union { u8 bytes[sizeof(usize)]; usize bytesptr; } valptr;
@@ -52,7 +53,8 @@ attr_internal void internal_memory_set_word( void* dst, u8 val, usize size ) {
 }
 
 
-attr_internal void internal_memory_copy_word(
+attr_internal
+void internal_memory_copy_word(
     void* attr_restrict dst, const void* attr_restrict src, usize size
 ) {
     usize* dstptr = (usize*)dst;
@@ -84,8 +86,8 @@ internal_memory_copy_bytes:
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
 
-attr_always_inline inline
-attr_internal void internal_memory_copy_sse(
+attr_always_inline inline attr_internal
+void internal_memory_copy_sse(
     void* attr_restrict dst, const void* attr_restrict src, usize size
 ) {
     if( size < INTERNAL_MEMORY_COPY_PREFER_SIMD_SIZE ) {
@@ -116,7 +118,8 @@ attr_internal void internal_memory_copy_sse(
 
 #endif /* SSE */
 
-attr_core_api void memory_copy(
+attr_core_api
+void memory_copy(
     void* attr_restrict dst, const void* attr_restrict src, usize size
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -125,17 +128,20 @@ attr_core_api void memory_copy(
     internal_memory_copy_word( dst, src, size );
 #endif
 }
-attr_core_api void memory_move(
+attr_core_api
+void memory_move(
     void* dst, const void* src, usize size
 ) {
     // TODO(alicia): implementation with sse
     (void)memmove( dst, src, size );
 }
-attr_core_api void memory_set( void* dst, u8 byte, usize size ) {
+attr_core_api
+void memory_set( void* dst, u8 byte, usize size ) {
     // TODO(alicia): implementation with sse
     internal_memory_set_word( dst, byte, size );
 }
-attr_core_api void memory_set_chunks(
+attr_core_api
+void memory_set_chunks(
     void* dst, usize chunk_size, const void* chunk, usize count
 ) {
     // TODO(alicia): SIMD?
@@ -145,7 +151,8 @@ attr_core_api void memory_set_chunks(
         dst_bytes += chunk_size;
     }
 }
-attr_core_api b32 memory_cmp( const void* a, const void* b, usize size ) {
+attr_core_api
+b32 memory_cmp( const void* a, const void* b, usize size ) {
     // TODO(alicia): SIMD?
 
     usize sizeptr = size / sizeof(usize);
@@ -168,20 +175,24 @@ attr_core_api b32 memory_cmp( const void* a, const void* b, usize size ) {
     return true;
 }
 
-attr_core_api void* memory_alloc( usize size ) {
+attr_core_api
+void* memory_alloc( usize size ) {
     return platform_heap_alloc( 0, 0, (usize)size );
 }
-attr_core_api void* memory_realloc(
+attr_core_api
+void* memory_realloc(
     void* old_buffer, usize old_size, usize new_size
 ) {
     return platform_heap_alloc( old_buffer, (usize)old_size, (usize)new_size );
 }
-attr_core_api void memory_free( void* buffer, usize size ) {
+attr_core_api
+void memory_free( void* buffer, usize size ) {
     if( buffer ) {
         platform_heap_free( buffer, (usize)size );
     }
 }
-attr_core_api void* memory_alloc_aligned( usize size, usize alignment ) {
+attr_core_api
+void* memory_alloc_aligned( usize size, usize alignment ) {
     void* ptr = memory_alloc( size + alignment + sizeof(void*) );
     if( !ptr ) {
         return NULL;
@@ -192,7 +203,8 @@ attr_core_api void* memory_alloc_aligned( usize size, usize alignment ) {
 
     return aligned;
 }
-attr_core_api void* memory_realloc_aligned(
+attr_core_api
+void* memory_realloc_aligned(
     void* old_buffer, usize old_size,
     usize new_size, usize alignment
 ) {
@@ -210,7 +222,8 @@ attr_core_api void* memory_realloc_aligned(
 
     return aligned;
 }
-attr_core_api void memory_free_aligned(
+attr_core_api
+void memory_free_aligned(
     void* buffer, usize size, usize alignment
 ) {
     if( !buffer ) {
@@ -220,7 +233,8 @@ attr_core_api void memory_free_aligned(
     void* base = ((void**)buffer)[-1];
     memory_free( base, size + alignment + sizeof(void*) );
 }
-attr_core_api usize memory_calculate_aligned_size( usize size, usize alignment ) {
+attr_core_api
+usize memory_calculate_aligned_size( usize size, usize alignment ) {
     return size + alignment + sizeof(void*);
 }
 

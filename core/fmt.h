@@ -14,7 +14,8 @@
 
 // forward declaration
 struct TimeSplit;
-attr_core_api usize stream_fmt_time(
+attr_core_api
+usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
     int padding, usize opt_format_len, const char* opt_format );
 
@@ -211,7 +212,8 @@ typedef struct FormatArguments {
 /// @param[in] booleans Pointer to start of boolean array.
 /// @param[in] args     Boolean format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_bool(
+attr_core_api
+usize stream_fmt_bool(
     StreamBytesFN* stream, void* target,
     int padding, u32 count, const b32* booleans,
     struct BoolFormatArguments* args );
@@ -223,7 +225,8 @@ attr_core_api usize stream_fmt_bool(
 /// @param[in] characters Pointer to start of character array.
 /// @param[in] args       Character format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_char(
+attr_core_api
+usize stream_fmt_char(
     StreamBytesFN* stream, void* target,
     int padding, u32 count, const char* characters,
     struct CharFormatArguments* args );
@@ -235,7 +238,8 @@ attr_core_api usize stream_fmt_char(
 /// @param[in] string     Pointer to start of string.
 /// @param[in] args       String format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_string(
+attr_core_api
+usize stream_fmt_string(
     StreamBytesFN* stream, void* target,
     int padding, usize string_len, const void* string,
     struct StringFormatArguments* args );
@@ -247,7 +251,8 @@ attr_core_api usize stream_fmt_string(
 /// @param[in] floats  Pointer to start of float array.
 /// @param[in] args    Float format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_float(
+attr_core_api
+usize stream_fmt_float(
     StreamBytesFN* stream, void* target,
     int padding, u32 count, const void* floats,
     struct FloatFormatArguments* args );
@@ -259,7 +264,8 @@ attr_core_api usize stream_fmt_float(
 /// @param[in] integers Pointer to start of integer array.
 /// @param[in] args     Integer format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_int(
+attr_core_api
+usize stream_fmt_int(
     StreamBytesFN* stream, void* target,
     int padding, u32 count, const void* integers,
     struct IntFormatArguments* args );
@@ -268,7 +274,8 @@ attr_core_api usize stream_fmt_int(
 /// @param[in] target   Pointer to streaming function parameters.
 /// @param[in] args     Format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_args(
+attr_core_api
+usize stream_fmt_args(
     StreamBytesFN* stream, void* target, FormatArguments* args );
 /// @brief Stream formatted string.
 /// @param[in] stream     Pointer to streaming function.
@@ -277,7 +284,8 @@ attr_core_api usize stream_fmt_args(
 /// @param[in] format     Pointer to start of format string.
 /// @param     va         Variadic format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt_va(
+attr_core_api
+usize stream_fmt_va(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, va_list va );
 /// @brief Stream formatted string.
@@ -287,7 +295,8 @@ attr_core_api usize stream_fmt_va(
 /// @param[in] format     Pointer to start of format string.
 /// @param     ...        Format arguments.
 /// @return Number of characters that could not be streamed to target.
-attr_core_api usize stream_fmt(
+attr_core_api
+usize stream_fmt(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ... );
 /// @brief Stream formatted string.

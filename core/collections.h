@@ -110,7 +110,8 @@ typedef b8 PackedBool;
 /// @return
 ///     - @c true  : Allocated new generic array.
 ///     - @c false : Failed to allocate new generic array.
-attr_core_api b32 generic_array_from_alloc(
+attr_core_api
+b32 generic_array_from_alloc(
     usize stride, usize cap, void** buf, struct AllocatorInterface* allocator );
 /// @brief Attempt to push new item in generic array.
 /// @param         stride Size of items in array.
@@ -121,7 +122,8 @@ attr_core_api b32 generic_array_from_alloc(
 /// @return
 ///     - @c true  : Array had enough capacity to push new item.
 ///     - @c false : Array is full.
-attr_core_api b32 generic_array_try_push(
+attr_core_api
+b32 generic_array_try_push(
     usize stride, usize* len, usize cap, void* buf, const void* item );
 /// @brief Attempt to emplace new item in generic array.
 /// @param         stride Size of items in array.
@@ -133,7 +135,8 @@ attr_core_api b32 generic_array_try_push(
 /// @return
 ///     - @c true  : Array had enough capacity to emplace new item.
 ///     - @c false : Array is full.
-attr_core_api b32 generic_array_try_emplace(
+attr_core_api
+b32 generic_array_try_emplace(
     usize stride, usize* len, usize cap, void* buf, const void* item, usize at );
 /// @brief Attempt to insert array in generic array.
 /// @param         stride     Size of items in array.
@@ -146,7 +149,8 @@ attr_core_api b32 generic_array_try_emplace(
 /// @return
 ///     - @c true  : Array had enough capacity to insert items.
 ///     - @c false : Array cannot hold @c insert_len new items.
-attr_core_api b32 generic_array_try_insert(
+attr_core_api
+b32 generic_array_try_insert(
     usize stride, usize* len, usize cap, void* buf,
     usize insert_len, const void* insert, usize at );
 /// @brief Attempt to prepend array in generic array.
@@ -159,8 +163,8 @@ attr_core_api b32 generic_array_try_insert(
 /// @return
 ///     - @c true  : Array had enough capacity to prepend items.
 ///     - @c false : Array cannot hold @c prepend_len new items.
-attr_always_inline
-attr_header b32 generic_array_try_prepend(
+attr_always_inline attr_header
+b32 generic_array_try_prepend(
     usize stride, usize* len, usize cap, void* buf,
     usize prepend_len, const void* prepend
 ) {
@@ -177,8 +181,8 @@ attr_header b32 generic_array_try_prepend(
 /// @return
 ///     - @c true  : Array had enough capacity to append items.
 ///     - @c false : Array cannot hold @c append_len new items.
-attr_always_inline
-attr_header b32 generic_array_try_append(
+attr_always_inline attr_header
+b32 generic_array_try_append(
     usize stride, usize* len, usize cap, void* buf,
     usize append_len, const void* append
 ) {
@@ -194,7 +198,8 @@ attr_header b32 generic_array_try_append(
 /// @return
 ///     - @c true  : Reallocated array successfully.
 ///     - @c false : Failed to reallocate array.
-attr_core_api b32 generic_array_grow(
+attr_core_api
+b32 generic_array_grow(
     usize stride, usize* cap, void** buf,
     usize amount, struct AllocatorInterface* allocator );
 /// @brief Push new item in generic array.
@@ -207,7 +212,8 @@ attr_core_api b32 generic_array_grow(
 /// @return
 ///     - @c true  : New item pushed. If reallocation was necessary, it was successful.
 ///     - @c false : Failed to reallocate array.
-attr_core_api b32 generic_array_push(
+attr_core_api
+b32 generic_array_push(
     usize stride, usize* len, usize* cap, void** buf,
     const void* item, struct AllocatorInterface* allocator );
 /// @brief Emplace new item in generic array.
@@ -221,7 +227,8 @@ attr_core_api b32 generic_array_push(
 /// @return
 ///     - @c true  : New item emplaced. If reallocation was necessary, it was successful.
 ///     - @c false : Failed to reallocate array.
-attr_core_api b32 generic_array_emplace(
+attr_core_api
+b32 generic_array_emplace(
     usize stride, usize* len, usize* cap, void** buf,
     const void* item, usize at, struct AllocatorInterface* allocator );
 /// @brief Insert array in generic array.
@@ -236,7 +243,8 @@ attr_core_api b32 generic_array_emplace(
 /// @return
 ///     - @c true  : Items inserted. If reallocation was necessary, it was successful.
 ///     - @c false : Failed to reallocate array.
-attr_core_api b32 generic_array_insert(
+attr_core_api
+b32 generic_array_insert(
     usize stride, usize* len, usize* cap, void** buf,
     usize insert_len, const void* insert, usize at,
     struct AllocatorInterface* allocator );
@@ -251,8 +259,8 @@ attr_core_api b32 generic_array_insert(
 /// @return
 ///     - @c true  : Items prepended. If reallocation was necessary, it was successful.
 ///     - @c false : Failed to reallocate array.
-attr_always_inline
-attr_header b32 generic_array_prepend(
+attr_always_inline attr_header
+b32 generic_array_prepend(
     usize stride, usize* len, usize* cap, void** buf,
     usize prepend_len, const void* prepend,
     struct AllocatorInterface* allocator
@@ -271,8 +279,8 @@ attr_header b32 generic_array_prepend(
 /// @return
 ///     - @c true  : Items appended. If reallocation was necessary, it was successful.
 ///     - @c false : Failed to reallocate array.
-attr_always_inline
-attr_header b32 generic_array_append(
+attr_always_inline attr_header
+b32 generic_array_append(
     usize stride, usize* len, usize* cap, void** buf,
     usize append_len, const void* append,
     struct AllocatorInterface* allocator
@@ -289,7 +297,8 @@ attr_header b32 generic_array_append(
 /// @return
 ///     - @c true  : Array had item to pop.
 ///     - @c false : Array already empty.
-attr_core_api b32 generic_array_pop(
+attr_core_api
+b32 generic_array_pop(
     usize stride, usize* len, void* buf, void* opt_out_item );
 /// @brief Remove item from generic array.
 /// @param         stride Size of items in array.
@@ -299,7 +308,8 @@ attr_core_api b32 generic_array_pop(
 /// @return
 ///     - @c true  : Removed item from array.
 ///     - @c false : Array is empty or @c at is outside bounds of array.
-attr_core_api b32 generic_array_remove(
+attr_core_api
+b32 generic_array_remove(
     usize stride, usize* len, void* buf, usize at );
 /// @brief Remove range of items from generic array.
 /// @param         stride         Size of items in array.
@@ -310,7 +320,8 @@ attr_core_api b32 generic_array_remove(
 /// @return
 ///     - @c true  : Removed items from array.
 ///     - @c false : Range provided is invalid.
-attr_core_api b32 generic_array_remove_range(
+attr_core_api
+b32 generic_array_remove_range(
     usize stride, usize* len, void* buf,
     usize from_inclusive, usize to_exclusive );
 /// @brief Allocate new generic array and copy items from given array.
@@ -324,7 +335,8 @@ attr_core_api b32 generic_array_remove_range(
 /// @return
 ///     - @c true  : Allocated new generic array and copied items.
 ///     - @c false : Failed to allocate new array.
-attr_core_api b32 generic_array_clone(
+attr_core_api
+b32 generic_array_clone(
     usize stride, usize len, void* buf,
     usize* out_len, usize* out_cap, void** out_res,
     struct AllocatorInterface* allocator );
@@ -587,17 +599,19 @@ attr_core_api b32 generic_array_clone(
 /// @return
 ///     - @c true  : Allocated new queue.
 ///     - @c false : Failed to allocate queue.
-attr_core_api b32 queue_from_alloc(
+attr_core_api
+b32 queue_from_alloc(
     usize stride, usize cap, Queue* out_queue, struct AllocatorInterface* allocator );
 /// @brief Free queue created from allocator.
 /// @param[in] queue     Pointer to queue to free.
 /// @param[in] allocator Pointer to allocator interface.
-attr_core_api void queue_free( Queue* queue, struct AllocatorInterface* allocator );
+attr_core_api
+void queue_free( Queue* queue, struct AllocatorInterface* allocator );
 /// @brief Calculate number of items in queue.
 /// @param[in] queue Queue.
 /// @return Number of items in queue.
-attr_always_inline
-attr_header usize queue_len( const Queue* queue ) {
+attr_always_inline attr_header
+usize queue_len( const Queue* queue ) {
     if( queue->head > queue->tail ) {
         return queue->tail + ((0xFFFFFFFF - queue->head) + 1);
     } else {
@@ -609,8 +623,8 @@ attr_header usize queue_len( const Queue* queue ) {
 /// @return
 ///     - @c true  : Queue is full.
 ///     - @c false : Queue is not full.
-attr_always_inline
-attr_header b32 queue_is_full( const Queue* queue ) {
+attr_always_inline attr_header
+b32 queue_is_full( const Queue* queue ) {
     return queue_len( queue ) == queue->cap;
 }
 /// @brief Check if queue is empty.
@@ -618,8 +632,8 @@ attr_header b32 queue_is_full( const Queue* queue ) {
 /// @return
 ///     - @c true  : Queue is empty.
 ///     - @c false : Queue is not empty.
-attr_always_inline
-attr_header b32 queue_is_empty( const Queue* queue ) {
+attr_always_inline attr_header
+b32 queue_is_empty( const Queue* queue ) {
     return queue_len( queue ) == 0;
 }
 /// @brief Reallocate queue buffer.
@@ -629,7 +643,8 @@ attr_header b32 queue_is_empty( const Queue* queue ) {
 /// @return
 ///     - @c true  : Reallocated queue buffer.
 ///     - @c false : Failed to reallocate queue buffer.
-attr_core_api b32 queue_grow(
+attr_core_api
+b32 queue_grow(
     Queue* queue, usize amount, struct AllocatorInterface* allocator );
 /// @brief Attempt to enqueue new item in queue.
 /// @param[in] queue Queue.
@@ -637,7 +652,8 @@ attr_core_api b32 queue_grow(
 /// @return
 ///     - @c true  : Queue had enough capacity to enqueue new item.
 ///     - @c false : Queue is full.
-attr_core_api b32 queue_try_enqueue( Queue* queue, const void* item );
+attr_core_api
+b32 queue_try_enqueue( Queue* queue, const void* item );
 /// @brief Enqueue new item in queue.
 /// @param[in] queue     Queue.
 /// @param[in] item      Pointer to item to enqueue.
@@ -645,7 +661,8 @@ attr_core_api b32 queue_try_enqueue( Queue* queue, const void* item );
 /// @return
 ///     - @c true  : Item enqueued. If reallocation is needed, it was successful.
 ///     - @c false : Failed to reallocate queue.
-attr_core_api b32 queue_enqueue(
+attr_core_api
+b32 queue_enqueue(
     Queue* queue, const void* item, struct AllocatorInterface* allocator );
 /// @brief Dequeue item by reference.
 /// @note
@@ -655,14 +672,16 @@ attr_core_api b32 queue_enqueue(
 /// @return
 ///     - @c true  : Removed item from queue and wrote out its pointer.
 ///     - @c false : Queue is empty.
-attr_core_api b32 queue_dequeue_ref( Queue* queue, void** out_item );
+attr_core_api
+b32 queue_dequeue_ref( Queue* queue, void** out_item );
 /// @brief Dequeue item.
 /// @param[in]  queue        Queue.
 /// @param[out] opt_out_item (optional) Pointer to write item value to.
 /// @return
 ///     - @c true  : Removed item from queue and zeroed out its memory.
 ///     - @c false : Queue is empty.
-attr_core_api b32 queue_dequeue( Queue* queue, void* opt_out_item );
+attr_core_api
+b32 queue_dequeue( Queue* queue, void* opt_out_item );
 /// @brief Peek at next item in queue without removing it.
 /// @note
 /// Item should be used before enqueueing as it may be overwritten.
@@ -671,10 +690,12 @@ attr_core_api b32 queue_dequeue( Queue* queue, void* opt_out_item );
 /// @return
 ///     - @c true  : Peeked at item.
 ///     - @c false : Queue is empty.
-attr_core_api b32 queue_peek( Queue* queue, void** out_item );
+attr_core_api
+b32 queue_peek( Queue* queue, void** out_item );
 /// @brief Reset queue and zero out memory.
 /// @param[in] queue Queue to clear.
-attr_core_api void queue_clear( Queue* queue );
+attr_core_api
+void queue_clear( Queue* queue );
 
 /// @brief Calculate how much memory is required for given hashmap.
 /// @param stride   (u32) Size of items in hashmap.
@@ -702,13 +723,15 @@ attr_core_api void queue_clear( Queue* queue );
 /// @return
 ///     - @c true  : Hashmap allocated successfully.
 ///     - @c false : Failed to allocate hashmap.
-attr_core_api b32 hashmap_from_alloc(
+attr_core_api
+b32 hashmap_from_alloc(
     usize stride, usize cap, Hashmap* out_map,
     struct AllocatorInterface* allocator );
 /// @brief Free allocated hashmap.
 /// @param[in] map       Hashmap to free.
 /// @param[in] allocator Pointer to allocator interface.
-attr_core_api void hashmap_free(
+attr_core_api
+void hashmap_free(
     Hashmap* map, struct AllocatorInterface* allocator );
 /// @brief Get pointer to hashmap keys. Keys are stored inline with hashmap buffer.
 /// @param[in] map (Hashmap*) Pointer to hashmap.
@@ -719,8 +742,8 @@ attr_core_api void hashmap_free(
 /// @return
 ///     - @c true  : Hashmap is empty.
 ///     - @c false : Hashmap is not empty.
-attr_always_inline
-attr_header b32 hashmap_is_empty( const Hashmap* map ) {
+attr_always_inline attr_header
+b32 hashmap_is_empty( const Hashmap* map ) {
     return map->len == 0;
 }
 /// @brief Check if hashmap is full.
@@ -728,13 +751,14 @@ attr_header b32 hashmap_is_empty( const Hashmap* map ) {
 /// @return
 ///     - @c true  : Hashmap is full.
 ///     - @c false : Hashmap is not full.
-attr_always_inline
-attr_header b32 hashmap_is_full( const Hashmap* map ) {
+attr_always_inline attr_header
+b32 hashmap_is_full( const Hashmap* map ) {
     return map->len == map->cap;
 }
 /// @brief Set hashmap length to zero and zero out memory.
 /// @param[in] map Hashmap.
-attr_core_api void hashmap_clear( Hashmap* map );
+attr_core_api
+void hashmap_clear( Hashmap* map );
 /// @brief Reallocate hashmap buffer.
 /// @param[in] map       Hashmap.
 /// @param     amount    Number of items to grow buffer by.
@@ -742,7 +766,8 @@ attr_core_api void hashmap_clear( Hashmap* map );
 /// @return
 ///     - @c true  : Reallocated hashmap buffer successfully.
 ///     - @c false : Failed to reallocate hashmap buffer.
-attr_core_api b32 hashmap_grow(
+attr_core_api
+b32 hashmap_grow(
     Hashmap* map, u32 amount, struct AllocatorInterface* allocator );
 /// @brief Attempt to insert new value in hashmap.
 /// @param[in] map  Hashmap.
@@ -751,7 +776,8 @@ attr_core_api b32 hashmap_grow(
 /// @return
 ///     - @c true  : Hashmap had enough capacity to insert new item.
 ///     - @c false : Hashmap is full.
-attr_core_api b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item );
+attr_core_api
+b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item );
 /// @brief Attempt to insert new value in hashmap.
 /// @note requires string.h
 /// @param[in] map  (Hashmap*)    Hashmap.
@@ -780,7 +806,8 @@ attr_core_api b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item
 /// @return
 ///     - @c true  : New item inserted. If reallocated, it was successful.
 ///     - @c false : Failed to reallocate hashmap buffer.
-attr_core_api b32 hashmap_insert(
+attr_core_api
+b32 hashmap_insert(
     Hashmap* map, hash64 key, const void* item,
     struct AllocatorInterface* allocator );
 /// @brief Insert new value in hashmap.
@@ -812,7 +839,8 @@ attr_core_api b32 hashmap_insert(
 /// @return
 ///     - @c true  : Found item and removed it.
 ///     - @c false : @c key does not exist.
-attr_core_api b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item );
+attr_core_api
+b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item );
 /// @brief Remove item from hashmap.
 /// @note requires string.h
 /// @param[in]  map          (Hashmap*) Hashmap.
@@ -839,7 +867,8 @@ attr_core_api b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item )
 /// @return
 ///     - NULL    : @c key does not exist.
 ///     - Pointer : Pointer to item.
-attr_core_api void* hashmap_index_ref( Hashmap* map, hash64 key );
+attr_core_api
+void* hashmap_index_ref( Hashmap* map, hash64 key );
 /// @brief Get pointer to item in hashmap.
 /// @note requires string.h
 /// @param[in] map (Hashmap*) Hashmap.
@@ -865,7 +894,8 @@ attr_core_api void* hashmap_index_ref( Hashmap* map, hash64 key );
 /// @return
 ///     - @c true  : Found item and copied to @c out_item.
 ///     - @c false : @c key does not exist.
-attr_core_api b32 hashmap_index( Hashmap* map, hash64 key, void* out_item );
+attr_core_api
+b32 hashmap_index( Hashmap* map, hash64 key, void* out_item );
 /// @brief Get item in hashmap.
 /// @note requires string.h
 /// @param[in]  map      (Hashmap*) Hashmap.
@@ -892,8 +922,8 @@ attr_core_api b32 hashmap_index( Hashmap* map, hash64 key, void* out_item );
 /// @return
 ///     - @c true  : Hashmap contains key.
 ///     - @c false : Key does not exist.
-attr_always_inline
-attr_header b32 hashmap_contains( Hashmap* map, hash64 key ) {
+attr_always_inline attr_header
+b32 hashmap_contains( Hashmap* map, hash64 key ) {
     return hashmap_index_ref( map, key ) != NULL;
 }
 /// @brief Check if hashmap contains key.
@@ -921,7 +951,8 @@ attr_header b32 hashmap_contains( Hashmap* map, hash64 key ) {
 /// @return
 ///     - @c true  : Found value and copied @c item to it.
 ///     - @c false : @c key does not exist.
-attr_core_api b32 hashmap_set( Hashmap* map, hash64 key, const void* item );
+attr_core_api
+b32 hashmap_set( Hashmap* map, hash64 key, const void* item );
 /// @brief Set value of key.
 /// @note requires string.h
 /// @param[in] map  (Hashmap*)    Hashmap.

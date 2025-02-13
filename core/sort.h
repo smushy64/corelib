@@ -29,7 +29,8 @@ typedef SortCmpFN SearchCmpFN;
 /// @param to_inclusive End of sort range, must be > from_inclusive and positive.
 /// @param[in] buffer Pointer to integers to sort.
 /// @param reverse If true, numbers are sorted from greatest -> least, otherwise least -> greatest.
-attr_core_api void quicksort_i32(
+attr_core_api
+void quicksort_i32(
     isize from_inclusive, isize to_inclusive, i32* buffer, b32 reverse );
 /// @brief Quicksort algorithm for u32.
 /// @note Prefer this function over #quicksort_generic() when sorting unsigned integers.
@@ -37,7 +38,8 @@ attr_core_api void quicksort_i32(
 /// @param to_inclusive End of sort range, must be > from_inclusive and positive.
 /// @param[in] buffer Pointer to integers to sort.
 /// @param reverse If true, numbers are sorted from greatest -> least, otherwise least -> greatest.
-attr_core_api void quicksort_u32(
+attr_core_api
+void quicksort_u32(
     isize from_inclusive, isize to_inclusive, u32* buffer, b32 reverse );
 /// @brief Quicksort algorithm for f32.
 /// @note Prefer this function over #quicksort_generic() when sorting floats.
@@ -45,7 +47,8 @@ attr_core_api void quicksort_u32(
 /// @param to_inclusive End of sort range, must be > from_inclusive and positive.
 /// @param[in] buffer Pointer to floats to sort.
 /// @param reverse If true, numbers are sorted from greatest -> least, otherwise least -> greatest.
-attr_core_api void quicksort_f32(
+attr_core_api
+void quicksort_f32(
     isize from_inclusive, isize to_inclusive, f32* buffer, b32 reverse );
 
 /// @brief Generic quicksort algorithm.
@@ -56,7 +59,8 @@ attr_core_api void quicksort_f32(
 /// @param cmp Function to use for comparisons.
 /// @param[in] opt_cmp_params (optional) Parameters for comparison function.
 /// @param[in] swap_buffer Buffer for swapping values, must be able to hold >= stride.
-attr_core_api void quicksort_generic(
+attr_core_api
+void quicksort_generic(
     isize from_inclusive, isize to_inclusive,
     usize stride, void* buffer,
     SortCmpFN* cmp, void* opt_cmp_params, void* swap_buffer );
@@ -66,7 +70,8 @@ attr_core_api void quicksort_generic(
 /// @param stride Size of each item in buffer.
 /// @param[in] buffer Pointer to start of buffer.
 /// @param[in] swap_buffer Pointer to swap buffer, must be able to hold stride bytes.
-attr_core_api void sort_reverse(
+attr_core_api
+void sort_reverse(
     usize len, usize stride, void* buffer, void* swap_buffer );
 
 #endif /* header guard */

@@ -45,11 +45,13 @@ typedef void CoreLoggingCallbackFN(
 /// Use #core_get_major(), #core_get_minor() and #core_get_patch() macros defined
 /// in core/macros.h to extract major, minor and patch version numbers.
 /// @return Version integer.
-attr_core_api u32 core_version(void);
+attr_core_api
+u32 core_version(void);
 /// @brief Get string that describes command line used to build library.
 /// @param[out] opt_out_len (optional) Length of command line string.
 /// @return Null-terminated UTF-8 command line string.
-attr_core_api const char* core_command_line( usize* opt_out_len );
+attr_core_api
+const char* core_command_line( usize* opt_out_len );
 /// @brief Set logging level.
 /// @details
 /// By default, the logging level is CORE_LOGGING_LEVEL_NONE,
@@ -57,16 +59,20 @@ attr_core_api const char* core_command_line( usize* opt_out_len );
 /// @param level Enum defining what logging messages are sent.
 /// @note Logging can only be enabled if
 /// core library is compiled with CORE_ENABLE_LOGGING defined.
-attr_core_api void core_set_logging_level( CoreLoggingLevel level );
+attr_core_api
+void core_set_logging_level( CoreLoggingLevel level );
 /// @brief Query current logging level.
 /// @return Logging level.
-attr_core_api CoreLoggingLevel core_query_logging_level(void);
+attr_core_api
+CoreLoggingLevel core_query_logging_level(void);
 /// @brief Set callback for receiving log messages.
 /// @param[in] callback Function for receiving log messages.
 /// @param[in] user_params User parameters for callback.
-attr_core_api void core_set_logging_callback(
+attr_core_api
+void core_set_logging_callback(
     CoreLoggingCallbackFN* callback, void* user_params );
 /// @brief Clear logging callback.
-attr_core_api void core_clear_logging_callback(void);
+attr_core_api
+void core_clear_logging_callback(void);
 
 #endif /* header guard */

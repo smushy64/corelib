@@ -23,8 +23,7 @@
     #define INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED
 #endif
 
-attr_unused
-attr_internal attr_always_inline inline
+attr_unused attr_internal attr_always_inline inline
 f32 internal_f32_sqrt( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
@@ -42,8 +41,7 @@ f32 internal_f32_sqrt( f32 x ) {
     }
     return result;
 }
-attr_unused
-attr_internal attr_always_inline inline
+attr_unused attr_internal attr_always_inline inline
 f32 internal_f32_inversesqrt( f32 x ) {
     return 1.0f / internal_f32_sqrt( x );
 }
@@ -61,7 +59,8 @@ f32 internal_f32_inversesqrt_sse( f32 x ) {
 
 #endif /* SSE functions */ 
 
-attr_core_api f32 f32_sqrt( f32 x ) {
+attr_core_api
+f32 f32_sqrt( f32 x ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
     return internal_f32_sqrt_sse( x );
 #else
@@ -69,7 +68,8 @@ attr_core_api f32 f32_sqrt( f32 x ) {
 #endif
 }
 
-attr_core_api f32 f32_inversesqrt( f32 x ) {
+attr_core_api
+f32 f32_inversesqrt( f32 x ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
     return internal_f32_inversesqrt_sse( x );
 #else
@@ -77,7 +77,8 @@ attr_core_api f32 f32_inversesqrt( f32 x ) {
 #endif
 }
 
-attr_core_api f32 f32_ln( f32 x ) {
+attr_core_api
+f32 f32_ln( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
@@ -97,7 +98,8 @@ attr_core_api f32 f32_ln( f32 x ) {
     return 2.0f * (div + r3 + r5 + r7 + r9);
 }
 
-attr_core_api f32 f32_log2( f32 x ) {
+attr_core_api
+f32 f32_log2( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
@@ -106,7 +108,8 @@ attr_core_api f32 f32_log2( f32 x ) {
     }
     return f32_ln( x ) * 1.49f;
 }
-attr_core_api f32 f32_log10( f32 x ) {
+attr_core_api
+f32 f32_log10( f32 x ) {
     if( x < 0.0f ) {
         return F32_NAN;
     }
@@ -116,7 +119,8 @@ attr_core_api f32 f32_log10( f32 x ) {
     return f32_ln( x ) / 2.3f;
 }
 
-attr_core_api f32 f32_powi( f32 base, i32 exp ) {
+attr_core_api
+f32 f32_powi( f32 base, i32 exp ) {
     u32 exp_abs = num_abs( exp );
     f32 result  = base;
     for( u32 i = 1; i < exp_abs; ++i ) {
@@ -128,7 +132,8 @@ attr_core_api f32 f32_powi( f32 base, i32 exp ) {
         return result;
     }
 }
-attr_core_api f32 f32_exp( f32 x ) {
+attr_core_api
+f32 f32_exp( f32 x ) {
     if( x < -4.0f ) {
         return 0.0f;
     }
@@ -162,7 +167,8 @@ attr_core_api f32 f32_exp( f32 x ) {
 #define internal_floor( x )\
     (((x) > 0.0f) ? (i32)(x) : (i32)( (x) - 0.99999f ))
 
-attr_core_api f32 f32_mod( f32 lhs, f32 rhs ) {
+attr_core_api
+f32 f32_mod( f32 lhs, f32 rhs ) {
     if( rhs == 0.0f ) {
         return lhs;
     }
@@ -198,15 +204,18 @@ attr_core_api f32 f32_mod( f32 lhs, f32 rhs ) {
     return m;
 }
 
-attr_core_api f32 f32_wrap_degrees( f32 deg ) {
+attr_core_api
+f32 f32_wrap_degrees( f32 deg ) {
     f32 result = f32_mod( deg, 360.0f );
     return result < 0.0f ? result + 360.0f : result;
 }
-attr_core_api f32 f32_wrap_radians( f32 rad ) {
+attr_core_api
+f32 f32_wrap_radians( f32 rad ) {
     return f32_mod( rad + F32_PI, F32_TAU ) - F32_PI;
 }
 
-attr_core_api f32 f32_sin( f32 x ) {
+attr_core_api
+f32 f32_sin( f32 x ) {
 #if defined(INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED)
     x = f32_wrap_radians(x);
 
@@ -229,7 +238,8 @@ attr_core_api f32 f32_sin( f32 x ) {
     return res;
 #endif
 }
-attr_core_api f32 f32_cos( f32 x ) {
+attr_core_api
+f32 f32_cos( f32 x ) {
 #if defined(INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED)
     x = f32_wrap_radians(x);
 
@@ -271,8 +281,7 @@ void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
 
 #else /* MSVC */
 
-attr_internal
-attr_always_inline inline attr_optimized
+attr_internal attr_always_inline inline attr_optimized
 void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
     f32 s, c;
     __asm__ inline ( "fsincos" : "=t"(c), "=u"(s) : "0"(x) );
@@ -284,7 +293,8 @@ void internal_f32_sincos_fsincos( f32 x, f32* out_sine, f32* out_cos ) {
 
 #endif /* x86 fsincos */
 
-attr_core_api void f32_sincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
+attr_core_api
+void f32_sincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
 #if defined(CORE_ARCH_X86)
     internal_f32_sincos_fsincos( x, out_sine, out_f32_cos );
 #else
@@ -292,7 +302,8 @@ attr_core_api void f32_sincos( f32 x, f32* out_sine, f32* out_f32_cos ) {
 #endif
 }
 
-attr_core_api f32 f32_asin( f32 x ) {
+attr_core_api
+f32 f32_asin( f32 x ) {
     // NOTE(alicia): don't ask me how i figured this out
     // i don't even know
     f32 sign_of_x = (((x) > 0.0f) - ((x) < 0.0f));
@@ -313,7 +324,8 @@ attr_core_api f32 f32_asin( f32 x ) {
 
     return result * sign_of_x;
 }
-attr_core_api f32 f32_atan( f32 x ) {
+attr_core_api
+f32 f32_atan( f32 x ) {
     // NOTE(alicia): preventing sequential operations
     f32 p3  = x * x * x;
     f32 p5  = x * x * x * x * x;
@@ -330,7 +342,8 @@ attr_core_api f32 f32_atan( f32 x ) {
         ( p11 / 11.0f ) +
         ( p13 / 13.0f );
 }
-attr_core_api f32 f32_atan2( f32 y, f32 x ) {
+attr_core_api
+f32 f32_atan2( f32 y, f32 x ) {
     if( y == 0.0f ) {
         if( x < 0.0f ) {
             return F32_PI;
@@ -344,7 +357,8 @@ attr_core_api f32 f32_atan2( f32 y, f32 x ) {
     return 2.0f * f32_atan( y / ( f32_sqrt( x_sqr + y_sqr ) + x ) );
 }
 
-attr_core_api struct Vector3 rgb_to_hsl( struct Vector3 _rgb ) {
+attr_core_api
+struct Vector3 rgb_to_hsl( struct Vector3 _rgb ) {
     f32 R = _rgb.r;
     f32 G = _rgb.g;
     f32 B = _rgb.b;
@@ -398,7 +412,8 @@ attr_core_api struct Vector3 rgb_to_hsl( struct Vector3 _rgb ) {
 
     return vec3( H, S, L );
 }
-attr_core_api struct Vector3 hsl_to_rgb( struct Vector3 _hsl ) {
+attr_core_api
+struct Vector3 hsl_to_rgb( struct Vector3 _hsl ) {
     f32 H = _hsl.h;
     f32 S = _hsl.s;
     f32 L = _hsl.l;
@@ -430,9 +445,8 @@ struct Vector3 vec3_slerp( struct Vector3 a, struct Vector3 b, f32 t ) {
     return vec3_add( quotient_1, quotient_2 );
 }
 
-attr_unused
-attr_always_inline inline
-attr_internal struct Quaternion internal_quat_mul_quat_scalar(
+attr_unused attr_always_inline inline attr_internal
+struct Quaternion internal_quat_mul_quat_scalar(
      struct Quaternion lhs, struct Quaternion rhs   
 ) {
     return quat_new( ( lhs.array[0] * rhs.array[0] ) -
@@ -453,7 +467,8 @@ attr_internal struct Quaternion internal_quat_mul_quat_scalar(
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
 
-attr_internal struct Quaternion internal_quat_mul_quat_sse(
+attr_internal
+struct Quaternion internal_quat_mul_quat_sse(
     struct Quaternion lhs, struct Quaternion rhs
 ) {
     const __m128 negate_first128 = _mm_setr_ps( -1.0f, 1.0f, 1.0f, 1.0f );
@@ -488,7 +503,8 @@ attr_internal struct Quaternion internal_quat_mul_quat_sse(
 
 #endif
 
-attr_core_api struct Quaternion quat_mul_quat(
+attr_core_api
+struct Quaternion quat_mul_quat(
     struct Quaternion lhs, struct Quaternion rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -497,13 +513,15 @@ attr_core_api struct Quaternion quat_mul_quat(
     return internal_quat_mul_quat_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Vector3 quat_mul_vec3(
+attr_core_api
+struct Vector3 quat_mul_vec3(
     struct Quaternion lhs, struct Vector3 rhs
 ) {
     vec3 t = vec3_mul( vec3_cross( lhs.xyz, rhs ), 2.0f );
     return vec3_add( vec3_add( rhs, vec3_mul( t, lhs.w ) ), vec3_cross( lhs.xyz, t ) );
 }
-attr_core_api struct Quaternion quat_slerp(
+attr_core_api
+struct Quaternion quat_slerp(
     struct Quaternion a, struct Quaternion b, f32 t
 ) {
     struct Quaternion _b = b;
@@ -529,7 +547,8 @@ attr_core_api struct Quaternion quat_slerp(
             ) );
     }
 }
-attr_core_api struct Quaternion quat_from_angle_axis(
+attr_core_api
+struct Quaternion quat_from_angle_axis(
     struct AngleAxis_ a
 ) {
     f32 half_angle = a.angle / 2.0f;
@@ -540,7 +559,8 @@ attr_core_api struct Quaternion quat_from_angle_axis(
     result.xyz = vec3_mul( a.axis, sin );
     return quat_normalize( result );
 }
-attr_core_api struct Quaternion quat_from_euler( f32 x, f32 y, f32 z ) {
+attr_core_api
+struct Quaternion quat_from_euler( f32 x, f32 y, f32 z ) {
     f32 hx = x / 2.0f;
     f32 hy = y / 2.0f;
     f32 hz = z / 2.0f;
@@ -564,7 +584,8 @@ attr_core_api struct Quaternion quat_from_euler( f32 x, f32 y, f32 z ) {
 
     return result;
 }
-attr_core_api struct Vector3 quat_to_euler( struct Quaternion q ) {
+attr_core_api
+struct Vector3 quat_to_euler( struct Quaternion q ) {
     struct Vector3 result;
 
     result.x = f32_atan2(
@@ -578,7 +599,8 @@ attr_core_api struct Vector3 quat_to_euler( struct Quaternion q ) {
         1.0f - 2.0f * ((q.y * q.y) + (q.z * q.z)) );
     return result;
 }
-attr_core_api struct AngleAxis_ quat_to_angle_axis( struct Quaternion q ) {
+attr_core_api
+struct AngleAxis_ quat_to_angle_axis( struct Quaternion q ) {
     struct AngleAxis_ result;
     
     result.angle = f32_acos( q.w ) * 2.0f;
@@ -587,9 +609,7 @@ attr_core_api struct AngleAxis_ quat_to_angle_axis( struct Quaternion q ) {
     return result;
 }
 
-attr_unused
-attr_optimized attr_internal
-attr_always_inline inline
+attr_unused attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_mat4_scalar( const struct Matrix4x4* lhs, const struct Matrix4x4* rhs ) {
     return mat4_new(
         // column - 0
@@ -614,9 +634,7 @@ struct Matrix4x4 internal_mat4_mul_mat4_scalar( const struct Matrix4x4* lhs, con
         ( lhs->array[3] * rhs->array[12] ) + ( lhs->array[7] * rhs->array[13] ) + ( lhs->array[11] * rhs->array[14] ) + ( lhs->array[15] * rhs->array[15] ) );
 }
 
-attr_unused
-attr_optimized attr_internal
-attr_always_inline inline
+attr_unused attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_add_scalar(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -627,9 +645,7 @@ struct Matrix4x4 internal_mat4_add_scalar(
     res.col3 = vec4_add( lhs->col3, rhs->col3 );
     return res;
 }
-attr_unused
-attr_optimized attr_internal
-attr_always_inline inline
+attr_unused attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_sub_scalar(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -640,9 +656,7 @@ struct Matrix4x4 internal_mat4_sub_scalar(
     res.col3 = vec4_sub( lhs->col3, rhs->col3 );
     return res;
 }
-attr_unused
-attr_optimized attr_internal
-attr_always_inline inline
+attr_unused attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_scalar(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -653,9 +667,7 @@ struct Matrix4x4 internal_mat4_mul_scalar(
     res.col3 = vec4_mul( lhs->col3, rhs );
     return res;
 }
-attr_unused
-attr_optimized attr_internal
-attr_always_inline inline
+attr_unused attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_div_scalar(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -669,8 +681,7 @@ struct Matrix4x4 internal_mat4_div_scalar(
 
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
 
-attr_optimized attr_internal
-attr_always_inline inline
+attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_add_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -697,8 +708,7 @@ struct Matrix4x4 internal_mat4_add_sse(
 
     return res;
 }
-attr_optimized attr_internal
-attr_always_inline inline
+attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_sub_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -725,8 +735,7 @@ struct Matrix4x4 internal_mat4_sub_sse(
 
     return res;
 }
-attr_optimized attr_internal
-attr_always_inline inline
+attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_sse(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -750,8 +759,7 @@ struct Matrix4x4 internal_mat4_mul_sse(
 
     return res;
 }
-attr_optimized attr_internal
-attr_always_inline inline
+attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_div_sse(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
@@ -776,8 +784,7 @@ struct Matrix4x4 internal_mat4_div_sse(
     return res;
 }
 
-attr_optimized attr_internal
-attr_always_inline inline
+attr_optimized attr_internal attr_always_inline inline
 struct Matrix4x4 internal_mat4_mul_mat4_sse(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
@@ -879,7 +886,8 @@ struct Matrix4x4 internal_mat4_mul_mat4_sse(
 
 #endif
 
-attr_core_api struct Matrix4x4 mat4_add(
+attr_core_api
+struct Matrix4x4 mat4_add(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -888,7 +896,8 @@ attr_core_api struct Matrix4x4 mat4_add(
     return internal_mat4_add_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Matrix4x4 mat4_sub(
+attr_core_api
+struct Matrix4x4 mat4_sub(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -897,7 +906,8 @@ attr_core_api struct Matrix4x4 mat4_sub(
     return internal_mat4_sub_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Matrix4x4 mat4_mul(
+attr_core_api
+struct Matrix4x4 mat4_mul(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -906,7 +916,8 @@ attr_core_api struct Matrix4x4 mat4_mul(
     return internal_mat4_mul_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Matrix4x4 mat4_div(
+attr_core_api
+struct Matrix4x4 mat4_div(
     const struct Matrix4x4* lhs, f32 rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -915,7 +926,8 @@ attr_core_api struct Matrix4x4 mat4_div(
     return internal_mat4_div_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Matrix4x4 mat4_mul_mat4(
+attr_core_api
+struct Matrix4x4 mat4_mul_mat4(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs
 ) {
 #if defined(CORE_ENABLE_SSE_INSTRUCTIONS)
@@ -924,7 +936,8 @@ attr_core_api struct Matrix4x4 mat4_mul_mat4(
     return internal_mat4_mul_mat4_scalar( lhs, rhs );
 #endif
 }
-attr_core_api struct Vector4 mat4_mul_vec4(
+attr_core_api
+struct Vector4 mat4_mul_vec4(
     const struct Matrix4x4* lhs, const struct Vector4 rhs
 ) {
     // NOTE(alicia): sse does not seem to help in this case. :(
@@ -935,7 +948,8 @@ attr_core_api struct Vector4 mat4_mul_vec4(
         (lhs->array[3] * rhs.array[0]) + (lhs->array[7] * rhs.array[1]) + (lhs->array[11] * rhs.array[2]) + (lhs->array[15] * rhs.array[3])
     );
 }
-attr_core_api f32 mat4_determinant( const struct Matrix4x4* m ) {
+attr_core_api
+f32 mat4_determinant( const struct Matrix4x4* m ) {
     struct Matrix3x3 sub0 = mat4_submatrix( m, 0, 0 );
     struct Matrix3x3 sub1 = mat4_submatrix( m, 1, 0 );
     struct Matrix3x3 sub2 = mat4_submatrix( m, 2, 0 );
@@ -947,7 +961,8 @@ attr_core_api f32 mat4_determinant( const struct Matrix4x4* m ) {
         ( m->array[ 8] * mat3_determinant( &sub2 ) ) -
         ( m->array[12] * mat3_determinant( &sub3 ) );
 }
-attr_core_api struct Matrix3x3 mat4_submatrix(
+attr_core_api
+struct Matrix3x3 mat4_submatrix(
     const struct Matrix4x4* m, u32 row, u32 column
 ) {
     struct Matrix3x3 res;
@@ -968,19 +983,22 @@ attr_core_api struct Matrix3x3 mat4_submatrix(
 
     return res;
 }
-attr_core_api f32 mat4_cofactor( const struct Matrix4x4* m, u32 column, u32 row ) {
+attr_core_api
+f32 mat4_cofactor( const struct Matrix4x4* m, u32 column, u32 row ) {
     f32 minor = mat4_minor( m, column, row );
     i32 exp   = ( row + 1 ) + ( column + 1 );
     return minor * f32_powi( -1.0f, exp );
 }
-attr_core_api struct Matrix4x4 mat4_cofactor_matrix( const struct Matrix4x4* m ) {
+attr_core_api
+struct Matrix4x4 mat4_cofactor_matrix( const struct Matrix4x4* m ) {
     return mat4_new(
         mat4_cofactor( m, 0, 0 ), mat4_cofactor( m, 0, 1 ), mat4_cofactor( m, 0, 2 ), mat4_cofactor( m, 0, 3 ),
         mat4_cofactor( m, 1, 0 ), mat4_cofactor( m, 1, 1 ), mat4_cofactor( m, 1, 2 ), mat4_cofactor( m, 1, 3 ),
         mat4_cofactor( m, 2, 0 ), mat4_cofactor( m, 2, 1 ), mat4_cofactor( m, 2, 2 ), mat4_cofactor( m, 2, 3 ),
         mat4_cofactor( m, 3, 0 ), mat4_cofactor( m, 3, 1 ), mat4_cofactor( m, 3, 2 ), mat4_cofactor( m, 3, 3 ) );
 }
-attr_core_api b32 mat4_inverse_checked(
+attr_core_api
+b32 mat4_inverse_checked(
     const struct Matrix4x4* m, struct Matrix4x4* out_inverse
 ) {
     f32 det = mat4_determinant( m );
@@ -992,12 +1010,14 @@ attr_core_api b32 mat4_inverse_checked(
     *out_inverse = mat4_div( &adjoint, det );
     return true;
 }
-attr_core_api struct Matrix4x4 mat4_inverse( const struct Matrix4x4* m ) {
+attr_core_api
+struct Matrix4x4 mat4_inverse( const struct Matrix4x4* m ) {
     f32 det = mat4_determinant( m );
     struct Matrix4x4 adjoint = mat4_adjoint( m );
     return mat4_div( &adjoint, det );
 }
-attr_core_api b32 mat4_normal_matrix_checked(
+attr_core_api
+b32 mat4_normal_matrix_checked(
     const struct Matrix4x4* m, struct Matrix3x3* out_normal
 ) {
     struct Matrix4x4 inverse;
@@ -1012,14 +1032,16 @@ attr_core_api b32 mat4_normal_matrix_checked(
         inverse.array[2], inverse.array[6], inverse.array[10] );
     return true;
 }
-attr_core_api struct Matrix3x3 mat4_normal_matrix( const struct Matrix4x4* m ) {
+attr_core_api
+struct Matrix3x3 mat4_normal_matrix( const struct Matrix4x4* m ) {
     struct Matrix4x4 inverse = mat4_inverse( m );
     return mat3_new(
         inverse.array[0], inverse.array[4], inverse.array[ 8],
         inverse.array[1], inverse.array[5], inverse.array[ 9],
         inverse.array[2], inverse.array[6], inverse.array[10] );
 }
-attr_core_api struct Matrix4x4 mat4_view(
+attr_core_api
+struct Matrix4x4 mat4_view(
     struct Vector3 position, struct Vector3 target,
     struct Vector3 up
 ) {
@@ -1038,7 +1060,8 @@ attr_core_api struct Matrix4x4 mat4_view(
         x.z, y.z, z.z, 0.0f,
          dx,  dy,  dz, 1.0f );
 }
-attr_core_api struct Matrix4x4 mat4_ortho(
+attr_core_api
+struct Matrix4x4 mat4_ortho(
     f32 left, f32 right,
     f32 bottom, f32 top,
     f32 clip_near, f32 clip_far
@@ -1057,7 +1080,8 @@ attr_core_api struct Matrix4x4 mat4_ortho(
 
     return res;
 }
-attr_core_api struct Matrix4x4 mat4_perspective(
+attr_core_api
+struct Matrix4x4 mat4_perspective(
     f32 fov, f32 aspect_ratio, f32 clip_near, f32 clip_far
 ) {
     struct Matrix4x4 res = MAT4_ZERO;
@@ -1073,7 +1097,8 @@ attr_core_api struct Matrix4x4 mat4_perspective(
 
     return res;
 }
-attr_core_api struct Matrix4x4 mat4_rotation_pitch( f32 pitch ) {
+attr_core_api
+struct Matrix4x4 mat4_rotation_pitch( f32 pitch ) {
     f32 sin, cos;
     f32_sincos( pitch, &sin, &cos );
 
@@ -1083,7 +1108,8 @@ attr_core_api struct Matrix4x4 mat4_rotation_pitch( f32 pitch ) {
         0.0f, -sin,  cos, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f );
 }
-attr_core_api struct Matrix4x4 mat4_rotation_yaw( f32 yaw ) {
+attr_core_api
+struct Matrix4x4 mat4_rotation_yaw( f32 yaw ) {
     f32 sin, cos;
     f32_sincos( yaw, &sin, &cos );
 
@@ -1093,7 +1119,8 @@ attr_core_api struct Matrix4x4 mat4_rotation_yaw( f32 yaw ) {
          sin, 0.0f,  cos, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f );
 }
-attr_core_api struct Matrix4x4 mat4_rotation_roll( f32 roll ) {
+attr_core_api
+struct Matrix4x4 mat4_rotation_roll( f32 roll ) {
     f32 sin, cos;
     f32_sincos( roll, &sin, &cos );
 
@@ -1103,7 +1130,8 @@ attr_core_api struct Matrix4x4 mat4_rotation_roll( f32 roll ) {
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f );
 }
-attr_core_api struct Matrix4x4 mat4_rotation_euler( f32 pitch, f32 yaw, f32 roll ) {
+attr_core_api
+struct Matrix4x4 mat4_rotation_euler( f32 pitch, f32 yaw, f32 roll ) {
     struct Matrix4x4 pitch_m = mat4_rotation_pitch( pitch );
     struct Matrix4x4 yaw_m   = mat4_rotation_yaw( yaw );
     struct Matrix4x4 roll_m  = mat4_rotation_roll( roll );
@@ -1111,7 +1139,8 @@ attr_core_api struct Matrix4x4 mat4_rotation_euler( f32 pitch, f32 yaw, f32 roll
     struct Matrix4x4 temp = mat4_mul_mat4( &yaw_m, &roll_m );
     return mat4_mul_mat4( &pitch_m, &temp );
 }
-attr_core_api struct Matrix4x4 mat4_rotation( struct Quaternion rotation ) {
+attr_core_api
+struct Matrix4x4 mat4_rotation( struct Quaternion rotation ) {
     struct Matrix4x4 res = MAT4_IDENTITY;
 
     f32 _2x2 = 2.0f * (rotation.x * rotation.x);
@@ -1139,7 +1168,8 @@ attr_core_api struct Matrix4x4 mat4_rotation( struct Quaternion rotation ) {
 
     return res;
 }
-attr_core_api struct Matrix4x4 mat4_transform(
+attr_core_api
+struct Matrix4x4 mat4_transform(
     struct Vector3 translation, struct Quaternion rotation,
     struct Vector3 scale
 ) {
@@ -1150,7 +1180,8 @@ attr_core_api struct Matrix4x4 mat4_transform(
     struct Matrix4x4 temp = mat4_mul_mat4( &r, &s );
     return mat4_mul_mat4( &t, &temp );
 }
-attr_core_api struct Matrix4x4 mat4_transform_euler(
+attr_core_api
+struct Matrix4x4 mat4_transform_euler(
     struct Vector3 translation, struct Vector3 rotation,
     struct Vector3 scale
 ) {
@@ -1162,28 +1193,34 @@ attr_core_api struct Matrix4x4 mat4_transform_euler(
     return mat4_mul_mat4( &t, &temp );
 }
 
-attr_core_api struct Matrix2x2 mat2_from_array( const f32 array[4] ) {
+attr_core_api
+struct Matrix2x2 mat2_from_array( const f32 array[4] ) {
     struct Matrix2x2 result;
     memory_copy( result.array, array, sizeof(f32) * 4 );
     return result;
 }
-attr_core_api void mat2_to_array( struct Matrix2x2 m, f32* out_array ) {
+attr_core_api
+void mat2_to_array( struct Matrix2x2 m, f32* out_array ) {
     memory_copy( out_array, m.array, sizeof(f32) * 4 );
 }
-attr_core_api struct Matrix3x3 mat3_from_array( const f32 array[9] ) {
+attr_core_api
+struct Matrix3x3 mat3_from_array( const f32 array[9] ) {
     struct Matrix3x3 result;
     memory_copy( result.array, array, sizeof(f32) * 9 );
     return result;
 }
-attr_core_api void mat3_to_array( const struct Matrix3x3* m, f32* out_array ) {
+attr_core_api
+void mat3_to_array( const struct Matrix3x3* m, f32* out_array ) {
     memory_copy( out_array, m, sizeof(f32) * 9 );
 }
-attr_core_api struct Matrix4x4 mat4_from_array( const f32 array[16] ) {
+attr_core_api
+struct Matrix4x4 mat4_from_array( const f32 array[16] ) {
     struct Matrix4x4 result;
     memory_copy( result.array, array, sizeof(f32) * 16 );
     return result;
 }
-attr_core_api void mat4_to_array( const struct Matrix4x4* m, f32* out_array ) {
+attr_core_api
+void mat4_to_array( const struct Matrix4x4* m, f32* out_array ) {
     memory_copy( out_array, m, sizeof(f32) * 16 );
 }
 

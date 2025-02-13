@@ -13,11 +13,13 @@
 /// @note state keeps track of generator state and is also the seed.
 /// @param[in,out] in_out_state State of generator.
 /// @return Next number in sequence.
-attr_core_api u64 rand_lcg_next( u64* in_out_state );
+attr_core_api
+u64 rand_lcg_next( u64* in_out_state );
 /// @brief Get next random number using XOR shift generator.
 /// @note state keeps track of generator state and is also the seed.
 /// @param[in,out] in_out_state State of generator.
 /// @return Next number in sequence.
-attr_core_api u64 rand_xor_next( u64* in_out_state );
+attr_core_api
+u64 rand_xor_next( u64* in_out_state );
 
 #endif /* header guard */

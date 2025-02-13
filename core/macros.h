@@ -47,7 +47,8 @@ void _unused(int a, ...) { (void)(a); }
 /// @param minor (u8) Minor version.
 /// @param patch (u8) Patch version.
 /// @return Version encoded as a 32-bit unsigned integer.
-#define core_create_version( major, minor, patch ) ((u32)((major) << 16u | (minor) << 8u | (patch)))
+#define core_create_version( major, minor, patch ) \
+    ((u32)((major) << 16u | (minor) << 8u | (patch)))
 /// @brief Extract major version from a corelib version integer.
 /// @param version (u32) Corelib version encoded as an unsigned 32-bit integer.
 /// @return Major version.

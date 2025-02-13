@@ -16,14 +16,17 @@
 #include "core/constants.h"
 #include "core/math.h"
 
-attr_global char FMT_DIGITS_BINARY[2]   = { '0', '1' };
-attr_global char FMT_DIGITS_DECIMAL[10] = {
+attr_global
+char FMT_DIGITS_BINARY[2]   = { '0', '1' };
+attr_global
+char FMT_DIGITS_DECIMAL[10] = {
     '0', '1', '2',
     '3', '4', '5',
     '6', '7', '8',
     '9'
 };
-attr_global char FMT_DIGITS_HEXADECIMAL_UPPER[16] = {
+attr_global
+char FMT_DIGITS_HEXADECIMAL_UPPER[16] = {
     '0', '1', '2',
     '3', '4', '5',
     '6', '7', '8',
@@ -31,7 +34,8 @@ attr_global char FMT_DIGITS_HEXADECIMAL_UPPER[16] = {
     'C', 'D', 'E',
     'F'
 };
-attr_global char FMT_DIGITS_HEXADECIMAL_LOWER[16] = {
+attr_global
+char FMT_DIGITS_HEXADECIMAL_LOWER[16] = {
     '0', '1', '2',
     '3', '4', '5',
     '6', '7', '8',
@@ -78,7 +82,8 @@ enum FmtIntWidth {
     FMT_INT_WIDTH_FULL,
 };
 
-attr_internal usize stream_repeat(
+attr_internal
+usize stream_repeat(
     StreamBytesFN* stream, void* target, u32 n, char c
 ) {
     usize res = 0;
@@ -87,7 +92,8 @@ attr_internal usize stream_repeat(
     }
     return res;
 }
-attr_internal usize stream_padded(
+attr_internal
+usize stream_padded(
     StreamBytesFN* stream, void* target,
     int padding, char padding_c, usize len, const char* message
 ) {
@@ -112,7 +118,8 @@ attr_internal usize stream_padded(
     return res;
 }
 
-attr_core_api usize stream_fmt_bool(
+attr_core_api
+usize stream_fmt_bool(
     StreamBytesFN* stream, void* target,
     int padding, u32 count, const b32* booleans,
     struct BoolFormatArguments* args
@@ -145,7 +152,8 @@ attr_core_api usize stream_fmt_bool(
 
     return res;
 }
-attr_core_api usize stream_fmt_char(
+attr_core_api
+usize stream_fmt_char(
     StreamBytesFN* stream, void* target,
     int pad, u32 count, const char* characters,
     struct CharFormatArguments* args
@@ -203,7 +211,8 @@ attr_core_api usize stream_fmt_char(
 
     return res;
 }
-attr_internal usize internal_stream_fmt_path(
+attr_internal
+usize internal_stream_fmt_path(
     StreamBytesFN* stream, void* target,
     Path path, struct StringFormatArguments* args
 ) {
@@ -215,7 +224,8 @@ attr_internal usize internal_stream_fmt_path(
     }
     return result;
 }
-attr_internal usize internal_stream_fmt_string(
+attr_internal
+usize internal_stream_fmt_string(
     StreamBytesFN* stream, void* target,
     String string, struct StringFormatArguments* args
 ) {
@@ -234,7 +244,8 @@ attr_internal usize internal_stream_fmt_string(
     }
     return result;
 }
-attr_core_api usize stream_fmt_string(
+attr_core_api
+usize stream_fmt_string(
     StreamBytesFN* stream, void* target,
     int pad, usize string_len, const void* string,
     struct StringFormatArguments* args
@@ -270,7 +281,8 @@ attr_core_api usize stream_fmt_string(
 
     return res;
 }
-attr_internal f64 internal_float_index(
+attr_internal
+f64 internal_float_index(
     int bitdepth, const void* floats, usize index
 ) {
     f64 res = 0.0;
@@ -285,11 +297,14 @@ attr_internal f64 internal_float_index(
     }
     return res;
 }
-attr_internal void internal_float_fmt(
+attr_internal 
+void internal_float_fmt(
     f64 value, b32 separate, int precision, StringBuf* buf );
-attr_internal void internal_memory_fmt(
+attr_internal
+void internal_memory_fmt(
     f64 value, int precision, b32 kibi, StringBuf* buf );
-attr_core_api usize stream_fmt_float(
+attr_core_api
+usize stream_fmt_float(
     StreamBytesFN* stream, void* target,
     int pad, u32 count, const void* floats,
     struct FloatFormatArguments* args
@@ -386,7 +401,8 @@ attr_core_api usize stream_fmt_float(
     }
     return res;
 }
-attr_internal u64 internal_int_index(
+attr_internal
+u64 internal_int_index(
     b32 is_signed, int bitdepth, const void* integers, usize index
 ) {
     if( is_signed ) {
@@ -424,10 +440,12 @@ attr_internal u64 internal_int_index(
     }
     unreachable();
 }
-attr_internal void internal_int_fmt(
+attr_internal
+void internal_int_fmt(
     u64 value, b32 is_signed, int bitdepth, int base,
     enum FmtIntWidth width, StringBuf* buf );
-attr_core_api usize stream_fmt_int(
+attr_core_api
+usize stream_fmt_int(
     StreamBytesFN* stream, void* target,
     int pad, u32 count, const void* integers,
     struct IntFormatArguments* args
@@ -552,7 +570,8 @@ attr_core_api usize stream_fmt_int(
     return res;
 
 }
-attr_core_api usize stream_fmt_args(
+attr_core_api
+usize stream_fmt_args(
     StreamBytesFN* stream, void* target, FormatArguments* args
 ) {
     switch( args->type ) {
@@ -603,7 +622,8 @@ b32 internal_fmt_parse_args(
     union FmtValue* out_val, va_list va );
 #endif
 
-attr_core_api usize stream_fmt(
+attr_core_api
+usize stream_fmt(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format, ...
 ) {
@@ -613,7 +633,8 @@ attr_core_api usize stream_fmt(
     va_end( va );
     return res;
 }
-attr_core_api usize stream_fmt_va(
+attr_core_api
+usize stream_fmt_va(
     StreamBytesFN* stream, void* target,
     usize format_len, const char* format_cc, va_list va
 ) {
@@ -674,7 +695,8 @@ attr_core_api usize stream_fmt_va(
     return res;
 }
 
-attr_internal u32 internal_int_max_digits( int bitdepth, int base ) {
+attr_internal
+u32 internal_int_max_digits( int bitdepth, int base ) {
     switch( base ) {
         case FMT_INT_BINARY: {
             return bitdepth;
@@ -694,7 +716,8 @@ attr_internal u32 internal_int_max_digits( int bitdepth, int base ) {
     }
     unreachable();
 }
-attr_internal void internal_int_0(
+attr_internal
+void internal_int_0(
     enum FmtIntWidth width, int bitdepth, int base, StringBuf* buf
 ) {
     switch( base ) {
@@ -764,7 +787,8 @@ attr_internal void internal_int_0(
         default: unreachable();
     }
 }
-attr_internal void internal_int_fmt(
+attr_internal
+void internal_int_fmt(
     u64 value, b32 is_signed, int bitdepth, int base,
     enum FmtIntWidth width, StringBuf* in_buf
 ) {
@@ -850,7 +874,8 @@ internal_int_fmt_end:
 
     string_mut_reverse( string_advance_by( in_buf->slice, rev_start ) );
 }
-attr_internal void internal_float_fmt(
+attr_internal
+void internal_float_fmt(
     f64 value, b32 seperate, int precision, StringBuf* buf 
 ) {
     // TODO(alicia): Grisu3
@@ -897,7 +922,8 @@ attr_internal void internal_float_fmt(
         string_buf_try_push( buf, digit );
     }
 }
-attr_internal void internal_memory_fmt(
+attr_internal
+void internal_memory_fmt(
     f64 value, int precision, b32 kibi, StringBuf* buf
 ) {
     #define BYTES 0
@@ -957,7 +983,8 @@ attr_internal void internal_memory_fmt(
 #undef BASE_DECIMAL    
 #undef BASE_HEXADECIMAL
 
-attr_internal b32 internal_fmt_parse_format_type(
+attr_internal
+b32 internal_fmt_parse_format_type(
     String spec, FormatArguments* out_args
 ) {
     if( string_is_empty( spec ) ) {

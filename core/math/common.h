@@ -276,7 +276,8 @@ b32 f64_isinf( f64 x ) {
 /// @param lhs Left hand side of modulo operation.
 /// @param rhs Right hand side of modulo operation.
 /// @return Result.
-attr_core_api f32 f32_mod( f32 lhs, f32 rhs );
+attr_core_api
+f32 f32_mod( f32 lhs, f32 rhs );
 
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.

@@ -282,7 +282,7 @@ b32 string_find_phrase( struct _StringPOD str, struct _StringPOD phrase, usize* 
 /// @return 
 ///     - @c true  : @c phrase was found in @c str.
 ///     - @c false : @c phrase was not found.
-attr_core_api 
+attr_core_api
 b32 string_find_phrase_rev(
     struct _StringPOD str, struct _StringPOD phrase, usize* opt_out_index );
 /// @brief Tally number of times that phrase occurs in string.

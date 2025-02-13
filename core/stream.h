@@ -11,8 +11,8 @@
 
 /// @brief Function prototype for a streaming function.
 /// @param[in] target (optional) Where to stream data to.
-/// @param count Number of bytes to stream.
-/// @param[in] bytes Data to stream.
+/// @param     count  Number of bytes to stream.
+/// @param[in] bytes  Data to stream.
 /// @return Number of bytes that could not be streamed to target. Zero if successful.
 typedef usize StreamBytesFN( void* target, usize count, const void* bytes );
 

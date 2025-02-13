@@ -177,13 +177,15 @@ struct Quaternion quat_div( struct Quaternion lhs, f32 rhs ) {
 /// @param lhs, rhs Quaternions to multiply.
 /// @return Result of quaternion multiplication.
 /// @note lhs X rhs and rhs X lhs give different results!
-attr_core_api struct Quaternion quat_mul_quat(
+attr_core_api
+struct Quaternion quat_mul_quat(
     struct Quaternion lhs, struct Quaternion rhs );
 /// @brief Multiply Vector3 by Quaternion.
 /// @param lhs Quaternion to multiply.
 /// @param rhs Vector3 to multiply
 /// @return Result of quaternion vector multiplication.
-attr_core_api struct Vector3 quat_mul_vec3(
+attr_core_api
+struct Vector3 quat_mul_vec3(
     struct Quaternion lhs, struct Vector3 rhs );
 /// @brief Negate quaternion.
 /// @param x Quaternion to negate.
@@ -282,11 +284,13 @@ struct Quaternion quat_slerp(
 /// @brief Convert AngleAxis to Quaternion.
 /// @param angle_axis Angle axis.
 /// @return Quaternion representation of angle axis rotation.
-attr_core_api struct Quaternion quat_from_angle_axis( struct AngleAxis_ angle_axis );
+attr_core_api
+struct Quaternion quat_from_angle_axis( struct AngleAxis_ angle_axis );
 /// @brief Convert euler angles rotation to quaternion rotation.
 /// @param x, y, z Euler angles.
 /// @return Euler angle rotation as quaternion.
-attr_core_api struct Quaternion quat_from_euler( f32 x, f32 y, f32 z );
+attr_core_api
+struct Quaternion quat_from_euler( f32 x, f32 y, f32 z );
 /// @brief Convert euler angles rotation to quaternion rotation.
 /// @param euler_angles Euler angles.
 /// @return Euler angle rotation as quaternion.
@@ -297,11 +301,13 @@ struct Quaternion quat_from_euler_vec3( struct Vector3 euler_angles ) {
 /// @brief Convert quaternion rotation to euler angles.
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as euler angles.
-attr_core_api struct Vector3 quat_to_euler( struct Quaternion q );
+attr_core_api
+struct Vector3 quat_to_euler( struct Quaternion q );
 /// @brief Convert quaternion rotation to angle axis rotation.
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as angle axis rotation.
-attr_core_api struct AngleAxis_ quat_to_angle_axis( struct Quaternion q );
+attr_core_api
+struct AngleAxis_ quat_to_angle_axis( struct Quaternion q );
 /// @brief Compare two quaternions for equality.
 /// @param a, b Quaternions to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.

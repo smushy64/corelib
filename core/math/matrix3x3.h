@@ -124,16 +124,18 @@ struct Matrix3x3 {
 /// @brief Create matrix from array.
 /// @param array Array, must have at least 9 floats.
 /// @return Matrix with components from array.
-attr_core_api struct Matrix3x3 mat3_from_array( const f32 array[9] );
+attr_core_api
+struct Matrix3x3 mat3_from_array( const f32 array[9] );
 /// @brief Fill array with components from matrix.
 /// @param m Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 9 floats.
-attr_core_api void mat3_to_array( const struct Matrix3x3* m, f32* out_array );
+attr_core_api
+void mat3_to_array( const struct Matrix3x3* m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct Matrix3x3 mat3_add(
+attr_always_inline attr_header
+struct Matrix3x3 mat3_add(
     const struct Matrix3x3* lhs, const struct Matrix3x3* rhs
 ) {
     struct Matrix3x3 result;
@@ -145,8 +147,8 @@ attr_header struct Matrix3x3 mat3_add(
 /// @brief Component-wise subtract matrices.
 /// @param lhs, rhs Matrices to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct Matrix3x3 mat3_sub(
+attr_always_inline attr_header
+struct Matrix3x3 mat3_sub(
     const struct Matrix3x3* lhs, const struct Matrix3x3* rhs
 ) {
     struct Matrix3x3 result;
@@ -159,8 +161,8 @@ attr_header struct Matrix3x3 mat3_sub(
 /// @param lhs Matrix to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Matrix3x3 mat3_mul(
+attr_always_inline attr_header
+struct Matrix3x3 mat3_mul(
     const struct Matrix3x3* lhs, f32 rhs
 ) {
     struct Matrix3x3 result;
@@ -173,8 +175,8 @@ attr_header struct Matrix3x3 mat3_mul(
 /// @param lhs Matrix to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Matrix3x3 mat3_div(
+attr_always_inline attr_header
+struct Matrix3x3 mat3_div(
     const struct Matrix3x3* lhs, f32 rhs
 ) {
     struct Matrix3x3 result;
@@ -224,8 +226,8 @@ attr_header struct Matrix3x3 mat3_mul_mat3(
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
 /// @return Transposed matrix.
-attr_always_inline
-attr_header struct Matrix3x3 mat3_transpose( const struct Matrix3x3* m ) {
+attr_always_inline attr_header
+struct Matrix3x3 mat3_transpose( const struct Matrix3x3* m ) {
     return mat3_new(
         m->array[0], m->array[3], m->array[6],
         m->array[1], m->array[4], m->array[7],
@@ -234,8 +236,8 @@ attr_header struct Matrix3x3 mat3_transpose( const struct Matrix3x3* m ) {
 /// @brief Calculate the determinant of matrix.
 /// @param m Matrix to calculate determinant of.
 /// @return Determinant of matrix.
-attr_always_inline
-attr_header f32 mat3_determinant( const struct Matrix3x3* m ) {
+attr_always_inline attr_header
+f32 mat3_determinant( const struct Matrix3x3* m ) {
     return
     ( m->array[0] * ( ( m->array[4] * m->array[8] ) - ( m->array[7] * m->array[5] ) ) ) -
     ( m->array[3] * ( ( m->array[1] * m->array[8] ) - ( m->array[7] * m->array[2] ) ) ) +

@@ -93,16 +93,18 @@ struct Matrix2x2 {
 /// @brief Create matrix from array.
 /// @param array Array, must have at least 4 floats.
 /// @return Matrix with components from array.
-attr_core_api struct Matrix2x2 mat2_from_array( const f32 array[4] );
+attr_core_api
+struct Matrix2x2 mat2_from_array( const f32 array[4] );
 /// @brief Fill array with components from matrix.
 /// @param m Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 floats.
-attr_core_api void mat2_to_array( struct Matrix2x2 m, f32* out_array );
+attr_core_api
+void mat2_to_array( struct Matrix2x2 m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
-attr_always_inline
-attr_header struct Matrix2x2 mat2_add(
+attr_always_inline attr_header
+struct Matrix2x2 mat2_add(
     struct Matrix2x2 lhs, struct Matrix2x2 rhs
 ) {
     struct Matrix2x2 result;
@@ -113,8 +115,8 @@ attr_header struct Matrix2x2 mat2_add(
 /// @brief Component-wise subtract matrices.
 /// @param lhs, rhs Matrices to subtract.
 /// @return Result of subtraction.
-attr_always_inline
-attr_header struct Matrix2x2 mat2_sub(
+attr_always_inline attr_header
+struct Matrix2x2 mat2_sub(
     struct Matrix2x2 lhs, struct Matrix2x2 rhs
 ) {
     struct Matrix2x2 result;
@@ -126,8 +128,8 @@ attr_header struct Matrix2x2 mat2_sub(
 /// @param lhs Matrix to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_always_inline
-attr_header struct Matrix2x2 mat2_mul(
+attr_always_inline attr_header
+struct Matrix2x2 mat2_mul(
     struct Matrix2x2 lhs, f32 rhs
 ) {
     struct Matrix2x2 result;
@@ -139,8 +141,8 @@ attr_header struct Matrix2x2 mat2_mul(
 /// @param lhs Matrix to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_always_inline
-attr_header struct Matrix2x2 mat2_div(
+attr_always_inline attr_header
+struct Matrix2x2 mat2_div(
     struct Matrix2x2 lhs, f32 rhs
 ) {
     struct Matrix2x2 result;
@@ -151,8 +153,8 @@ attr_header struct Matrix2x2 mat2_div(
 /// @brief Multiply matrices.
 /// @param lhs, rhs Matrices to multiply.
 /// @return Result of multiplication
-attr_always_inline
-attr_header struct Matrix2x2 mat2_mul_mat2(
+attr_always_inline attr_header
+struct Matrix2x2 mat2_mul_mat2(
     struct Matrix2x2 lhs, struct Matrix2x2 rhs
 ) {
     return mat2_new(
@@ -164,8 +166,8 @@ attr_header struct Matrix2x2 mat2_mul_mat2(
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
 /// @return Transposed matrix.
-attr_always_inline
-attr_header struct Matrix2x2 mat2_transpose( struct Matrix2x2 m ) {
+attr_always_inline attr_header
+struct Matrix2x2 mat2_transpose( struct Matrix2x2 m ) {
     return mat2_new(
         m.array[0], m.array[2],
         m.array[1], m.array[3] );
@@ -173,8 +175,8 @@ attr_header struct Matrix2x2 mat2_transpose( struct Matrix2x2 m ) {
 /// @brief Calculate the determinant of matrix.
 /// @param m Matrix to calculate determinant of.
 /// @return Determinant of matrix.
-attr_always_inline
-attr_header f32 mat2_determinant( struct Matrix2x2 m ) {
+attr_always_inline attr_header
+f32 mat2_determinant( struct Matrix2x2 m ) {
     return ( m.array[0] * m.array[3] ) - ( m.array[2] * m.array[1] );
 }
 

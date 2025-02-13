@@ -42,8 +42,8 @@ typedef struct UTF16 {
 /// @param      utf8               UTF-8 characters.
 /// @param[out] opt_out_read_count (optional) Pointer to write number of bytes read from UTF-8.
 /// @return UTF-32 codepoint.
-attr_always_inline
-attr_header c32 utf8_to_codepoint(
+attr_always_inline attr_header
+c32 utf8_to_codepoint(
     UTF8 utf8, usize* opt_out_read_count
 ) {
     if( !utf8.len ) {
@@ -81,8 +81,8 @@ attr_header c32 utf8_to_codepoint(
 /// @brief Convert UTF-32 codepoint to UTF-8 characters.
 /// @param codepoint UTF-32 codepoint to convert.
 /// @return UTF-8 characters.
-attr_always_inline
-attr_header UTF8 codepoint_to_utf8( c32 codepoint ) {
+attr_always_inline attr_header
+UTF8 codepoint_to_utf8( c32 codepoint ) {
     UTF8 result = {0};
     if( codepoint <= 0x007F ) {
         result.bytes[0] = codepoint;
@@ -112,8 +112,8 @@ attr_header UTF8 codepoint_to_utf8( c32 codepoint ) {
 /// @param      utf16              UTF-16 characters.
 /// @param[out] opt_out_read_count (optional) Pointer to write number of shorts read from UTF-16.
 /// @return UTF-32 codepoint.
-attr_always_inline
-attr_header c32 utf16_to_codepoint( UTF16 utf16, usize* opt_out_read_count ) {
+attr_always_inline attr_header
+c32 utf16_to_codepoint( UTF16 utf16, usize* opt_out_read_count ) {
     if( !utf16.len ) {
         return UTF32_REPLACEMENT_CHARACTER;
     }
@@ -140,8 +140,8 @@ attr_header c32 utf16_to_codepoint( UTF16 utf16, usize* opt_out_read_count ) {
 /// @brief Convert UTF-32 codepoint to UTF-16 characters.
 /// @param codepoint UTF-32 codepoint to convert.
 /// @return UTF-16 characters.
-attr_always_inline
-attr_header UTF16 codepoint_to_utf16( c32 codepoint ) {
+attr_always_inline attr_header
+UTF16 codepoint_to_utf16( c32 codepoint ) {
     UTF16 result = UTF16_REPLACEMENT_CHARACTER;
 
     if( codepoint <= 0xFFFF ) {

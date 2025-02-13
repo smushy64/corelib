@@ -12,7 +12,8 @@
 
 #include "core/internal/platform/time.h"
 
-attr_global u8 global_day_month_table[] = {
+attr_global
+u8 global_day_month_table[] = {
     31,// jan
     28,// feb
     31,// mar
@@ -27,29 +28,36 @@ attr_global u8 global_day_month_table[] = {
     31 // dec
 };
 
-attr_core_api TimePosix time_posix(void) {
+attr_core_api
+TimePosix time_posix(void) {
     return platform_time_posix();
 }
-attr_core_api TimeSplit time_split(void) {
+attr_core_api
+TimeSplit time_split(void) {
     return platform_time_split();
 }
-attr_core_api b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 ) {
+attr_core_api
+b32 time_hour_24_to_12( TimeHour hr24, TimeHour* out_hr12 ) {
     TimeHour hr12 = hr24 % 12;
     b32      am   = hr24 < 12;
 
     *out_hr12 = hr12 ? hr12 : 12;
     return am;
 }
-attr_core_api f64 timer_milliseconds(void) {
+attr_core_api
+f64 timer_milliseconds(void) {
     return platform_timer_milliseconds();
 }
-attr_core_api f64 timer_seconds(void) {
+attr_core_api
+f64 timer_seconds(void) {
     return platform_timer_seconds();
 }
-attr_core_api u32 time_day_month_to_day_week( u32 year, u32 month, u32 day ) {
+attr_core_api
+u32 time_day_month_to_day_week( u32 year, u32 month, u32 day ) {
     return (day += month < 3 ? year-- : year - 2, 23 * month / 9 + day + 4 + year / 4 - year / 100 + year / 400 ) % 7;
 }
-attr_core_api u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month ) {
+attr_core_api
+u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month ) {
     u32 m_idx = num_clamp( month, 1, 12 ) - 1;
     u32 days  = 0;
     b32 leap  = time_year_is_leap( year );
@@ -62,7 +70,8 @@ attr_core_api u32 time_day_month_to_day_year( u32 year, u32 month, u32 day_month
     }
     return days + day_month;
 }
-attr_core_api b32 time_year_is_leap( u32 year ) {
+attr_core_api
+b32 time_year_is_leap( u32 year ) {
     if( !(year % 400) ) {
         return true;
     } else if( !(year % 100) ) {
@@ -76,14 +85,16 @@ attr_core_api b32 time_year_is_leap( u32 year ) {
 
 #define DEFAULT_FORMAT string_text( "[mm]/[ddd]/[yyyy] [h]:[m]:[s] [hm]" )
 
-attr_internal usize internal_time_dummy_stream(
+attr_internal
+usize internal_time_dummy_stream(
     void* _, usize count, const void* __
 ) {
     unused(_,__);
     return count;
 }
 
-attr_core_api usize stream_fmt_time(
+attr_core_api
+usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
     int padding, usize opt_format_len, const char* opt_format
 ) {

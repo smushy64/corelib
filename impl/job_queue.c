@@ -31,21 +31,22 @@ struct InternalThreadArray {
     ThreadHandle threads[];
 };
 
-attr_always_inline inline
-attr_internal usize internal_job_queue_size( u32 entry_count ) {
+attr_always_inline inline attr_internal
+usize internal_job_queue_size( u32 entry_count ) {
     return sizeof(struct InternalJobQueue) + (sizeof(struct JobEntry) * entry_count);
 }
-attr_always_inline inline
-attr_internal usize internal_thread_array_size( u32 len ) {
+attr_always_inline inline attr_internal
+usize internal_thread_array_size( u32 len ) {
     return sizeof(struct InternalThreadArray) + (sizeof(ThreadHandle*) * len);
 }
-attr_always_inline inline
-attr_internal usize internal_memory_requirement( u32 thread_count, u32 entry_count ) {
+attr_always_inline inline attr_internal
+usize internal_memory_requirement( u32 thread_count, u32 entry_count ) {
     return
         internal_job_queue_size( entry_count ) +
         internal_thread_array_size( thread_count );
 }
-attr_core_api b32 job_queue_query_memory_requirement(
+attr_core_api
+b32 job_queue_query_memory_requirement(
     u32 thread_count, u32 max_entry_count, usize* out_size
 ) {
     if(
@@ -59,7 +60,8 @@ attr_core_api b32 job_queue_query_memory_requirement(
     return true;
 }
 
-attr_internal b32 internal_job_dequeue(
+attr_internal
+b32 internal_job_dequeue(
     struct InternalJobQueue* q, struct JobEntry* out_entry
 ) {
     if( !q->len ) {
@@ -77,8 +79,8 @@ attr_internal b32 internal_job_dequeue(
     return true;
 }
 
-attr_unused
-attr_internal int internal_job_queue_main( u32 thread_id, void* params ) {
+attr_unused attr_internal
+int internal_job_queue_main( u32 thread_id, void* params ) {
     struct InternalJobQueue* q = rcast_ref( struct InternalJobQueue, params );
 
     loop() {
@@ -106,7 +108,8 @@ attr_internal int internal_job_queue_main( u32 thread_id, void* params ) {
     return 0;
 }
 
-attr_core_api JobQueue* job_queue_create(
+attr_core_api
+JobQueue* job_queue_create(
     u32* in_out_thread_count, u32 max_entry_count, usize stack_size,
     usize buffer_size, void* buffer
 ) {
@@ -166,7 +169,8 @@ attr_core_api JobQueue* job_queue_create(
 
     return buffer;
 }
-attr_core_api void job_queue_destroy( JobQueue* queue ) {
+attr_core_api
+void job_queue_destroy( JobQueue* queue ) {
     struct InternalJobQueue* q = rcast_ref( struct InternalJobQueue, queue );
     job_queue_wait( queue );
 
@@ -193,7 +197,8 @@ attr_core_api void job_queue_destroy( JobQueue* queue ) {
     usize buffer_size = job_queue_size + internal_thread_array_size( array->len );
     memory_zero( queue, buffer_size );
 }
-attr_core_api b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* params ) {
+attr_core_api
+b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* params ) {
     struct InternalJobQueue* q = rcast_ref( struct InternalJobQueue, queue );
     if( q->back == q->front ) {
         return false;
@@ -215,7 +220,8 @@ attr_core_api b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* para
 
     return true;
 }
-attr_core_api b32 job_queue_wait_timed( JobQueue* queue, u32 ms ) {
+attr_core_api
+b32 job_queue_wait_timed( JobQueue* queue, u32 ms ) {
     struct InternalJobQueue* q = rcast_ref( struct InternalJobQueue, queue );
     if( ms == U32_MAX ) {
         while( q->len ) {

@@ -6,10 +6,13 @@
 */
 #include "core/macros.h"
 #include "core/print.h"
+#include "core/string.h"
 
 int main( int argc, char** argv ) {
     unused(argc, argv);
 
-    println( "hello, world!" );
+    String foo = string_text( "foo" );
+    String bar = string_text( "bar" );
+    println( "'{s}' '{s}'", foo, bar );
     return 0;
 }

@@ -24,7 +24,8 @@ typedef void JobMainFN( u32 thread_id, void* params );
 /// @param max_entry_count Number of entries job queue will accept, must be >= thread_count and < #I32_MAX.
 /// @param[out] out_memory_requirement Pointer to receive memory requirement.
 /// @return True if values for thread_count and max_entry_count are valid.
-attr_core_api b32 job_queue_query_memory_requirement(
+attr_core_api
+b32 job_queue_query_memory_requirement(
     u32 thread_count, u32 max_entry_count, usize* out_memory_requirement );
 
 /// @brief Create a job queue.
@@ -37,7 +38,8 @@ attr_core_api b32 job_queue_query_memory_requirement(
 /// @param[in] buffer Pointer to buffer to hold JobQueue.
 /// @see #job_queue_query_memory_requirement()
 /// @return Returns null on failure, otherwise it's the same pointer as the provided buffer.
-attr_core_api JobQueue* job_queue_create(
+attr_core_api
+JobQueue* job_queue_create(
     u32* in_out_thread_count, u32 max_entry_count,
     usize stack_size, usize buffer_size, void* buffer );
 /// @brief Destroy a job queue.
@@ -45,22 +47,25 @@ attr_core_api JobQueue* job_queue_create(
 /// Signals job threads that they should exit and waits for all threads to exit.
 /// After threads have exited, zeroes out queue buffer.
 /// @param[in] queue Pointer to job queue.
-attr_core_api void job_queue_destroy( JobQueue* queue );
+attr_core_api
+void job_queue_destroy( JobQueue* queue );
 /// @brief Enqueue a new job into job queue.
 /// @param[in] queue Pointer to job queue.
 /// @param job Pointer to job's main function.
 /// @param[in] params (optional) Optional parameters for job function.
 /// @return Returns true if job queue had enough space for job, otherwise false.
-attr_core_api b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* params );
+attr_core_api
+b32 job_queue_enqueue( JobQueue* queue, JobMainFN* job, void* params );
 /// @brief Wait for all jobs in job queue to finish within given milliseconds.
 /// @param[in] queue Pointer to job queue.
 /// @param ms Milliseconds to wait for jobs to finish, must be less than #U32_MAX.
 /// @return True if jobs finished within given milliseconds.
-attr_core_api b32 job_queue_wait_timed( JobQueue* queue, u32 ms );
+attr_core_api
+b32 job_queue_wait_timed( JobQueue* queue, u32 ms );
 /// @brief Wait for all jobs in job queue to finish.
 /// @param[in] queue Pointer to job queue.
-attr_always_inline
-attr_header void job_queue_wait( JobQueue* queue ) {
+attr_always_inline attr_header
+void job_queue_wait( JobQueue* queue ) {
     (void)job_queue_wait_timed( queue, U32_MAX );
 }
 

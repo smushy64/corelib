@@ -64,15 +64,16 @@ typedef struct SystemInfo {
 } SystemInfo;
 /// @brief Query information about the current system.
 /// @param[out] out_info Pointer to SystemInfo to fill out.
-attr_core_api void system_query_info( SystemInfo* out_info );
+attr_core_api
+void system_query_info( SystemInfo* out_info );
 /// @brief Check if x86 cpu has SSE instructions
 /// @details
 /// SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2
 /// @param flags Feature flags.
 /// @return Bitfield with missing instructions.
 /// Zero if all SSE instructions are present.
-attr_always_inline
-attr_header CPUFeatureFlags system_feature_check_x86_sse( CPUFeatureFlags flags ) {
+attr_always_inline attr_header
+CPUFeatureFlags system_feature_check_x86_sse( CPUFeatureFlags flags ) {
     return ~flags & CPU_FEATURE_SSE_MASK;
 }
 /// @brief Check if x86 cpu has AVX instructions
@@ -81,8 +82,8 @@ attr_header CPUFeatureFlags system_feature_check_x86_sse( CPUFeatureFlags flags 
 /// @param flags Feature flags.
 /// @return Bitfield with missing instructions.
 /// Zero if all AVX instructions are present.
-attr_always_inline
-attr_header CPUFeatureFlags system_feature_check_x86_avx( CPUFeatureFlags flags ) {
+attr_always_inline attr_header
+CPUFeatureFlags system_feature_check_x86_avx( CPUFeatureFlags flags ) {
     return ~flags & CPU_FEATURE_AVX_MASK;
 }
 

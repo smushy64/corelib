@@ -13,7 +13,8 @@
 /// @param     len Length of @c buf in bytes.
 /// @param[in] buf Pointer to start of buffer to hash.
 /// @return 64-bit hash of @c buf.
-attr_core_api hash64 hash_elf_64( usize len, const void* buf );
+attr_core_api
+hash64 hash_elf_64( usize len, const void* buf );
 /// @brief MurmurHash2 64-bit hash function.
 /// @details
 /// Original implementation is in the public domain and was written by Austin Appleby.
@@ -21,7 +22,8 @@ attr_core_api hash64 hash_elf_64( usize len, const void* buf );
 /// @param     len Length of @c buf in bytes.
 /// @param[in] buf Pointer to start of buffer to hash.
 /// @return 64-bit hash of @c buf.
-attr_core_api hash64 hash_murmur2_64( usize len, const void* buf );
+attr_core_api
+hash64 hash_murmur2_64( usize len, const void* buf );
 /// @brief Cityhash 64-bit hash function.
 /// @details
 /// CityHash, by Geoff Pike and Jyrki Alakuijala
@@ -32,6 +34,7 @@ attr_core_api hash64 hash_murmur2_64( usize len, const void* buf );
 /// @param     len Length of @c buf in bytes.
 /// @param[in] buf Pointer to start of buffer to hash.
 /// @return 64-bit hash of @c buf.
-attr_core_api hash64 hash_city_64( usize len, const void* buf );
+attr_core_api
+hash64 hash_city_64( usize len, const void* buf );
 
 #endif /* header guard */

@@ -13,44 +13,55 @@
 
 #include "core/internal/platform/thread.h"
 
-attr_core_api b32 named_semaphore_open(
+attr_core_api
+b32 named_semaphore_open(
     const char* name, u32 initial_value, struct NamedSemaphore* out_sem
 ) {
     return platform_semaphore_create( name, initial_value, out_sem );
 }
-attr_core_api void named_semaphore_signal( struct NamedSemaphore* sem ) {
+attr_core_api
+void named_semaphore_signal( struct NamedSemaphore* sem ) {
     platform_semaphore_signal( sem );
 }
-attr_core_api b32 named_semaphore_wait_timed( struct NamedSemaphore* sem, u32 ms ) {
+attr_core_api
+b32 named_semaphore_wait_timed( struct NamedSemaphore* sem, u32 ms ) {
     return platform_semaphore_wait( sem, ms );
 }
-attr_core_api void named_semaphore_close( struct NamedSemaphore* sem ) {
+attr_core_api
+void named_semaphore_close( struct NamedSemaphore* sem ) {
     platform_semaphore_destroy( sem );
 }
 
-attr_core_api b32 os_mutex_open( struct OSMutex* out_mtx ) {
+attr_core_api
+b32 os_mutex_open( struct OSMutex* out_mtx ) {
     return platform_mutex_create( out_mtx );
 }
-attr_core_api b32 os_mutex_lock_timed( struct OSMutex* mtx, u32 ms ) {
+attr_core_api
+b32 os_mutex_lock_timed( struct OSMutex* mtx, u32 ms ) {
     return platform_mutex_lock( mtx, ms );
 }
-attr_core_api void os_mutex_unlock( struct OSMutex* mtx ) {
+attr_core_api
+void os_mutex_unlock( struct OSMutex* mtx ) {
     platform_mutex_unlock( mtx );
 }
-attr_core_api void os_mutex_destroy( struct OSMutex* mtx ) {
+attr_core_api
+void os_mutex_destroy( struct OSMutex* mtx ) {
     platform_mutex_destroy( mtx );
 }
 
-attr_core_api void semaphore_init( struct Semaphore* sem, u32 init ) {
+attr_core_api
+void semaphore_init( struct Semaphore* sem, u32 init ) {
     sem->atom = init;
     mutex_init( &sem->mtx );
 }
-attr_core_api void semaphore_signal( struct Semaphore* sem ) {
+attr_core_api
+void semaphore_signal( struct Semaphore* sem ) {
     mutex_lock( &sem->mtx );
     atomic_increment32( &sem->atom );
     mutex_unlock( &sem->mtx );
 }
-attr_core_api void semaphore_wait( struct Semaphore* sem ) {
+attr_core_api
+void semaphore_wait( struct Semaphore* sem ) {
     for( ;; ) {
         mutex_lock( &sem->mtx );
         if( sem->atom > 0 ) {
@@ -61,7 +72,8 @@ attr_core_api void semaphore_wait( struct Semaphore* sem ) {
         mutex_unlock( &sem->mtx );
     }
 }
-attr_core_api b32 semaphore_wait_timed( struct Semaphore* sem, u32 ms ) {
+attr_core_api
+b32 semaphore_wait_timed( struct Semaphore* sem, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         semaphore_wait( sem );
         return true;
@@ -94,13 +106,16 @@ attr_core_api b32 semaphore_wait_timed( struct Semaphore* sem, u32 ms ) {
     }
 }
 
-attr_core_api void mutex_init( struct Mutex* mtx ) {
+attr_core_api
+void mutex_init( struct Mutex* mtx ) {
     mtx->atom = 0;
 }
-attr_core_api void mutex_unlock( struct Mutex* mtx ) {
+attr_core_api
+void mutex_unlock( struct Mutex* mtx ) {
     atomic_exchange32( &mtx->atom, 0 );
 }
-attr_core_api b32 mutex_lock_timed( struct Mutex* mtx, u32 ms ) {
+attr_core_api
+b32 mutex_lock_timed( struct Mutex* mtx, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         atomic_spinlock( &mtx->atom, 0 );
     } else {
@@ -113,7 +128,8 @@ attr_core_api b32 mutex_lock_timed( struct Mutex* mtx, u32 ms ) {
     return true;
 }
 
-attr_internal void internal_atomic_spinlock( atomic32* atom, i32 sentinel ) {
+attr_internal
+void internal_atomic_spinlock( atomic32* atom, i32 sentinel ) {
     for( ;; ) {
         atomic_compare_exchange32( atom, sentinel, sentinel );
         if( *atom == sentinel ) {
@@ -125,7 +141,8 @@ attr_internal void internal_atomic_spinlock( atomic32* atom, i32 sentinel ) {
     }
 }
 
-attr_internal void internal_atomic_spinlock64( atomic64* atom, i64 sentinel ) {
+attr_internal
+void internal_atomic_spinlock64( atomic64* atom, i64 sentinel ) {
     for( ;; ) {
         atomic_compare_exchange64( atom, sentinel, sentinel );
         if( *atom == sentinel ) {
@@ -137,7 +154,8 @@ attr_internal void internal_atomic_spinlock64( atomic64* atom, i64 sentinel ) {
     }
 }
 
-attr_core_api b32 atomic_spinlock_timed( atomic32* atom, i32 sentinel, u32 ms ) {
+attr_core_api
+b32 atomic_spinlock_timed( atomic32* atom, i32 sentinel, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         internal_atomic_spinlock( atom, sentinel );
         return true;
@@ -164,7 +182,8 @@ attr_core_api b32 atomic_spinlock_timed( atomic32* atom, i32 sentinel, u32 ms ) 
 
     return true;
 }
-attr_core_api b32 atomic_spinlock_timed64( atomic64* atom, i64 sentinel, u32 ms ) {
+attr_core_api
+b32 atomic_spinlock_timed64( atomic64* atom, i64 sentinel, u32 ms ) {
     if( ms == CORE_WAIT_INFINITE ) {
         internal_atomic_spinlock64( atom, sentinel );
         return true;

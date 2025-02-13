@@ -168,43 +168,51 @@ struct Matrix4x4 {
 /// @brief Create matrix from array.
 /// @param array Array, must have at least 16 floats.
 /// @return Matrix with components from array.
-attr_core_api struct Matrix4x4 mat4_from_array( const f32 array[16] );
+attr_core_api
+struct Matrix4x4 mat4_from_array( const f32 array[16] );
 /// @brief Fill array with components from matrix.
 /// @param m Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 16 floats.
-attr_core_api void mat4_to_array( const struct Matrix4x4* m, f32* out_array );
+attr_core_api
+void mat4_to_array( const struct Matrix4x4* m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
-attr_core_api struct Matrix4x4 mat4_add(
+attr_core_api
+struct Matrix4x4 mat4_add(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs );
 /// @brief Component-wise subtract matrices.
 /// @param lhs, rhs Matrices to subtract.
 /// @return Result of subtraction.
-attr_core_api struct Matrix4x4 mat4_sub(
+attr_core_api
+struct Matrix4x4 mat4_sub(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs );
 /// @brief Multiply matrix components.
 /// @param lhs Matrix to multiply.
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
-attr_core_api struct Matrix4x4 mat4_mul(
+attr_core_api
+struct Matrix4x4 mat4_mul(
     const struct Matrix4x4* lhs, f32 rhs );
 /// @brief Divide matrix components.
 /// @param lhs Matrix to divide.
 /// @param rhs Scalar to divide components by.
 /// @return Result of division.
-attr_core_api struct Matrix4x4 mat4_div(
+attr_core_api
+struct Matrix4x4 mat4_div(
     const struct Matrix4x4* lhs, f32 rhs );
 /// @brief Multiply matrices.
 /// @param lhs, rhs Matrices to multiply.
 /// @return Result of multiplication.
-attr_core_api struct Matrix4x4 mat4_mul_mat4(
+attr_core_api
+struct Matrix4x4 mat4_mul_mat4(
     const struct Matrix4x4* lhs, const struct Matrix4x4* rhs );
 /// @brief Multiply vector by matrix.
 /// @param lhs Matrix to multiply.
 /// @param rhs Vector4 to multiply.
 /// @return Result of multiplication.
-attr_core_api struct Vector4 mat4_mul_vec4(
+attr_core_api
+struct Vector4 mat4_mul_vec4(
     const struct Matrix4x4* lhs, struct Vector4 rhs );
 /// @brief Multiply vector by matrix.
 /// @param lhs Matrix to multiply.
@@ -221,8 +229,8 @@ attr_header struct Vector3 mat4_mul_vec3(
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
 /// @return Transposed matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_transpose( const struct Matrix4x4* m ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_transpose( const struct Matrix4x4* m ) {
     return mat4_new(
         m->array[0], m->array[4], m->array[ 8], m->array[12],
         m->array[1], m->array[5], m->array[ 9], m->array[13],
@@ -232,19 +240,21 @@ attr_header struct Matrix4x4 mat4_transpose( const struct Matrix4x4* m ) {
 /// @brief Calculate the determinant of matrix.
 /// @param m Matrix to calculate determinant of.
 /// @return Determinant of matrix.
-attr_core_api f32 mat4_determinant( const struct Matrix4x4* m );
+attr_core_api
+f32 mat4_determinant( const struct Matrix4x4* m );
 /// @brief Get the submatrix at given coordinates.
 /// @param m Matrix to get submatrix of.
 /// @param column, row Coordinates of submatrix.
 /// @return Submatrix at given coordinates.
-attr_core_api struct Matrix3x3 mat4_submatrix(
+attr_core_api
+struct Matrix3x3 mat4_submatrix(
     const struct Matrix4x4* m, u32 column, u32 row );
 /// @brief Get the determinant of the submatrix of given coordinates.
 /// @param m Matrix to get minor of.
 /// @param column, row Coordinates of matrix minor.
 /// @return Determinant of submatrix at given coordinates.
-attr_always_inline
-attr_header f32 mat4_minor( const struct Matrix4x4* m, u32 column, u32 row ) {
+attr_always_inline attr_header
+f32 mat4_minor( const struct Matrix4x4* m, u32 column, u32 row ) {
     struct Matrix3x3 submatrix = mat4_submatrix( m, column, row );
     return mat3_determinant( &submatrix );
 }
@@ -252,16 +262,18 @@ attr_header f32 mat4_minor( const struct Matrix4x4* m, u32 column, u32 row ) {
 /// @param m Matrix to get cofactor of.
 /// @param column, row Coordinates of cofactor.
 /// @return Cofactor.
-attr_core_api f32 mat4_cofactor( const struct Matrix4x4* m, u32 column, u32 row );
+attr_core_api
+f32 mat4_cofactor( const struct Matrix4x4* m, u32 column, u32 row );
 /// @brief Create a matrix of all the cofactors of the given matrix.
 /// @param m Matrix to create cofactor matrix of.
 /// @return Cofactor matrix.
-attr_core_api struct Matrix4x4 mat4_cofactor_matrix( const struct Matrix4x4* m );
+attr_core_api
+struct Matrix4x4 mat4_cofactor_matrix( const struct Matrix4x4* m );
 /// @brief Get the adjoint matrix of given matrix.
 /// @param m Matrix to get adjoint of.
 /// @return Adjoint matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_adjoint( const struct Matrix4x4* m ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_adjoint( const struct Matrix4x4* m ) {
     struct Matrix4x4 cofactor = mat4_cofactor_matrix( m );
     return mat4_transpose( &cofactor );
 }
@@ -269,36 +281,41 @@ attr_header struct Matrix4x4 mat4_adjoint( const struct Matrix4x4* m ) {
 /// @param m Matrix to get inverse of.
 /// @param[out] out_inverse Inverse matrix.
 /// @return False if the determinant of given matrix was zero (division by zero).
-attr_core_api b32 mat4_inverse_checked(
+attr_core_api
+b32 mat4_inverse_checked(
     const struct Matrix4x4* m, struct Matrix4x4* out_inverse );
 /// @brief Get the inverse of given matrix without checking for zero determinant.
 /// @param m Matrix to get inverse of.
 /// @return Inverse matrix.
 /// @warning Resulting matrix could be all NaN!
-attr_core_api struct Matrix4x4 mat4_inverse( const struct Matrix4x4* m );
+attr_core_api
+struct Matrix4x4 mat4_inverse( const struct Matrix4x4* m );
 /// @brief Attempt to construct normal matrix from matrix.
 /// @param m Matrix to construct normal matrix from.
 /// @param[out] out_normal Normal matrix.
 /// @return False if the determinant of given matrix was zero (division by zero).
-attr_core_api b32 mat4_normal_matrix_checked(
+attr_core_api
+b32 mat4_normal_matrix_checked(
     const struct Matrix4x4* m, struct Matrix3x3* out_normal );
 /// @brief Construct normal matrix from matrix without checking for zero determinant.
 /// @param m Matrix to construct normal matrix from.
 /// @return Normal matrix.
-attr_core_api struct Matrix3x3 mat4_normal_matrix( const struct Matrix4x4* m );
+attr_core_api
+struct Matrix3x3 mat4_normal_matrix( const struct Matrix4x4* m );
 /// @brief Construct a view matrix.
 /// @param position Position of camera.
 /// @param target Position that camera is targetting.
 /// @param up Up direction.
 /// @return View matrix.
-attr_core_api struct Matrix4x4 mat4_view(
+attr_core_api
+struct Matrix4x4 mat4_view(
     struct Vector3 position, struct Vector3 target, struct Vector3 up );
 /// @brief Construct a view Matrix for 2d rendering.
 /// @param position Position of camera.
 /// @param up Up direction.
 /// @return View matrix for 2d rendering.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_view_2d(
+attr_always_inline attr_header
+struct Matrix4x4 mat4_view_2d(
     struct Vector2 position, struct Vector2 up
 ) {
     struct Vector3 target3d   = vec3( position.x, position.y, 0.0f );
@@ -312,7 +329,8 @@ attr_header struct Matrix4x4 mat4_view_2d(
 /// @param bottom, top Bottom and Top bounds of projection.
 /// @param clip_near, clip_far Near and Far bounds of projection.
 /// @return Orthographic projection matrix.
-attr_core_api struct Matrix4x4 mat4_ortho(
+attr_core_api
+struct Matrix4x4 mat4_ortho(
     f32 left, f32 right,
     f32 bottom, f32 top,
     f32 clip_near, f32 clip_far );
@@ -321,13 +339,14 @@ attr_core_api struct Matrix4x4 mat4_ortho(
 /// @param aspect_ratio Aspect ratio of render target.
 /// @param clip_near, clip_far Near and Far bounds of projection.
 /// @return Perspective projection matrix.
-attr_core_api struct Matrix4x4 mat4_perspective(
+attr_core_api
+struct Matrix4x4 mat4_perspective(
     f32 field_of_view, f32 aspect_ratio, f32 clip_near, f32 clip_far );
 /// @brief Construct a translation matrix.
 /// @param x, y, z Translation coordinates.
 /// @return Translation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_translation( f32 x, f32 y, f32 z ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_translation( f32 x, f32 y, f32 z ) {
     return mat4_new(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -337,63 +356,68 @@ attr_header struct Matrix4x4 mat4_translation( f32 x, f32 y, f32 z ) {
 /// @brief Construct a translation matrix.
 /// @param translation Translation coordinates.
 /// @return Translation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_translation_vec3( struct Vector3 translation ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_translation_vec3( struct Vector3 translation ) {
     return mat4_translation( translation.x, translation.y, translation.z );
 }
 /// @brief Construct a 2d translation matrix.
 /// @param x, y Translation coordinates.
 /// @return Translation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_translation_2d( f32 x, f32 y ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_translation_2d( f32 x, f32 y ) {
     return mat4_translation( x, y, 0.0f );
 }
 /// @brief Construct a 2d translation matrix.
 /// @param translation Translation coordinates.
 /// @return Translation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_translation_vec2( struct Vector2 translation ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_translation_vec2( struct Vector2 translation ) {
     return mat4_translation_2d( translation.x, translation.y );
 }
 /// @brief Construct a rotation matrix for pitch rotation.
 /// @param pitch Rotation in radians.
 /// @return Rotation matrix.
-attr_core_api struct Matrix4x4 mat4_rotation_pitch( f32 pitch );
+attr_core_api
+struct Matrix4x4 mat4_rotation_pitch( f32 pitch );
 /// @brief Construct a rotation matrix for yaw rotation.
 /// @param yaw Rotation in radians.
 /// @return Rotation matrix.
-attr_core_api struct Matrix4x4 mat4_rotation_yaw( f32 yaw );
+attr_core_api
+struct Matrix4x4 mat4_rotation_yaw( f32 yaw );
 /// @brief Construct a rotation matrix for roll rotation.
 /// @param roll Rotation in radians.
 /// @return Rotation matrix.
-attr_core_api struct Matrix4x4 mat4_rotation_roll( f32 roll );
+attr_core_api
+struct Matrix4x4 mat4_rotation_roll( f32 roll );
 /// @brief Construct a rotation matrix using euler angles.
 /// @param pitch, yaw, roll Rotation in radians.
 /// @return Rotation matrix.
-attr_core_api struct Matrix4x4 mat4_rotation_euler( f32 pitch, f32 yaw, f32 roll );
+attr_core_api
+struct Matrix4x4 mat4_rotation_euler( f32 pitch, f32 yaw, f32 roll );
 /// @brief Construct a rotation matrix using euler angles.
 /// @param euler Rotation in radians.
 /// @return Rotation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_rotation_euler_vec3( struct Vector3 euler ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_rotation_euler_vec3( struct Vector3 euler ) {
     return mat4_rotation_euler( euler.x, euler.y, euler.z );
 }
 /// @brief Construct a rotation matrix from quaternion rotation.
 /// @param rotation Rotation.
 /// @return Rotation matrix.
-attr_core_api struct Matrix4x4 mat4_rotation( struct Quaternion rotation );
+attr_core_api
+struct Matrix4x4 mat4_rotation( struct Quaternion rotation );
 /// @brief Construct a rotation matrix for 2d rotation.
 /// @param rotation Rotation in radians.
 /// @return Rotation matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_rotation_2d( f32 rotation ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_rotation_2d( f32 rotation ) {
     return mat4_rotation_roll( -rotation );
 }
 /// @brief Construct a scale matrix.
 /// @param width, height, length Dimensions.
 /// @return Scale matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_scale( f32 width, f32 height, f32 length ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_scale( f32 width, f32 height, f32 length ) {
     return mat4_new(
         width,   0.0f,   0.0f, 0.0f,
          0.0f, height,   0.0f, 0.0f,
@@ -403,22 +427,22 @@ attr_header struct Matrix4x4 mat4_scale( f32 width, f32 height, f32 length ) {
 /// @brief Construct a scale matrix.
 /// @param dimensions Dimensions.
 /// @return Scale matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_scale_vec3( struct Vector3 dimensions ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_scale_vec3( struct Vector3 dimensions ) {
     return mat4_scale( dimensions.x, dimensions.y, dimensions.z );
 }
 /// @brief Construct a 2d scale matrix.
 /// @param width, height Dimensions.
 /// @return Scale matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_scale_2d( f32 width, f32 height ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_scale_2d( f32 width, f32 height ) {
     return mat4_scale( width, height, 0.0f );
 }
 /// @brief Construct a 2d scale matrix.
 /// @param dimensions Dimensions.
 /// @return Scale matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_scale_vec2( struct Vector2 dimensions ) {
+attr_always_inline attr_header
+struct Matrix4x4 mat4_scale_vec2( struct Vector2 dimensions ) {
     return mat4_scale_2d( dimensions.x, dimensions.y );
 }
 /// @brief Construct a transform matrix.
@@ -426,7 +450,8 @@ attr_header struct Matrix4x4 mat4_scale_vec2( struct Vector2 dimensions ) {
 /// @param rotation Rotation.
 /// @param scale Scale.
 /// @return Transform matrix.
-attr_core_api struct Matrix4x4 mat4_transform(
+attr_core_api
+struct Matrix4x4 mat4_transform(
     struct Vector3 translation, struct Quaternion rotation,
     struct Vector3 scale );
 /// @brief Construct a transform matrix.
@@ -434,7 +459,8 @@ attr_core_api struct Matrix4x4 mat4_transform(
 /// @param rotation Euler rotation.
 /// @param scale Scale.
 /// @return Transform matrix.
-attr_core_api struct Matrix4x4 mat4_transform_euler(
+attr_core_api
+struct Matrix4x4 mat4_transform_euler(
     struct Vector3 translation, struct Vector3 rotation,
     struct Vector3 scale );
 /// @brief Construct a 2d transform matrix.
@@ -442,8 +468,8 @@ attr_core_api struct Matrix4x4 mat4_transform_euler(
 /// @param rotation Rotation.
 /// @param scale Scale.
 /// @return Transform matrix.
-attr_always_inline
-attr_header struct Matrix4x4 mat4_transform_2d(
+attr_always_inline attr_header
+struct Matrix4x4 mat4_transform_2d(
     struct Vector2 translation, f32 rotation, struct Vector2 scale
 ) {
     struct Vector3 translation3d = vec3( translation.x, translation.y, 0.0f );

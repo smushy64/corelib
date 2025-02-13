@@ -8,7 +8,8 @@
 #include "core/memory.h"
 #include "core/alloc.h"
 
-attr_core_api b32 generic_array_from_alloc(
+attr_core_api
+b32 generic_array_from_alloc(
     usize stride, usize cap, void** buf, struct AllocatorInterface* allocator
 ) {
     void* _buf = allocator_alloc( allocator, stride * cap );
@@ -18,7 +19,8 @@ attr_core_api b32 generic_array_from_alloc(
     *buf = _buf;
     return true;
 }
-attr_core_api b32 generic_array_try_push(
+attr_core_api
+b32 generic_array_try_push(
     usize stride, usize* len, usize cap, void* buf, const void* item
 ) {
     if( *len == cap ) {
@@ -30,7 +32,8 @@ attr_core_api b32 generic_array_try_push(
 
     return true;
 }
-attr_core_api b32 generic_array_try_emplace(
+attr_core_api
+b32 generic_array_try_emplace(
     usize stride, usize* len, usize cap, void* buf, const void* item, usize at
 ) {
     if( *len == cap ) {
@@ -48,7 +51,8 @@ attr_core_api b32 generic_array_try_emplace(
 
     return true;
 }
-attr_core_api b32 generic_array_try_insert(
+attr_core_api
+b32 generic_array_try_insert(
     usize stride, usize* len, usize cap, void* buf,
     usize insert_len, const void* insert, usize at
 ) {
@@ -66,7 +70,8 @@ attr_core_api b32 generic_array_try_insert(
 
     return true;
 }
-attr_core_api b32 generic_array_grow(
+attr_core_api
+b32 generic_array_grow(
     usize stride, usize* cap, void** buf,
     usize amount, struct AllocatorInterface* allocator
 ) {
@@ -83,7 +88,8 @@ attr_core_api b32 generic_array_grow(
     *cap = *cap + amount;
     return true;
 }
-attr_core_api b32 generic_array_push(
+attr_core_api
+b32 generic_array_push(
     usize stride, usize* len, usize* cap, void** buf,
     const void* item, struct AllocatorInterface* allocator
 ) {
@@ -95,7 +101,8 @@ attr_core_api b32 generic_array_push(
     }
     return generic_array_try_push( stride, len, *cap, *buf, item );
 }
-attr_core_api b32 generic_array_emplace(
+attr_core_api
+b32 generic_array_emplace(
     usize stride, usize* len, usize* cap, void** buf,
     const void* item, usize at, struct AllocatorInterface* allocator
 ) {
@@ -107,7 +114,8 @@ attr_core_api b32 generic_array_emplace(
     }
     return generic_array_try_emplace( stride, len, *cap, *buf, item, at );
 }
-attr_core_api b32 generic_array_insert(
+attr_core_api
+b32 generic_array_insert(
     usize stride, usize* len, usize* cap, void** buf,
     usize insert_len, const void* insert, usize at,
     struct AllocatorInterface* allocator
@@ -123,7 +131,8 @@ attr_core_api b32 generic_array_insert(
     return generic_array_try_insert(
         stride, len, *cap, *buf, insert_len, insert, at );
 }
-attr_core_api b32 generic_array_pop(
+attr_core_api
+b32 generic_array_pop(
     usize stride, usize* len, void* buf, void* opt_out_item
 ) {
     if( !*len ) {
@@ -140,7 +149,8 @@ attr_core_api b32 generic_array_pop(
 
     return true;
 }
-attr_core_api b32 generic_array_remove(
+attr_core_api
+b32 generic_array_remove(
     usize stride, usize* len, void* buf, usize at
 ) {
     if( !*len ) {
@@ -160,7 +170,8 @@ attr_core_api b32 generic_array_remove(
 
     return true;
 }
-attr_core_api b32 generic_array_remove_range(
+attr_core_api
+b32 generic_array_remove_range(
     usize stride, usize* len, void* buf,
     usize from_inclusive, usize to_exclusive
 ) {
@@ -178,7 +189,8 @@ attr_core_api b32 generic_array_remove_range(
 
     return true;
 }
-attr_core_api b32 generic_array_clone(
+attr_core_api
+b32 generic_array_clone(
     usize stride, usize len, void* buf,
     usize* out_len, usize* out_cap, void** out_res,
     struct AllocatorInterface* allocator
@@ -198,7 +210,8 @@ attr_core_api b32 generic_array_clone(
 
     return true;
 }
-attr_core_api b32 queue_from_alloc(
+attr_core_api
+b32 queue_from_alloc(
     usize stride, usize cap, Queue* out_queue, struct AllocatorInterface* allocator
 ) {
     void* buf = allocator_alloc( allocator, stride * cap );
@@ -214,13 +227,15 @@ attr_core_api b32 queue_from_alloc(
 
     return true;
 }
-attr_core_api void queue_free( Queue* queue, struct AllocatorInterface* allocator ) {
+attr_core_api
+void queue_free( Queue* queue, struct AllocatorInterface* allocator ) {
     if( queue && queue->buf ) {
         allocator_free( allocator, queue, queue->stride * queue->cap );
         memory_zero( queue, sizeof(*queue) );
     }
 }
-attr_core_api b32 queue_grow(
+attr_core_api
+b32 queue_grow(
     Queue* queue, usize amount, struct AllocatorInterface* allocator
 ) {
     // TODO(alicia): do this in place >:(
@@ -242,7 +257,8 @@ attr_core_api b32 queue_grow(
 
     return true;
 }
-attr_core_api b32 queue_try_enqueue( Queue* queue, const void* item ) {
+attr_core_api
+b32 queue_try_enqueue( Queue* queue, const void* item ) {
     if( queue_is_full( queue ) ) {
         return false;
     }
@@ -250,7 +266,8 @@ attr_core_api b32 queue_try_enqueue( Queue* queue, const void* item ) {
     memory_copy( (u8*)queue->buf + (queue->stride * index), item, queue->stride );
     return true;
 }
-attr_core_api b32 queue_enqueue(
+attr_core_api
+b32 queue_enqueue(
     Queue* queue, const void* item, struct AllocatorInterface* allocator
 ) {
     if( queue_try_enqueue( queue, item ) ) {
@@ -261,7 +278,8 @@ attr_core_api b32 queue_enqueue(
     }
     return queue_try_enqueue( queue, item );
 }
-attr_core_api b32 queue_dequeue_ref( Queue* queue, void** out_item ) {
+attr_core_api
+b32 queue_dequeue_ref( Queue* queue, void** out_item ) {
     if( queue_is_empty( queue ) ) {
         return false;
     }
@@ -269,7 +287,8 @@ attr_core_api b32 queue_dequeue_ref( Queue* queue, void** out_item ) {
     *out_item = (u8*)queue->buf + (queue->stride * index);
     return true;
 }
-attr_core_api b32 queue_dequeue( Queue* queue, void* opt_out_item ) {
+attr_core_api
+b32 queue_dequeue( Queue* queue, void* opt_out_item ) {
     void* item = NULL;
     if( !queue_dequeue_ref( queue, &item ) ) {
         return false;
@@ -280,7 +299,8 @@ attr_core_api b32 queue_dequeue( Queue* queue, void* opt_out_item ) {
     memory_zero( item, queue->stride );
     return true;
 }
-attr_core_api b32 queue_peek( Queue* queue, void** out_item ) {
+attr_core_api
+b32 queue_peek( Queue* queue, void** out_item ) {
     if( queue_is_empty( queue ) ) {
         return false;
     }
@@ -288,12 +308,14 @@ attr_core_api b32 queue_peek( Queue* queue, void** out_item ) {
     *out_item = (u8*)queue->buf + (queue->stride * index);
     return true;
 }
-attr_core_api void queue_clear( Queue* queue ) {
+attr_core_api
+void queue_clear( Queue* queue ) {
     memory_zero( queue->buf, queue->stride * queue->cap );
     *queue = queue_new( queue->stride, queue->cap, queue->buf );
 }
 
-attr_core_api b32 hashmap_from_alloc(
+attr_core_api
+b32 hashmap_from_alloc(
     usize stride, usize cap, Hashmap* out_map,
     struct AllocatorInterface* allocator
 ) {
@@ -304,7 +326,8 @@ attr_core_api b32 hashmap_from_alloc(
     *out_map = hashmap_new( stride, cap, buf );
     return true;
 }
-attr_core_api void hashmap_free(
+attr_core_api
+void hashmap_free(
     Hashmap* map, struct AllocatorInterface* allocator
 ) {
     if( map && map->buf ) {
@@ -313,11 +336,13 @@ attr_core_api void hashmap_free(
         memory_zero( map, sizeof(*map) );
     }
 }
-attr_core_api void hashmap_clear( Hashmap* map ) {
+attr_core_api
+void hashmap_clear( Hashmap* map ) {
     memory_zero( map->buf, (map->stride * map->cap) + (sizeof(hash64) * map->cap) );
     *map = hashmap_new( map->stride, map->cap, map->buf );
 }
-attr_core_api b32 hashmap_grow(
+attr_core_api
+b32 hashmap_grow(
     Hashmap* map, u32 amount, struct AllocatorInterface* allocator
 ) {
     usize old_size = (map->stride * map->cap) + (sizeof(hash64) * map->cap);
@@ -338,7 +363,8 @@ attr_core_api b32 hashmap_grow(
 
     return true;
 }
-attr_internal void internal_hashmap_push( Hashmap* map, hash64 key, const void* item ) {
+attr_internal
+void internal_hashmap_push( Hashmap* map, hash64 key, const void* item ) {
     memory_copy( (u8*)map->buf + (map->stride * map->len), item, map->stride );
     hash64* keys = hashmap_keys( map );
     keys[map->len++] = key;
@@ -347,7 +373,8 @@ attr_internal void internal_hashmap_push( Hashmap* map, hash64 key, const void* 
         map->largest_key = key;
     }
 }
-attr_core_api b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item ) {
+attr_core_api
+b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item ) {
     if( hashmap_is_full( map ) ) {
         return false;
     }
@@ -396,7 +423,8 @@ attr_core_api b32 hashmap_try_insert( Hashmap* map, hash64 key, const void* item
 
     return true;
 }
-attr_core_api b32 hashmap_insert(
+attr_core_api
+b32 hashmap_insert(
     Hashmap* map, hash64 key, const void* item,
     struct AllocatorInterface* allocator
 ) {
@@ -408,7 +436,8 @@ attr_core_api b32 hashmap_insert(
     }
     return hashmap_try_insert( map, key, item );
 }
-attr_core_api b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item ) {
+attr_core_api
+b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item ) {
     void* item = hashmap_index_ref( map, key );
     if( !item ) {
         return false;
@@ -447,7 +476,8 @@ attr_core_api b32 hashmap_remove( Hashmap* map, hash64 key, void* opt_out_item )
     map->len--;
     return true;
 }
-attr_core_api void* hashmap_index_ref( Hashmap* map, hash64 key ) {
+attr_core_api
+void* hashmap_index_ref( Hashmap* map, hash64 key ) {
     if( hashmap_is_empty( map ) || key > map->largest_key ) {
         return NULL;
     }
@@ -471,7 +501,8 @@ attr_core_api void* hashmap_index_ref( Hashmap* map, hash64 key ) {
 
     return NULL;
 }
-attr_core_api b32 hashmap_index( Hashmap* map, hash64 key, void* out_item ) {
+attr_core_api
+b32 hashmap_index( Hashmap* map, hash64 key, void* out_item ) {
     void* item = hashmap_index_ref( map, key );
     if( !item ) {
         return false;
@@ -479,7 +510,8 @@ attr_core_api b32 hashmap_index( Hashmap* map, hash64 key, void* out_item ) {
     memory_copy( out_item, item, map->stride );
     return true;
 }
-attr_core_api b32 hashmap_set( Hashmap* map, hash64 key, const void* item ) {
+attr_core_api
+b32 hashmap_set( Hashmap* map, hash64 key, const void* item ) {
     void* at = hashmap_index_ref( map, key );
     if( !item ) {
         return false;
