@@ -1,5 +1,4 @@
 # Todo List
-- [ ] Remove collections
 - [ ] unicode:   more functions (like what ascii.h provides)
 - [ ] hash:      continuous hashing function
 - [ ] math:      noise functions
@@ -25,6 +24,7 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] Remove collections
 - [x] Remove job_queue
 - [x] fs:posix:      directory_remove (recursive)
 - [x] fmt:           custom formatter

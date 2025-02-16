@@ -27,7 +27,6 @@
 #endif
 
 #include "impl/alloc.c"
-#include "impl/collections.c"
 #include "impl/fmt.c"
 #include "impl/fs.c"
 #include "impl/hash.c"

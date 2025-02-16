@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- collections: removed
 - job_queue: removed
 - fs:posix: directory_remove()
 - fmt: any formatter (custom text formatting)
