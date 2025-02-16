@@ -95,11 +95,16 @@ struct PosixGlobal {
 };
 attr_global struct PosixGlobal global_posix;
 _Thread_local char* tls_global_posix_path_buf;
-struct FTWState {
-    DirectoryWalkFN* function;
-    void*            params;
+union FTWState {
+    struct {
+        DirectoryWalkFN* function;
+        void*            params;
+    } directory_walk;
+    struct {
+        b32 success;
+    } directory_remove_recursive;
 }; 
-_Thread_local struct FTWState tls_global_ftw_state;
+_Thread_local union FTWState tls_global_ftw_state;
 
 void internal_posix_get_cpu_name(void);
 
@@ -139,29 +144,6 @@ void* platform_heap_alloc( void* opt_old_ptr, usize opt_old_size, usize new_size
     return result;
 #endif
 }
-/* #if !defined(CORE_PLATFORM_LINUX) */
-/* void* platform_heap_realloc( */
-/*     void* old_buffer, const usize old_size, const usize new_size */
-/* ) { */
-/*     u8* result = (u8*)realloc( old_buffer, new_size ); */
-/*     if( !result ) { */
-/*         return NULL; */
-/*     } */
-/*     memory_set( result + old_size, 0, new_size - old_size ); */
-/*     return result; */
-/* #if 0 */
-/*     void* new_buffer = platform_heap_alloc( new_size ); */
-/*     if( !new_buffer ) { */
-/*         return NULL; */
-/*     } */
-/*     memory_copy( new_buffer, old_buffer, old_size ); */
-/*     platform_heap_free( old_buffer, old_size ); */
-/**/
-/*     return new_buffer; */
-/* #endif */
-/* } */
-/* #endif */
-
 void platform_heap_free( void* buffer, usize size ) {
     unused(size);
     free( buffer );
@@ -693,7 +675,6 @@ b32 platform_file_query_info( struct FD* fd, struct FileInfo* out_info ) {
     out_info->permissions = 0;
 
     return true;
-
 }
 enum FileType platform_file_query_type( struct FD* fd ) {
     struct stat st;
@@ -789,10 +770,70 @@ b32 platform_directory_create( struct _StringPOD path ) {
     }
     return true;
 }
+b32 internal_posix_directory_remove_recursive( const char* path );
+int internal_posix_directory_remove_nftw(
+    const char* filename, const struct stat* st, int flag, struct FTW* _info
+) {
+    unused(flag,_info);
+    if( S_ISDIR( st->st_mode ) ) {
+        if( !internal_posix_directory_remove_recursive( filename ) ) {
+            return FTW_STOP;
+        }
+        if( rmdir( filename ) ) {
+            int errnum = errno;
+            core_error(
+                "POSIX: directory_remove(): "
+                "failed to remove directory '{cc}'! reason: {cc}",
+                filename, strerror(errnum) );
+
+            tls_global_ftw_state.directory_remove_recursive.success = false;
+            return FTW_STOP;
+        }
+        return FTW_SKIP_SUBTREE;
+    } else {
+        if( unlink( filename ) ) {
+            int errnum = errno;
+            core_error(
+                "POSIX: directory_remove(): "
+                "failed to remove file '{cc}'! reason: {cc}",
+                filename, strerror(errnum) );
+            tls_global_ftw_state.directory_remove_recursive.success = false;
+            return FTW_STOP;
+        }
+        return FTW_CONTINUE;
+    }
+}
+b32 internal_posix_directory_remove_recursive( const char* path ) {
+    struct stat st;
+    if( stat( path, &st ) ) {
+        int errnum = errno;
+        core_error(
+            "POSIX: directory_remove(): failed to stat '{cc}'! reason: {cc}",
+            path, strerror(errnum) );
+        return false;
+    }
+
+    if( !S_ISDIR( st.st_mode ) ) {
+        core_error(
+            "POSIX: directory_remove(): path '{cc}' does not point to a directory!", path );
+        return false;
+    }
+
+    tls_global_ftw_state.directory_remove_recursive.success = true;
+
+    if( nftw( path, internal_posix_directory_remove_nftw, 5, FTW_ACTIONRETVAL ) < 0 ) {
+        core_error(
+            "POSIX: directory_remove(): failed to walk '{cc}'! reason: {cc}",
+            path, strerror(errno) );
+        return false;
+    }
+
+    return tls_global_ftw_state.directory_remove_recursive.success;
+}
 b32 platform_directory_remove( struct _StringPOD path, b32 recursive ) {
     if( recursive ) {
-        // TODO(alicia): 
-        return false;
+        const char* p = posix_path_null_terminated( path );
+        return internal_posix_directory_remove_recursive( p );
     } else {
         const char* p = posix_path_null_terminated( path );
         if( rmdir( p ) ) {
@@ -819,23 +860,30 @@ int internal_posix_nftw(
     info.path_name_offset = _info->base;
     info.level            = _info->level;
 
-    switch( tls_global_ftw_state.function( &info, tls_global_ftw_state.params ) ) {
-        case DWC_CONTINUE: return 0;
-        case DWC_STOP:     return 1;
-        case DWC_SKIP:     return 2;
+    switch( tls_global_ftw_state.directory_walk.function(
+        &info, tls_global_ftw_state.directory_walk.params
+    ) ) {
+        case DWC_CONTINUE: return FTW_CONTINUE;
+        case DWC_STOP:     return FTW_STOP;
+        case DWC_SKIP:     return FTW_SKIP_SUBTREE;
     }
-    return 1;
+    return FTW_STOP;
 }
 b32 platform_directory_walk(
     struct _StringPOD path,
     enum DirectoryWalkControl (callback)( const struct DirectoryWalkInfo* info, void* params ),
     void* params
 ) {
-    // TODO(alicia): 
     const char* p = posix_path_null_terminated( path );
-    tls_global_ftw_state.function = callback;
-    tls_global_ftw_state.params   = params;
-    nftw( p, internal_posix_nftw, 5, 0 );
+    tls_global_ftw_state.directory_walk.function = callback;
+    tls_global_ftw_state.directory_walk.params   = params;
+
+    if( nftw( p, internal_posix_nftw, 5, FTW_ACTIONRETVAL ) < 0 ) {
+        core_error(
+            "POSIX: directory_walk(): failed to walk '{p}'! reason: {cc}",
+            path, strerror(errno) );
+        return false;
+    }
     return true;
 }
 struct _StringPOD platform_directory_current_query(void) {

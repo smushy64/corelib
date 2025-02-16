@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- fs:posix: directory_remove()
+- fmt: any formatter (custom text formatting)
 - attributes: renamed attr_clink to attr_c_call
 - attributes: renamed attr_explicit_fallthough to attr_fallthrough
 - attributes: renamed attr_optimized to attr_hot, attr_optnone to attr_cold
