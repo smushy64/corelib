@@ -30,7 +30,7 @@
 #include "impl/collections.c"
 #include "impl/fmt.c"
 #include "impl/fs.c"
-#include "impl/job_queue.c"
+#include "impl/hash.c"
 #include "impl/lib.c"
 #include "impl/library.c"
 #include "impl/math.c"
@@ -43,7 +43,6 @@
 #include "impl/system.c"
 #include "impl/thread.c"
 #include "impl/time.c"
-#include "impl/hash.c"
 #include "impl/unicode.c"
 
 #endif /* header guard */
