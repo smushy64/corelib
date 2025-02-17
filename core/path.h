@@ -41,26 +41,20 @@ typedef struct _StringBufPOD   _PathBufPOD;
 typedef StringBufStreamTarget PathBufStreamTarget;
 
 /// @brief Create new path slice.
-/// @param     len    Length of path slice.
+/// @param     length Length of path slice.
 /// @param[in] start  Pointer to start of slice.
 /// @return Path slice.
-attr_always_inline attr_header
-_PathPOD path_new( usize len, const void* start ) {
-    return string_new( len, start );
-}
+#define path_new( length, start ) \
+    string_new( length, start )
 /// @brief Create empty path slice.
 /// @return Path slice.
-attr_always_inline attr_header
-_PathPOD path_empty() {
-    return string_empty();
-}
+#define path_empty() \
+    string_empty()
 /// @brief Create new path slice from null terminated C string.
 /// @param[in] cstr (const cstr*) C string.
 /// @return Path slice.
-attr_always_inline attr_header
-_PathPOD path_from_cstr( const char* cstr ) {
-    return string_from_cstr( cstr );
-}
+#define path_from_cstr( cstr ) \
+    string_from_cstr( cstr )
 /// @brief Create new path slice from string literal.
 /// @param literal (const char* literal) String literal.
 /// @return Path slice.
