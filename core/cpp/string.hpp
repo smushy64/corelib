@@ -295,37 +295,29 @@ b32 string_split_whitespace(
         (_StringPOD*)opt_out_right );
 }
 
-/// @brief Calculate remaining space in string buffer.
-/// @param[in] buf String buffer.
-/// @return Number of bytes (characters) remaining in string.
-attr_always_inline attr_header
-usize string_buf_remaining( const struct _StringBufCPP* buf ) {
-    return string_buf_remaining( (_StringBufPOD*)buf );
-}
-/// @brief Check if string buffer is empty.
-/// @param[in] buf Pointer to string buffer.
-/// @return
-///     - @c true  : String buffer is empty.
-///     - @c false : String buffer is not empty.
-attr_always_inline attr_header
-b32 string_buf_is_empty( const struct _StringBufCPP* buf ) {
-    return string_buf_is_empty( (_StringBufPOD*)buf );
-}
-/// @brief Check if string buffer is full.
-/// @note String buffer always tries to have space for null terminator.
-/// @param[in] buf Pointer to string buffer.
-/// @return
-///     - @c true  : String buffer is full.
-///     - @c false : String buffer still has space.
-attr_always_inline attr_header
-b32 string_buf_is_full( const struct _StringBufCPP* buf ) {
-    return string_buf_is_full( (_StringBufPOD*)buf );
-}
 /// @brief Set string buffer length to zero and zero out memory.
 /// @param[in] buf Pointer to string buffer.
 attr_always_inline attr_header
 void string_buf_clear( struct _StringBufCPP* buf ) {
     string_buf_clear( (_StringBufPOD*)buf );
+}
+/// @brief Clone string buffer.
+/// @details
+/// Allocates @c src.len + 1 in @c dst buffer.
+/// @param[in]  allocator Pointer to allocator interface.
+/// @param[out] dst       Destination string buffer.
+/// @param[in]  src       Source string buffer.
+/// @return
+///     - @c true  : Allocated @c dst buffer and copied contents of @c src to it.
+///     - @c false : Failed to allocate @c dst buffer.
+attr_always_inline attr_header
+b32 string_buf_clone(
+    struct AllocatorInterface* allocator,
+    struct _StringBufCPP*      dst,
+    struct _StringCPP          src
+) {
+    return string_buf_clone(
+        allocator, (struct _StringBufPOD*)dst, *(struct _StringPOD*)&src );
 }
 /// @brief Attempt to push character to end of string buffer.
 /// @param[in] buf String buffer to push character to.
@@ -337,6 +329,17 @@ attr_always_inline attr_header
 b32 string_buf_try_push( struct _StringBufCPP* buf, char c ) {
     return string_buf_try_push( (_StringBufPOD*)buf, c );
 }
+/// @brief Push character to end of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       String buffer to push character to.
+/// @param     c         Character to push.
+/// @return
+///     - @c true  : Pushed new character. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline attr_header
+b32 string_buf_push( struct AllocatorInterface* allocator, struct _StringBufCPP* buf, char c ) {
+    return string_buf_push( allocator, (_StringBufPOD*)buf, c );
+}
 /// @brief Attempt to emplace a character inside of string buffer.
 /// @param[in] buf String buffer to emplace character in.
 /// @param     c   Character to emplace.
@@ -347,6 +350,20 @@ b32 string_buf_try_push( struct _StringBufCPP* buf, char c ) {
 attr_always_inline attr_header
 b32 string_buf_try_emplace( struct _StringBufCPP* buf, char c, usize at ) {
     return string_buf_try_emplace( (_StringBufPOD*)buf, c, at );
+}
+/// @brief Emplace a character inside of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       String buffer to emplace character in.
+/// @param     c         Character to emplace.
+/// @param     at        Index to emplace character at.
+/// @return
+///     - @c true  : Emplaced character. If allocation was required, it was successful.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline attr_header
+b32 string_buf_emplace(
+    struct AllocatorInterface* allocator, struct _StringBufCPP* buf, char c, usize at
+) {
+    return string_buf_emplace( allocator, (struct _StringBufPOD*)buf, c, at );
 }
 /// @brief Pop character from end of string buffer.
 /// @param[in]  buf       String buffer to pop from.
@@ -391,6 +408,49 @@ attr_always_inline attr_header
 b32 string_buf_try_append( struct _StringBufCPP* buf, struct _StringPOD append ) {
     return string_buf_try_append( (_StringBufPOD*)buf, append );
 }
+/// @brief Insert string in string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer to insert in.
+/// @param     insert    String to insert.
+/// @param     at        Index to insert at.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline attr_header
+b32 string_buf_insert(
+    struct AllocatorInterface* allocator, struct _StringBufCPP* buf,
+    struct _StringCPP insert, usize at
+) {
+    return string_buf_insert( allocator, (struct _StringBufPOD*)buf, insert, at );
+}
+/// @brief Prepend string in string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer to prepend in.
+/// @param     prepend   String to prepend.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline attr_header
+b32 string_buf_prepend(
+    struct AllocatorInterface* allocator, struct _StringBufCPP* buf,
+    struct _StringCPP prepend
+) {
+    return string_buf_insert( allocator, buf, prepend, 0 );
+}
+/// @brief Append string in string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer to append in.
+/// @param     append    String to append.
+/// @return
+///     - @c true  : Inserted string. If reallocation was required, allocation succeeded.
+///     - @c false : Failed to reallocate @c buf.
+attr_always_inline attr_header
+b32 string_buf_append(
+    struct AllocatorInterface* allocator, struct _StringBufCPP* buf,
+    struct _StringCPP append
+) {
+    return string_buf_insert( allocator, buf, append, buf->len );
+}
 /// @brief Remove character from string buffer.
 /// @param[in] buf Buffer to remove character from.
 /// @param     at  Index of character to remove. Must be in bounds.
@@ -408,35 +468,39 @@ void string_buf_remove_range(
 ) {
     string_buf_remove_range( (_StringBufPOD*)buf, from_inclusive, to_exclusive );
 }
-/// @brief Attempt to write a formatted string to string buffer.
-/// @param[in] buf        Buffer to write to.
-/// @param     format_len Length of format string.
-/// @param     format     Format string.
-/// @param     va         Variadic format arguments.
-/// @return
-///     - Zero   : @c buf had enough capacity to write format string.
-///     - > Zero : Number of characters not written to @c buf.
+
 attr_always_inline attr_header
-usize string_buf_try_fmt_buffer_va(
-    struct _StringBufCPP* buf, usize format_len, const char* format, va_list va
+usize internal_string_buf_try_fmt_va(
+    struct _StringBufCPP* buf, usize format_len, const char* format, va_list va 
 ) {
-    return string_buf_try_fmt_buffer_va( (_StringBufPOD*)buf, format_len, format, va );
+    return internal_string_buf_try_fmt_va( (struct _StringBufPOD*)buf, format_len, format, va );
 }
-/// @brief Attempt to write a formatted string to string buffer.
-/// @param[in] buf        Buffer to write to.
-/// @param     format_len Length of format string.
-/// @param     format     Format string.
-/// @param     ...        Format arguments.
-/// @return
-///     - Zero   : @c buf had enough capacity to write format string.
-///     - > Zero : Number of characters not written to @c buf.
 attr_always_inline attr_header
-usize string_buf_try_fmt_buffer(
+usize internal_string_buf_try_fmt(
     struct _StringBufCPP* buf, usize format_len, const char* format, ...
 ) {
     va_list va;
     va_start( va, format );
-    usize result = string_buf_try_fmt_buffer_va( (_StringBufPOD*)buf, format_len, format, va );
+    usize result = internal_string_buf_try_fmt_va( buf, format_len, format, va );
+    va_end( va );
+    return result;
+}
+attr_always_inline attr_header
+usize internal_string_buf_fmt_va(
+    struct AllocatorInterface* allocator,
+    struct _StringBufCPP* buf, usize format_len, const char* format, va_list va 
+) {
+    return internal_string_buf_fmt_va(
+        allocator, (struct _StringBufPOD*)buf, format_len, format, va );
+}
+attr_always_inline attr_header
+usize internal_string_buf_try_fmt(
+    struct AllocatorInterface* allocator,
+    struct _StringBufCPP* buf, usize format_len, const char* format, ...
+) {
+    va_list va;
+    va_start( va, format );
+    usize result = internal_string_buf_fmt_va( allocator, buf, format_len, format, va );
     va_end( va );
     return result;
 }

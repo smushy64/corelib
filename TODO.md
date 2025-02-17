@@ -19,12 +19,16 @@
 - [ ] math:      RGB <-> HEX conversions
 - [ ] math:      uvec2/3/4 dvec2/3/4
 - [ ] math:docs: write docs for overloads and C++ vector/matrix/quaternion
-- [ ] fs:        memory mapped file?
 - [ ] fmt:       more accurate float formatting (grisu3 or errol?)
+- [ ] fs:        memory mapped file?
 - [ ] memory:    more memory allocation functions
-    - page protections, shared memory, allocate pages for example.
+    - page_query_size: Query size of pages.
+    - page_alloc:      Allocate pages of memory with given permissions.
+    - page_free:       Free pages of memory.
 ## New Features
+- [ ] regex.h            Regular expression parser.
 - [ ] process.h:         API for creating processes and pipes.
+    - Shell-like API. 
 - [ ] search.h:          Search algorithms.
     - At minimum: ordered_binary_search, ordered_binary_search_custom
 - [ ] socket.h:          Sockets and web connectivity.
