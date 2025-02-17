@@ -231,6 +231,7 @@ b32 file_remove_by_path( _PathPOD path );
 /// @return
 ///     - true  : Successfully obtained information about the specified file.
 ///     - false : Failed to obtain file information.
+attr_core_api
 b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info );
 /// @brief Query file descriptor file type by path.
 /// @note
@@ -238,6 +239,7 @@ b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info );
 /// the type field.
 /// @param path Path to file.
 /// @return Type of file.
+attr_core_api
 FileType file_query_type_by_path( _PathPOD path );
 /// @brief Query when file was created by path.
 /// @note
@@ -245,6 +247,7 @@ FileType file_query_type_by_path( _PathPOD path );
 /// the time.create field.
 /// @param path Path to file.
 /// @return Time created.
+attr_core_api
 TimePosix file_query_time_create_by_path( _PathPOD path );
 /// @brief Query when file was last modified by path.
 /// @note
@@ -252,6 +255,7 @@ TimePosix file_query_time_create_by_path( _PathPOD path );
 /// the time.modify field.
 /// @param path Path to file.
 /// @return Time modified.
+attr_core_api
 TimePosix file_query_time_modify_by_path( _PathPOD path );
 
 /// @brief Open file descriptor.
@@ -273,6 +277,7 @@ void file_close( FD* fd );
 /// @return
 ///     - true  : Successfully obtained information about the specified file.
 ///     - false : Failed to obtain file information.
+attr_core_api
 b32 file_query_info( FD* fd, FileInfo* out_info );
 /// @brief Query file descriptor file type.
 /// @note
@@ -280,6 +285,7 @@ b32 file_query_info( FD* fd, FileInfo* out_info );
 /// reading only the type field.
 /// @param[in] fd Pointer to file descriptor.
 /// @return Type of file descriptor.
+attr_core_api
 FileType file_query_type( FD* fd );
 /// @brief Query when file was created.
 /// @note
@@ -287,6 +293,7 @@ FileType file_query_type( FD* fd );
 /// the time.create field.
 /// @param[in] fd Pointer to file descriptor.
 /// @return Time created.
+attr_core_api
 TimePosix file_query_time_create( FD* fd );
 /// @brief Query when file was last modified.
 /// @note
@@ -294,6 +301,7 @@ TimePosix file_query_time_create( FD* fd );
 /// the time.modify field.
 /// @param[in] fd Pointer to file descriptor.
 /// @return Time modified.
+attr_core_api
 TimePosix file_query_time_modify( FD* fd );
 /// @brief Query size of file by file descriptor.
 /// @note

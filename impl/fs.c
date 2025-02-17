@@ -89,6 +89,7 @@ b32 file_remove_by_path( _PathPOD path ) {
     }
     return platform_file_remove_by_path( path );
 }
+attr_core_api
 b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info ) {
     if( path_is_empty( path ) ) {
         core_error( "core/fs:file_query_info_by_path(): path is empty!" );
@@ -96,6 +97,7 @@ b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info ) {
     }
     return platform_file_query_info_by_path( path, out_info );
 }
+attr_core_api
 FileType file_query_type_by_path( _PathPOD path ) {
     if( path_is_empty( path ) ) {
         core_error( "core/fs:file_query_type_by_path(): path is empty!" );
@@ -103,6 +105,7 @@ FileType file_query_type_by_path( _PathPOD path ) {
     }
     return platform_file_query_type_by_path( path );
 }
+attr_core_api
 TimePosix file_query_time_create_by_path( _PathPOD path ) {
     if( path_is_empty( path ) ) {
         core_error( "core/fs:file_query_time_create_by_path(): path is empty!" );
@@ -110,6 +113,7 @@ TimePosix file_query_time_create_by_path( _PathPOD path ) {
     }
     return platform_file_query_time_create_by_path( path );
 }
+attr_core_api
 TimePosix file_query_time_modify_by_path( _PathPOD path ) {
     if( path_is_empty( path ) ) {
         core_error( "core/fs:file_query_time_modify_by_path(): path is empty!" );
@@ -153,15 +157,19 @@ attr_core_api
 void file_close( FD* fd ) {
     platform_file_close( fd );
 }
+attr_core_api
 b32 file_query_info( FD* fd, FileInfo* out_info ) {
     return platform_file_query_info( fd, out_info );
 }
+attr_core_api
 FileType file_query_type( FD* fd ) {
     return platform_file_query_type( fd );
 }
+attr_core_api
 TimePosix file_query_time_create( FD* fd ) {
     return platform_file_query_time_create( fd );
 }
+attr_core_api
 TimePosix file_query_time_modify( FD* fd ) {
     return platform_file_query_time_modify( fd );
 }
