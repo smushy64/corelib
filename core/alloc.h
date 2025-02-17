@@ -11,10 +11,12 @@
 #include "core/string.h"
 #include "core/memory.h"
 
+struct AllocatorInterface;
+
 /// @brief Function prototype for allocator allocation function.
 /// @details
 /// All allocators must return zeroed memory. (Only newly allocated space)
-/// @param[in] ctx          (optional) Allocator context.
+/// @param[in] interface    Pointer to allocator interface.
 /// @param[in] memory       (nullable) Pointer to memory to reallocate. If null, @c old_size is ignored.
 /// @param     old_size     Size of @c memory. If @c memory is null, ignored.
 /// @param     new_size     New size of @c memory. Must be >= @c old_size.
@@ -26,10 +28,10 @@
 ///     - NULL    : Failed to reallocate buffer. @c memory is still valid.
 ///     - Pointer : Pointer to new buffer. @c memory is no longer valid.
 typedef void* AllocatorAllocFN(
-    void* ctx, void* memory, usize old_size, usize new_size, struct _StringPOD opt_name,
+    struct AllocatorInterface* interface, void* memory, usize old_size, usize new_size,
     const char* opt_file, int opt_line, const char* opt_function );
 /// @brief Function prototype for allocator free function.
-/// @param[in] ctx          (optional) Allocator context.
+/// @param[in] interface    Pointer to allocator interface.
 /// @param[in] memory       Pointer to memory to free.
 /// @param     size         Size of @c memory.
 /// @param     opt_name     (optional) Name of allocator.
@@ -37,7 +39,7 @@ typedef void* AllocatorAllocFN(
 /// @param     opt_line     (optional) Line where function was called.
 /// @param[in] opt_function (optional) Name of function where this function was called.
 typedef void AllocatorFreeFN(
-    void* ctx, void* memory, usize size, struct _StringPOD opt_name,
+    struct AllocatorInterface* interface, void* memory, usize size,
     const char* opt_file, int opt_line, const char* opt_function );
 
 /// @brief Interface for memory allocators.
@@ -65,8 +67,8 @@ typedef void AllocatorFreeFN(
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
 /// That way, when you call allocator_alloc, you can just rcast the
-/// allocator or take a pointer to the interface itself. allocator_alloc
-/// passes one past the pointer provided as the context.
+/// allocator or take a pointer to the interface itself.
+/// @c allocator_alloc passes a pointer to the interface to allocator function.
 ///
 typedef struct AllocatorInterface {
 
@@ -113,7 +115,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
 ///     - Pointer : Pointer to new buffer.
 #define allocator_alloc( allocator, size ) \
     (allocator)->alloc( \
-        (void*)((allocator) + 1), NULL, 0, size, (allocator)->name, \
+        (allocator), NULL, 0, size, \
         __FILE__, __LINE__, __func__ )
 
 /// @brief Call allocator interface reallocate function.
@@ -126,7 +128,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
 ///     - Pointer : Pointer to new buffer.
 #define allocator_realloc( allocator, memory, old_size, new_size ) \
     (allocator)->alloc( \
-        (void*)((allocator) + 1), memory, old_size, new_size, (allocator)->name, \
+        (allocator), memory, old_size, new_size, \
         __FILE__, __LINE__, __func__ )
 
 /// @brief Call allocator interface free function.
@@ -135,7 +137,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
 /// @param     size      Size of @c memory.
 #define allocator_free( allocator, memory, size ) \
     (allocator)->free( \
-        (void*)((allocator) + 1), memory, size, (allocator)->name, \
+        (allocator), memory, size, \
         __FILE__, __LINE__, __func__ )
 
 /// @brief Call allocator interface allocate function.
@@ -182,10 +184,10 @@ void* __allocator_interface_alloc_aligned__(
         usize off  = (usize)memory - (usize)base;
 
         void* new_buffer = allocator->alloc(
-            (void*)(allocator + 1), base,
+            allocator, base,
             old_size + alignment + sizeof(void*),
             new_size + alignment + sizeof(void*),
-            allocator->name, file, line, function );
+            file, line, function );
 
         if( !new_buffer ) {
             return NULL;
@@ -197,8 +199,8 @@ void* __allocator_interface_alloc_aligned__(
         return aligned;
     } else {
         void* ptr = allocator->alloc(
-            (void*)(allocator + 1), NULL, 0,
-            new_size, allocator->name, file, line, function );
+            allocator, NULL, 0,
+            new_size, file, line, function );
         if( !ptr ) {
             return NULL;
         }
@@ -220,9 +222,9 @@ void __allocator_interface_free_aligned__(
     }
     void* base = ((void**)memory)[-1];
     allocator->free(
-        (void*)(allocator + 1), base,
+        allocator, base,
         size + alignment + sizeof(void*),
-        allocator->name, file, line, function );
+        file, line, function );
 }
 
 #endif /* header guard */

@@ -9,10 +9,10 @@
 #include "core/memory.h"
 
 void* allocator_heap_alloc(
-    void* ctx, void* memory, usize old_size, usize new_size,
-    struct _StringPOD opt_name, const char* opt_file, int opt_line, const char* opt_function
+    AllocatorInterface* interface, void* memory, usize old_size, usize new_size,
+    const char* opt_file, int opt_line, const char* opt_function
 ) {
-    unused(ctx, opt_file, opt_line, opt_function, opt_name);
+    unused(interface, opt_file, opt_line, opt_function);
 
     if( memory ) {
         void* result = memory_realloc( memory, old_size, new_size );
@@ -23,10 +23,10 @@ void* allocator_heap_alloc(
 }
 
 void allocator_heap_free(
-    void* ctx, void* memory, usize size, struct _StringPOD opt_name,
+    AllocatorInterface* interface, void* memory, usize size,
     const char* opt_file, int opt_line, const char* opt_function
 ) {
-    unused(ctx, opt_file, opt_line, opt_function, opt_name);
+    unused(interface, opt_file, opt_line, opt_function);
 
     if( !memory ) {
         return;
