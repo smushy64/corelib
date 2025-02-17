@@ -1,5 +1,14 @@
 # Todo List
 - [ ] unicode:   more functions (like what ascii.h provides)
+    - is_whitespace (can be wrapper for ascii_is_whitespace)
+    - is_path_separator (can be wrapper for ascii_is_path_separator)
+    - is_numeric
+    - is_alphabetic_upper
+    - is_alphabetic_lower
+    - is_alphabetic
+    - is_alphanumeric
+    - to_upper
+    - to_lower
 - [ ] hash:      continuous hashing function
 - [ ] math:      noise functions
 - [ ] time:      rename timer_* to time_*
@@ -15,12 +24,39 @@
 - [ ] memory:    more memory allocation functions
     - page protections, shared memory, allocate pages for example.
 ## New Features
-- [ ] process.h: API for creating processes and pipes.
-- [ ] search.h:  Search algorithms.
-- [ ] socket.h:  Sockets and web connectivity.
-- [ ] simd.h:    SIMD abstractions.
+- [ ] process.h:         API for creating processes and pipes.
+- [ ] search.h:          Search algorithms.
+    - At minimum: ordered_binary_search, ordered_binary_search_custom
+- [ ] socket.h:          Sockets and web connectivity.
+- [ ] simd.h:            SIMD abstractions.
+    - At minimum: add/sub/mul/div for float/double/int
+- [ ] window.h:          Create window and poll events.
+    - Windows: SDL3 and WinAPI.
+    - Linux:   SDL3 and X11 only. Maybe raw Wayland in the future.
+- [ ] input.h:           Poll keyboard/mouse/gamepad input.
+- [ ] data/ini.h:        Load ini.
+- [ ] data/json.h:       Load json.
+    - json.h at first. (external dependency)
+- [ ] render/software.h: Software rendering.
+- [ ] render/opengl.h:   Initialize OpenGL backend.
+- [ ] render/vulkan.h:   Initialize Vulkan backend.
+- [ ] render/image.h:    Load images from memory and disk.
+    - stb_image.h at first.
+    - At minimum: .png, .jpeg, .bmp
+- [ ] render/font.h:     Load ttf/otf fonts.
+    - stb_font.h at first.
+    - Render using stb at first but later, custom sdf renderer.
+- [ ] render/model.h:    Loading 3D models.
+    - cgtlf.h at first.
+    - At minimum: .gltf/.glb, .obj
+- [ ] audio.h:           Loading audio. (no backend like renderer)
+    - miniaudio.h at first.
+    - At minimum: .wav, .mp3, .ogg
 ## Bugs
 ## unlikely
+- [ ] render/dx11.h:  Initialize DirectX11 (Windows only).
+- [ ] render/dx12.h:  Initialize DirectX12 (Windows only).
+- [ ] render/metal.h: Initialize Metal (MacOS/iOS only).
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete

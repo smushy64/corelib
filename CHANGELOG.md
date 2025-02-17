@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- memory: copy, move, set, set_chunks and zero now return pointer to buffer being modified.
+- memory: removed *_aligned functions. feature is provided in alloc.h
 - collections: removed
 - job_queue: removed
 - fs:posix: directory_remove()
