@@ -8,7 +8,6 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/macros.h"
 #include "core/assertions.h"
 #include "core/stream.h"
 #include "core/ascii.h"
@@ -91,12 +90,21 @@ usize cstr_len_utf8( const cstr* c_string );
 attr_core_api
 b32 cstr_cmp( const cstr* a, const cstr* b );
 
-/// @brief Create new string slice.
-/// @param     length Length of string slice.
-/// @param[in] start  Pointer to start of slice.
-/// @return String slice.
-#define string_new( length, start ) \
-    struct_literal(struct _StringPOD){ .len = length, .buf = (char*)(start) }
+#if defined(CORE_CPLUSPLUS)
+    /// @brief Create new string slice.
+    /// @param     length Length of string slice.
+    /// @param[in] start  Pointer to start of slice.
+    /// @return String slice.
+    #define string_new( length, start ) \
+        _StringPOD{ .len = length, .buf = (char*)(start) }
+#else
+    /// @brief Create new string slice.
+    /// @param     length Length of string slice.
+    /// @param[in] start  Pointer to start of slice.
+    /// @return String slice.
+    #define string_new( length, start ) \
+        (struct _StringPOD){ .len = length, .buf = (char*)(start) }
+#endif
 /// @brief Create empty string slice.
 /// @return String slice.
 #define string_empty() \
