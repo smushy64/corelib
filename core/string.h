@@ -15,7 +15,7 @@
 // forward declaration.
 struct AllocatorInterface;
 attr_core_api
-void memory_set( void* dst, u8 byte, usize size );
+void* memory_set( void* dst, u8 byte, usize size );
 
 struct _StringPOD {
     /// @brief Byte length of string.
