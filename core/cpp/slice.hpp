@@ -12,10 +12,10 @@
 // NOTE(alicia): forward declaration
 
 attr_core_api
-void memory_copy(
+void* memory_copy(
     void* attr_restrict dst, const void* attr_restrict src, usize size );
 attr_core_api
-void memory_move(
+void* memory_move(
     void* dst, const void* src, usize size );
 
 #define GEN_RANGE_FOR( Type ) \
