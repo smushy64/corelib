@@ -96,14 +96,14 @@ b32 cstr_cmp( const cstr* a, const cstr* b );
     /// @param[in] start  Pointer to start of slice.
     /// @return String slice.
     #define string_new( length, start ) \
-        _StringPOD{ .len = length, .buf = (char*)(start) }
+        _StringPOD{ .len = length, .cbuf = (const char*)(start) }
 #else
     /// @brief Create new string slice.
     /// @param     length Length of string slice.
     /// @param[in] start  Pointer to start of slice.
     /// @return String slice.
     #define string_new( length, start ) \
-        (struct _StringPOD){ .len = length, .buf = (char*)(start) }
+        (struct _StringPOD){ .len = length, .cbuf = (const char*)(start) }
 #endif
 /// @brief Create empty string slice.
 /// @return String slice.
