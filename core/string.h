@@ -8,6 +8,7 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
+#include "core/macros.h"
 #include "core/assertions.h"
 #include "core/stream.h"
 #include "core/ascii.h"
@@ -91,29 +92,20 @@ attr_core_api
 b32 cstr_cmp( const cstr* a, const cstr* b );
 
 /// @brief Create new string slice.
-/// @param     len    Length of string slice.
+/// @param     length Length of string slice.
 /// @param[in] start  Pointer to start of slice.
 /// @return String slice.
-attr_always_inline attr_header
-struct _StringPOD string_new( usize len, const void* start ) {
-    struct _StringPOD result;
-    result.len  = len;
-    result.cbuf = (const char*)start;
-    return result;
-}
+#define string_new( length, start ) \
+    struct_literal(struct _StringPOD){ .len = length, .buf = (char*)(start) }
 /// @brief Create empty string slice.
 /// @return String slice.
-attr_always_inline attr_header
-struct _StringPOD string_empty(void) {
-    return string_new( 0, NULL );
-}
+#define string_empty() \
+    string_new( 0, NULL )
 /// @brief Create new string slice from null terminated C string.
 /// @param[in] cstr (const cstr*) C string.
 /// @return String slice.
-attr_always_inline attr_header
-struct _StringPOD string_from_cstr( const char* cstr ) {
-    return string_new( cstr_len( cstr ), cstr );
-}
+#define string_from_cstr( cstr ) \
+    string_new( cstr_len( cstr ), cstr )
 /// @brief Create new string slice from string literal.
 /// @param literal (const char* literal) String literal.
 /// @return String slice.
