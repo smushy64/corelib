@@ -27,6 +27,8 @@ struct _StringPOD {
         char*       buf;
         /// @brief Pointer to string bytes.
         u8*         bytes;
+        /// @brief Pointer to string UTF-8 code units.
+        c8*         utf8;
         /// @brief Void pointer to string buffer.
         void*       _void;
     };
@@ -45,6 +47,8 @@ struct _StringBufPOD {
                 char*       buf;
                 /// @brief Pointer to string bytes.
                 u8*         bytes;
+                /// @brief Pointer to string UTF-8 code units.
+                c8*         utf8;
                 /// @brief Void pointer to string buffer.
                 void*       _void;
             };
@@ -76,19 +80,19 @@ typedef struct StringBufStreamTarget {
 /// @param[in] c_string Pointer to string.
 /// @return Ascii length of string excluding null terminator.
 attr_core_api
-usize cstr_len( const cstr* c_string );
+usize cstr_len( const char* c_string );
 /// @brief Calculate UTF-8 length of null terminated C string.
 /// @param[in] c_string Pointer to string.
 /// @return UTF-8 length of string excluding null terminator.
 attr_core_api
-usize cstr_len_utf8( const cstr* c_string );
+usize cstr_len_utf8( const char* c_string );
 /// @brief Compare two null terminated C strings.
 /// @param[in] a, b Pointers to strings to compare. Cannot be null.
 /// @return
 ///     - @c true  : @c a and @c b match in contents and length.
 ///     - @c false : @c a and @c b do not match in contents or length.
 attr_core_api
-b32 cstr_cmp( const cstr* a, const cstr* b );
+b32 cstr_cmp( const char* a, const char* b );
 
 #if defined(CORE_CPLUSPLUS)
     /// @brief Create new string slice.
@@ -110,7 +114,7 @@ b32 cstr_cmp( const cstr* a, const cstr* b );
 #define string_empty() \
     string_new( 0, NULL )
 /// @brief Create new string slice from null terminated C string.
-/// @param[in] cstr (const cstr*) C string.
+/// @param[in] cstr (const char*) C string.
 /// @return String slice.
 #define string_from_cstr( cstr ) \
     string_new( cstr_len( cstr ), cstr )

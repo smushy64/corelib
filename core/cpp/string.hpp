@@ -38,6 +38,8 @@ struct _StringCPP {
                 Type*       buf;
                 /// @brief Pointer to string bytes.
                 u8*         bytes;
+                /// @brief Pointer to UTF-8 code units.
+                c8*         utf8;
                 /// @brief Void pointer to string buffer.
                 void*       _void;
             };
@@ -129,6 +131,8 @@ struct _StringBufCPP {
                         Type*       buf;
                         /// @brief Pointer to string bytes.
                         u8*         bytes;
+                        /// @brief Pointer to UTF-8 code units.
+                        c8*         utf8;
                         /// @brief Void pointer to string buffer.
                         void*       _void;
                     };

@@ -104,15 +104,15 @@ typedef float  f32;
 /// @brief 64-bit floating point.
 typedef double f64;
 
-/// @brief Denotes that string is UTF-8 and has a null-terminator.
-typedef char cstr;
-
-/// @brief UTF-8 character.
-typedef char c8;
-/// @brief UTF-16 character.
+/// @brief UTF-8 code unit.
+typedef  u8  c8;
+/// @brief UTF-16 code unit.
 typedef u16 c16;
-/// @brief UTF-32 character.
+/// @brief UTF-32 code unit.
 typedef u32 c32;
+
+/// @brief UTF-32 code point.
+typedef u32 rune32;
 
 /// @brief Same as time_t.
 typedef isize TimePosix;

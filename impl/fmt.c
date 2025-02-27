@@ -1551,7 +1551,7 @@ internal_fmt_parse_args_skip:
     if( pointer && args->type != FT_TIME ) {
         args->data = va_arg( va, const void* );
         if( args->type == FT_STRING ) {
-            usize strlen = cstr_len( (const cstr*)args->data );
+            usize strlen = cstr_len( (const char*)args->data );
             if( !args->count || args->count > strlen ) {
                 args->count = strlen;
             }

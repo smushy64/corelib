@@ -51,7 +51,7 @@ typedef StringBufStreamTarget PathBufStreamTarget;
 #define path_empty() \
     string_empty()
 /// @brief Create new path slice from null terminated C string.
-/// @param[in] cstr (const cstr*) C string.
+/// @param[in] cstr (const char*) C string.
 /// @return Path slice.
 #define path_from_cstr( cstr ) \
     string_from_cstr( cstr )

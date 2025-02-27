@@ -1,14 +1,12 @@
 # Todo List
-- [ ] unicode:   more functions (like what ascii.h provides)
-    - is_whitespace (can be wrapper for ascii_is_whitespace)
-    - is_path_separator (can be wrapper for ascii_is_path_separator)
-    - is_numeric
-    - is_alphabetic_upper
-    - is_alphabetic_lower
-    - is_alphabetic
-    - is_alphanumeric
-    - to_upper
-    - to_lower
+- [ ] unicode: unicode_is_alphabetic_upper
+- [ ] unicode: unicode_is_alphabetic_lower
+- [ ] unicode: unicode_is_alphabetic
+- [ ] unicode: unicode_is_alphanumeric
+- [ ] unicode: unicode_to_upper
+- [ ] unicode: unicode_to_lower
+- [ ] unicode: unicode_cluster_to_upper
+- [ ] unicode: unicode_cluster_to_lower
 - [ ] hash:      continuous hashing function
 - [ ] math:      noise functions
 - [ ] time:      rename timer_* to time_*
@@ -57,6 +55,8 @@
     - miniaudio.h at first.
     - At minimum: .wav, .mp3, .ogg
 ## Bugs
+- [ ] unicode: validate functions don't fully validate.
+    - range checking is incomplete.
 ## unlikely
 - [ ] render/dx11.h:  Initialize DirectX11 (Windows only).
 - [ ] render/dx12.h:  Initialize DirectX12 (Windows only).
@@ -64,6 +64,11 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] unicode: unicode_is_mathematical_symbol
+- [x] unicode: unicode_is_emoji
+- [x] unicode: more functions (like what ascii.h provides)
+    - is_whitespace (can be wrapper for ascii_is_whitespace)
+    - is_path_separator (can be wrapper for ascii_is_path_separator)
 - [x] Remove collections
 - [x] Remove job_queue
 - [x] fs:posix:      directory_remove (recursive)

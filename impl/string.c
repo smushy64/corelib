@@ -22,7 +22,7 @@
 #define VECTOR_MIN_LEN (256)
 
 attr_core_api
-usize cstr_len( const cstr* c_string ) {
+usize cstr_len( const char* c_string ) {
     if( !c_string ) {
         return 0;
     }
@@ -34,11 +34,11 @@ usize cstr_len( const cstr* c_string ) {
     return res;
 }
 attr_core_api
-usize cstr_len_utf8( const cstr* c_string ) {
+usize cstr_len_utf8( const char* c_string ) {
     return string_len_utf8( string_from_cstr( c_string ) );
 }
 attr_core_api
-b32 cstr_cmp( const cstr* a, const cstr* b ) {
+b32 cstr_cmp( const char* a, const char* b ) {
     loop() {
         if( *a != *b ) {
             return false;
@@ -65,54 +65,26 @@ attr_core_api
 c32 string_index_utf8( struct _StringPOD str, usize index ) {
     debug_assert( index < str.len, "string_index_utf8: index is out of bounds!" );
 
-    b32   found      = false;
-    usize counter    = 0;
-    usize byte_index = 0;
-    for( usize i = 0; i < str.len; ++i ) {
-        if( (str.bytes[i] & 0xC0) != 0x80 ) {
-            counter++;
-        }
+    usize counter = 0;
+    struct _StringPOD substr = str;
+    while( !string_is_empty( substr ) ) {
+        UTFCodePoint8 cp8 = {};
+        u32 advance       = unicode_cp8_from_string( substr.len, substr.utf8, &cp8 );
+        substr            = string_advance_by( substr, advance );
         if( counter == index ) {
-            byte_index = i;
-            found = true;
-            break;
+            return unicode_rune_from_cp8( cp8 );
         }
-    }
 
-    if( !found ) {
-        return UTF32_REPLACEMENT_CHARACTER;
+        counter++;
     }
-
-    struct _StringPOD remaining = string_advance_by( str, byte_index );
-    UTF8 utf8;
-    utf8.len = remaining.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : remaining.len;
-    if( utf8.len ) {
-        memory_copy( utf8.bytes, remaining.cbuf, utf8.len );
-    }
-    return utf8_to_codepoint( utf8, NULL );
-    /* struct _StringPOD rem    = str; */
-    /* usize i       = 0; */
-    /* c32 result    = UTF_32_REPLACEMENT_CHARACTER; */
-    /* while( !string_is_empty(rem) ) { */
-    /*     if( i >= index ) { */
-    /*         break; */
-    /*     } */
-    /*     rem = string_utf8_next( rem, &result ); */
-    /* } */
-    /* return result; */
+    return UNICODE_CP32_REPLACEMENT_CHARACTER.rune;
 }
 attr_core_api
 struct _StringPOD string_utf8_next( struct _StringPOD src, c32* out_codepoint ) {
-    usize read_count = 0;
-    UTF8 utf8;
-    utf8.len = src.len > sizeof(utf8.bytes) ? sizeof(utf8.bytes) : src.len;
-    if( utf8.len ) {
-        memory_copy( utf8.bytes, src.cbuf, utf8.len );
-    }
-    c32 codepoint = utf8_to_codepoint( utf8, &read_count );
-
-    *out_codepoint = codepoint;
-    return string_advance_by( src, read_count ? read_count : 1 );
+    UTFCodePoint8 cp8 = {};
+    u32 advance       = unicode_cp8_from_string( src.len, src.utf8, &cp8 );
+    *out_codepoint    = unicode_rune_from_cp8( cp8 );
+    return string_advance_by( src, advance );
 }
 attr_core_api
 b32 string_cmp( struct _StringPOD a, struct _StringPOD b ) {

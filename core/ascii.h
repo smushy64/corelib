@@ -8,6 +8,7 @@
 */
 #include "core/attributes.h"
 #include "core/types.h"
+#include "core/stream.h"
 
 /// @brief Set of whitespace characters.
 #define CHARACTER_SET_WHITESPACE 0x20, 0x09, 0x0D, 0x0A
@@ -103,6 +104,75 @@ char ascii_to_lower( char c ) {
     }
     return c;
 }
+
+/// @brief Convert UTF-8 string to ASCII string.
+///
+/// @details
+/// By default, characters without ASCII equivalent will be
+/// skipped but if a non-zero value is provided in @c opt_replacement_character,
+/// they will be replaced with that character.
+///
+/// @internal
+/// This function is defined in unicode.c
+///
+/// @param[in] stream                    Streaming function.
+/// @param[in] target                    Target for streaming.
+/// @param     len                       Length of UTF-8 string in code units. (bytes)
+/// @param[in] utf8                      UTF-8 string.
+/// @param     opt_replacement_character (optional) Character to use when unicode character
+///                                        has no ASCII equivalent.
+/// @return Number of bytes that could not be written to target.
+attr_core_api
+usize ascii_from_utf8(
+    StreamBytesFN* stream, void* target,
+    usize len, const c8* utf8,
+    char opt_replacement_character );
+
+/// @brief Convert UTF-16 string to ASCII string.
+///
+/// @details
+/// By default, characters without ASCII equivalent will be
+/// skipped but if a non-zero value is provided in @c opt_replacement_character,
+/// they will be replaced with that character.
+///
+/// @internal
+/// This function is defined in unicode.c
+///
+/// @param[in] stream                    Streaming function.
+/// @param[in] target                    Target for streaming.
+/// @param     len                       Length of UTF-16 string in code units. (shorts)
+/// @param[in] utf16                     UTF-16 string.
+/// @param     opt_replacement_character (optional) Character to use when unicode character
+///                                        has no ASCII equivalent.
+/// @return Number of bytes that could not be written to target.
+attr_core_api
+usize ascii_from_utf16(
+    StreamBytesFN* stream, void* target,
+    usize len, const c16* utf16,
+    char opt_replacement_character );
+
+/// @brief Convert UTF-32 string to ASCII string.
+///
+/// @details
+/// By default, characters without ASCII equivalent will be
+/// skipped but if a non-zero value is provided in @c opt_replacement_character,
+/// they will be replaced with that character.
+///
+/// @internal
+/// This function is defined in unicode.c
+///
+/// @param[in] stream                    Streaming function.
+/// @param[in] target                    Target for streaming.
+/// @param     len                       Length of UTF-32 string in code units. (ints)
+/// @param[in] utf32                     UTF-32 string.
+/// @param     opt_replacement_character (optional) Character to use when unicode character
+///                                        has no ASCII equivalent.
+/// @return Number of bytes that could not be written to target.
+attr_core_api
+usize ascii_from_utf32(
+    StreamBytesFN* stream, void* target,
+    usize len, const c32* utf32,
+    char opt_replacement_character );
 
 
 

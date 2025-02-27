@@ -180,7 +180,7 @@ f64 timer_seconds(void);
 /// @param[out] opt_out_len (optional) Pointer to write length of string.
 /// @return Month short name read-only string.
 attr_header
-const cstr* time_month_to_string_short(
+const char* time_month_to_string_short(
     TimeMonth month, usize* opt_out_len
 ) {
     #define res( literal )\
@@ -209,7 +209,7 @@ const cstr* time_month_to_string_short(
 /// @param[out] opt_out_len (optional) Pointer to write length of string.
 /// @return Month name read-only string.
 attr_header
-const cstr* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
+const char* time_month_to_string( TimeMonth month, usize* opt_out_len ) {
     #define res( literal )\
         if( opt_out_len ) { *opt_out_len = sizeof(literal) - 1; } return literal
 

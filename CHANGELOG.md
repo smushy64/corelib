@@ -22,6 +22,16 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- string: updated to use new unicode APIs
+- unicode: rewrote APIs and made unicode functions more consistent
+- types: `typedef char c8;` changed to `typedef u8 c8;`
+- types: added typedef for `rune32`
+- types: removed typedef `cstr`
+- fmt: removed reference to typedef `cstr`
+- time: removed reference to typedef `cstr`
+- path: removed reference to typedef `cstr`
+- string: added field `c8* utf8` for accessing string bytes as UTF-8 code units
+- ascii: functions for converting unicode to ascii 
 - memory: copy, move, set, set_chunks and zero now return pointer to buffer being modified.
 - memory: removed *_aligned functions. feature is provided in alloc.h
 - collections: removed
