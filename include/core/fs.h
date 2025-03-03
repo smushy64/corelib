@@ -259,7 +259,7 @@ attr_core_api
 TimePosix file_query_time_modify_by_path( _PathPOD path );
 
 /// @brief Open file descriptor.
-/// @param      path   Path to file. Must be null-terminated and less than #CORE_MAX_PATH_NAME.
+/// @param      path   Path to file.
 /// @param      flags  Flags for opening file.
 /// @param[out] out_fd Pointer to write file descriptor to.
 /// @return
@@ -497,10 +497,9 @@ attr_core_api
 usize internal_pipe_write_fmt(
     PipeWrite* pipe, usize format_len, const char* format, ... );
 /// @brief Write formatted string to pipe.
-/// @param[in]  pipe          (PipeWrite*)     Pipe to write to.
-/// @param[out] opt_out_write (usize*)         (optional) Pointer to write bytes written.
-/// @param      format        (string literal) Format string literal.
-/// @param      va            (va_list)        Variadic format arguments.
+/// @param[in]  pipe   (PipeWrite*)     Pipe to write to.
+/// @param      format (string literal) Format string literal.
+/// @param      va     (va_list)        Variadic format arguments.
 /// @return Number of bytes that could not be written to pipe.
 #define pipe_write_fmt_va( pipe, format, va )\
     internal_pipe_write_fmt_va( pipe, sizeof(format) - 1, format, va )

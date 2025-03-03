@@ -112,9 +112,6 @@ char ascii_to_lower( char c ) {
 /// skipped but if a non-zero value is provided in @c opt_replacement_character,
 /// they will be replaced with that character.
 ///
-/// @internal
-/// This function is defined in unicode.c
-///
 /// @param[in] stream                    Streaming function.
 /// @param[in] target                    Target for streaming.
 /// @param     len                       Length of UTF-8 string in code units. (bytes)
@@ -122,6 +119,9 @@ char ascii_to_lower( char c ) {
 /// @param     opt_replacement_character (optional) Character to use when unicode character
 ///                                        has no ASCII equivalent.
 /// @return Number of bytes that could not be written to target.
+///
+/// @internal
+/// This function is defined in unicode.c
 attr_core_api
 usize ascii_from_utf8(
     StreamBytesFN* stream, void* target,
@@ -135,9 +135,6 @@ usize ascii_from_utf8(
 /// skipped but if a non-zero value is provided in @c opt_replacement_character,
 /// they will be replaced with that character.
 ///
-/// @internal
-/// This function is defined in unicode.c
-///
 /// @param[in] stream                    Streaming function.
 /// @param[in] target                    Target for streaming.
 /// @param     len                       Length of UTF-16 string in code units. (shorts)
@@ -145,6 +142,9 @@ usize ascii_from_utf8(
 /// @param     opt_replacement_character (optional) Character to use when unicode character
 ///                                        has no ASCII equivalent.
 /// @return Number of bytes that could not be written to target.
+///
+/// @internal
+/// This function is defined in unicode.c
 attr_core_api
 usize ascii_from_utf16(
     StreamBytesFN* stream, void* target,
@@ -158,9 +158,6 @@ usize ascii_from_utf16(
 /// skipped but if a non-zero value is provided in @c opt_replacement_character,
 /// they will be replaced with that character.
 ///
-/// @internal
-/// This function is defined in unicode.c
-///
 /// @param[in] stream                    Streaming function.
 /// @param[in] target                    Target for streaming.
 /// @param     len                       Length of UTF-32 string in code units. (ints)
@@ -168,6 +165,9 @@ usize ascii_from_utf16(
 /// @param     opt_replacement_character (optional) Character to use when unicode character
 ///                                        has no ASCII equivalent.
 /// @return Number of bytes that could not be written to target.
+///
+/// @internal
+/// This function is defined in unicode.c
 attr_core_api
 usize ascii_from_utf32(
     StreamBytesFN* stream, void* target,

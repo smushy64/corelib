@@ -5,6 +5,6 @@ build
 **/compile_flags.txt
 docs/Doxyfile_*
 !docs/Doxyfile_default
-generated
+src/generated
 *.pdb
 cbuild

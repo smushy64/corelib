@@ -7,11 +7,11 @@
 #include "core/defines.h"
 
 #if defined(CORE_PLATFORM_WINDOWS)
-    #include "impl/platform_win32_sharedmain.c"
+    #include "src/core/platform_win32_sharedmain.c"
 #endif
 
 #if defined(CORE_PLATFORM_POSIX)
-    #include "impl/platform_posix_sharedmain.c"
+    #include "src/core/platform_posix_sharedmain.c"
 #endif
 
 

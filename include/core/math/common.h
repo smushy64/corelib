@@ -303,10 +303,10 @@ attr_always_inline attr_header
 f32 f32_inverselerp( f32 a, f32 b, f32 v ) {
     return ( v - a ) / ( b - a );
 }
-/// @brief Linearly interpolate from a to b.
-/// @param a, b Range to interpolate within.
-/// @param t Where to interpolate to.
-/// @return Result.
+/// @brief Inverse lerp.
+/// @param a, b Range of interpolation.
+/// @param v Value within range a -> b.
+/// @return t value of v.
 attr_always_inline attr_header
 f32 f32_inversemix( f32 a, f32 b, f32 v ) {
     return ( v - a ) / ( b - a );

@@ -175,6 +175,7 @@ struct IVector4 {
         i32 array[4];
     };
 };
+/// @brief 4 Component 32-bit Unsigned Integer Vector.
 struct UVector4 {
     union {
         struct {
@@ -186,6 +187,7 @@ struct UVector4 {
         u32 array[4];
     };
 };
+/// @brief 4 Component 64-bit Floating Point Vector.
 struct DVector4 {
     union {
         struct {
@@ -197,6 +199,7 @@ struct DVector4 {
         f64 array[4];
     };
 };
+/// @brief 4 Component 32-bit Boolean Vector.
 struct BVector4 {
     union {
         struct {
@@ -216,7 +219,9 @@ struct BVector4 {
     /// @brief 4 Component 32-bit Boolean Vector.
     typedef struct BVector4 bvec4;
 #endif
+/// @brief 4 Component 32-bit Unsigned Integer Vector.
 typedef struct UVector4 uvec4;
+/// @brief 4 Component 64-bit Floating Point Vector.
 typedef struct DVector4 dvec4;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
@@ -789,7 +794,7 @@ struct Vector4 vec4_tan( struct Vector4 angle ) {
 /// @brief Calculate arcsine of x.
 ///
 /// Does not produce NaN when outside valid range.
-/// @param x Value to get arcsine of.
+/// @param angle Value to get arcsine of.
 /// @return Arcsine of x clamped to -Pi -> Pi.
 /// @see #F32_PI
 /// @see #asin()
@@ -798,14 +803,14 @@ struct Vector4 vec4_asin( struct Vector4 angle ) {
     return vec4_new( f32_asin_real(angle.x), f32_asin_real(angle.y), f32_asin_real(angle.z), f32_asin_real(angle.w) );
 }
 /// @brief Calculate arccosine of x.
-/// @param x Value to get arccosine of.
+/// @param angle Value to get arccosine of.
 /// @return Arccosine of x.
 attr_always_inline attr_header
 struct Vector4 vec4_acos( struct Vector4 angle ) {
     return vec4_new( f32_acos(angle.x), f32_acos(angle.y), f32_acos(angle.z), f32_acos(angle.w) );
 }
 /// @brief Calculate arctangent of x.
-/// @param x Value to get arctangent of.
+/// @param angle Value to get arctangent of.
 /// @return Arctangent of x.
 attr_always_inline attr_header
 struct Vector4 vec4_atan( struct Vector4 angle ) {
@@ -1185,7 +1190,7 @@ struct IVector4 ivec4_max( struct IVector4 x, struct IVector4 y ) {
     return result;
 }
 /// @brief Component-wise abs.
-/// @param v Vector.
+/// @param x Vector.
 /// @return Vector with absolute values.
 attr_always_inline attr_header
 struct IVector4 ivec4_abs( struct IVector4 x ) {

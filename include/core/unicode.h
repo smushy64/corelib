@@ -218,7 +218,7 @@ rune32 unicode_rune_from_cp16( UTFCodePoint16 cp16 );
 /// That being said, if code point is invalid,
 /// this function will return replacement character.
 ///
-/// @param cp8 UTF-32 code point.
+/// @param cp32 UTF-32 code point.
 /// @return Unicode rune. (UTF-32 encoding)
 attr_always_inline attr_header
 rune32 unicode_rune_from_cp32( UTFCodePoint32 cp32 );

@@ -31,6 +31,7 @@ u32 core_version(void) {
     return global_lib_version;
 }
 
+extern TimePosix  external_core_build_time;
 extern const char external_core_command_line[];
 extern usize      external_core_command_line_len;
 
@@ -40,6 +41,10 @@ const char* core_command_line( usize* opt_out_len ) {
         *opt_out_len = external_core_command_line_len;
     }
     return external_core_command_line;
+}
+attr_core_api
+TimePosix core_build_time(void) {
+    return external_core_build_time;
 }
 
 attr_global

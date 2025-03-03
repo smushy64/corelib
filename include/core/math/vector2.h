@@ -73,6 +73,7 @@ struct IVector2 {
         i32 array[2];
     };
 };
+/// @brief 2 Component 32-bit Unsigned Integer Vector.
 struct UVector2 {
     union {
         struct {
@@ -82,6 +83,7 @@ struct UVector2 {
         u32 array[2];
     };
 };
+/// @brief 2 Component 64-bit Floating Point Vector.
 struct DVector2 {
     union {
         struct {
@@ -91,6 +93,7 @@ struct DVector2 {
         f64 array[2];
     };
 };
+/// @brief 2 Component 32-bit Boolean Vector.
 struct BVector2 {
     union {
         struct {
@@ -111,7 +114,9 @@ struct BVector2 {
     /// @see struct BVector2
     typedef struct BVector2 bvec2;
 #endif
+/// @brief 2 Component 32-bit Unsigned Integer Vector.
 typedef struct UVector2 uvec2;
+/// @brief 2 Component 64-bit Floating Point Vector.
 typedef struct DVector2 dvec2;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
@@ -152,7 +157,7 @@ typedef struct DVector2 dvec2;
 #define vec2_set( s )\
     vec2_new( s, s )
 /// @brief Contruct a new IVector2 with identical components.
-/// @param x (i32) Value for components.
+/// @param s (i32) Value for components.
 /// @return IVector2.
 #define ivec2_set( s )\
     ivec2_new( s, s )
@@ -681,7 +686,7 @@ struct Vector2 vec2_tan( struct Vector2 angle ) {
 /// @brief Calculate arcsine of x.
 ///
 /// Does not produce NaN when outside valid range.
-/// @param x Value to get arcsine of.
+/// @param angle Value to get arcsine of.
 /// @return Arcsine of x clamped to -Pi -> Pi.
 /// @see #F32_PI
 /// @see #asin()
@@ -690,14 +695,14 @@ struct Vector2 vec2_asin( struct Vector2 angle ) {
     return vec2_new( f32_asin_real(angle.x), f32_asin_real(angle.y) );
 }
 /// @brief Calculate arccosine of x.
-/// @param x Value to get arccosine of.
+/// @param angle Value to get arccosine of.
 /// @return Arccosine of x.
 attr_always_inline attr_header
 struct Vector2 vec2_acos( struct Vector2 angle ) {
     return vec2_new( f32_acos(angle.x), f32_acos(angle.y) );
 }
 /// @brief Calculate arctangent of x.
-/// @param x Value to get arctangent of.
+/// @param angle Value to get arctangent of.
 /// @return Arctangent of x.
 attr_always_inline attr_header
 struct Vector2 vec2_atan( struct Vector2 angle ) {
@@ -1024,7 +1029,7 @@ struct IVector2 ivec2_max( struct IVector2 x, struct IVector2 y ) {
     return result;
 }
 /// @brief Component-wise abs.
-/// @param v Vector.
+/// @param x Vector.
 /// @return Vector with absolute values.
 attr_always_inline attr_header
 struct IVector2 ivec2_abs( struct IVector2 x ) {

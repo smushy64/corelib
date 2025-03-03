@@ -52,6 +52,10 @@ u32 core_version(void);
 /// @return Null-terminated UTF-8 command line string.
 attr_core_api
 const char* core_command_line( usize* opt_out_len );
+/// @brief Get when core library was built.
+/// @return Time when core library was built.
+attr_core_api
+TimePosix core_build_time(void);
 /// @brief Set logging level.
 /// @details
 /// By default, the logging level is CORE_LOGGING_LEVEL_NONE,

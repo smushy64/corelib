@@ -113,6 +113,7 @@ struct IVector3 {
         i32 array[3];
     };
 };
+/// @brief 3 Component 32-bit Unsigned Integer Vector.
 struct UVector3 {
     union {
         struct {
@@ -123,6 +124,7 @@ struct UVector3 {
         u32 array[3];
     };
 };
+/// @brief 3 Component 64-bit Floating Point Vector.
 struct DVector3 {
     union {
         struct {
@@ -133,6 +135,7 @@ struct DVector3 {
         f64 array[3];
     };
 };
+/// @brief 3 Component 32-bit Boolean Vector.
 struct BVector3 {
     union {
         struct {
@@ -151,7 +154,9 @@ struct BVector3 {
     /// @brief 3 Component 32-bit Boolean Vector.
     typedef struct BVector3 bvec3;
 #endif
+/// @brief 3 Component 32-bit Unsigned Integer Vector.
 typedef struct UVector3 uvec3;
+/// @brief 3 Component 64-bit Floating Point Vector.
 typedef struct DVector3 dvec3;
 
 #if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
@@ -805,7 +810,7 @@ struct Vector3 vec3_tan( struct Vector3 angle ) {
 /// @brief Calculate arcsine of x.
 ///
 /// Does not produce NaN when outside valid range.
-/// @param x Value to get arcsine of.
+/// @param angle Value to get arcsine of.
 /// @return Arcsine of x clamped to -Pi -> Pi.
 /// @see #F32_PI
 /// @see #asin()
@@ -814,14 +819,14 @@ struct Vector3 vec3_asin( struct Vector3 angle ) {
     return vec3_new( f32_asin_real(angle.x), f32_asin_real(angle.y), f32_asin_real(angle.z) );
 }
 /// @brief Calculate arccosine of x.
-/// @param x Value to get arccosine of.
+/// @param angle Value to get arccosine of.
 /// @return Arccosine of x.
 attr_always_inline attr_header
 struct Vector3 vec3_acos( struct Vector3 angle ) {
     return vec3_new( f32_acos(angle.x), f32_acos(angle.y), f32_acos(angle.z) );
 }
 /// @brief Calculate arctangent of x.
-/// @param x Value to get arctangent of.
+/// @param angle Value to get arctangent of.
 /// @return Arctangent of x.
 attr_always_inline attr_header
 struct Vector3 vec3_atan( struct Vector3 angle ) {
@@ -1146,7 +1151,7 @@ f32 ivec3_length( struct IVector3 x ) {
     return vec3_length( _x );
 }
 /// @brief Component-wise abs.
-/// @param v Vector.
+/// @param x Vector.
 /// @return Vector with absolute values.
 attr_always_inline attr_header
 struct IVector3 ivec3_abs( struct IVector3 x ) {

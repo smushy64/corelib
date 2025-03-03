@@ -255,21 +255,6 @@
 /// @note Defined by compiler.
 #define CORE_ENABLE_DEBUG_TIMER_BLOCK
 
-/// @brief Enable generic macros/function overloads
-/// 
-/// Default = disabled.
-/// 
-/// @note Defined by compiler.
-#define CORE_ENABLE_GENERICS
-
-/// @brief Enable global time function aliases.
-/// @see core/time.h
-///
-/// Default = disabled.
-///
-/// @note Defined by compiler.
-#define CORE_ENABLE_TIME_GLOBAL_ALIAS
-
 /// @brief Enable x86 SSE instructions.
 /// 
 /// Default = enabled (x86_64 only).
@@ -290,23 +275,6 @@
 ///
 /// @note Defined by compiler.
 #define CORE_ENABLE_NEON_INSTRUCTIONS
-
-/// @brief Enable compiling as a shared executable.
-///
-/// Default = disabled.
-///
-/// Only takes effect when targetting Linux currently.
-///
-/// @note Defined by compiler.
-#define CORE_ENABLE_SHARED_EXECUTABLE
-
-/// @brief Enable use of __COUNTER__ in macros.
-///
-/// Default = disabled.
-///
-/// @see #unique_id_counted
-/// @note Defined by compiler.
-#define CORE_ENABLE_COUNTER_MACRO
 
 #endif /* Doxygen */
 

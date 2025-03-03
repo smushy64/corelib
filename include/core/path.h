@@ -37,7 +37,7 @@ typedef struct _StringBufPOD   _PathBufPOD;
     typedef _PathBufPOD PathBuf;
 #endif
 
-/// @Brief Target for PathBuf stream.
+/// @brief Target for PathBuf stream.
 typedef StringBufStreamTarget PathBufStreamTarget;
 
 /// @brief Create new path slice.
@@ -450,7 +450,7 @@ attr_core_api
 b32 path_buf_pop_chunk( _PathBufPOD* buf );
 /// @brief Try to set path buffer's extension.
 /// @param[in] buf       Pointer to path buffer.
-/// @parma     extension Extension to set.
+/// @param     extension Extension to set.
 /// @return
 ///     - true  : @c buf had enough capacity to change extension.
 ///     - false : @c buf did not have enough capacity to change extension.
@@ -459,7 +459,7 @@ b32 path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension );
 /// @brief Set path buffer's extension.
 /// @param[in] allocator Pointer to allocator.
 /// @param[in] buf       Pointer to path buffer.
-/// @parma     extension Extension to set.
+/// @param     extension Extension to set.
 /// @return
 ///     - true  : Extension set successfully.
 ///     - false : Faileed to reallocate @c buf.

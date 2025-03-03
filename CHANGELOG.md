@@ -22,6 +22,9 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- docs: fixed various documentation warnings
+- cbuild: updated header and build script
+- moved core/ to include/core and impl to src/core
 - string: updated to use new unicode APIs
 - unicode: rewrote APIs and made unicode functions more consistent
 - types: `typedef char c8;` changed to `typedef u8 c8;`

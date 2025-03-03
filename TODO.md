@@ -64,6 +64,8 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] move impl/ to src/ and core/ to include/
+- [x] update cbuild build script
 - [x] unicode: unicode_is_mathematical_symbol
 - [x] unicode: unicode_is_emoji
 - [x] unicode: more functions (like what ascii.h provides)

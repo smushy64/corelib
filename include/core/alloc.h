@@ -20,7 +20,6 @@ struct AllocatorInterface;
 /// @param[in] memory       (nullable) Pointer to memory to reallocate. If null, @c old_size is ignored.
 /// @param     old_size     Size of @c memory. If @c memory is null, ignored.
 /// @param     new_size     New size of @c memory. Must be >= @c old_size.
-/// @param     opt_name     (optional) Name of allocator.
 /// @param[in] opt_file     (optional) Name of file where function was called.
 /// @param     opt_line     (optional) Line where function was called.
 /// @param[in] opt_function (optional) Name of function where this function was called.
@@ -34,7 +33,6 @@ typedef void* AllocatorAllocFN(
 /// @param[in] interface    Pointer to allocator interface.
 /// @param[in] memory       Pointer to memory to free.
 /// @param     size         Size of @c memory.
-/// @param     opt_name     (optional) Name of allocator.
 /// @param[in] opt_file     (optional) Name of file where function was called.
 /// @param     opt_line     (optional) Line where function was called.
 /// @param[in] opt_function (optional) Name of function where this function was called.
@@ -133,7 +131,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
 
 /// @brief Call allocator interface free function.
 /// @param[in] allocator Pointer to allocator interface.
-/// @parma[in] memory    Pointer to start of buffer to free.
+/// @param[in] memory    Pointer to start of buffer to free.
 /// @param     size      Size of @c memory.
 #define allocator_free( allocator, memory, size ) \
     (allocator)->free( \
@@ -166,7 +164,7 @@ void allocator_interface_from_heap( AllocatorInterface* out_interface );
 
 /// @brief Call allocator interface free function.
 /// @param[in] allocator Pointer to allocator interface.
-/// @parma[in] memory    Pointer to start of buffer to free.
+/// @param[in] memory    Pointer to start of buffer to free.
 /// @param     size      Size of @c memory.
 /// @param     alignment Alignment of memory.
 #define allocator_free_aligned( allocator, memory, size, alignment ) \

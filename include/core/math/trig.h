@@ -41,13 +41,13 @@ f64 f64_degrees( f64 theta ) {
 /// @brief Calculate sine of x.
 /// @param angle Value to get sine of.
 /// @return Sine of angle.
-/// @see #sine_cosine() if both sine and cosine of x are needed.
+/// @see #f32_sincos() if both sine and cosine of x are needed.
 attr_core_api
 f32 f32_sin( f32 angle );
 /// @brief Calculate cosine of x.
 /// @param angle Value to get cosine of.
 /// @return Cosine of angle.
-/// @see #sine_cosine() if both sine and cosine of x are needed.
+/// @see #f32_sincos() if both sine and cosine of x are needed.
 attr_core_api
 f32 f32_cos( f32 angle );
 /// @brief Calculate sine and cosine of x simultaneously.

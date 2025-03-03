@@ -17,6 +17,9 @@ struct AllocatorInterface;
 attr_core_api
 void* memory_set( void* dst, u8 byte, usize size );
 
+/// @brief UTF-8 String.
+/// @details
+/// Not necessarily null terminated.
 struct _StringPOD {
     /// @brief Byte length of string.
     usize len;
@@ -33,6 +36,9 @@ struct _StringPOD {
         void*       _void;
     };
 };
+/// @brief UTF-8 String Buffer.
+/// @details
+/// Always accounts for null terminator.
 struct _StringBufPOD {
     /// @brief Byte capacity of string buffer.
     usize cap;

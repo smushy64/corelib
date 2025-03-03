@@ -25,7 +25,7 @@
 #include "core/thread.h"
 
 #if defined(CORE_PLATFORM_LINUX)
-    #include "impl/platform_linux.c"
+    #include "src/core/platform_linux.c"
 #endif
 
 #if !defined(_LARGEFILE64_SOURCE)
