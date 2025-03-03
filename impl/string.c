@@ -27,8 +27,7 @@ usize cstr_len( const char* c_string ) {
         return 0;
     }
     usize res = 0;
-    const char* at = c_string;
-    while( *at++ ) {
+    while( *c_string++ ) {
         res++;
     }
     return res;
@@ -63,21 +62,21 @@ usize string_len_utf8( struct _StringPOD str ) {
 }
 attr_core_api
 c32 string_index_utf8( struct _StringPOD str, usize index ) {
-    debug_assert( index < str.len, "string_index_utf8: index is out of bounds!" );
-
-    usize counter = 0;
-    struct _StringPOD substr = str;
-    while( !string_is_empty( substr ) ) {
-        UTFCodePoint8 cp8 = {};
-        u32 advance       = unicode_cp8_from_string( substr.len, substr.utf8, &cp8 );
-        substr            = string_advance_by( substr, advance );
+    usize counter     = 0;
+    usize byte_offset = 0;
+    for( ; byte_offset < str.len; ++byte_offset ) {
         if( counter == index ) {
-            return unicode_rune_from_cp8( cp8 );
+            break;
         }
-
-        counter++;
+        if( (str.bytes[byte_offset] & 0xC0) != 0x80 ) {
+            counter++;
+        }
     }
-    return UNICODE_CP32_REPLACEMENT_CHARACTER.rune;
+    debug_assert( counter == index, "string_index_utf8: index is out of bounds!" );
+
+    UTFCodePoint8 cp8 = {};
+    unicode_cp8_from_string( str.len - byte_offset, str.utf8 + byte_offset, &cp8 );
+    return unicode_rune_from_cp8( cp8 );
 }
 attr_core_api
 struct _StringPOD string_utf8_next( struct _StringPOD src, c32* out_codepoint ) {
