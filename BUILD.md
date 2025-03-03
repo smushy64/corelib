@@ -10,14 +10,14 @@ Build from Source
 
 ### Windows
 
-- [MinGW](https://www.mingw-w64.org/)
+- [MinGW](https://www.mingw-w64.org/) clang (preferred) or gcc
 - [Latest Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
 
 ## Dependencies
 
 ### Posix
 
-- libc
+- C standard library
 
 ## Steps
 
@@ -28,29 +28,47 @@ Build from Source
 clang cbuild.c -o cbuild
 ```
 
-3) compile project for current platform and architecture:
+3) compile project for current platform:
 ```console
 ./cbuild build
 ```
 
-By default, result will be in ./build
+By default, result will be in ./build/<platform-name>
 
-to compile using a compiler different from the one used to compile cbuild:
+to compile using a different compiler:
 ```console
-./cbuild build --compiler=gcc
+./cbuild build -compiler gcc
 ```
-**compiler** being clang, gcc or cc(for default compiler, usually gcc).
+**compiler** being clang, gcc or gcc-mingw32 if cross-compiling to Windows.
 
 to compile and run tests:
 ```console
 ./cbuild test
 ```
+
 to generate documentation:
 ```console
 ./cbuild docs
 ```
 
-additional build flags can be obtained with:
+to generate clangd files:
+```console
+./cbuild lsp
+```
+
+to generate clangd flags for downstream project:
+```console
+./cbuild lsp -downstream
+```
+flags are output to stdout
+
+to generate compilation flags for downstream project:
+```console
+./cbuild flags
+```
+flags are output to stdout
+
+additional build options can be obtained with:
 ```console
 ./cbuild help
 ```
