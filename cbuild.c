@@ -128,6 +128,8 @@ struct Settings {
             } flags;
         } lsp;
         struct SettingsFlags {
+            const char* path_output;
+
             enum Target target;
 
             struct {
@@ -458,6 +460,15 @@ int main( int argc, char** argv ) {
                 }
             } break;
             case M_FLAGS: {
+                if( strcmp( args.buf[0], "-output" ) == 0 ) {
+                    args = NEXT( args );
+                    if( !args.len ) {
+                        CB_ERROR( "-output requires a path after it!" );
+                        goto error_arg;
+                    }
+                    settings.flags.path_output = args.buf[0];
+                    goto next_arg;
+                }
                 if( strcmp( args.buf[0], "-target" ) == 0 ) {
                     args = NEXT( args );
                     if( !args.len ) {
@@ -724,6 +735,8 @@ int mode_help( struct Settings* settings ) {
         } break;
 
         case M_FLAGS: {
+            printf( "  -output <string>     Set output directory.\n" );
+            printf( "                          default: ./build\n" );
             printf( "  -target <string>     Change compilation target.\n" );
             printf( "                          default: native\n" );
             printf( "                          valid:   " );
@@ -1522,12 +1535,24 @@ int mode_flags( struct Settings* settings ) {
         settings->flags.flags.enable_stdlib = true;
     }
 
-    char* canonical = cb_path_canonicalize( "." );
+    char* corelib_directory = cb_path_canonicalize( "." );
+    const char* output_directory = settings->flags.path_output;
+    if( settings->flags.path_output ) {
+        char* canonical_path_output =
+            cb_path_canonicalize( settings->flags.path_output );
+        output_directory = memcpy(
+            cb_local_buf(), canonical_path_output, strlen( canonical_path_output ) );
+        free( canonical_path_output );
+    } else {
+        output_directory = cb_local_buf_fmt(
+            "%s/build/%s", corelib_directory,
+            string_from_target( settings->flags.target ) );
+    }
+
     if( settings->flags.flags.is_static ) {
-        printf( "-DCORE_ENABLE_STATIC_BUILD %s/build/%s/libcore.o ",
-            canonical, string_from_target( settings->flags.target ) );
+        printf( "-DCORE_ENABLE_STATIC_BUILD %s/libcore.o ", output_directory );
         if( !settings->flags.flags.disable_simd ) {
-            printf( "-DCORE_ENABLE_SSE_INSTRUCTIONS" );
+            printf( "-DCORE_ENABLE_SSE_INSTRUCTIONS " );
         }
         if( settings->flags.target == T_WINDOWS ) {
 #if CB_PLATFORM_CURRENT == CB_PLATFORM_WINDOWS
@@ -1535,8 +1560,7 @@ int mode_flags( struct Settings* settings ) {
 #endif
         }
     } else {
-        printf( "-L%s/build/%s -lcore ",
-            canonical, string_from_target( settings->flags.target ) );
+        printf( "-L%s -lcore ", output_directory );
     }
     if( !settings->flags.flags.enable_stdlib ) {
         printf( "-nostdlib " );
@@ -1545,9 +1569,9 @@ int mode_flags( struct Settings* settings ) {
     if( settings->flags.flags.enable_assertions ) {
         printf( "-DCORE_ENABLE_ASSERTIONS " );
     }
-    printf( "-I%s/include", canonical );
+    printf( "-I%s/include", corelib_directory );
 
-    free( canonical );
+    free( corelib_directory );
     return 0;
 }
 
