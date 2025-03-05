@@ -286,6 +286,10 @@ int main( int argc, char** argv ) {
                     settings.build.flags.enable_stdlib = true;
                     goto next_arg;
                 }
+                if( strcmp( args.buf[0], "-enable-logging" ) == 0 ) {
+                    settings.build.flags.enable_logging = true;
+                    goto next_arg;
+                }
                 if( strcmp( args.buf[0], "-enable-assertions" ) == 0 ) {
                     settings.build.flags.enable_assertions = true;
                     goto next_arg;
@@ -613,6 +617,7 @@ int mode_help( struct Settings* settings ) {
             printf( "  -dry                 Don't actually compile, just print configuration and command.\n" );
             printf( "  -disable-config      Don't print configuration to stdout.\n" );
             printf( "                          note: still prints compile command.\n" );
+            printf( "  -enable-logging      Enable logging inside of library.\n" );
             printf( "  -enable-stdlib       Link to C stdlib.\n" );
             printf( "                          note: always enabled when targetting GNU/Linux.\n" );
             printf( "  -enable-assertions   Enable compile-time assertions in library.\n" );
@@ -980,7 +985,6 @@ int mode_build( struct Settings* settings ) {
         cb_command_builder_free( &builder );
         return 255;
     }
-    cb_command_builder_add_null_terminator( &builder );
 
     int  exit_code = 0;
     bool success   = cb_process_exec( builder.cmd, &exit_code, NULL, NULL, NULL, NULL, NULL );
