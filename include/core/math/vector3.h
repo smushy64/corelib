@@ -200,10 +200,17 @@ typedef struct DVector3 dvec3;
 /// @param r, g, b (f32) Red, Green and Blue channels.
 /// @return RGB (Vector3).
 #define rgb( r, g, b ) vec3_new( r, g, b )
-/// @brief Construct a new HSL (Vector3).
-/// @param h, s, l (f32) Hue, Saturation and Lightness.
-/// @return HSL (Vector3).
-#define hsl( h, s, l ) vec3_new( wrap_deg( h ), clamp01( s ), clamp01( l ) )
+/// @brief Construct a new HSL color (struct Vector3).
+/// @param hue, saturation, lightness Hue, Saturation and Lightness.
+/// @return HSL (struct Vector3).
+attr_header attr_always_inline attr_hot
+struct Vector3 hsl_new( f32 hue, f32 saturation, f32 lightness ) {
+    struct Vector3 result;
+    result.x = f32_wrap_degrees( hue );
+    result.y = ((saturation) < (0.0) ? (0.0) : ((saturation) > (1.0) ? (1.0) : (saturation)));
+    result.z = ((lightness) < (0.0) ? (0.0) : ((lightness) > (1.0) ? (1.0) : (lightness)));
+    return result;
+}
 /// @brief Construct a new IVector3 with identical components.
 /// @param x (i32) Value for components.
 /// @return IVector3.
