@@ -22,6 +22,11 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- math:color: Luma/RGB/sRGB/HSL/CIE_XYZ/LMS/OKLab color conversions
+- math: cbrt()
+- math: mat3_mul_vec3()
+- math: conversion from packed color to vec3/vec4
+- math: added color.h
 - docs: fixed various documentation warnings
 - cbuild: updated header and build script
 - moved core/ to include/core and impl to src/core

@@ -17,6 +17,7 @@
 #include "core/math/matrix2x2.h"
 #include "core/math/matrix3x3.h"
 #include "core/math/matrix4x4.h"
+#include "core/math/color.h"
 
 #if defined(CORE_CPLUSPLUS)
     #include "core/cpp/math/overload.hpp"

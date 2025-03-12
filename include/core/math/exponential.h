@@ -25,6 +25,12 @@ f32 f32_sqrt( f32 x );
 attr_core_api
 f32 f32_inversesqrt( f32 x );
 
+/// @brief Calculate cube root.
+/// @param x Value to get cube root of.
+/// @return Cube root.
+attr_core_api
+f32 f32_cbrt( f32 x );
+
 /// @brief Calculate natural logarithm.
 /// @param x Value to get natural logarithm of.
 /// @return Natural logarithm.

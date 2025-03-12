@@ -111,6 +111,10 @@ Matrix3x3CPP mul( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
     return mat3_mul_mat3( &lhs.pod, &rhs.pod );
 }
 attr_always_inline attr_header
+Vector3CPP mul( const Matrix3x3CPP& lhs, Vector3CPP rhs ) {
+    return mat3_mul_vec3( &lhs.pod, rhs.pod );
+}
+attr_always_inline attr_header
 Matrix3x3CPP div( const Matrix3x3CPP& lhs, f32 rhs ) {
     return mat3_div( &lhs.pod, rhs );
 }
@@ -141,6 +145,10 @@ Matrix3x3CPP operator*( f32 lhs, const Matrix3x3& rhs ) {
 }
 attr_always_inline attr_header
 Matrix3x3CPP operator*( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline attr_header
+Vector3CPP operator*( const Matrix3x3& lhs, Vector3CPP rhs ) {
     return mul( lhs, rhs );
 }
 attr_always_inline attr_header

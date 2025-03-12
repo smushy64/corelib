@@ -196,21 +196,6 @@ typedef struct DVector3 dvec3;
 /// @return Vector3.
 #define vec3_set( x )\
     vec3_new( (x), (x), (x) )
-/// @brief Construct a new RGB (Vector3).
-/// @param r, g, b (f32) Red, Green and Blue channels.
-/// @return RGB (Vector3).
-#define rgb( r, g, b ) vec3_new( r, g, b )
-/// @brief Construct a new HSL color (struct Vector3).
-/// @param hue, saturation, lightness Hue, Saturation and Lightness.
-/// @return HSL (struct Vector3).
-attr_header attr_always_inline attr_hot
-struct Vector3 hsl_new( f32 hue, f32 saturation, f32 lightness ) {
-    struct Vector3 result;
-    result.x = f32_wrap_degrees( hue );
-    result.y = ((saturation) < (0.0) ? (0.0) : ((saturation) > (1.0) ? (1.0) : (saturation)));
-    result.z = ((lightness) < (0.0) ? (0.0) : ((lightness) > (1.0) ? (1.0) : (lightness)));
-    return result;
-}
 /// @brief Construct a new IVector3 with identical components.
 /// @param x (i32) Value for components.
 /// @return IVector3.
@@ -252,17 +237,17 @@ struct Vector3 hsl_new( f32 hue, f32 saturation, f32 lightness ) {
 #define IVEC3_BACK    ( ivec3_new(  0,  0, -1 ) )
 
 /// @brief RGB red constant.
-#define RGB_RED     ( rgb( 1.0f, 0.0f, 0.0f ) )
+#define RGB_RED     ( vec3_new( 1.0f, 0.0f, 0.0f ) )
 /// @brief RGB green constant.
-#define RGB_GREEN   ( rgb( 0.0f, 1.0f, 0.0f ) )
+#define RGB_GREEN   ( vec3_new( 0.0f, 1.0f, 0.0f ) )
 /// @brief RGB blue constant.
-#define RGB_BLUE    ( rgb( 0.0f, 0.0f, 1.0f ) )
+#define RGB_BLUE    ( vec3_new( 0.0f, 0.0f, 1.0f ) )
 /// @brief RGB yellow constant.
-#define RGB_YELLOW  ( rgb( 1.0f, 1.0f, 0.0f ) )
+#define RGB_YELLOW  ( vec3_new( 1.0f, 1.0f, 0.0f ) )
 /// @brief RGB magenta constant.
-#define RGB_MAGENTA ( rgb( 1.0f, 0.0f, 1.0f ) )
+#define RGB_MAGENTA ( vec3_new( 1.0f, 0.0f, 1.0f ) )
 /// @brief RGB cyan constant.
-#define RGB_CYAN    ( rgb( 0.0f, 1.0f, 1.0f ) )
+#define RGB_CYAN    ( vec3_new( 0.0f, 1.0f, 1.0f ) )
 /// @brief RGB black constant.
 #define RGB_BLACK   ( vec3_set( 0.0f ) )
 /// @brief RGB white constant.
@@ -279,19 +264,9 @@ struct Vector3 vec3_from_array( const f32 array[3] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 3 values.
 attr_always_inline attr_header
-void vec3_to_array( struct Vector3 v, f32* out_array ) {
+void array_from_vec3( struct Vector3 v, f32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1]; out_array[2] = v.array[2];
 }
-/// Convert RGB color to HSL color.
-/// @param _rgb RGB color to convert.
-/// @return HSL color.
-attr_core_api
-struct Vector3 rgb_to_hsl( struct Vector3 _rgb );
-/// Convert HSL color to RGB color.
-/// @param _hsl HSL color to convert.
-/// @return RGB color.
-attr_core_api
-struct Vector3 hsl_to_rgb( struct Vector3 _hsl );
 /// @brief Component-wise add vectors.
 /// @param lhs, rhs Vectors to add.
 /// @return Result of addition.
@@ -1008,7 +983,7 @@ struct IVector3 ivec3_from_array( i32 array[3] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 3 values.
 attr_always_inline attr_header
-void ivec3_to_array( struct IVector3 v, i32* out_array ) {
+void array_from_ivec3( struct IVector3 v, i32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1]; out_array[2] = v.array[2];
 }
 /// @brief Component-wise add vectors.
@@ -1303,8 +1278,5 @@ struct BVector3 bvec3_not( struct BVector3 x ) {
     typedef IVector3CPP ivec3;
     typedef BVector3CPP bvec3;
 #endif
-
-typedef vec3 rgb;
-typedef vec3 hsl;
 
 #endif /* header guard */

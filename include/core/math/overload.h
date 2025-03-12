@@ -69,6 +69,9 @@
 #define inversesqrt( x ) _Generic( (x),\
     default: f32_inversesqrt\
 )(x)
+#define cbrt( x ) _Generic( (x),\
+    default: f32_cbrt\
+)(x)
 #define ln( x ) _Generic( (x),\
     default: f32_ln\
 )(x)

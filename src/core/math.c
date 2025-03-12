@@ -23,6 +23,114 @@
     #define INTERNAL_CORE_SINE_COSINE_NOT_IMPLEMENTED
 #endif
 
+attr_core_api
+f32 luma_from_rgb( struct Vector3 color ) {
+    return f32_sqrt( vec3_dot( color, vec3_new( 0.299, 0.587, 0.114 ) ) );
+}
+attr_core_api
+struct Vector3 srgb_from_lin( struct Vector3 linear ) {
+    return vec3_pow( linear, vec3_set(1.0 / 2.2) );
+}
+attr_core_api
+struct Vector3 lin_from_srgb( struct Vector3 srgb ) {
+    return vec3_pow( srgb, vec3_set(2.2) );
+}
+
+attr_core_api
+struct Vector3 cie_xyz_from_rgb( struct Vector3 color ) {
+    // Standard Illuminant D65
+    // https://en.wikipedia.org/wiki/Oklab_color_space
+    struct Matrix3x3 m = { .array = {
+        0.4122214708, 0.2119034982, 0.0883024619,
+        0.5363325263, 0.6806995451, 0.2817188376,
+        0.0514459929, 0.1073969566, 0.6299787005,
+    } };
+
+    return mat3_mul_vec3( &m, color );
+}
+attr_core_api
+struct Vector3 rgb_from_cie_xyz( struct Vector3 color ) {
+    // Standard Illuminant D65
+    // https://en.wikipedia.org/wiki/Oklab_color_space
+    struct Matrix3x3 m = { .array = {
+         3.240479, -0.969256,  0.055648,
+        -1.537150,  1.875992, -0.204043,
+        -0.498535,  0.041556,  1.057311
+    } };
+
+    return mat3_mul_vec3( &m, color );
+}
+
+attr_core_api
+struct Vector3 cie_xyz_from_lms( struct Vector3 color ) {
+    struct Matrix3x3 m = { .array = {
+        1.4002,  -0.4592,  -0.1035,
+       -0.5034,   1.2580,  -0.3557,
+       -0.0159,   0.0240,   1.0570
+    } };
+    return mat3_mul_vec3( &m, color );
+}
+attr_core_api
+struct Vector3 lms_from_cie_xyz( struct Vector3 color ) {
+    struct Matrix3x3 m = { .array = {
+        0.818933,  0.032984,  0.048200,
+        0.361866,  0.929311,  0.264366,
+       -0.128859,  0.036145,  0.633853
+    } };
+
+    return mat3_mul_vec3( &m, color );
+}
+
+attr_core_api
+struct Vector3 oklab_from_lms( struct Vector3 color ) {
+    struct Vector3 cbrt_transform = color;
+    cbrt_transform.x = f32_cbrt( cbrt_transform.x );
+    cbrt_transform.y = f32_cbrt( cbrt_transform.y );
+    cbrt_transform.z = f32_cbrt( cbrt_transform.z );
+
+    struct Matrix3x3 m = { .array = {
+        0.210454,  1.977998,  0.025904,
+        0.793617, -2.428592,  0.782771,
+       -0.004072,  0.450593, -0.808675
+    }};
+
+    return mat3_mul_vec3( &m, cbrt_transform );
+}
+attr_core_api
+struct Vector3 lms_from_oklab( struct Vector3 color ) {
+    struct Matrix3x3 m = { .array = {
+        4.07657,  -2.26843,  0.26702,
+        0.35857,   1.20543,  -0.09235,
+        0.18116,   0.05353,   0.79694
+    }};
+
+    struct Vector3 lms = mat3_mul_vec3( &m, color );
+
+    lms.x = f32_powi( lms.x, 3 );
+    lms.y = f32_powi( lms.y, 3 );
+    lms.z = f32_powi( lms.z, 3 );
+
+    return lms;
+}
+
+attr_core_api
+f32 f32_cbrt( f32 x ) {
+    if( x == 0.0f ) {
+        return 0.0f;
+    }
+
+    u32 ux = *(u32*)&x;
+    ux     = ux / 3 + 709921077; // Initial guess using integer bit manipulation
+
+    f32 y = *(f32*)&ux;
+
+    // Perform 2 iterations of Newton-Raphson for refinement
+    y = (2.0f * y + x / (y * y)) / 3.0f;
+    y = (2.0f * y + x / (y * y)) / 3.0f;
+
+    return y;
+}
+
 attr_unused attr_internal attr_always_inline inline
 f32 internal_f32_sqrt( f32 x ) {
     if( x < 0.0f ) {
@@ -358,75 +466,42 @@ f32 f32_atan2( f32 y, f32 x ) {
 }
 
 attr_core_api
-struct Vector3 rgb_to_hsl( struct Vector3 _rgb ) {
-    f32 R = _rgb.r;
-    f32 G = _rgb.g;
-    f32 B = _rgb.b;
+struct Vector3 hsl_from_rgb( struct Vector3 c ) {
+    struct Vector4 K = vec4_new( 0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0 );
+    struct Vector4 p = vec4_mix(
+        vec4_new(c.b, c.g, K.w, K.z),
+        vec4_new(c.g, c.b, K.x, K.y),
+        f32_step(c.b, c.g) );
+    struct Vector4 q = vec4_mix(
+        vec4_new(p.x, p.y, p.w, c.r),
+        vec4_new(c.r, p.y, p.z, p.x),
+        f32_step(p.x, c.r) );
 
-    u32 X_max_i = 0;
-    if( R > G ) {
-        if( R < B ) {
-            X_max_i = 2;
-        }
-    } else {
-        if( G > B ) {
-            X_max_i = 1;
-        } else {
-            X_max_i = 2;
-        }
-    }
+    f32 d = q.x - num_min(q.w, q.y);
+    f32 e = 1.0e-10;
 
-    f32 X_max = _rgb.array[X_max_i];
-    f32 X_min = vec3_hmin( _rgb );
-
-    f32 C = X_max - X_min;
-
-    f32 H = 0.0f;
-    f32 S = 0.0f;
-    f32 L = ( X_max + X_min ) / 2.0f;
-
-    if( !f32_cmp( C, 0.0f ) ) {
-        f32 segment = 0.0f, shift = 0.0f;
-        switch( X_max_i ) {
-            case 0: { // R
-                segment = (G - B) / C;
-                shift   = 0.0f;
-                if( segment < 0.0f ) {
-                    shift = 360.0f / 60.0f;
-                }
-            } break;
-            case 1: { // G
-                segment = (B - R) / C;
-                shift   = 120.0f / 60.0f;
-            } break;
-            case 2: { // B
-                segment = (R - G) / C;
-                shift   = 240.0f / 60.0f;
-            } break;
-            default: break;
-        }
-        H = ( segment + shift ) * 60.0f;
-        f32 d = 2.0f * L - 1.0f;
-        S = C / ( 1.0f - num_abs( d ) );
-    }
-
-    return vec3( H, S, L );
+    f32 x = num_abs(q.z + (q.w - q.y) / (6.0 * d + e));
+    return vec3_new( x, d / (q.x + e), q.x );
 }
 attr_core_api
-struct Vector3 hsl_to_rgb( struct Vector3 _hsl ) {
-    f32 H = _hsl.h;
-    f32 S = _hsl.s;
-    f32 L = _hsl.l;
+struct Vector3 rgb_from_hsl( struct Vector3 color ) {
+    struct Vector4 K = vec4_new( 1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0 );
 
-    f32 a = S * num_min(L, 1.0f - L);
+    struct Vector3 _fract         = vec3_fract( vec3_add( vec3_set( color.x ), K.xyz ) );
+    struct Vector3 _fract6        = vec3_mul( _fract, 6.0f );
+    struct Vector3 _fract6_sub_kw = vec3_sub( _fract6, vec3_set( K.w ) );
 
-    #define k(n) f32_mod( n + (H / 30.0f), 12.0f )
-    #define f(n) L - ( a * num_max( -1.0f, num_min( num_min( k(n) - 3.0f, 9.0f - k(n) ), 1.0f ) ) )
+    struct Vector3 p = vec3_new(
+        num_abs(_fract6_sub_kw.x),
+        num_abs(_fract6_sub_kw.y),
+        num_abs(_fract6_sub_kw.z) );
 
-    return rgb( f(0.0f), f(8.0f), f(4.0f) );
-
-    #undef k
-    #undef f
+    return vec3_mul(
+        vec3_mix(
+            vec3_set( K.x ),
+            vec3_clamp( vec3_sub( p, vec3_set( K.x ) ), VEC3_ZERO, VEC3_ONE ),
+            color.y
+        ), color.z );
 }
 attr_core_api
 struct Vector3 vec3_slerp( struct Vector3 a, struct Vector3 b, f32 t ) {

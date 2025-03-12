@@ -202,7 +202,7 @@ struct Vector2 vec2_from_array( const f32 array[2] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 2 values.
 attr_always_inline attr_header
-void vec2_to_array( struct Vector2 v, f32* out_array ) {
+void array_from_vec2( struct Vector2 v, f32* out_array ) {
     out_array[0] = v.x; out_array[1] = v.y;
 }
 /// @brief Component-wise add vectors.
@@ -838,7 +838,7 @@ struct IVector2 ivec2_from_array( const i32 array[2] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 2 values.
 attr_always_inline attr_header
-void ivec2_to_array( struct IVector2 v, i32* out_array ) {
+void array_from_ivec2( struct IVector2 v, i32* out_array ) {
     out_array[0] = v.x; out_array[1] = v.y;
 }
 /// @brief Component-wise add vectors.

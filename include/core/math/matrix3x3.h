@@ -188,7 +188,8 @@ struct Matrix3x3 mat3_div(
 /// @brief Multiply matrices.
 /// @param lhs, rhs Matrices to multiply.
 /// @return Result of multiplication.
-attr_header struct Matrix3x3 mat3_mul_mat3(
+attr_header
+struct Matrix3x3 mat3_mul_mat3(
     const struct Matrix3x3* lhs, const struct Matrix3x3* rhs
 ) {
     return mat3_new(
@@ -222,6 +223,17 @@ attr_header struct Matrix3x3 mat3_mul_mat3(
         ( lhs->array[2] * rhs->array[6] ) +
             ( lhs->array[5] * rhs->array[7] )  +
             ( lhs->array[8] * rhs->array[8] ) );
+}
+/// @brief Multiply matrices.
+/// @param lhs, rhs Matrices to multiply.
+/// @return Result of multiplication.
+attr_header
+struct Vector3 mat3_mul_vec3( const struct Matrix3x3* m, struct Vector3 v ) {
+    struct Vector3 result;
+    result.x = m->array[0] * v.x + m->array[3] * v.y + m->array[6] * v.z;
+    result.y = m->array[1] * v.x + m->array[4] * v.y + m->array[7] * v.z;
+    result.z = m->array[2] * v.x + m->array[5] * v.y + m->array[8] * v.z;
+    return result;
 }
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.

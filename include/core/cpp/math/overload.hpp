@@ -109,6 +109,10 @@ f32 inversesqrt( f32 x ) {
     return f32_inversesqrt( x );
 }
 attr_always_inline attr_header
+f32 cbrt( f32 x ) {
+    return f32_cbrt( x );
+}
+attr_always_inline attr_header
 f32 ln( f32 x ) {
     return f32_ln( x );
 }

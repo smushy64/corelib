@@ -311,7 +311,7 @@ struct Vector4 vec4_from_array( const f32 array[4] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 values.
 attr_always_inline attr_header
-void vec4_to_array( struct Vector4 v, f32* out_array ) {
+void array_from_vec4( struct Vector4 v, f32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1];
     out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
@@ -999,7 +999,7 @@ struct IVector4 ivec4_from_array( const i32 array[4] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 values.
 attr_always_inline attr_header
-void ivec4_to_array( struct IVector4 v, i32* out_array ) {
+void array_from_ivec4( struct IVector4 v, i32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1];
     out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
@@ -1348,7 +1348,5 @@ struct BVector4 bvec4_not( struct BVector4 x ) {
     typedef IVector4CPP ivec4;
     typedef BVector4CPP bvec4;
 #endif
-
-typedef vec4 rgba;
 
 #endif /* header guard */

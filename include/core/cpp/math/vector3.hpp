@@ -197,15 +197,6 @@ struct Vector3CPP {
         return Vector3CPP( 1.0, 1.0, 1.0 );
     }
 
-    attr_always_inline attr_header constexpr
-    Vector3CPP to_hsl() const {
-        return rgb_to_hsl( pod );
-    }
-    attr_always_inline attr_header constexpr
-    Vector3CPP to_rgb() const {
-        return hsl_to_rgb( pod );
-    }
-
     attr_always_inline attr_header static constexpr
     Vector3CPP from_array( const f32 array[3] ) {
         return *(Vector3CPP*)array;
