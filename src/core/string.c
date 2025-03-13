@@ -23,14 +23,16 @@
 
 attr_core_api
 usize cstr_len( const char* c_string ) {
-    if( !c_string ) {
-        return 0;
+    usize result = 0;
+    for(;;) {
+        if( *c_string ) {
+            c_string++;
+            result++;
+        } else {
+            break;
+        }
     }
-    usize res = 0;
-    while( *c_string++ ) {
-        res++;
-    }
-    return res;
+    return result;
 }
 attr_core_api
 usize cstr_len_utf8( const char* c_string ) {
