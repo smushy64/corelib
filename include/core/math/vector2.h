@@ -553,7 +553,7 @@ struct Vector2 vec2_round( struct Vector2 v ) {
 /// @return Vector with fractional part.
 attr_always_inline attr_header
 struct Vector2 vec2_fract( struct Vector2 v ) {
-    return vec2_sub( v, vec2_round(v) );
+    return vec2_sub( v, vec2_floor(v) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.

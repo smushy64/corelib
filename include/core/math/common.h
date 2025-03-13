@@ -164,14 +164,14 @@ i64 f64_round( f64 x ) {
 /// @return Fractional part.
 attr_always_inline attr_header
 f32 f32_fract( f32 x ) {
-    return x - (f32)f32_round(x);
+    return x - (f32)f32_floor(x);
 }
 /// @brief Get fractional part.
 /// @param x Float.
 /// @return Fractional part.
 attr_always_inline attr_header
 f64 f64_fract( f64 x ) {
-    return x - (f64)f64_round(x);
+    return x - (f64)f64_floor(x);
 }
 /// @brief Swap endianness of unsigned 8-bit integer.
 /// @param x Integer to swap endianness of.

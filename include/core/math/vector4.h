@@ -645,7 +645,7 @@ struct Vector4 vec4_round( struct Vector4 v ) {
 /// @return Vector with fractional part.
 attr_always_inline attr_header
 struct Vector4 vec4_fract( struct Vector4 v ) {
-    return vec4_sub( v, vec4_round(v) );
+    return vec4_sub( v, vec4_floor(v) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.

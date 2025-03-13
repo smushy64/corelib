@@ -645,7 +645,7 @@ struct Vector3 vec3_round( struct Vector3 v ) {
 /// @return Vector with fractional part.
 attr_always_inline attr_header
 struct Vector3 vec3_fract( struct Vector3 v ) {
-    return vec3_sub( v, vec3_round(v) );
+    return vec3_sub( v, vec3_floor(v) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
