@@ -90,14 +90,14 @@ struct Vector3 rgb_from_packed_bgr( u32 packed ) {
 }
 
 /// @brief Create new HSL color.
-/// @param hue        Hue, 0.0 to 360.0
+/// @param hue        Hue, 0.0 to 1.0
 /// @param saturation Saturation, 0.0 to 1.0
 /// @param lightness  Lightness, 0.0 to 1.0
 /// @return HSL color.
 attr_header attr_always_inline attr_hot
 struct Vector3 hsl_new( f32 hue, f32 saturation, f32 lightness ) {
     struct Vector3 result;
-    result.x = f32_wrap_degrees( hue );
+    result.x = hue;
     result.y = ((saturation) < (0.0) ? (0.0) : ((saturation) > (1.0) ? (1.0) : (saturation)));
     result.z = ((lightness) < (0.0) ? (0.0) : ((lightness) > (1.0) ? (1.0) : (lightness)));
     return result;
@@ -114,7 +114,7 @@ attr_core_api
 struct Vector3 rgb_from_hsl( struct Vector3 color );
 
 /// @brief Create new HSLA color.
-/// @param hue        Hue, 0.0 to 360.0
+/// @param hue        Hue, 0.0 to 1.0
 /// @param saturation Saturation, 0.0 to 1.0
 /// @param lightness  Lightness, 0.0 to 1.0
 /// @param alpha      Alpha.
