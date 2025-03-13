@@ -705,6 +705,7 @@ usize string_buf_try_stream(
     }
 
     memory_copy( buf->buf + buf->len, bytes, copy_count );
+    buf->len += copy_count;
 
     return count - copy_count;
 }
