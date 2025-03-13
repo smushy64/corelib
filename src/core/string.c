@@ -694,14 +694,17 @@ usize string_buf_try_stream(
     void* StringBuf, usize count, const void* bytes
 ) {
     struct _StringBufPOD* buf = (struct _StringBufPOD*)StringBuf;
-    usize rem        = string_buf_remaining( *buf );
+    if( !buf ) {
+        return count;
+    }
+
+    usize remaining = string_buf_remaining( *buf );
     usize copy_count = count;
-    if( rem < copy_count ) {
-        copy_count = rem;
+    if( copy_count > remaining ) {
+        copy_count = remaining;
     }
 
     memory_copy( buf->buf + buf->len, bytes, copy_count );
-    buf->len += copy_count;
 
     return count - copy_count;
 }
@@ -711,6 +714,10 @@ bsize string_buf_stream(
     void* target, usize count, const void* bytes
 ) {
     StringBufStreamTarget* t = (StringBufStreamTarget*)target;
+    if( !t ) {
+        return count;
+    }
+
     struct _StringPOD str;
     str.len  = count;
     str.cbuf = (const char*)bytes;
