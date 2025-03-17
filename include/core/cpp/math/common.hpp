@@ -89,14 +89,14 @@ constexpr i64 round( f64 x ) {
 /// @return Fractional part.
 attr_always_inline
 attr_header f32 fract( f32 x ) {
-    return x - (f32)round(x);
+    return x - (f32)floor(x);
 }
 /// @brief Get fractional part.
 /// @param x Float.
 /// @return Fractional part.
 attr_always_inline
 attr_header f64 fract( f64 x ) {
-    return x - (f64)round(x);
+    return x - (f64)floor(x);
 }
 
 attr_always_inline attr_header
