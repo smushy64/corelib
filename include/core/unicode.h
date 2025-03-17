@@ -88,20 +88,23 @@ typedef enum UnicodeValidationResult {
 /// @return UTF-8 code point.
 #define unicode_cp8_from_code_units( code_unit_0, code_unit_1, code_unit_2, code_unit_3 ) \
     (struct_literal(UTFCodePoint8){ .code_units = { \
-        (code_unit_0), (code_unit_1), (code_unit_2), (code_unit_3) }})
+        (u8)(code_unit_0), \
+        (u8)(code_unit_1), \
+        (u8)(code_unit_2), \
+        (u8)(code_unit_3) }})
 
 /// @brief Construct UTF-16 code point from code units.
 /// @param code_unit_0, code_unit_1 (cp16) Code units.
 /// @return UTF-16 code point.
 #define unicode_cp16_from_code_units( code_unit_0, code_unit_1 ) \
     (struct_literal(UTFCodePoint16){ .code_units = { \
-        (code_unit_0), (code_unit_1) }})
+        (u16)(code_unit_0), (u16)(code_unit_1) }})
 
 /// @brief Construct UTF-32 code point from code units.
 /// @param code_unit_0 (cp32) Code units.
 /// @return UTF-32 code point.
 #define unicode_cp32_from_code_units( code_unit_0 ) \
-    (struct_literal(UTFCodePoint32){ .code_units = { (code_unit_0) }})
+    (struct_literal(UTFCodePoint32){ .code_units = { (u32)(code_unit_0) }})
 
 /// @brief Construct UTF-8 code point from bytes.
 /// @param code_unit_0, code_unit_1, code_unit_2, code_unit_3 (c8) Code units.
@@ -109,7 +112,10 @@ typedef enum UnicodeValidationResult {
 #define unicode_cp8_from_bytes(                          \
     code_unit_0, code_unit_1, code_unit_2, code_unit_3 ) \
     (struct_literal(UTFCodePoint8){ .bytes = {           \
-        (code_unit_0), (code_unit_1), (code_unit_2), (code_unit_3) } })
+        (u8)(code_unit_0), \
+        (u8)(code_unit_1), \
+        (u8)(code_unit_2), \
+        (u8)(code_unit_3) } })
 
 #if defined(CORE_ARCH_BIG_ENDIAN)
 
@@ -120,7 +126,10 @@ typedef enum UnicodeValidationResult {
 #define unicode_cp16_from_bytes(                                           \
     code_unit_0_low, code_unit_0_high, code_unit_1_low, code_unit_1_high ) \
     (struct_literal(UTFCodePoint16){ .bytes = {                            \
-        (code_unit_0_high), (code_unit_0_low), (code_unit_1_high), (code_unit_1_low) }})
+        (u8)(code_unit_0_high), \
+        (u8)(code_unit_0_low), \
+        (u8)(code_unit_1_high), \
+        (u8)(code_unit_1_low) }})
 
 /// @brief Construct UTF-32 code point from bytes.
 /// @param low_0, low_1   (u8) Low bytes.
@@ -128,7 +137,10 @@ typedef enum UnicodeValidationResult {
 /// @return UTF-32 code point.
 #define unicode_cp32_from_bytes( low_0, low_1, high_0, high_1 ) \
     (struct_literal(UTFCodePoint32){ .bytes = {                 \
-        (high_1), (high_0), (low_1), (low_0) } })
+        (u8)(high_1), \
+        (u8)(high_0), \
+        (u8)(low_1), \
+        (u8)(low_0) } })
 
 /// @brief Access byte from UTF-16 code point.
 /// @param[in] ptr_cp16  (UTFCodePoint16*) Pointer to code point to access.
@@ -157,7 +169,10 @@ typedef enum UnicodeValidationResult {
 #define unicode_cp16_from_bytes(                                           \
     code_unit_0_low, code_unit_0_high, code_unit_1_low, code_unit_1_high ) \
     (struct_literal(UTFCodePoint16){ .bytes = {                            \
-        (code_unit_0_low), (code_unit_0_high), (code_unit_1_low), (code_unit_1_high) }})
+        (u8)(code_unit_0_low), \
+        (u8)(code_unit_0_high), \
+        (u8)(code_unit_1_low), \
+        (u8)(code_unit_1_high) }})
 
 /// @brief Construct UTF-32 code point from bytes.
 /// @param low_0, low_1   (u8) Low bytes.
@@ -165,7 +180,10 @@ typedef enum UnicodeValidationResult {
 /// @return UTF-32 code point.
 #define unicode_cp32_from_bytes( low_0, low_1, high_0, high_1 ) \
     (struct_literal(UTFCodePoint32){ .bytes = {                 \
-        (low_0), (low_1), (high_0), (high_1) } })
+        (u8)(low_0), \
+        (u8)(low_1), \
+        (u8)(high_0), \
+        (u8)(high_1) } })
 
 /// @brief Access byte from UTF-16 code point.
 /// @param[in] ptr_cp16  (UTFCodePoint16*) Pointer to code point to access.
