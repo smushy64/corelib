@@ -35,15 +35,18 @@ typedef enum CPUFeatureFlags {
 } CPUFeatureFlags;
 /// @brief Current CPU supports all SSE instructions.
 #define CPU_FEATURE_SSE_MASK \
-    (   CPU_FEATURE_SSE      | \
-        CPU_FEATURE_SSE2     | \
-        CPU_FEATURE_SSE3     | \
-        CPU_FEATURE_SSSE3    | \
-        CPU_FEATURE_SSE4_1   | \
-        CPU_FEATURE_SSE4_2 )
+    (CPUFeatureFlags)( (u32)CPU_FEATURE_SSE      | \
+                       (u32)CPU_FEATURE_SSE2     | \
+                       (u32)CPU_FEATURE_SSE3     | \
+                       (u32)CPU_FEATURE_SSSE3    | \
+                       (u32)CPU_FEATURE_SSE4_1   | \
+                       (u32)CPU_FEATURE_SSE4_2 )
 /// @brief Current CPU supports AVX and AVX2 instructions.
 #define CPU_FEATURE_AVX_MASK \
-    ( CPU_FEATURE_AVX | CPU_FEATURE_AVX2 )
+    (CPUFeatureFlags)(          \
+        (u32)CPU_FEATURE_AVX  | \
+        (u32)CPU_FEATURE_AVX2   \
+    )
 
 /// @brief System Information.
 typedef struct SystemInfo {
@@ -74,7 +77,8 @@ void system_query_info( SystemInfo* out_info );
 /// Zero if all SSE instructions are present.
 attr_always_inline attr_header
 CPUFeatureFlags system_feature_check_x86_sse( CPUFeatureFlags flags ) {
-    return ~flags & CPU_FEATURE_SSE_MASK;
+    u32 f = (u32)flags;
+    return (CPUFeatureFlags)(~f & (u32)CPU_FEATURE_SSE_MASK);
 }
 /// @brief Check if x86 cpu has AVX instructions
 /// @details
@@ -84,7 +88,8 @@ CPUFeatureFlags system_feature_check_x86_sse( CPUFeatureFlags flags ) {
 /// Zero if all AVX instructions are present.
 attr_always_inline attr_header
 CPUFeatureFlags system_feature_check_x86_avx( CPUFeatureFlags flags ) {
-    return ~flags & CPU_FEATURE_AVX_MASK;
+    u32 f = (u32)flags;
+    return (CPUFeatureFlags)(~f & (u32)CPU_FEATURE_AVX_MASK);
 }
 
 #endif /* header guard */
