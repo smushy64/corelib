@@ -87,7 +87,7 @@
     /// @param condition (expression)           Condition to check.
     /// @param ...       (string literal, args) (optional) Error message format and args.      
     /// @note Currently enabled in this build configuration.
-    #define assert( condition, ... ) do {\
+    #define assertion( condition, ... ) do {\
         if( !(condition) ) {\
             ___helper3( "Assertion '" #condition "' failed! ", __VA_ARGS__ );\
             insert_panic();\
@@ -99,7 +99,7 @@
     /// This macro function does not return when condition is not met.
     /// @param ... (expression, string literal, args) Condition to check and optional formatted error message.
     /// @note Currently disabled in this build configuration.
-    #define assert(...) 
+    #define assertion(...) 
 #endif
 
 #if defined(CORE_ENABLE_ASSERTIONS) && defined(CORE_ENABLE_DEBUG_ASSERTIONS)
