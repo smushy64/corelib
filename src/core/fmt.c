@@ -379,8 +379,18 @@ usize stream_fmt_float(
             internal_float_fmt( value, seperate, precision, &buf );
         }
 
+        String output_string = string_new( buf.len, buf.cbuf );
+
+        if( buf.buf[0] == '-' && padding_c == '0' ) {
+            output_string = string_advance( output_string );
+            res += stream_padded( stream, target, 0, 0, 1, "-" );
+            if( pad ) {
+                pad--;
+            }
+        }
+
         res += stream_padded(
-            stream, target, pad, padding_c, buf.len, buf.cbuf );
+            stream, target, pad, padding_c, output_string.len, output_string.cbuf );
 
         if( vector_counter >= 0 ) {
             vector_counter++;
@@ -900,11 +910,14 @@ void internal_float_fmt(
     i64 whole = (i64)value;
     f64 fract = num_abs( value ) - (f64)num_abs(whole);
 
+    if( !whole && value < 0.0f ) {
+        string_buf_try_push( buf, '-' );
+    }
     internal_int_fmt(
         rcast( u64, &whole ),
-        true,
-        64,
-        0, // BASE_DECIMAL
+        true, // is_signed
+        64,   // bitdepth
+        0,    // base:  BASE_DECIMAL
         seperate ? FMT_INT_WIDTH_SEPARATE : FMT_INT_WIDTH_NORMAL,
         buf );
     if( fract <= 0.0000001 ) {

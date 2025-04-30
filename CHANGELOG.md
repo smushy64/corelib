@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- fmt:bug: stream_fmt_float was not adding negative sign to negative numbers less than -1
 - assert: renamed assert() to assertion()
 - math:color: Luma/RGB/sRGB/HSL/CIE_XYZ/LMS/OKLab color conversions
 - math: cbrt()
