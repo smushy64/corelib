@@ -83,6 +83,7 @@ struct Settings {
                 bool enable_logging       : 1;
                 bool enable_assertions    : 1;
                 bool disable_simd         : 1;
+                bool enable_fpic          : 1;
             } flags;
         } build;
         struct SettingsTest {
@@ -268,6 +269,10 @@ int main( int argc, char** argv ) {
                 }
                 if( strcmp( args.buf[0], "-static" ) == 0 ) {
                     settings.build.flags.is_static = true;
+                    goto next_arg;
+                }
+                if( strcmp( args.buf[0], "-enable-fpic" ) == 0 ) {
+                    settings.build.flags.enable_fpic = true;
                     goto next_arg;
                 }
                 if( strcmp( args.buf[0], "-debug" ) == 0 ) {
@@ -623,6 +628,7 @@ int mode_help( struct Settings* settings ) {
             printf( "  -enable-assertions   Enable compile-time assertions in library.\n" );
             printf( "  -disable-simd        Disable SIMD instructions.\n" );
             printf( "                          note: on x86_64, SSE1-4.2 instructions are used.\n" );
+            printf( "  -enable-fpic         Compile with -fPIC. Only applies for static libraries as dynamic already includes it.\n" );
         } break;
 
         case M_TEST: {
@@ -899,6 +905,9 @@ int mode_build( struct Settings* settings ) {
 
     if( settings->build.flags.is_static ) {
         cb_command_builder_append( &builder, "-DCORE_ENABLE_STATIC_BUILD" );
+        if( settings->build.target == T_GNU_LINUX && settings->build.flags.enable_fpic ) {
+            cb_command_builder_append( &builder, "-fPIC" );
+        }
     } else {
         cb_command_builder_append( &builder, "-DCORE_ENABLE_EXPORT", "-shared" );
         if( settings->build.target == T_GNU_LINUX ) {
