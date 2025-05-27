@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.2
 -----
 
+- cbuild: flags mode now outputs null-separated list of flags rather than space separated
 - cbuild: added -enable-fpic flag for using -fPIC when compiling static library.
 - fmt:bug: stream_fmt_float was not adding negative sign to negative numbers less than -1
 - assert: renamed assert() to assertion()

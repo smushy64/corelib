@@ -8,6 +8,16 @@
 #include <inttypes.h>
 #include <time.h>
 
+#if CB_PLATFORM_CURRENT == CB_PLATFORM_WINDOWS
+    #include <io.h>
+    #define output_is_terminal() \
+        _isatty(_fileno(stdout))
+#else
+    #include <unistd.h>
+    #define output_is_terminal() \
+        isatty( 1 )
+#endif
+
 #define CORE_VERSION_MAJOR 0
 #define CORE_VERSION_MINOR 1
 #define CORE_VERSION_PATCH 2
@@ -503,6 +513,10 @@ int main( int argc, char** argv ) {
                 }
                 if( strcmp( args.buf[0], "-static" ) == 0 ) {
                     settings.flags.flags.is_static = true;
+                    goto next_arg;
+                }
+                if( strcmp( args.buf[0], "-enable-logging" ) == 0 ) {
+                    settings.build.flags.enable_logging = true;
                     goto next_arg;
                 }
                 if( strcmp( args.buf[0], "-enable-assertions" ) == 0 ) {
@@ -1541,12 +1555,34 @@ int mode_lsp( struct Settings* settings ) {
         return mode_lsp_corelib( settings );
     }
 }
+void mode_flags_puts( const char* string ) {
+    fputs( string, stdout );
+    if( output_is_terminal() ) {
+        putchar( ' ' );
+    } else {
+        putchar( 0 );
+    }
+}
+void mode_flags_printf( const char* fmt, ... ) {
+    va_list va;
+    va_start( va, fmt );
+    vprintf( fmt, va );
+    va_end( va );
+    if( output_is_terminal() ) {
+        putchar( ' ' );
+    } else {
+        putchar( 0 );
+    }
+}
 int mode_flags( struct Settings* settings ) {
     settings->flags.target =
         target_normalize( settings->flags.target );
     if( settings->flags.target == T_GNU_LINUX ) {
         settings->flags.flags.enable_stdlib = true;
     }
+
+    #define puts   mode_flags_puts
+    #define printf mode_flags_printf
 
     char* corelib_directory = cb_path_canonicalize( "." );
     const char* output_directory = settings->flags.path_output;
@@ -1563,27 +1599,33 @@ int mode_flags( struct Settings* settings ) {
     }
 
     if( settings->flags.flags.is_static ) {
-        printf( "-DCORE_ENABLE_STATIC_BUILD %s/libcore.o ", output_directory );
+        puts( "-DCORE_ENABLE_STATIC_BUILD" );
+        printf( "%s/libcore.o", output_directory );
         if( !settings->flags.flags.disable_simd ) {
-            printf( "-DCORE_ENABLE_SSE_INSTRUCTIONS " );
+            puts( "-DCORE_ENABLE_SSE_INSTRUCTIONS" );
         }
         if( settings->flags.target == T_WINDOWS ) {
 #if CB_PLATFORM_CURRENT == CB_PLATFORM_WINDOWS
-        printf( "-fuse-ld=lld -Wl,/stack:0x100000 -lkernel32 " );
+            puts( "-fuse-ld=lld" );
+            puts( "-Wl,/stack:0x100000" );
+            puts( "-lkernel32" );
 #endif
         }
     } else {
-        printf( "-L%s -lcore ", output_directory );
+        printf( "-L%s", output_directory );
+        puts( "-lcore" );
     }
     if( !settings->flags.flags.enable_stdlib ) {
-        printf( "-nostdlib " );
+        puts( "-nostdlib" );
     }
 
     if( settings->flags.flags.enable_assertions ) {
-        printf( "-DCORE_ENABLE_ASSERTIONS " );
+        puts( "-DCORE_ENABLE_ASSERTIONS" );
     }
     printf( "-I%s/include", corelib_directory );
 
+    #undef puts
+    #undef printf
     free( corelib_directory );
     return 0;
 }
@@ -1623,7 +1665,7 @@ const char* mode_description( enum Mode mode ) {
         case M_LSP:
             return "Generate clangd compile flags.";
         case M_FLAGS:
-            return "Generate compilation flags for downstream project and exit.";
+            return "Output null-separated list of compile flags for downstream project.";
         case M_COUNT:
             break;
     }
