@@ -16,7 +16,7 @@ struct AllocatorInterface;
 /// @brief Function prototype for allocator allocation function.
 /// @details
 /// All allocators must return zeroed memory. (Only newly allocated space)
-/// @param[in] interface    Pointer to allocator interface.
+/// @param[in] allocator    Pointer to allocator interface.
 /// @param[in] memory       (nullable) Pointer to memory to reallocate. If null, @c old_size is ignored.
 /// @param     old_size     Size of @c memory. If @c memory is null, ignored.
 /// @param     new_size     New size of @c memory. Must be >= @c old_size.
@@ -27,17 +27,17 @@ struct AllocatorInterface;
 ///     - NULL    : Failed to reallocate buffer. @c memory is still valid.
 ///     - Pointer : Pointer to new buffer. @c memory is no longer valid.
 typedef void* AllocatorAllocFN(
-    struct AllocatorInterface* interface, void* memory, usize old_size, usize new_size,
+    struct AllocatorInterface* allocator, void* memory, usize old_size, usize new_size,
     const char* opt_file, int opt_line, const char* opt_function );
 /// @brief Function prototype for allocator free function.
-/// @param[in] interface    Pointer to allocator interface.
+/// @param[in] allocator    Pointer to allocator interface.
 /// @param[in] memory       Pointer to memory to free.
 /// @param     size         Size of @c memory.
 /// @param[in] opt_file     (optional) Name of file where function was called.
 /// @param     opt_line     (optional) Line where function was called.
 /// @param[in] opt_function (optional) Name of function where this function was called.
 typedef void AllocatorFreeFN(
-    struct AllocatorInterface* interface, void* memory, usize size,
+    struct AllocatorInterface* allocator, void* memory, usize size,
     const char* opt_file, int opt_line, const char* opt_function );
 
 /// @brief Interface for memory allocators.

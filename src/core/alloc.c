@@ -9,10 +9,10 @@
 #include "core/memory.h"
 
 void* allocator_heap_alloc(
-    AllocatorInterface* interface, void* memory, usize old_size, usize new_size,
+    AllocatorInterface* allocator, void* memory, usize old_size, usize new_size,
     const char* opt_file, int opt_line, const char* opt_function
 ) {
-    unused(interface, opt_file, opt_line, opt_function);
+    unused(allocator, opt_file, opt_line, opt_function);
 
     if( memory ) {
         void* result = memory_realloc( memory, old_size, new_size );
@@ -23,10 +23,10 @@ void* allocator_heap_alloc(
 }
 
 void allocator_heap_free(
-    AllocatorInterface* interface, void* memory, usize size,
+    AllocatorInterface* allocator, void* memory, usize size,
     const char* opt_file, int opt_line, const char* opt_function
 ) {
-    unused(interface, opt_file, opt_line, opt_function);
+    unused(allocator, opt_file, opt_line, opt_function);
 
     if( !memory ) {
         return;

@@ -19,6 +19,15 @@ Number between 0-255
 
 Indicates additions to API, minor bug fixes and other small changes.
 
+0.1.3
+-----
+
+- process: added API for executing sub-processes
+- alloc: renamed interface to allocator in parameter lists
+- string: internal_string_buf_try_fmt: removed attr_always_inline
+- types: redefined NULL to be a void* pointer
+- cbuild:linux: searches for correct mingw-gcc instead of returning static compiler name
+
 0.1.2
 -----
 

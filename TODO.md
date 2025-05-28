@@ -25,8 +25,6 @@
     - page_free:       Free pages of memory.
 ## New Features
 - [ ] regex.h            Regular expression parser.
-- [ ] process.h:         API for creating processes and pipes.
-    - Shell-like API. 
 - [ ] search.h:          Search algorithms.
     - At minimum: ordered_binary_search, ordered_binary_search_custom
 - [ ] socket.h:          Sockets and web connectivity.
@@ -64,6 +62,8 @@
 - [ ] finish writing C tests
 - [ ] write C++ tests
 ## Complete
+- [x] process.h: API for creating processes and pipes.
+- [x] process:posix: convert paths separated with ; to paths separated with :
 - [x] move impl/ to src/ and core/ to include/
 - [x] update cbuild build script
 - [x] unicode: unicode_is_mathematical_symbol

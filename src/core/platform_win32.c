@@ -17,6 +17,7 @@
 
 #include "core/string.h"
 #include "core/fs.h"
+#include "core/unicode.h"
 
 #include "core/internal/platform/path.h"
 #include "core/internal/platform/time.h"
@@ -24,6 +25,7 @@
 #include "core/internal/platform/thread.h"
 #include "core/internal/platform/fs.h"
 #include "core/internal/platform/library.h"
+#include "core/internal/platform/process.h"
 #include "core/internal/platform/misc.h"
 
 #include "core/internal/logging.h"
@@ -35,6 +37,13 @@
 #if defined(CORE_COMPILER_MSVC)
     int _fltused;
 #endif
+
+struct Win32UTF16Buf {
+    usize cap;
+    usize len;
+    u16*  buf;
+};
+usize win32_utf16_buf_stream( void* Win32UTF16Buf, usize count, const void* bytes );
 
 struct Win32Tls {
     u32  thread_id;
@@ -106,9 +115,9 @@ void win32_path_buf_push_chunk(
     usize buffer_cap, usize* buffer_len, wchar_t* buffer, _PathPOD chunk );
 
 attr_internal
-b32 win32_ucs2_cmp( wchar_t* a, wchar_t* b );
+b32 win32_ucs2_cmp( const wchar_t* a, const wchar_t* b );
 attr_internal
-usize win32_ucs2_len( wchar_t* p );
+usize win32_ucs2_len( const wchar_t* p );
 
 attr_internal
 void win32_log_error( DWORD error_code );
@@ -1405,14 +1414,14 @@ b32 win32_directory_remove( usize* path_len, wchar_t* path, WIN32_FIND_DATAW* da
     CloseHandle( handle );
     return RemoveDirectoryW( path ) == TRUE;
 }
-usize win32_ucs2_len( wchar_t* p ) {
+usize win32_ucs2_len( const wchar_t* p ) {
     usize result = 0;
     while( *p++ ) {
         result++;
     }
     return result;
 }
-b32 win32_ucs2_cmp( wchar_t* a, wchar_t* b ) {
+b32 win32_ucs2_cmp( const wchar_t* a, const wchar_t* b ) {
     while( *a && *b ) {
         if( *a != *b ) {
             return false;
@@ -1658,285 +1667,531 @@ void win32_get_gpu_name( char* buffer ) {
     FreeLibrary( user32 );
 }
 
-
-
-#if 0
-
-attr_internal u32 win32_utf8_to_wide(
-    u32 utf8_len, const char* utf8, u32 wide_cap, wchar_t* wide_buf );
-attr_internal u32 win32_wide_to_utf8(
-    u32 wide_len, const wchar_t* wide, u32 utf8_cap, char* utf8_buf );
-
-attr_global struct Win32Global {
-    volatile u32 thread_id;
-
-    DWORD    home_len;
-    wchar_t* home;
-
-    PipeRead  in;
-    PipeWrite out, err;
-
-    LARGE_INTEGER qpf;
-} global_win32;
-
-b32 win32_init(void) {
-    global_win32.buf_cwd.len = GetCurrentDirectoryW( 0, 0 ) - 1;
-    global_win32.buf_cwd.cap = global_win32.buf_cwd.len + 16;
-    global_win32.buf_cwd.raw =
-        LocalAlloc( 0, sizeof(wchar_t) * global_win32.buf_cwd.cap );
-    memory_zero(
-        global_win32.buf_cwd.raw, sizeof(wchar_t) * global_win32.buf_cwd.cap );
-    if( !global_win32.buf_cwd.raw ) {
-        return false;
+usize win32_utf16_buf_stream( void* target, usize count, const void* bytes ) {
+    struct Win32UTF16Buf* buf = target;
+    if( !buf ) {
+        return count / sizeof(u16);
     }
 
-    GetCurrentDirectoryW( global_win32.buf_cwd.len + 1, global_win32.buf_cwd.raw );
-
-    DWORD drive_cap = GetEnvironmentVariableW( L"HOMEDRIVE", 0, 0 );
-    DWORD hpath_cap = GetEnvironmentVariableW( L"HOMEPATH", 0, 0 );
-    DWORD required_memory = drive_cap + hpath_cap;
-    wchar_t* paths_buffer = LocalAlloc( 0, sizeof(wchar_t) * required_memory );
-    if( !paths_buffer ) {
-        LocalFree( global_win32.buf_cwd.raw );
-        return false;
+    usize u16_count  = count / sizeof(u16);
+    usize copy_count = (buf->cap - buf->len);
+    if( copy_count > u16_count ) {
+        copy_count = u16_count;
     }
 
-    global_win32.home = paths_buffer;
-    GetEnvironmentVariableW( L"HOMEDRIVE", global_win32.home, drive_cap );
-    GetEnvironmentVariableW( L"HOMEPATH",
-        global_win32.home + (drive_cap - 1), hpath_cap );
-    global_win32.home_len = (drive_cap + hpath_cap) - 2;
-
-    global_win32.thread_id  = 1;
-
-    return true;
+    memory_copy( buf->buf + buf->len, bytes, sizeof(u16) * copy_count );
+    buf->len += copy_count;
+    return u16_count - copy_count;
 }
+struct _StringPOD platform_environment_query( struct _StringPOD key ) {
+    u16*  wkey_buf   = (u16*)win32_get_local_buffer();
+    u16*  wvalue_buf = wkey_buf + CORE_PATH_NAME_LEN;
+    char* value_buf  = (char*)(wvalue_buf + CORE_PATH_NAME_LEN);
 
-#if 0
-Path internal_path_advance_by( Path path, usize count );
-Path internal_path_advance( Path path );
-b32 internal_path_find_sep_rev( Path path, usize* out_index );
-b32 internal_path_find_sep( Path path, usize* out_index );
-b32 internal_path_is_sep( PathCharacter c );
-b32 internal_path_find_rev( Path path, PathCharacter pc, usize* out_index );
-b32 internal_path_find( Path path, PathCharacter pc, usize* out_index );
+    struct Win32UTF16Buf wkey = {
+        .cap = CORE_PATH_NAME_LEN,
+        .len = 0,
+        .buf = wkey_buf
+    };
+    unicode_utf16_from_utf8( win32_utf16_buf_stream, &wkey, key.len, key.bytes );
 
-
-usize platform_fd_seek( FD* fd, FileSeek type, isize seek ) {
-    DWORD dwMoveMethod = FILE_BEGIN;
-    switch( type ) {
-        case FSEEK_CURRENT: {
-            dwMoveMethod = FILE_CURRENT;
-        } break;
-        case FSEEK_END: {
-            dwMoveMethod = FILE_END;
-        } break;
-        case FSEEK_SET: break;
+    int wvalue_len = GetEnvironmentVariableW( wkey.buf, wvalue_buf, CORE_PATH_NAME_LEN );
+    if( GetLastError() == ERROR_ENVVAR_NOT_FOUND ) {
+        core_error( "win32: environment_query: Key {s} not found!", key );
+        return string_empty();
     }
 
-#if defined(CORE_ARCH_64_BIT)
-    LARGE_INTEGER move, new_pointer;
-    move.QuadPart        = seek;
-    new_pointer.QuadPart = 0;
-    SetFilePointerEx( fd->opaque, move, &new_pointer, dwMoveMethod );
-    return new_pointer.QuadPart;
-#else
-    return SetFilePointer( fd->opaque, seek, NULL, dwMoveMethod );
-#endif
+    StringBuf value = string_buf_new( CORE_PATH_NAME_LEN, value_buf );
+    unicode_utf8_from_utf16( string_buf_try_stream, &value, wvalue_len, wvalue_buf );
+
+    return value.slice;
 }
+b32 platform_environment_set( struct _StringPOD key, struct _StringPOD value ) {
+    u16* wkey_buf   = (u16*)win32_get_local_buffer();
+    u16* wvalue_buf = wkey_buf + CORE_PATH_NAME_LEN;
 
-b32 platform_pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
-    HANDLE read, write;
+    struct Win32UTF16Buf convert = {
+        .cap = CORE_PATH_NAME_LEN,
+        .len = 0,
+        .buf = wkey_buf
+    };
+    unicode_utf16_from_utf8( win32_utf16_buf_stream, &convert, key.len, key.bytes );
 
-    SECURITY_ATTRIBUTES sa;
-    memory_zero( &sa, sizeof(sa) );
-    sa.nLength        = sizeof(sa);
-    sa.bInheritHandle = TRUE;
+    convert = (struct Win32UTF16Buf){
+        .cap = CORE_PATH_NAME_LEN,
+        .len = 0,
+        .buf = wvalue_buf
+    };
+    unicode_utf16_from_utf8( win32_utf16_buf_stream, &convert, value.len, value.bytes );
 
-    if( !CreatePipe( &read, &write, &sa, 0 ) ) {
-        return false;
-    }
-    
-    out_read->fd.opaque  = read;
-    out_write->fd.opaque = write;
-
-    return true;
+    return SetEnvironmentVariableW( wkey_buf, wvalue_buf );
 }
-
-void win32_canonical_from_path( PathBuf* buf, Path path ) {
-    enum {
-        WIN32_PATH_REL,
-        WIN32_PATH_HOME,
-        WIN32_PATH_ABS,
-    } type = WIN32_PATH_REL;
-
-    Path rem = path; {
-        Path prefix = path_text("\\\\?\\");
-        b32 prefix_required = true;
-        if( rem.len >= prefix.len ) {
-            Path potential_prefix = path_new( prefix.len, rem.const_raw );
-            if( path_cmp( potential_prefix, prefix ) ) {
-                prefix_required = false;
-            }
-        }
-        if( prefix_required ) {
-            memory_copy(
-                buf->raw, prefix.const_raw,
-                sizeof(wchar_t) * prefix.len );
-            buf->len += prefix.len;
+void win32_environment_block_size( const u16* block, usize* out_size, usize* out_pairs ) {
+    usize size_counter = 0;
+    usize pair_counter = 0;
+    usize null_counter = 0;
+    for( ;; ) {
+        size_counter++;
+        u16 c = *block;
+        if( c ) {
+            null_counter = 0;
         } else {
-            rem = internal_path_advance_by( rem, prefix.len + 1 );
-        }
-    }
-
-    if( path_is_absolute( path ) ) {
-        type = WIN32_PATH_ABS;
-    } else if( rem.len && rem.const_raw[0] == '~' ) {
-        type = WIN32_PATH_HOME;
-    }
-
-    switch( type ) {
-        case WIN32_PATH_REL: {
-            path_buf_try_push( buf, global_win32.buf_cwd.slice );
-        } break;
-        case WIN32_PATH_HOME: {
-            path_buf_try_push(
-                buf, path_new( global_win32.home_len, global_win32.home ) );
-            rem = internal_path_advance_by( rem, 2 );
-        } break;
-        case WIN32_PATH_ABS: break;
-    }
-
-    usize min = path_text("\\\\?\\A:\\").len;
-
-    while( !path_is_empty( rem ) ) {
-        Path chunk = rem;
-        usize sep = 0;
-        if( internal_path_find_sep( rem, &sep ) ) {
-            if( !sep ) {
-                rem = internal_path_advance( rem );
-                continue;
-            }
-            chunk.len = sep;
-        }
-
-        if( chunk.len < 3 ) {
-            if( path_cmp( chunk, path_text(".") )) {
-                rem = internal_path_advance_by( rem, chunk.len + 1 );
-                continue;
-            }
-            if( path_cmp( chunk, path_text(".."))) {
-                for( usize i = buf->len; i-- > 0; ) {
-                    if( buf->const_raw[i] == L'\\' ) {
-                        buf->len = i;
-                        break;
-                    }
-                }
-
-                if( buf->len < min ) {
-                    buf->len = min;
-                }
-
-                buf->raw[buf->len] = 0;
-                rem = internal_path_advance_by( rem, chunk.len + 1 );
-                continue;
+            null_counter++;
+            if( null_counter >= 2 ) {
+                break;
+            } else {
+                pair_counter++;
             }
         }
+        block++;
+    }
 
-        path_buf_try_push( buf, chunk );
-        rem = internal_path_advance_by( rem, chunk.len + 1 );
+    *out_size  = size_counter;
+    *out_pairs = pair_counter;
+}
+b32 win32_utf16_find( usize len, const u16* utf16, u16 c, usize* opt_out_position ) {
+    for( usize i = 0; i < len; ++i ) {
+        if( utf16[i] == c ) {
+            if( opt_out_position ) {
+                *opt_out_position = i;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+struct Win32EnvironmentBlock {
+    usize cap;
+    usize len;
+    struct Win32EnvironmentKV {
+        usize key_offset;
+        usize key_len;
+        usize value_offset;
+        usize value_len;
+    }* kv;
+    struct Win32UTF16Buf text;
+    u16*       complete;
+    const u16* source;
+    usize      source_size;
+    usize      source_pairs;
+};
+void win32_environment_block_create( struct Win32EnvironmentBlock* out_block ) {
+    out_block->source = GetEnvironmentStringsW();
+    win32_environment_block_size(
+        out_block->source, &out_block->source_size, &out_block->source_pairs );
+
+    out_block->text.cap = out_block->source_size;
+    out_block->text.len = 0;
+    out_block->text.buf = memory_alloc( sizeof(u16) * out_block->text.cap );
+
+    out_block->cap = out_block->source_pairs;
+    out_block->len = 0;
+    out_block->kv  = memory_alloc( sizeof(struct Win32EnvironmentKV) * out_block->cap );
+
+    const u16* at = out_block->source;
+    for( usize i = 0; i < out_block->source_pairs; ++i ) {
+        const u16* pair = at;
+        usize pair_len  = win32_ucs2_len( pair );
+
+        const u16* key = pair;
+        usize key_len;
+        win32_utf16_find( pair_len, pair, '=', &key_len );
+
+        const u16* value = key + key_len + 1;
+        usize value_len  = pair_len - (key_len + 1);
+
+        struct Win32EnvironmentKV kv;
+        kv.key_len   = key_len;
+        kv.value_len = value_len;
+
+        usize key_ptr = (usize)memory_copy(
+            out_block->text.buf + out_block->text.len, key, sizeof(u16) * key_len );
+        out_block->text.len += key_len + 1;
+
+        usize value_ptr = (usize)memory_copy(
+            out_block->text.buf + out_block->text.len, value, sizeof(u16) * value_len );
+        out_block->text.len += value_len + 1;
+
+        kv.key_offset   = (key_ptr   - (usize)out_block->text.buf) / sizeof(u16);
+        kv.value_offset = (value_ptr - (usize)out_block->text.buf) / sizeof(u16);
+
+        out_block->kv[out_block->len++] = kv;
+
+        at += pair_len + 1;
     }
 }
-
-b32 platform_directory_remove( Path path ) {
-    PathBuf p = win32_canonical_from_path_ucs2_local( path );
-    if( path_buf_is_empty( &p ) ) {
-        return false;
-    }
-    b32 result = RemoveDirectoryW( p.const_raw ) != FALSE;
-    if( p.cap ) {
-        HeapFree( GetProcessHeap(), 0, p.raw );
-    }
-    return result;
-}
-DirectoryWalk* platform_directory_walk_begin(
-    Path path, struct AllocatorInterface* allocator
+void win32_environment_block_add(
+    struct Win32EnvironmentBlock* block, String key, String value
 ) {
-    DirectoryWalk* walk = allocator->alloc( sizeof(*walk), 0, allocator->ctx );
-    if( !walk ) {
-        core_error( "failed to allocate directory walk!");
-        return NULL;
-    }
-    path_buf_from_stack( buf, kibibytes(4) );
-    win32_canonical_from_path( &buf, path );
-    if( !path_buf_try_push( &buf, path_text( "*" ) ) ) {
-        allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
-        core_error( "win32: path too long!" );
-        return NULL;
-    }
+    struct Win32UTF16Buf buf = {};
+    buf.cap = CORE_PATH_NAME_LEN;
+    buf.len = 0;
+    buf.buf = (u16*)win32_get_local_buffer();
 
-    walk->h = FindFirstFileExW(
-        buf.const_raw, FindExInfoBasic,
-        &walk->fd, FindExSearchNameMatch, 0, 0 );
+    unicode_utf16_from_utf8( win32_utf16_buf_stream, &buf, key.len, key.bytes );
 
-    if( walk->h == INVALID_HANDLE_VALUE ) {
-        win32_log_error( GetLastError() );
-        core_error( "win32: failed to open directory {p}", path );
-        allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
-        return NULL;
-    }
+    // NOTE(alicia): search for key in environment block
+    isize write_kv = -1;
+    for( usize i = 0; i < block->len; ++i ) {
+        struct Win32EnvironmentKV* kv = block->kv + i;
+        const u16* this_key = block->text.buf + kv->key_offset;
 
-    walk->is_first = true;
-    return walk;
-}
-b32 platform_directory_walk_next(
-    DirectoryWalk* walk, Path* out_path, b32* opt_out_is_directory
-) {
-
-    if( walk->is_first ) {
-        walk->is_first = false;
-    } else {
-        if( !FindNextFileW( walk->h, &walk->fd ) ) {
-            return false;
-        }
-    }
-
-    Path path = path_from_raw( 0, walk->fd.cFileName );
-    for(;;) {
-        if(
-            path_cmp( path, path_text("."))  ||
-            path_cmp( path, path_text("..")) ||
-            path_cmp( path, path_text(".git"))
-        ) {
-            if( !FindNextFileW( walk->h, &walk->fd ) ) {
-                return false;
-            }
-            path = path_from_raw( 0, walk->fd.cFileName );
+        if( kv->key_len != buf.len ) {
             continue;
         }
-        break;
+
+        if( memory_cmp( this_key, buf.buf, sizeof(u16) * buf.len ) ) {
+            write_kv = i;
+            break;
+        }
     }
 
-    if( opt_out_is_directory ) {
-        *opt_out_is_directory =
-            (walk->fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-    }
-    *out_path = path;
+    // NOTE(alicia): value is overwritten here
+    if( write_kv >= 0 ) {
+        struct Win32EnvironmentKV* kv = block->kv + write_kv;
 
+        buf.len = 0;
+        unicode_utf16_from_utf8( win32_utf16_buf_stream, &buf, value.len, value.bytes );
+        if( (block->text.cap - block->text.len) < (buf.len + 255) ) {
+            usize new_cap = block->text.cap + buf.len + 255;
+            void* new_ptr = memory_realloc(
+                block->text.buf, sizeof(u16) * block->text.cap, sizeof(u16) * new_cap );
+
+            block->text.cap = new_cap;
+            block->text.buf = new_ptr;
+        }
+
+        usize value_ptr = (usize)memory_copy(
+            block->text.buf + block->text.len, buf.buf, sizeof(u16) * buf.len );
+        block->text.len += buf.len + 1;
+        kv->value_len    = buf.len;
+        kv->value_offset = (value_ptr - (usize)block->text.buf) / sizeof(u16);
+
+    } else {
+        if( block->len == block->cap ) {
+            usize new_cap = block->cap + 4;
+            void* new_ptr = memory_realloc(
+                block->kv,
+                sizeof(struct Win32EnvironmentKV) * block->cap,
+                sizeof(struct Win32EnvironmentKV) * new_cap );
+
+            block->cap = new_cap;
+            block->kv  = new_ptr;
+        }
+
+        struct Win32EnvironmentKV kv = {};
+
+        if( (block->text.cap - block->text.len) < (buf.len + 255) ) {
+            usize new_cap = block->text.cap + buf.len + 255;
+            void* new_ptr = memory_realloc(
+                block->text.buf, sizeof(u16) * block->text.cap, sizeof(u16) * new_cap );
+
+            block->text.cap = new_cap;
+            block->text.buf = new_ptr;
+        }
+
+        usize key_ptr = (usize)memory_copy(
+            block->text.buf + block->text.len, buf.buf, sizeof(u16) * buf.len );
+        block->text.len += buf.len + 1;
+        kv.key_len = buf.len;
+
+        buf.len = 0;
+        unicode_utf16_from_utf8( win32_utf16_buf_stream, &buf, value.len, value.bytes );
+        if( (block->text.cap - block->text.len) < (buf.len + 255) ) {
+            usize new_cap = block->text.cap + buf.len + 255;
+            void* new_ptr = memory_realloc(
+                block->text.buf, sizeof(u16) * block->text.cap, sizeof(u16) * new_cap );
+
+            block->text.cap = new_cap;
+            block->text.buf = new_ptr;
+        }
+
+        usize value_ptr = (usize)memory_copy(
+            block->text.buf + block->text.len, buf.buf, sizeof(u16) * buf.len );
+        block->text.len += buf.len + 1;
+        kv.value_len = buf.len;
+        
+        kv.key_offset   = (key_ptr   - (usize)block->text.buf) / sizeof(u16);
+        kv.value_offset = (value_ptr - (usize)block->text.buf) / sizeof(u16);
+
+        block->kv[block->len++] = kv;
+    }
+}
+void win32_environment_block_complete(
+    struct Win32EnvironmentBlock* block, usize* out_len, u16** out_env
+) {
+    struct Win32UTF16Buf buf = {};
+    for( usize i = 0; i < block->len; ++i ) {
+        struct Win32EnvironmentKV kv = block->kv[i];
+        buf.cap += kv.key_len + kv.value_len + 2; // = and null"
+    }
+    buf.cap++; // second null at the end
+
+    buf.buf = memory_alloc( sizeof(u16) * buf.cap );
+
+    for( usize i = 0; i < block->len; ++i ) {
+        struct Win32EnvironmentKV kv = block->kv[i];
+        u16* key   = block->text.buf + kv.key_offset;
+        u16* value = block->text.buf + kv.value_offset;
+
+        memory_copy( buf.buf + buf.len, key, sizeof(u16) * kv.key_len );
+        buf.len += kv.key_len;
+
+        buf.buf[buf.len++] = '=';
+
+        memory_copy( buf.buf + buf.len, value, sizeof(u16) * kv.value_len );
+        buf.len += kv.value_len;
+
+        buf.buf[buf.len++] = 0;
+    }
+    buf.buf[buf.len++] = 0;
+
+    *out_len = buf.cap;
+    *out_env = buf.buf;
+
+    memory_free( block->text.buf, sizeof(u16) * block->text.cap );
+    memory_free( block->kv, sizeof(struct Win32EnvironmentKV) * block->cap );
+    FreeEnvironmentStringsW( (LPWCH)block->source );
+}
+b32 platform_process_exec_async(
+    Command               command,
+    Process*              out_pid,
+    const _PathPOD*       opt_working_directory,
+    const EnvironmentBuf* opt_environment,
+    const PipeRead*       opt_stdin,
+    const PipeWrite*      opt_stdout,
+    const PipeWrite*      opt_stderr
+) {
+    // TODO(alicia): 
+    unused(command,out_pid,opt_working_directory,opt_environment,opt_stdin,opt_stdout,opt_stderr);
+
+    STARTUPINFOW        si = {};
+    PROCESS_INFORMATION pi = {};
+
+    si.cb      = sizeof(si);
+    si.dwFlags = 0; // STARTF_USESTDHANDLES;
+
+    DWORD dwCreationFlags = 0;
+    BOOL  bInheritHandles = FALSE;
+    if( opt_stdin ) {
+        si.hStdInput    = (HANDLE)opt_stdin->fd.opaque;
+        bInheritHandles = TRUE;
+    } else {
+        si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
+    }
+    if( opt_stdout ) {
+        si.hStdOutput   = (HANDLE)opt_stdout->fd.opaque;
+        bInheritHandles = TRUE;
+    } else {
+        si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+    }
+    if( opt_stderr ) {
+        si.hStdError    = (HANDLE)opt_stderr->fd.opaque;
+        bInheritHandles = TRUE;
+    } else {
+        si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
+    }
+    if( bInheritHandles ) {
+        si.dwFlags |= STARTF_USESTDHANDLES;
+    }
+
+    // TODO(alicia): if environment is passed, create environment block
+    // GetEnvironmentStringsW to obtain current env
+    //   check for environment variables in opt_environment against this process's block and
+    //   replace each variable that exists in both with the opt_environment value
+    // FreeEnvironmentStringsW to free current env
+
+    usize env_len = 0;
+    u16*  env     = NULL;
+    unused(env_len, env);
+    if( opt_environment && opt_environment->len ) {
+        const EnvironmentBuf* e = opt_environment;
+        dwCreationFlags = CREATE_UNICODE_ENVIRONMENT;
+
+        struct Win32EnvironmentBlock env_block;
+        win32_environment_block_create( &env_block );
+
+        usize pair_count = e->len * 2;
+        for( usize pair = 0; pair < pair_count; pair += 2 ) {
+            String key   = e->buf[pair + 0];
+            String value = e->buf[pair + 1];
+
+            win32_environment_block_add( &env_block, key, value );
+        }
+
+        win32_environment_block_complete( &env_block, &env_len, &env );
+    }
+
+    // TODO(alicia): expand command to wide string with \"\" where needed
+    struct Win32UTF16Buf utf16_buf;
+    utf16_buf.cap = CORE_PATH_NAME_LEN * 2;
+    utf16_buf.len = 0;
+    utf16_buf.buf = (u16*)win32_get_local_buffer() + CORE_PATH_NAME_LEN;
+
+    for( usize i = 0; i < command.len; ++i ) {
+        String arg = command.buf[i];
+
+        usize space = 0;
+        b32   has_space = string_find( arg, ' ', &space );
+        if( has_space ) {
+            if( utf16_buf.len != utf16_buf.cap ) {
+                utf16_buf.buf[utf16_buf.len++] = '"';
+            }
+        }
+
+        unicode_utf16_from_utf8( win32_utf16_buf_stream, &utf16_buf, arg.len, arg.bytes );
+
+        if( has_space ) {
+            if( utf16_buf.len != utf16_buf.cap ) {
+                utf16_buf.buf[utf16_buf.len++] = '"';
+            }
+        }
+
+        if( ((i + 1) < command.len) && utf16_buf.len != utf16_buf.cap ) {
+            utf16_buf.buf[utf16_buf.len++] = ' ';
+        }
+    }
+    if( utf16_buf.len == utf16_buf.cap ) {
+        utf16_buf.buf[utf16_buf.len - 1] = 0;
+    } else {
+        utf16_buf.buf[utf16_buf.len++] = 0;
+    }
+
+    wchar_t* working_directory = NULL;
+    if( opt_working_directory ) {
+        working_directory = win32_canonical_from_path_ucs2_local( *opt_working_directory );
+    }
+
+    b32 result = CreateProcessW(
+        NULL, utf16_buf.buf, NULL, NULL, bInheritHandles,
+        dwCreationFlags, env, working_directory, &si, &pi );
+    DWORD error_code = GetLastError();
+
+    if( env && env_len ) {
+        memory_free( env, sizeof(u16) * env_len );
+    }
+
+    if( result ) {
+        out_pid->opaque = pi.hProcess;
+        CloseHandle( pi.hThread );
+        return true;
+    }
+
+    win32_log_error( error_code );
+    core_error(
+        "Windows: process_exec: "
+        "failed to execute process {s}!", command.buf[0] );
+    return false;
+}
+void platform_process_discard( Process* pid ) {
+    if( pid && pid->opaque ) {
+        CloseHandle( (HANDLE)pid->opaque );
+        pid->opaque = NULL;
+    }
+}
+int platform_process_wait( Process* pid ) {
+    int exit_code = 0;
+    if( platform_process_wait_timed( pid, INFINITE, &exit_code ) ) {
+        return exit_code;
+    }
+    return -2;
+}
+b32  platform_process_wait_timed( Process* pid, u32 msec, int* opt_out_exit_code ) {
+    DWORD result = WaitForSingleObject( pid->opaque, msec );
+    switch( result ) {
+        case WAIT_OBJECT_0:
+            break;
+        case WAIT_TIMEOUT:
+            return false;
+        default: {
+            if( opt_out_exit_code ) {
+                *opt_out_exit_code = -2;
+            }
+            win32_log_error( GetLastError() );
+            core_error(
+                "win32: process_wait: "
+                "failed to wait for pid!" );
+        } return false;
+    }
+
+    DWORD exit_code = 0;
+    if( !GetExitCodeProcess( pid->opaque, &exit_code ) ) {
+        win32_log_error( GetLastError() );
+        core_error( "win32: process_wait: failed to get exit code!" );
+        if( opt_out_exit_code ) {
+            *opt_out_exit_code = -2;
+        }
+        return false;
+    }
+
+    if( opt_out_exit_code ) {
+        *opt_out_exit_code = exit_code;
+    }
+    platform_process_discard( pid );
     return true;
 }
-void platform_directory_walk_end(
-    DirectoryWalk* walk, struct AllocatorInterface* allocator
-) {
-    if( walk ) {
-        if( walk->h ) {
-            FindClose( walk->h );
-        }
-        allocator->free( walk, sizeof(*walk), 0, allocator->ctx );
-    }
+void platform_process_kill( Process* pid ) {
+    TerminateProcess( pid->opaque, 0 );
+    platform_process_discard( pid );
 }
-#endif
+b32 platform_process_find( struct _StringPOD process_name ) {
+    char* utf8_buf  = win32_get_local_buffer();
+    u16*  utf16_buf = (u16*)(utf8_buf + CORE_PATH_NAME_LEN);
 
-#endif
+    struct Win32UTF16Buf wname = {
+        .cap = CORE_PATH_NAME_LEN,
+        .len = 0,
+        .buf = utf16_buf
+    };
+
+    StringBuf buf = string_buf_new( CORE_PATH_NAME_LEN, utf8_buf );
+    string_buf_try_fmt( &buf, "CMD /C WHERE {s}", process_name );
+    if( buf.len == buf.cap ) {
+        buf.buf[buf.len - 1] = 0;
+    } else {
+        buf.buf[buf.len] = 0;
+    }
+
+    unicode_utf16_from_utf8( win32_utf16_buf_stream, &wname, buf.len, buf.bytes );
+
+    STARTUPINFOW si = {};
+    si.cb      = sizeof(si);
+    si.dwFlags = STARTF_USESTDHANDLES;
+
+    SECURITY_ATTRIBUTES sa = {};
+    sa.nLength             = sizeof(sa);
+    sa.bInheritHandle      = TRUE;
+
+    HANDLE read, write;
+    CreatePipe( &read, &write, &sa, 0 );
+
+    si.hStdInput  = read;
+    si.hStdOutput = write;
+    si.hStdError  = write;
+
+    b32 bInheritHandles = TRUE;
+
+    PROCESS_INFORMATION pi = {};
+
+    DWORD dwCreationFlags = 0;
+    b32 result = CreateProcessW(
+        NULL, wname.buf, NULL, NULL, bInheritHandles,
+        dwCreationFlags, NULL, NULL, &si, &pi );
+
+    CloseHandle( read );
+    CloseHandle( write );
+
+    if( !result ) {
+        core_error( "win32: process_find: failed to search for processes!" );
+        return false;
+    }
+
+    CloseHandle( pi.hThread );
+
+    Process pid;
+    pid.opaque = pi.hProcess;
+
+    return platform_process_wait( &pid ) == 0;
+}
 
 #endif

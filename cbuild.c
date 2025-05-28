@@ -20,7 +20,7 @@
 
 #define CORE_VERSION_MAJOR 0
 #define CORE_VERSION_MINOR 1
-#define CORE_VERSION_PATCH 2
+#define CORE_VERSION_PATCH 3
 
 #define CORE_VERSION_STRING \
     CB_STRINGIFY_VALUE(CORE_VERSION_MAJOR) "." \
@@ -990,6 +990,8 @@ int mode_build( struct Settings* settings ) {
         if( settings->build.flags.is_debug ) {
             cb_command_builder_append( &builder, "-gcodeview", "-Wl,/debug" );
         }
+#else
+        cb_command_builder_append( &builder, "-lkernel32" );
 #endif
     }
 
@@ -1450,7 +1452,7 @@ int mode_lsp_core_src( struct Settings* settings ) {
 
     #define write( ... ) cb_file_write_fmt( &file, __VA_ARGS__ )
     write( "-I../../include\n" );
-    write( "-I..\n" );
+    write( "-I../..\n" );
     write( "-D_CLANGD\n" );
 
     if( !settings->lsp.flags.disable_warnings ) {
@@ -1467,9 +1469,9 @@ int mode_lsp_core_src( struct Settings* settings ) {
     if( settings->lsp.flags.enable_assertions ) {
         write( "-DCORE_ENABLE_ASSERTIONS\n" );
     }
-    write( "-DCORE_LIB_VERSION_MAJOR=" CB_STRINGIFY_VALUE(CORE_VERSION_MAJOR) );
-    write( "-DCORE_LIB_VERSION_MINOR=" CB_STRINGIFY_VALUE(CORE_VERSION_MINOR) );
-    write( "-DCORE_LIB_VERSION_PATCH=" CB_STRINGIFY_VALUE(CORE_VERSION_PATCH) );
+    write( "-DCORE_LIB_VERSION_MAJOR=" CB_STRINGIFY_VALUE(CORE_VERSION_MAJOR) "\n" );
+    write( "-DCORE_LIB_VERSION_MINOR=" CB_STRINGIFY_VALUE(CORE_VERSION_MINOR) "\n" );
+    write( "-DCORE_LIB_VERSION_PATCH=" CB_STRINGIFY_VALUE(CORE_VERSION_PATCH) "\n" );
     write( "-DCORE_ENABLE_INTERNAL\n" );
 
     cb_file_close( &file );
@@ -1693,12 +1695,50 @@ const char* string_from_compiler( enum Compiler compiler ) {
     }
     return "";
 }
+
+#if CB_PLATFORM_CURRENT == CB_PLATFORM_GNU_LINUX
+const char* global_mingw_c_compiler   = NULL;
+const char* global_mingw_cpp_compiler = NULL;
+const char* get_mingw_c_compiler(void) {
+    if( global_mingw_c_compiler ) {
+        return global_mingw_c_compiler;
+    }
+
+    if( cb_process_is_in_path( "x86_64-mingw32-w64-gcc" ) ) {
+        global_mingw_c_compiler = "x86_64-mingw32-w64-gcc";
+    } else if( cb_process_is_in_path( "x86_64-w64-mingw32-gcc" ) ) {
+        global_mingw_c_compiler = "x86_64-w64-mingw32-gcc";
+    } else {
+        global_mingw_c_compiler = "";
+    }
+
+    return global_mingw_c_compiler;
+}
+const char* get_mingw_cpp_compiler(void) {
+    if( global_mingw_cpp_compiler ) {
+        return global_mingw_cpp_compiler;
+    }
+
+    if( cb_process_is_in_path( "x86_64-mingw32-w64-g++" ) ) {
+        global_mingw_cpp_compiler = "x86_64-mingw32-w64-g++";
+    } else if( cb_process_is_in_path( "x86_64-w64-mingw32-g++" ) ) {
+        global_mingw_cpp_compiler = "x86_64-w64-mingw32-g++";
+    } else {
+        global_mingw_cpp_compiler = "";
+    }
+
+    return global_mingw_cpp_compiler;
+}
+#endif
+
 const char* compiler_command_c( enum Compiler compiler ) {
     switch( compiler ) {
         case C_CLANG:     return "clang";
         case C_GCC:       return "gcc";
 #if CB_PLATFORM_CURRENT == CB_PLATFORM_GNU_LINUX
-        case C_MINGW_GCC: return "x86_64-mingw32-w64-gcc";
+        case C_MINGW_GCC: {
+            return get_mingw_c_compiler();
+        } break;
 #endif
         case C_COUNT:
           break;
@@ -1710,7 +1750,9 @@ const char* compiler_command_cpp( enum Compiler compiler ) {
         case C_CLANG:     return "clang++";
         case C_GCC:       return "g++";
 #if CB_PLATFORM_CURRENT == CB_PLATFORM_GNU_LINUX
-        case C_MINGW_GCC: return "x86_64-mingw32-w64-g++";
+        case C_MINGW_GCC: {
+            return get_mingw_cpp_compiler();
+        } break;
 #endif
         case C_COUNT:
           break;

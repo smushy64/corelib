@@ -835,7 +835,7 @@ attr_core_api
 usize internal_string_buf_try_fmt_va(
     struct _StringBufPOD* buf, usize format_len, const char* format, va_list va );
 
-attr_always_inline attr_header
+attr_header
 usize internal_string_buf_try_fmt(
     struct _StringBufPOD* buf, usize format_len, const char* format, ...
 ) {

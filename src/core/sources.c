@@ -43,5 +43,6 @@
 #include "src/core/thread.c"
 #include "src/core/time.c"
 #include "src/core/unicode.c"
+#include "src/core/process.c"
 
 #endif /* header guard */

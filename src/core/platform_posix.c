@@ -13,6 +13,7 @@
 #include "core/internal/platform/memory.h"
 #include "core/internal/platform/thread.h"
 #include "core/internal/platform/fs.h"
+#include "core/internal/platform/process.h"
 #include "core/internal/platform/misc.h"
 
 #include "core/internal/logging.h"
@@ -23,6 +24,7 @@
 #include "core/system.h"
 #include "core/time.h"
 #include "core/thread.h"
+#include "core/constants.h"
 
 #if defined(CORE_PLATFORM_LINUX)
     #include "src/core/platform_linux.c"
@@ -39,6 +41,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -482,7 +485,7 @@ void platform_mutex_unlock( struct OSMutex* mutex ) {
 }
 
 char* posix_get_local_buffer(void) {
-    return tls_global_posix_path_buf;
+    return memory_zero( tls_global_posix_path_buf, CORE_PATH_NAME_LEN );
 }
 const char* posix_path_null_terminated( struct _StringPOD p ) {
     if( path_is_null_terminated( p ) ) {
@@ -1330,6 +1333,210 @@ b32 platform_path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension ) 
     }
     string_buf_try_append( buf, extension );
     return true;
+}
+
+struct _StringPOD platform_environment_query( struct _StringPOD key ) {
+    const char* key_nt = posix_path_null_terminated( key );
+    const char* result = getenv( key_nt );
+    if( !result ) {
+        return string_empty();
+    }
+    return string_from_cstr( result );
+}
+b32 platform_environment_set( struct _StringPOD key, struct _StringPOD value ) {
+    char* local = posix_get_local_buffer();
+
+    const char* key_nt   = memory_copy( local, key.buf, key.len );
+    local[key.len] = 0;
+    const char* value_nt = memory_copy( local + key.len + 1, value.buf, value.len );
+
+    if( setenv( key_nt, value_nt, true ) ) {
+        int errnum = errno;
+        core_error(
+            "posix: environment_set: "
+            "failed to set environment variable! reason: {cc}", strerror(errnum) );
+        return false;
+    }
+    return true;
+}
+b32 platform_process_exec_async(
+    Command               command,
+    Process*              out_pid,
+    const _PathPOD*       opt_working_directory,
+    const EnvironmentBuf* opt_environment,
+    const PipeRead*       opt_stdin,
+    const PipeWrite*      opt_stdout,
+    const PipeWrite*      opt_stderr
+) {
+    if( !command.len ) {
+        core_error( "posix: process_exec: command is empty!" );
+        return false;
+    }
+
+    int _pipe_stdin  =
+        opt_stdin  ? opt_stdin->fd.opaque : STDIN_FILENO;
+    int _pipe_stdout =
+        opt_stdout ? opt_stdout->fd.opaque : STDOUT_FILENO;
+    int _pipe_stderr =
+        opt_stderr ? opt_stderr->fd.opaque : STDERR_FILENO;
+
+    pid_t pid = fork();
+    if( pid < 0 ) {
+        core_error( "posix: process_exec_async: failed to fork process!" );
+        return false;
+    }
+
+    if( pid ) { // thread that ran process_exec
+        out_pid->opaque = pid;
+        return true;
+    }
+
+    // thread where process will run
+
+    if( opt_working_directory ) {
+        platform_directory_current_set( *opt_working_directory );
+    }
+    dup2(  _pipe_stdin, STDIN_FILENO );
+    dup2( _pipe_stdout, STDOUT_FILENO );
+    dup2( _pipe_stderr, STDERR_FILENO );
+
+    if( opt_environment ) {
+        StringBuf temp = {};
+
+        usize string_count = opt_environment->len * 2;
+        for( usize pair = 0; pair < string_count; pair += 2 ) {
+            String key   = opt_environment->buf[pair + 0];
+            String value = opt_environment->buf[pair + 1];
+
+            b32 value_has_semicolon = string_find( value, ';', NULL );
+
+            if( value_has_semicolon ) {
+                if( temp.buf ) {
+                    temp.len = 0;
+                    if( temp.cap < value.len ) {
+                        temp.buf = memory_realloc(
+                            temp.buf, temp.cap, temp.cap + value.len + 16 );
+                    }
+                } else {
+                    temp.cap = value.len + 1;
+                    temp.len = 0;
+                    temp.buf = memory_alloc( temp.cap );
+                }
+
+                value.buf = memory_copy( temp.buf, value.buf, value.len );
+                for( usize i = 0; i < value.len; ++i ) {
+                    if( value.buf[i] == ';' ) {
+                        value.buf[i] = ':';
+                    }
+                }
+            }
+
+            platform_environment_set( key, value );
+        }
+
+        if( temp.buf ) {
+            memory_free( temp.buf, temp.cap );
+        }
+    }
+
+    usize command_buffer_size = 0;
+    for( usize i = 0; i < command.len; ++i ) {
+        command_buffer_size += command.buf[i].len + 1;
+    }
+
+    char* command_buffer  = calloc( 1, command_buffer_size );
+    const char** commands = calloc( command.len + 1, sizeof(const char*) );
+    usize offset = 0;
+    for( usize i = 0; i < command.len; ++i ) {
+        String current = command.buf[i];
+        commands[i] = memory_copy( command_buffer + offset, current.buf, current.len );
+        offset += current.len + 1;
+    }
+
+    // NOTE(alicia): execvp should only return if command failed to execute.
+    execvp( commands[0], (char* const*)(commands) );
+    abort();
+}
+void platform_process_discard( Process* pid ) {
+    // NOTE(alicia): no need to discard on posix systems
+    unused(pid);
+}
+int platform_process_wait( Process* pid ) {
+    int wstatus = 0;
+    pid_t value = waitpid( pid->opaque, &wstatus, 0 );
+    if( value < 0 ) {
+        int errnum = errno;
+        core_error(
+            "posix: process_wait: "
+            "failed to wait for pid! reason: %s", strerror(errnum) );
+        return -2;
+    }
+    if( WIFEXITED( wstatus ) ) {
+        pid->opaque = 1;
+        return WEXITSTATUS( wstatus );
+    } else {
+        return -1;
+    }
+}
+b32 platform_process_wait_timed( Process* pid, u32 msec, int* opt_out_exit_code ) {
+    if( msec == U32_MAX ) {
+        int res = platform_process_wait( pid );
+        if( res < 0 ) {
+            return false;
+        }
+        if( opt_out_exit_code ) {
+            *opt_out_exit_code = res;
+        }
+        pid->opaque = 1;
+        return true;
+    }
+
+    for( u32 i = 0; i < msec; ++i ) {
+        int wstatus = 0;
+        pid_t value = waitpid( pid->opaque, &wstatus, WNOHANG );
+        if( value == 0 ) {
+            sleep(1);
+            continue;
+        }
+
+        if( value < 0 ) {
+            int errnum = errno;
+            core_error(
+                "posix: process_wait_timed: "
+                "failed to wait for pid! reason: %s", strerror(errnum) );
+            return false;
+        }
+
+        if( opt_out_exit_code ) {
+            if( WIFEXITED( wstatus ) ) {
+                *opt_out_exit_code = WEXITSTATUS( wstatus );
+            } else {
+                *opt_out_exit_code = -1;
+            }
+        }
+
+        pid->opaque = 1;
+        return true;
+    }
+
+    return false;
+}
+void platform_process_kill( Process* pid ) {
+    if( kill( pid->opaque, SIGKILL ) ) {
+        int errnum = errno;
+        core_error(
+            "posix: process_kill: failed to kill pid! reason: %s",
+            strerror(errnum) );
+    }
+    pid->opaque = 1;
+}
+b32 platform_process_find( struct _StringPOD process_name ) {
+    // TODO(alicia): replace use of 'which' and system!
+    StringBuf buf = string_buf_new( CORE_PATH_NAME_LEN, posix_get_local_buffer() );
+
+    string_buf_try_fmt( &buf, "which {s} > /dev/null 2>&1{c}", process_name, 0 );
+
+    return system( buf.buf ) == 0;
 }
 
 #endif /* Platform POSIX */
