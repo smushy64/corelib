@@ -123,11 +123,15 @@ typedef isize TimePosix;
 #if !defined(FALSE)
     #define FALSE (0)
 #endif
-#if !defined(NULL)
-    #define NULL ((void*)(0))
-#endif
 
-#if !defined(CORE_CPLUSPLUS)
+#if defined(CORE_CPLUSPLUS)
+    #if !defined(NULL)
+        #define NULL (0)
+    #endif
+#else
+    #if !defined(NULL)
+        #define NULL ((void*)(0))
+    #endif
     #if !defined(true)
         #define true TRUE
     #endif
