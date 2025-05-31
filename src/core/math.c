@@ -29,11 +29,13 @@ f32 luma_from_rgb( struct Vector3 color ) {
 }
 attr_core_api
 struct Vector3 srgb_from_lin( struct Vector3 linear ) {
-    return vec3_pow( linear, vec3_set(1.0 / 2.2) );
+    const f32 v = 1.0f / 2.2f;
+    return vec3_pow( linear, vec3_new( v, v, v ) );
 }
 attr_core_api
 struct Vector3 lin_from_srgb( struct Vector3 srgb ) {
-    return vec3_pow( srgb, vec3_set(2.2) );
+    const f32 v = 2.2f;
+    return vec3_pow( srgb, vec3_new( v, v, v ) );
 }
 
 attr_core_api
@@ -487,9 +489,12 @@ attr_core_api
 struct Vector3 rgb_from_hsl( struct Vector3 color ) {
     struct Vector4 K = vec4_new( 1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0 );
 
-    struct Vector3 _fract         = vec3_fract( vec3_add( vec3_set( color.x ), K.xyz ) );
+    struct Vector3 _color_x       = vec3_new( color.x, color.x, color.x );
+    struct Vector3 _fract         = vec3_fract( vec3_add( _color_x, K.xyz ) );
     struct Vector3 _fract6        = vec3_mul( _fract, 6.0f );
-    struct Vector3 _fract6_sub_kw = vec3_sub( _fract6, vec3_set( K.w ) );
+
+    struct Vector3 _k_w           = vec3_new( K.w, K.w, K.w );
+    struct Vector3 _fract6_sub_kw = vec3_sub( _fract6, _k_w );
 
     struct Vector3 p = vec3_new(
         num_abs(_fract6_sub_kw.x),
@@ -498,8 +503,8 @@ struct Vector3 rgb_from_hsl( struct Vector3 color ) {
 
     return vec3_mul(
         vec3_mix(
-            vec3_set( K.x ),
-            vec3_clamp( vec3_sub( p, vec3_set( K.x ) ), VEC3_ZERO, VEC3_ONE ),
+            vec3_new( K.x, K.x, K.x ),
+            vec3_clamp( vec3_sub( p, vec3_new( K.x, K.x, K.x ) ), VEC3_ZERO, VEC3_ONE ),
             color.y
         ), color.z );
 }
@@ -624,7 +629,7 @@ struct Quaternion quat_slerp(
 }
 attr_core_api
 struct Quaternion quat_from_angle_axis(
-    struct AngleAxis_ a
+    struct __AngleAxisPOD a
 ) {
     f32 half_angle = a.angle / 2.0f;
     f32 sin, cos;
@@ -660,7 +665,7 @@ struct Quaternion quat_from_euler( f32 x, f32 y, f32 z ) {
     return result;
 }
 attr_core_api
-struct Vector3 quat_to_euler( struct Quaternion q ) {
+struct Vector3 euler_from_quat( struct Quaternion q ) {
     struct Vector3 result;
 
     result.x = f32_atan2(
@@ -675,8 +680,8 @@ struct Vector3 quat_to_euler( struct Quaternion q ) {
     return result;
 }
 attr_core_api
-struct AngleAxis_ quat_to_angle_axis( struct Quaternion q ) {
-    struct AngleAxis_ result;
+struct __AngleAxisPOD angle_axis_from_quat( struct Quaternion q ) {
+    struct __AngleAxisPOD result;
     
     result.angle = f32_acos( q.w ) * 2.0f;
     result.axis  = vec3_div( q.xyz, f32_sqrt( 1.0f - ( q.w * q.w ) ) );
@@ -1139,7 +1144,7 @@ attr_core_api
 struct Matrix4x4 mat4_ortho(
     f32 left, f32 right,
     f32 bottom, f32 top,
-    f32 clip_near, f32 clip_far
+    f32 clip_near, f32 clip_far, ...
 ) {
     struct Matrix4x4 res = MAT4_IDENTITY;
     f32 rl = right - left;
@@ -1157,7 +1162,7 @@ struct Matrix4x4 mat4_ortho(
 }
 attr_core_api
 struct Matrix4x4 mat4_perspective(
-    f32 fov, f32 aspect_ratio, f32 clip_near, f32 clip_far
+    f32 fov, f32 aspect_ratio, f32 clip_near, f32 clip_far, ...
 ) {
     struct Matrix4x4 res = MAT4_ZERO;
     
@@ -1295,7 +1300,7 @@ struct Matrix4x4 mat4_from_array( const f32 array[16] ) {
     return result;
 }
 attr_core_api
-void mat4_to_array( const struct Matrix4x4* m, f32* out_array ) {
+void array_from_array( const struct Matrix4x4* m, f32* out_array ) {
     memory_copy( out_array, m, sizeof(f32) * 16 );
 }
 

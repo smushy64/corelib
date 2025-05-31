@@ -6,17 +6,9 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/math/vector3.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief Column-major 3x3 matrix.
 struct Matrix3x3 {
@@ -73,52 +65,67 @@ struct Matrix3x3 {
         f32  array[9];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief Column-major 3x3 matrix.
-    /// @see Matrix3x3
-    typedef struct Matrix3x3 mat3x3;
-    /// @brief Column-major 3x3 matrix.
-    /// @see Matrix3x3
-    typedef mat3x3 mat3;
-#endif
 
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a new 3x3 Matrix.
+#if defined(__cplusplus)
+    /// @brief Create matrix.
     /// @param m00, m01, m02 First column components.
     /// @param m10, m11, m12 Second column components.
     /// @param m20, m21, m22 Third column components.
-    /// @return Matrix3x3.
-    #define mat3( m00, m01, m02, m10, m11, m12, m20, m21, m22 )
-#else /* Doxygen */
+    /// @return Matrix.
+    #define mat3_new(            \
+        m00, m01, m02,           \
+        m10, m11, m12,           \
+        m20, m21, m22 )          \
+        Matrix3x3 { .array={     \
+            (m00), (m01), (m02), \
+            (m10), (m11), (m12), \
+            (m20), (m21), (m22)  \
+        } }
+#else
+    /// @brief Column-major 3x3 matrix.
+    typedef struct Matrix3x3 mat3x3;
+    /// @brief Column-major 3x3 matrix.
+    typedef struct Matrix3x3 mat3;
 
-#if defined(CORE_CPLUSPLUS)
-    #define mat3_new(\
-        m00, m01, m02,\
-        m10, m11, m12,\
-        m20, m21, m22 )\
-        Matrix3x3{ .array={\
-            (m00), (m01), (m02), (m10), (m11), (m12), (m20), (m21), (m22) } }
-#else /* C++ constructor */
-    #define mat3_new(\
-        m00, m01, m02,\
-        m10, m11, m12,\
-        m20, m21, m22 )\
-        (struct Matrix3x3){ .array={\
-            (m00), (m01), (m02), (m10), (m11), (m12), (m20), (m21), (m22) } }
-    #define mat3(...) mat3_new(__VA_ARGS__)
-#endif /* C constructor */
+    /// @brief Create matrix.
+    /// @param m00, m01, m02 First column components.
+    /// @param m10, m11, m12 Second column components.
+    /// @param m20, m21, m22 Third column components.
+    /// @return Matrix.
+    #define mat3_new(                \
+        m00, m01, m02,               \
+        m10, m11, m12,               \
+        m20, m21, m22 )              \
+        (struct Matrix3x3){ .array={ \
+            (m00), (m01), (m02),     \
+            (m10), (m11), (m12),     \
+            (m20), (m21), (m22)      \
+        } }
 
-#endif /* Doxygen */
+    /// @brief Create matrix.
+    /// @param m00, m01, m02 First column components.
+    /// @param m10, m11, m12 Second column components.
+    /// @param m20, m21, m22 Third column components.
+    /// @return Matrix.
+    #define mat3(           \
+        m00, m01, m02,      \
+        m10, m11, m12,      \
+        m20, m21, m22 )     \
+        mat3_new(           \
+            m00, m01, m02,  \
+            m10, m11, m12,  \
+            m20, m21, m22 )
+#endif
 
 /// @brief Matrix3x3 zero constant.
-#define MAT3_ZERO mat3(\
-        0.0f, 0.0f, 0.0f,\
-        0.0f, 0.0f, 0.0f,\
+#define MAT3_ZERO mat3_new(  \
+        0.0f, 0.0f, 0.0f,    \
+        0.0f, 0.0f, 0.0f,    \
         0.0f, 0.0f, 0.0f  )
 /// @brief Matrix3x3 identity constant.
-#define MAT3_IDENTITY mat3(\
-        1.0f, 0.0f, 0.0f,\
-        0.0f, 1.0f, 0.0f,\
+#define MAT3_IDENTITY mat3_new(  \
+        1.0f, 0.0f, 0.0f,        \
+        0.0f, 1.0f, 0.0f,        \
         0.0f, 0.0f, 1.0f )
 
 /// @brief Create matrix from array.
@@ -130,7 +137,7 @@ struct Matrix3x3 mat3_from_array( const f32 array[9] );
 /// @param m Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 9 floats.
 attr_core_api
-void mat3_to_array( const struct Matrix3x3* m, f32* out_array );
+void array_from_mat3( const struct Matrix3x3* m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
@@ -169,20 +176,6 @@ struct Matrix3x3 mat3_mul(
     result.col0 = vec3_mul( lhs->col0, rhs );
     result.col1 = vec3_mul( lhs->col1, rhs );
     result.col2 = vec3_mul( lhs->col2, rhs );
-    return result;
-}
-/// @brief Divide matrix components.
-/// @param lhs Matrix to divide.
-/// @param rhs Scalar to divide components by.
-/// @return Result of division.
-attr_always_inline attr_header
-struct Matrix3x3 mat3_div(
-    const struct Matrix3x3* lhs, f32 rhs
-) {
-    struct Matrix3x3 result;
-    result.col0 = vec3_div( lhs->col0, rhs );
-    result.col1 = vec3_div( lhs->col1, rhs );
-    result.col2 = vec3_div( lhs->col2, rhs );
     return result;
 }
 /// @brief Multiply matrices.
@@ -235,6 +228,20 @@ struct Vector3 mat3_mul_vec3( const struct Matrix3x3* m, struct Vector3 v ) {
     result.z = m->array[2] * v.x + m->array[5] * v.y + m->array[8] * v.z;
     return result;
 }
+/// @brief Divide matrix components.
+/// @param lhs Matrix to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+attr_always_inline attr_header
+struct Matrix3x3 mat3_div(
+    const struct Matrix3x3* lhs, f32 rhs
+) {
+    struct Matrix3x3 result;
+    result.col0 = vec3_div( lhs->col0, rhs );
+    result.col1 = vec3_div( lhs->col1, rhs );
+    result.col2 = vec3_div( lhs->col2, rhs );
+    return result;
+}
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
 /// @return Transposed matrix.
@@ -256,17 +263,8 @@ f32 mat3_determinant( const struct Matrix3x3* m ) {
     ( m->array[6] * ( ( m->array[1] * m->array[5] ) - ( m->array[4] * m->array[2] ) ) );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_MATRIX3X3_HPP)
-        #include "core/cpp/math/matrix3x3.hpp"
-    #endif
-    typedef Matrix3x3CPP mat3x3;
-    typedef mat3x3 mat3;
+#if !defined(CORE_CPP_MATH_MATRIX3X3_HPP)
+    #include "core/cpp/math/matrix3x3.hpp"
 #endif
 
 #endif /* header guard */

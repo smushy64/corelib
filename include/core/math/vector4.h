@@ -6,7 +6,6 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/constants.h"
@@ -16,13 +15,6 @@
 #include "core/math/common.h"
 #include "core/math/vector2.h"
 #include "core/math/vector3.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief 4 Component 32-bit Floating Point Vector.
 struct Vector4 {
@@ -211,94 +203,162 @@ struct BVector4 {
         b32 array[4];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
+
+#if defined(__cplusplus)
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define vec4_new( x, y, z, w )   Vector4 { .array={x, y, z, w} }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define ivec4_new( x, y, z, w ) IVector4 { .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define bvec4_new( x, y, z, w ) BVector4 { .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define uvec4_new( x, y, z, w ) UVector4 { .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define dvec4_new( x, y, z, w ) DVector4 { .array={ x, y, z, w } }
+#else
     /// @brief 4 Component 32-bit Floating Point Vector.
-    typedef struct Vector4 vec4;
-    /// @brief 4 Component 32-bit Signed Integer Vector.
+    typedef struct  Vector4  vec4;
+    /// @brief 4 Component 32-bit Integer Vector.
     typedef struct IVector4 ivec4;
     /// @brief 4 Component 32-bit Boolean Vector.
     typedef struct BVector4 bvec4;
+    /// @brief 4 Component 32-bit Unsigned Integer Vector.
+    typedef struct UVector4 uvec4;
+    /// @brief 4 Component 64-bit Floating Point Vector.
+    typedef struct DVector4 dvec4;
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define vec4_new( x, y, z, w )   (struct Vector4){ .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define ivec4_new( x, y, z, w ) (struct IVector4){ .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define bvec4_new( x, y, z, w ) (struct BVector4){ .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define uvec4_new( x, y, z, w ) (struct UVector4){ .array={ x, y, z, w } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define dvec4_new( x, y, z, w ) (struct DVector4){ .array={ x, y, z, w } }
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define  vec4( x, y, z, w )  vec4_new( x, y, z, w )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define ivec4( x, y, z, w ) ivec4_new( x, y, z, w )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define bvec4( x, y, z, w ) bvec4_new( x, y, z, w )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define uvec4( x, y, z, w ) uvec4_new( x, y, z, w )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    /// @return Vector.
+    #define dvec4( x, y, z, w ) dvec4_new( x, y, z, w )
 #endif
-/// @brief 4 Component 32-bit Unsigned Integer Vector.
-typedef struct UVector4 uvec4;
-/// @brief 4 Component 64-bit Floating Point Vector.
-typedef struct DVector4 dvec4;
 
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a Vector4.
-    /// @param x, y, z, w (f32) Components.
-    /// @return Vector4.
-    #define vec4( x, y, z, w )
-    /// @brief Construct an IVector4.
-    /// @param x, y, z, w (i32) Components.
-    /// @return IVector4.
-    #define ivec4( x, y, z, w )
-#else /* Doxygen */
-
-#if defined(CORE_CPLUSPLUS)
-    #define vec4_new( x, y, z, w )\
-        Vector4{ .array={ (x), (y), (z), (w) } }
-    #define ivec4_new( x, y, z, w )\
-        IVector4{ .array={ (x), (y), (z), (w) } }
-    #define bvec4_new( x, y, z, w )\
-        BVector4{ .array={ (x), (y), (z), (w) } }
-#else /* C++ constructors */
-    #define vec4( x, y, z, w )\
-        (struct Vector4){ .array={ (x), (y), (z), (w) } }
-    #define ivec4( x, y, z, w )\
-        (struct IVector4){ .array={ (x), (y), (z), (w) } }
-    #define bvec4( x, y, z, w )\
-        (struct BVector4){ .array={ (x), (y), (z), (w) } }
-    #define vec4_new(...)  vec4(__VA_ARGS__)
-    #define ivec4_new(...) ivec4(__VA_ARGS__)
-    #define bvec4_new(...) bvec4(__VA_ARGS__)
-#endif /* C constructors */ 
-
-#endif /* Doxygen */
-
-/// @brief Construct a new Vector4 with identical components.
-/// @param x (f32) Value for components.
-/// @return Vector4.
-#define vec4_set( x )\
-    vec4_new( (x), (x), (x), (x) )
-/// @brief Construct a new RGBA (Vector4).
-/// @param r, g, b, a (f32) Red, Green, Blue and Alpha channels.
-/// @return RGBA (Vector4).
-#define rgba( r, g, b, a ) vec4_new( r, g, b, a )
-/// @brief Construct a new IVector4 with identical components.
-/// @param x (i32) Value for components.
-/// @return IVector4.
-#define ivec4_set( x )\
-    ivec4_new( (x), (x), (x), (x) )
 
 /// @brief Vector4 zero constant.
-#define VEC4_ZERO ( vec4_set( 0.0f ) )
+#define VEC4_ZERO ( vec4_new( 0.0f, 0.0f, 0.0f, 0.0f ) )
 /// @brief Vector4 one constant.
-#define VEC4_ONE  ( vec4_set( 1.0f ) )
+#define VEC4_ONE  ( vec4_new( 1.0f, 1.0f, 1.0f, 1.0f ) )
 
 /// @brief IVector4 zero constant.
-#define IVEC4_ZERO ( ivec4_set( 0 ) )
+#define IVEC4_ZERO ( ivec4_new( 0, 0, 0, 0 ) )
 /// @brief IVector4 one constant.
-#define IVEC4_ONE  ( ivec4_set( 1 ) )
+#define IVEC4_ONE  ( ivec4_new( 1, 1, 1, 1 ) )
+
+/// @brief IVector4 zero constant.
+#define BVEC4_ZERO ( bvec4_new( false, false, false, false ) )
+/// @brief IVector4 one constant.
+#define BVEC4_ONE  ( bvec4_new( true, true, true, true ) )
 
 /// @brief RGBA red constant.
-#define RGBA_RED     ( rgba( 1.0f, 0.0f, 0.0f, 1.0f ) )
+#define RGBA_RED     ( vec4_new( 1.0f, 0.0f, 0.0f, 1.0f ) )
 /// @brief RGBA green constant.
-#define RGBA_GREEN   ( rgba( 0.0f, 1.0f, 0.0f, 1.0f ) )
+#define RGBA_GREEN   ( vec4_new( 0.0f, 1.0f, 0.0f, 1.0f ) )
 /// @brief RGBA blue constant.
-#define RGBA_BLUE    ( rgba( 0.0f, 0.0f, 1.0f, 1.0f ) )
+#define RGBA_BLUE    ( vec4_new( 0.0f, 0.0f, 1.0f, 1.0f ) )
 /// @brief RGBA yellow constant.
-#define RGBA_YELLOW  ( rgba( 1.0f, 1.0f, 0.0f, 1.0f ) )
+#define RGBA_YELLOW  ( vec4_new( 1.0f, 1.0f, 0.0f, 1.0f ) )
 /// @brief RGBA magenta constant.
-#define RGBA_MAGENTA ( rgba( 1.0f, 0.0f, 1.0f, 1.0f ) )
+#define RGBA_MAGENTA ( vec4_new( 1.0f, 0.0f, 1.0f, 1.0f ) )
 /// @brief RGBA cyan constant.
-#define RGBA_CYAN    ( rgba( 0.0f, 1.0f, 1.0f, 1.0f ) )
+#define RGBA_CYAN    ( vec4_new( 0.0f, 1.0f, 1.0f, 1.0f ) )
 /// @brief RGBA black constant.
-#define RGBA_BLACK   ( rgba( 0.0f, 0.0f, 0.0f, 1.0f ) )
+#define RGBA_BLACK   ( vec4_new( 0.0f, 0.0f, 0.0f, 1.0f ) )
 /// @brief RGBA white constant.
-#define RGBA_WHITE   ( vec4_set( 1.0f ) )
+#define RGBA_WHITE   ( vec4_new( 1.0f, 1.0f, 1.0f, 1.0f ) )
 /// @brief RGBA clear constant.
-#define RGBA_CLEAR   ( vec4_set( 0.0f ) )
+#define RGBA_CLEAR   ( vec4_new( 0.0f, 0.0f, 0.0f, 0.0f ) )
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 4 values.
@@ -460,16 +520,16 @@ f32 vec4_dot( struct Vector4 lhs, struct Vector4 rhs ) {
 /// @param x Vector to get maximum of.
 /// @return Component with largest value.
 attr_always_inline attr_header
-f32 vec4_hmax( struct Vector4 x ) {
-    f32 _0 = vec2_hmax( x.xy );
-    f32 _1 = vec2_hmax( vec2_new( x.y, x.z ) );
+f32 vec4_max( struct Vector4 x ) {
+    f32 _0 = vec2_max( x.xy );
+    f32 _1 = vec2_max( vec2_new( x.y, x.z ) );
     return _0 < _1 ? _1 : _0;
 }
 /// @brief Component-wise maximum value.
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
 attr_always_inline attr_header
-struct Vector4 vec4_max( struct Vector4 x, struct Vector4 y ) {
+struct Vector4 vec4_max_vec4( struct Vector4 x, struct Vector4 y ) {
     struct Vector4 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
@@ -481,16 +541,16 @@ struct Vector4 vec4_max( struct Vector4 x, struct Vector4 y ) {
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
 attr_always_inline attr_header
-f32 vec4_hmin( struct Vector4 x ) {
-    f32 _0 = vec2_hmin( x.xy );
-    f32 _1 = vec2_hmin( vec2_new( x.y, x.z ) );
+f32 vec4_min( struct Vector4 x ) {
+    f32 _0 = vec2_min( x.xy );
+    f32 _1 = vec2_min( vec2_new( x.y, x.z ) );
     return _0 < _1 ? _0 : _1;
 }
 /// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
 attr_always_inline attr_header
-struct Vector4 vec4_min( struct Vector4 x, struct Vector4 y ) {
+struct Vector4 vec4_min_vec4( struct Vector4 x, struct Vector4 y ) {
     struct Vector4 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
@@ -539,18 +599,18 @@ struct Vector4 vec4_normalize( struct Vector4 x ) {
     }
 }
 /// @brief Component-wise clamp.
-/// @param v        Vector.
-/// @param min, max Range.
+/// @param v          Vector.
+/// @param min_, max_ Range.
 /// @return Clamped vector.
 attr_always_inline attr_header
 struct Vector4 vec4_clamp(
-    struct Vector4 v, struct Vector4 min, struct Vector4 max
+    struct Vector4 v, struct Vector4 min_, struct Vector4 max_
 ) {
     struct Vector4 result;
-    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
-    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
-    result.z = ( (v.z) < (min.z) ? (min.z) : ( (v.z) > (max.z) ? (max.z) : (v.z) ) );
-    result.w = ( (v.w) < (min.w) ? (min.w) : ( (v.w) > (max.w) ? (max.w) : (v.w) ) );
+    result.x = ( (v.x) < (min_.x) ? (min_.x) : ( (v.x) > (max_.x) ? (max_.x) : (v.x) ) );
+    result.y = ( (v.y) < (min_.y) ? (min_.y) : ( (v.y) > (max_.y) ? (max_.y) : (v.y) ) );
+    result.z = ( (v.z) < (min_.z) ? (min_.z) : ( (v.z) > (max_.z) ? (max_.z) : (v.z) ) );
+    result.w = ( (v.w) < (min_.w) ? (min_.w) : ( (v.w) > (max_.w) ? (max_.w) : (v.w) ) );
     return result;
 }
 /// @brief Clamp vector's magnitude to range min -> max.
@@ -650,29 +710,57 @@ struct Vector4 vec4_fract( struct Vector4 v ) {
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector4 vec4_lerp(
     struct Vector4 a, struct Vector4 b, f32 t 
 ) {
-    return vec4_add( vec4_mul( a, 1.0f - t ), vec4_mul( b, t ) );
+    return vec4_new(
+        f32_lerp( a.x, b.x, t ),
+        f32_lerp( a.y, b.y, t ),
+        f32_lerp( a.z, b.z, t ),
+        f32_lerp( a.w, b.w, t ) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector4 vec4_lerp_vec4(
+    struct Vector4 a, struct Vector4 b, struct Vector4 t 
+) {
+    return vec4_new(
+        f32_lerp( a.x, b.x, t.x ),
+        f32_lerp( a.y, b.y, t.y ),
+        f32_lerp( a.z, b.z, t.z ),
+        f32_lerp( a.w, b.w, t.w ) );
+}
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector4 vec4_mix(
     struct Vector4 a, struct Vector4 b, f32 t 
 ) {
     return vec4_lerp( a, b, t );
 }
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector4 vec4_mix_vec4(
+    struct Vector4 a, struct Vector4 b, struct Vector4 t 
+) {
+    return vec4_lerp_vec4( a, b, t );
+}
 /// @brief Step function.
 /// @param edge Value to compare @c x to.
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector4 vec4_step( struct Vector4 edge, struct Vector4 x ) {
+struct Vector4 vec4_step_vec4( struct Vector4 edge, struct Vector4 x ) {
     return vec4_new(
         f32_step( edge.x, x.x ),
         f32_step( edge.y, x.y ),
@@ -684,15 +772,15 @@ struct Vector4 vec4_step( struct Vector4 edge, struct Vector4 x ) {
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector4 vec4_step_scalar( f32 edge, struct Vector4 x ) {
-    return vec4_step( vec4_set( edge ), x );
+struct Vector4 vec4_step( f32 edge, struct Vector4 x ) {
+    return vec4_step_vec4( vec4_new( edge, edge, edge, edge ), x );
 }
 /// @brief Smooth step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector4 vec4_smoothstep(
+struct Vector4 vec4_smoothstep_vec4(
     struct Vector4 edge0, struct Vector4 edge1, struct Vector4 x
 ) {
     return vec4_new(
@@ -706,15 +794,18 @@ struct Vector4 vec4_smoothstep(
 /// @param x            Value.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector4 vec4_smoothstep_scalar( f32 edge0, f32 edge1, struct Vector4 x ) {
-    return vec4_smoothstep( vec4_set( edge0 ), vec4_set( edge1 ), x );
+struct Vector4 vec4_smoothstep( f32 edge0, f32 edge1, struct Vector4 x ) {
+    return vec4_smoothstep_vec4(
+        vec4_new( edge0, edge0, edge0, edge0 ),
+        vec4_new( edge1, edge1, edge1, edge1 ),
+        x );
 }
 /// @brief Smoother step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
-struct Vector4 vec4_smootherstep(
+struct Vector4 vec4_smootherstep_vec4(
     struct Vector4 edge0, struct Vector4 edge1, struct Vector4 x
 ) {
     return vec4_new(
@@ -726,12 +817,15 @@ struct Vector4 vec4_smootherstep(
 /// @brief Smoother step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
-struct Vector4 vec4_smootherstep_scalar(
+struct Vector4 vec4_smootherstep(
     f32 edge0, f32 edge1, struct Vector4 x
 ) {
-    return vec4_smootherstep( vec4_set( edge0 ), vec4_set( edge1 ), x );
+    return vec4_smootherstep_vec4(
+        vec4_new( edge0, edge0, edge0, edge0 ),
+        vec4_new( edge1, edge1, edge1, edge1 ),
+        x );
 }
 /// @brief Check if vector components are NaN.
 /// @param x Vector.
@@ -913,6 +1007,17 @@ struct Vector4 vec4_inversesqrt( struct Vector4 x ) {
         f32_inversesqrt( x.z ),
         f32_inversesqrt( x.w ) );
 }
+/// @brief Calculate cube root.
+/// @param x Value to get cube root of.
+/// @return Cube root.
+attr_always_inline attr_header
+struct Vector4 vec4_cbrt( struct Vector4 x ) {
+    return vec4_new(
+        f32_cbrt( x.x ),
+        f32_cbrt( x.y ),
+        f32_cbrt( x.z ),
+        f32_cbrt( x.w ) );
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
@@ -925,7 +1030,7 @@ b32 vec4_cmp( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_less_than( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_lt( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new(
         a.x < b.x,
         a.y < b.y,
@@ -936,7 +1041,7 @@ struct BVector4 vec4_less_than( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_greater_than( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_gt( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new(
         a.x > b.x,
         a.y > b.y,
@@ -947,7 +1052,7 @@ struct BVector4 vec4_greater_than( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_less_than_equal( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_lteq( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new(
         a.x <= b.x,
         a.y <= b.y,
@@ -958,7 +1063,7 @@ struct BVector4 vec4_less_than_equal( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_greater_than_equal( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_gteq( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new( 
         a.x >= b.x,
         a.y >= b.y,
@@ -969,7 +1074,7 @@ struct BVector4 vec4_greater_than_equal( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_equal( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_eq( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new(
         f32_cmp( a.x, b.x ),
         f32_cmp( a.y, b.y ),
@@ -980,7 +1085,7 @@ struct BVector4 vec4_equal( struct Vector4 a, struct Vector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 vec4_not_equal( struct Vector4 a, struct Vector4 b ) {
+struct BVector4 vec4_neq( struct Vector4 a, struct Vector4 b ) {
     return bvec4_new(
         !f32_cmp( a.x, b.x ),
         !f32_cmp( a.y, b.y ),
@@ -1166,10 +1271,19 @@ f32 ivec4_length( struct IVector4 x ) {
     return vec4_length( _x );
 }
 /// @brief Component-wise minimum value.
+/// @param x Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline attr_header
+i32 ivec4_min( struct IVector4 x ) {
+    i32 _0 = ivec2_min( x.xy );
+    i32 _1 = ivec2_min( ivec2_new( x.y, x.z ) );
+    return _0 < _1 ? _0 : _1;
+}
+/// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
 attr_always_inline attr_header
-struct IVector4 ivec4_min( struct IVector4 x, struct IVector4 y ) {
+struct IVector4 ivec4_min_ivec4( struct IVector4 x, struct IVector4 y ) {
     struct IVector4 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
@@ -1177,16 +1291,40 @@ struct IVector4 ivec4_min( struct IVector4 x, struct IVector4 y ) {
     result.w = x.w < y.w ? x.w : y.w;
     return result;
 }
+/// @brief Get the maximum component in vector.
+/// @param x Vector to get maximum of.
+/// @return Component with largest value.
+attr_always_inline attr_header
+i32 ivec4_max( struct IVector4 x ) {
+    i32 _0 = ivec2_max( x.xy );
+    i32 _1 = ivec2_max( ivec2_new( x.y, x.z ) );
+    return _0 < _1 ? _1 : _0;
+}
 /// @brief Component-wise maximum value.
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
 attr_always_inline attr_header
-struct IVector4 ivec4_max( struct IVector4 x, struct IVector4 y ) {
+struct IVector4 ivec4_max_ivec4( struct IVector4 x, struct IVector4 y ) {
     struct IVector4 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
     result.z = x.z < y.z ? y.z : x.z;
     result.w = x.w < y.w ? y.w : x.w;
+    return result;
+}
+/// @brief Component-wise clamp.
+/// @param v        Vector.
+/// @param min, max Range.
+/// @return Clamped vector.
+attr_always_inline attr_header
+struct IVector4 ivec4_clamp(
+    struct IVector4 v, struct IVector4 min, struct IVector4 max
+) {
+    struct IVector4 result;
+    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
+    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
+    result.z = ( (v.z) < (min.z) ? (min.z) : ( (v.z) > (max.z) ? (max.z) : (v.z) ) );
+    result.w = ( (v.w) < (min.w) ? (min.w) : ( (v.w) > (max.w) ? (max.w) : (v.w) ) );
     return result;
 }
 /// @brief Component-wise abs.
@@ -1228,7 +1366,7 @@ b32 ivec4_cmp( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_less_than( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_lt( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new(
         a.x < b.x,
         a.y < b.y,
@@ -1239,7 +1377,7 @@ struct BVector4 ivec4_less_than( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_greater_than( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_gt( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new(
         a.x > b.x,
         a.y > b.y,
@@ -1250,7 +1388,7 @@ struct BVector4 ivec4_greater_than( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_less_than_equal( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_lteq( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new(
         a.x <= b.x,
         a.y <= b.y,
@@ -1261,7 +1399,7 @@ struct BVector4 ivec4_less_than_equal( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_greater_than_equal( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_gteq( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new( 
         a.x >= b.x,
         a.y >= b.y,
@@ -1272,7 +1410,7 @@ struct BVector4 ivec4_greater_than_equal( struct IVector4 a, struct IVector4 b )
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_equal( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_eq( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new(
         a.x == b.x,
         a.y == b.y,
@@ -1283,7 +1421,7 @@ struct BVector4 ivec4_equal( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 ivec4_not_equal( struct IVector4 a, struct IVector4 b ) {
+struct BVector4 ivec4_neq( struct IVector4 a, struct IVector4 b ) {
     return bvec4_new(
         a.x != b.x,
         a.y != b.y,
@@ -1295,7 +1433,7 @@ struct BVector4 ivec4_not_equal( struct IVector4 a, struct IVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 bvec4_equal( struct BVector4 a, struct BVector4 b ) {
+struct BVector4 bvec4_eq( struct BVector4 a, struct BVector4 b ) {
     return bvec4_new(
         (a.x == b.x), (a.y == b.y),
         (a.z == b.z), (a.w == b.w) );
@@ -1304,7 +1442,7 @@ struct BVector4 bvec4_equal( struct BVector4 a, struct BVector4 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector4 bvec4_not_equal( struct BVector4 a, struct BVector4 b ) {
+struct BVector4 bvec4_neq( struct BVector4 a, struct BVector4 b ) {
     return bvec4_new(
         !(a.x == b.x), !(a.y == b.y),
         !(a.z == b.z), !(a.w == b.w) );
@@ -1331,22 +1469,12 @@ b32 bvec4_all( struct BVector4 x ) {
 /// @param x Vector to check.
 /// @return Booleans notted.
 attr_always_inline attr_header
-struct BVector4 bvec4_not( struct BVector4 x ) {
+struct BVector4 bvec4_flip( struct BVector4 x ) {
     return bvec4_new( !x.x, !x.y, !x.z, !x.w );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_VECTOR4_HPP)
-        #include "core/cpp/math/vector4.hpp"
-    #endif
-    typedef Vector4CPP  vec4;
-    typedef IVector4CPP ivec4;
-    typedef BVector4CPP bvec4;
+#if !defined(CORE_CPP_MATH_VECTOR4_HPP)
+    #include "core/cpp/math/vector4.hpp"
 #endif
 
 #endif /* header guard */

@@ -1,14 +1,11 @@
-#if !defined(CORE_CPP_MATH_MATRIX3X3_HPP)
+#if !defined(CORE_CPP_MATH_MATRIX3X3_HPP) && defined(__cplusplus)
 #define CORE_CPP_MATH_MATRIX3X3_HPP
 /**
  * @file   matrix3x3.hpp
- * @brief  C++ Matrix3x3.
+ * @brief  C++ Math: Matrix3x3.
  * @author Alicia Amarilla (smushyaa@gmail.com)
- * @date   September 28, 2024
+ * @date   May 30, 2025
 */
-
-struct Matrix3x3CPP;
-
 #if !defined(CORE_MATH_MATRIX3X3_H)
     #include "core/math/matrix3x3.h"
 #endif
@@ -29,132 +26,164 @@ struct Matrix3x3CPP {
                 Vector3CPP col2;
             };
         };
-        struct Matrix3x3 pod;
+        struct Matrix3x3 __pod;
 
         Vector3CPP col[3];
-        f32 array[9];
+        f32        array[9];
     };
 
-    attr_always_inline attr_header constexpr
-    Matrix3x3CPP() : col0(), col1(), col2() {}
-    attr_always_inline attr_header constexpr
-    explicit Matrix3x3CPP(
+    constexpr Matrix3x3CPP();
+    constexpr Matrix3x3CPP( const Matrix3x3& __pod );
+    constexpr explicit Matrix3x3CPP(
         f32 m00, f32 m01, f32 m02,
         f32 m10, f32 m11, f32 m12,
-        f32 m20, f32 m21, f32 m22
-    ) :
-    col0( m00, m01, m02 ),
-    col1( m10, m11, m12 ),
-    col2( m20, m21, m22 ) {}
-    attr_always_inline attr_header constexpr
-    explicit Matrix3x3CPP(
-        Vector3CPP col0, Vector3CPP col1, Vector3CPP col2 ) :
-    col0(col0), col1(col1), col2(col2) {}
-    attr_always_inline attr_header constexpr
-    Matrix3x3CPP( const struct Matrix3x3& m ) : pod(m) {}
+        f32 m20, f32 m21, f32 m22 );
+    constexpr explicit Matrix3x3CPP(
+        Vector3CPP col0, Vector3CPP col1, Vector3CPP col2 );
 
-    attr_always_inline attr_header constexpr
-    operator Matrix3x3() const {
-        return *(struct Matrix3x3*)this;
-    }
+    constexpr operator Matrix3x3() const;
+    constexpr Vector3CPP operator[]( usize index ) const;
+    constexpr Vector3CPP& operator[]( usize index );
 
-    attr_always_inline attr_header static constexpr
-    Matrix3x3CPP zero() {
-        return Matrix3x3CPP();
-    }
-    attr_always_inline attr_header static constexpr
-    Matrix3x3CPP identity() {
-        return Matrix3x3CPP(
-            1.0, 0.0, 0.0, 
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0 );
-    }
-
-    attr_always_inline attr_header static constexpr
-    Matrix3x3CPP from_array( const f32 array[9] ) {
-        return *(Matrix3x3CPP*)array;
-    }
-    attr_always_inline attr_header constexpr
-    void to_array( f32* out_array ) {
-        for( usize i = 0; i < 9; ++i ) {
-            out_array[i] = array[i];
-        }
-    }
-
-    attr_always_inline attr_header constexpr
-    const Vector3CPP& operator[]( usize idx ) const {
-        return col[idx];
-    }
-    attr_always_inline attr_header constexpr
-    Vector3CPP& operator[]( usize idx ) {
-        return col[idx];
-    }
+    static constexpr Matrix3x3CPP zero();
+    static constexpr Matrix3x3CPP identity();
 };
-attr_always_inline attr_header
-Matrix3x3CPP add( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
-    return mat3_add( &lhs.pod, &rhs.pod );
+
+typedef Matrix3x3CPP mat3x3;
+typedef Matrix3x3CPP mat3;
+
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP::Matrix3x3CPP()
+    : m00(0.0f), m01(0.0f), m02(0.0f),
+      m10(0.0f), m11(0.0f), m12(0.0f),
+      m20(0.0f), m21(0.0f), m22(0.0f) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP::Matrix3x3CPP( const Matrix3x3& __pod )
+    : __pod(__pod) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP::Matrix3x3CPP(
+    f32 m00, f32 m01, f32 m02,
+    f32 m10, f32 m11, f32 m12,
+    f32 m20, f32 m21, f32 m22
+) : m00(m00), m01(m01), m02(m02),
+    m10(m10), m11(m11), m12(m12),
+    m20(m20), m21(m21), m22(m22) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP::Matrix3x3CPP(
+    Vector3CPP col0, Vector3CPP col1, Vector3CPP col2 )
+    : col0(col0), col1(col1), col2(col2) {}
+
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP::operator Matrix3x3() const {
+    return *(Matrix3x3*)this;
 }
-attr_always_inline attr_header
-Matrix3x3CPP sub( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
-    return mat3_sub( &lhs.pod, &rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector3CPP Matrix3x3CPP::operator[]( usize index ) const {
+    return this->col[index];
 }
-attr_always_inline attr_header
-Matrix3x3CPP mul( const Matrix3x3CPP& lhs, f32 rhs ) {
-    return mat3_mul( &lhs.pod, rhs );
-}
-attr_always_inline attr_header
-Matrix3x3CPP mul( f32 lhs, const Matrix3x3CPP& rhs ) {
-    return mat3_mul( &rhs.pod, lhs );
-}
-attr_always_inline attr_header
-Matrix3x3CPP mul( const Matrix3x3CPP& lhs, const Matrix3x3CPP& rhs ) {
-    return mat3_mul_mat3( &lhs.pod, &rhs.pod );
-}
-attr_always_inline attr_header
-Vector3CPP mul( const Matrix3x3CPP& lhs, Vector3CPP rhs ) {
-    return mat3_mul_vec3( &lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-Matrix3x3CPP div( const Matrix3x3CPP& lhs, f32 rhs ) {
-    return mat3_div( &lhs.pod, rhs );
-}
-attr_always_inline attr_header
-Matrix3x3 transpose( const Matrix3x3& m ) {
-    return mat3_transpose( &m );
-}
-attr_always_inline attr_header
-f32 determinant( const Matrix3x3& m ) {
-    return mat3_determinant( &m );
+constexpr attr_always_inline attr_header attr_hot
+Vector3CPP& Matrix3x3CPP::operator[]( usize index ) {
+    return this->col[index];
 }
 
-attr_always_inline attr_header
-Matrix3x3CPP operator+( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP Matrix3x3CPP::zero() {
+    return MAT3_ZERO;
+}
+constexpr attr_always_inline attr_header attr_hot
+Matrix3x3CPP Matrix3x3CPP::identity() {
+    return MAT3_IDENTITY;
+}
+
+attr_always_inline attr_header attr_hot
+mat3 add( const mat3& lhs, const mat3& rhs ) {
+    return mat3_add( &lhs.__pod, &rhs.__pod );
+}
+attr_always_inline attr_header attr_hot
+mat3 sub( const mat3& lhs, const mat3& rhs ) {
+    return mat3_sub( &lhs.__pod, &rhs.__pod );
+}
+attr_always_inline attr_header attr_hot
+mat3 mul( const mat3& lhs, f32 rhs ) {
+    return mat3_mul( &lhs.__pod, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat3 mul( f32 lhs, const mat3& rhs ) {
+    return mat3_mul( &rhs.__pod, lhs );
+}
+attr_always_inline attr_header attr_hot
+mat3 mul( const mat3& lhs, const mat3& rhs ) {
+    return mat3_mul_mat3( &lhs.__pod, &rhs.__pod );
+}
+attr_always_inline attr_header attr_hot
+vec3 mul( const mat3& lhs, vec3 rhs ) {
+    return mat3_mul_vec3( &lhs.__pod, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat3 div( const mat3& lhs, f32 rhs ) {
+    return mat3_div( &lhs.__pod, rhs );
+}
+
+attr_always_inline attr_header attr_hot
+mat3 operator+( const mat3& lhs, const mat3& rhs ) {
     return add( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix3x3CPP operator-( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+attr_always_inline attr_header attr_hot
+mat3& operator+=( mat3& lhs, const mat3& rhs ) {
+    return lhs = lhs + rhs;
+}
+attr_always_inline attr_header attr_hot
+mat3 operator-( mat3 lhs, const mat3& rhs ) {
     return sub( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix3x3CPP operator*( const Matrix3x3& lhs, f32 rhs ) {
+attr_always_inline attr_header attr_hot
+mat3& operator-=( mat3& lhs, const mat3& rhs ) {
+    return lhs = lhs - rhs;
+}
+attr_always_inline attr_header attr_hot
+mat3 operator*( const mat3& lhs, f32 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix3x3CPP operator*( f32 lhs, const Matrix3x3& rhs ) {
+attr_always_inline attr_header attr_hot
+mat3 operator*( f32 lhs, const mat3& rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix3x3CPP operator*( const Matrix3x3& lhs, const Matrix3x3& rhs ) {
+attr_always_inline attr_header attr_hot
+mat3 operator*( const mat3& lhs, const mat3& rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector3CPP operator*( const Matrix3x3& lhs, Vector3CPP rhs ) {
+attr_always_inline attr_header attr_hot
+vec3 operator*( const mat3& lhs, vec3 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix3x3CPP operator/( const Matrix3x3& lhs, f32 rhs ) {
+attr_always_inline attr_header attr_hot
+mat3& operator*=( mat3& lhs, f32 rhs ) {
+    return lhs = lhs * rhs;
+}
+attr_always_inline attr_header attr_hot
+mat3& operator*=( mat3& lhs, const mat3& rhs ) {
+    return lhs = lhs * rhs;
+}
+attr_always_inline attr_header attr_hot
+mat3 operator/( const mat3& lhs, f32 rhs ) {
     return div( lhs, rhs );
 }
+attr_always_inline attr_header attr_hot
+mat3& operator/=( mat3& lhs, f32 rhs ) {
+    return lhs = lhs / rhs;
+}
 
+attr_always_inline attr_header attr_hot
+void array_from_mat3( const mat3& m, f32* out_array ) {
+    array_from_mat3( &m.__pod, out_array );
+}
+attr_always_inline attr_header attr_hot
+mat3 transpose( const mat3& x ) {
+    return mat3_transpose( &x.__pod );
+}
+attr_always_inline attr_header attr_hot
+f32 determinant( const mat3& x ) {
+    return mat3_determinant( &x.__pod );
+}
 
 #endif /* header guard */

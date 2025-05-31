@@ -29,7 +29,6 @@
 #include "core/attributes.h"
 #include "core/path.h"
 #include "core/macros.h" // IWYU pragma: export
-#include "core/cpp/enum.hpp"
 
 /// @brief Maximum allowed path name length.
 #define CORE_PATH_NAME_LEN (kibibytes(4))

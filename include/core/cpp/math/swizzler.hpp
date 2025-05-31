@@ -1,51 +1,52 @@
-#if !defined(CORE_CPP_MATH_SWIZZLER_HPP)
+#if !defined(CORE_CPP_MATH_SWIZZLER_HPP) && defined(__cplusplus)
 #define CORE_CPP_MATH_SWIZZLER_HPP
 /**
  * @file   swizzler.hpp
- * @brief  C++ template swizzling.
+ * @brief  C++ Math: Swizzling.
  * @author Alicia Amarilla (smushyaa@gmail.com)
- * @date   November 19, 2024
+ * @date   May 29, 2025
 */
+#include "core/types.h"
 #include "core/attributes.h"
 
-template<typename V, typename T, int...Indexes>
+template<typename Vector, typename T, int... Indices>
 struct Swizzler {
-    static const int Count = sizeof...(Indexes);
-    T v[Count];
+    attr_readonly usize Count = sizeof...(Indices);
+    T values[Count];
 
     attr_always_inline attr_header attr_hot
-    constexpr V& operator=( const V& rhs ) {
-        int indexes[] = { Indexes... };
-        for( int i = 0; i < Count; ++i ) {
-            v[indexes[i]] = rhs[i];
+    constexpr Vector& operator=( const Vector& rhs ) {
+        int indices[Count] = { Indices... };
+        for( usize i = 0; i < Count; ++i ) {
+            values[indices[i]] = rhs[i];
         }
-        return *(V*)this;
+        return *(Vector*)this;
     }
     attr_always_inline attr_header attr_hot
-    constexpr operator V() const {
-        return V{ v[Indexes]... };
+    constexpr operator Vector() const {
+        return Vector{ values[Indices]... };
     }
 };
 
-template<typename SRC, typename DST, typename T, int...Indexes>
+template<typename Source, typename Destination, typename T, int... Indices>
 struct SwizzlerConvert {
-    static const int Count = sizeof...(Indexes);
-    T v[Count];
+    attr_readonly usize Count = sizeof...(Indices);
+    T values[Count];
 
     attr_always_inline attr_header attr_hot
-    constexpr DST& operator=( const SRC& rhs ) {
-        int indexes[] = { Indexes... };
-        for( int i = 0; i < Count; ++i ) {
-            v[indexes[i]] = rhs[i];
+    constexpr Destination& operator=( const Source& rhs ) {
+        int indices[Count] = { Indices... };
+        for( usize i = 0; i < Count; ++i ) {
+            values[indices[i]] = rhs[i];
         }
-        return *(DST*)this;
+        return *(Destination*)this;
     }
     attr_always_inline attr_header attr_hot
-    constexpr operator DST() const {
-        DST result;
-        int indexes[] = { Indexes... };
-        for( int i = 0; i < Count; ++i ) {
-            result[i] = v[indexes[i]];
+    constexpr operator Destination() const {
+        Destination result;
+        int indices[Count] = { Indices... };
+        for( usize i = 0; i < Count; ++i ) {
+            result[i] = values[indices[i]];
         }
         return result;
     }

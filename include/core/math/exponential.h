@@ -49,7 +49,7 @@ f32 f32_log10( f32 x );
 
 /// @brief Raise base to the power of integer exponent.
 /// @param base Number to raise.
-/// @param exp Power to raise to.
+/// @param exp  Power to raise to.
 /// @return Result.
 attr_core_api
 f32 f32_powi( f32 base, i32 exp );
@@ -60,18 +60,22 @@ attr_core_api
 f32 f32_exp( f32 x );
 /// @brief Raise base to the power of exponent.
 /// @param base Number to raise.
-/// @param exp Power to raise to.
+/// @param exp  Power to raise to.
 /// @return Result.
-attr_always_inline attr_header
+attr_always_inline attr_header attr_hot
 f32 f32_pow( f32 base, f32 exp ) {
     return f32_exp( f32_ln( base ) * exp );
 }
 /// @brief Raise 2 to the power of exponent.
 /// @param x Exponent.
 /// @return 2^x
-attr_always_inline attr_header
+attr_always_inline attr_header attr_hot
 f32 f32_exp2( f32 x ) {
     return f32_pow( 2.0f, x );
 }
+
+#if !defined(CORE_CPP_MATH_EXPONENTIAL_HPP)
+    #include "core/cpp/math/exponential.hpp"
+#endif
 
 #endif /* header guard */

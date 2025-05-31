@@ -1,13 +1,11 @@
-#if !defined(CORE_CPP_MATH_MATRIX2X2_HPP)
+#if !defined(CORE_CPP_MATH_MATRIX2X2_HPP) && defined(__cplusplus)
 #define CORE_CPP_MATH_MATRIX2X2_HPP
 /**
  * @file   matrix2x2.hpp
- * @brief  C++ Matrix2x2.
+ * @brief  C++ Math: Matrix2x2.
  * @author Alicia Amarilla (smushyaa@gmail.com)
- * @date   September 28, 2024
+ * @date   May 30, 2025
 */
-struct Matrix2x2CPP;
-
 #if !defined(CORE_MATH_MATRIX2X2_H)
     #include "core/math/matrix2x2.h"
 #endif
@@ -24,120 +22,148 @@ struct Matrix2x2CPP {
                 Vector2CPP col1;
             };
         };
-        struct Matrix2x2 pod;
+        struct Matrix2x2 __pod;
 
         Vector2CPP col[2];
         f32 array[4];
     };
 
-    attr_always_inline attr_header constexpr
-    Matrix2x2CPP() : col0(), col1() {}
-    attr_always_inline attr_header constexpr
-    explicit Matrix2x2CPP(
-        f32 m00, f32 m01,
-        f32 m10, f32 m11
-    ) :
-    col0( m00, m01 ),
-    col1( m10, m11 ) {}
-    attr_always_inline attr_header constexpr
-    explicit Matrix2x2CPP( Vector2CPP col0, Vector2CPP col1 ) :
-        col0(col0), col1(col1) {}
-    attr_always_inline attr_header constexpr
-    Matrix2x2CPP( const struct Matrix2x2& m ) : pod(m) {}
+    constexpr Matrix2x2CPP();
+    constexpr Matrix2x2CPP( const Matrix2x2& __pod );
+    constexpr explicit Matrix2x2CPP( f32 m00, f32 m01, f32 m10, f32 m11 );
+    constexpr explicit Matrix2x2CPP( Vector2CPP col0, Vector2CPP col1 );
 
-    attr_always_inline attr_header constexpr
-    operator Matrix2x2() const {
-        return *(struct Matrix2x2*)this;
-    }
+    constexpr operator Matrix2x2() const;
+    constexpr Vector2CPP operator[]( usize index ) const;
+    constexpr Vector2CPP& operator[]( usize index );
 
-    attr_always_inline attr_header static constexpr
-    Matrix2x2CPP zero() {
-        return Matrix2x2CPP();
-    }
-    attr_always_inline attr_header static constexpr
-    Matrix2x2CPP identity() {
-        return Matrix2x2CPP(
-            1.0, 0.0,
-            0.0, 1.0 );
-    }
-
-    attr_always_inline attr_header static constexpr
-    Matrix2x2CPP from_array( const f32 array[4] ) {
-        return *(Matrix2x2CPP*)array;
-    }
-    attr_always_inline attr_header constexpr
-    void to_array( f32* out_array ) {
-        out_array[0] = array[0];
-        out_array[1] = array[1];
-        out_array[2] = array[2];
-        out_array[3] = array[3];
-    }
-
-    attr_always_inline attr_header constexpr
-    const Vector2CPP& operator[]( usize idx ) const {
-        return col[idx];
-    }
-    attr_always_inline attr_header constexpr
-    Vector2CPP& operator[]( usize idx ) {
-        return col[idx];
-    }
+    static constexpr Matrix2x2CPP zero();
+    static constexpr Matrix2x2CPP identity();
 };
-attr_always_inline attr_header
-Matrix2x2CPP add( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
-    return mat2_add( lhs.pod, rhs.pod );
+
+typedef Matrix2x2CPP mat2x2;
+typedef Matrix2x2CPP mat2;
+
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP::Matrix2x2CPP()
+    : m00(0.0f), m01(0.0f), m10(0.0f), m11(0.0f) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP::Matrix2x2CPP( const Matrix2x2& __pod )
+    : __pod(__pod) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP::Matrix2x2CPP( f32 m00, f32 m01, f32 m10, f32 m11 )
+    : m00(m00), m01(m01), m10(m10), m11(m11) {}
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP::Matrix2x2CPP( Vector2CPP col0, Vector2CPP col1 )
+    : col0(col0), col1(col1) {}
+
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP::operator Matrix2x2() const {
+    return *(Matrix2x2*)this;
 }
-attr_always_inline attr_header
-Matrix2x2CPP sub( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
-    return mat2_sub( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector2CPP Matrix2x2CPP::operator[]( usize index ) const {
+    return this->col[index];
 }
-attr_always_inline attr_header
-Matrix2x2CPP mul( Matrix2x2CPP lhs, f32 rhs ) {
-    return mat2_mul( lhs.pod, rhs );
-}
-attr_always_inline attr_header
-Matrix2x2CPP mul( f32 lhs, Matrix2x2CPP rhs ) {
-    return mat2_mul( rhs.pod, lhs );
-}
-attr_always_inline attr_header
-Matrix2x2CPP mul( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
-    return mat2_mul_mat2( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-Matrix2x2CPP div( Matrix2x2CPP lhs, f32 rhs ) {
-    return mat2_div( lhs.pod, rhs );
-}
-attr_always_inline attr_header
-Matrix2x2CPP transpose( Matrix2x2CPP m ) {
-    return mat2_transpose( m.pod );
-}
-attr_always_inline attr_header
-f32 determinant( Matrix2x2CPP m ) {
-    return mat2_determinant( m.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector2CPP& Matrix2x2CPP::operator[]( usize index ) {
+    return this->col[index];
 }
 
-attr_always_inline attr_header
-Matrix2x2CPP operator+( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP Matrix2x2CPP::zero() {
+    return MAT2_ZERO;
+}
+constexpr attr_always_inline attr_header attr_hot
+Matrix2x2CPP Matrix2x2CPP::identity() {
+    return MAT2_IDENTITY;
+}
+
+attr_always_inline attr_header attr_hot
+mat2 add( mat2 lhs, mat2 rhs ) {
+    return mat2_add( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2 sub( mat2 lhs, mat2 rhs ) {
+    return mat2_sub( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2 mul( mat2 lhs, f32 rhs ) {
+    return mat2_mul( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2 mul( f32 lhs, mat2 rhs ) {
+    return mat2_mul( rhs, lhs );
+}
+attr_always_inline attr_header attr_hot
+mat2 mul( mat2 lhs, mat2 rhs ) {
+    return mat2_mul_mat2( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+vec2 mul( mat2 lhs, vec2 rhs ) {
+    return mat2_mul_vec2( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2 div( mat2 lhs, f32 rhs ) {
+    return mat2_div( lhs, rhs );
+}
+
+attr_always_inline attr_header attr_hot
+mat2 operator+( mat2 lhs, mat2 rhs ) {
     return add( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix2x2CPP operator-( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+attr_always_inline attr_header attr_hot
+mat2& operator+=( mat2& lhs, mat2 rhs ) {
+    return lhs = lhs + rhs;
+}
+attr_always_inline attr_header attr_hot
+mat2 operator-( mat2 lhs, mat2 rhs ) {
     return sub( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix2x2CPP operator*( Matrix2x2CPP lhs, f32 rhs ) {
+attr_always_inline attr_header attr_hot
+mat2& operator-=( mat2& lhs, mat2 rhs ) {
+    return lhs = lhs - rhs;
+}
+attr_always_inline attr_header attr_hot
+mat2 operator*( mat2 lhs, f32 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix2x2CPP operator*( f32 lhs, Matrix2x2CPP rhs ) {
+attr_always_inline attr_header attr_hot
+mat2 operator*( f32 lhs, mat2 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix2x2CPP operator*( Matrix2x2CPP lhs, Matrix2x2CPP rhs ) {
+attr_always_inline attr_header attr_hot
+mat2 operator*( mat2 lhs, mat2 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Matrix2x2CPP operator/( Matrix2x2CPP lhs, f32 rhs ) {
+attr_always_inline attr_header attr_hot
+vec2 operator*( mat2 lhs, vec2 rhs ) {
+    return mul( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2& operator*=( mat2& lhs, f32 rhs ) {
+    return lhs = lhs * rhs;
+}
+attr_always_inline attr_header attr_hot
+mat2& operator*=( mat2& lhs, mat2 rhs ) {
+    return lhs = lhs * rhs;
+}
+attr_always_inline attr_header attr_hot
+mat2 operator/( mat2 lhs, f32 rhs ) {
     return div( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+mat2& operator/=( mat2& lhs, f32 rhs ) {
+    return lhs = lhs / rhs;
+}
+
+attr_always_inline attr_header attr_hot
+mat2 transpose( mat2 x ) {
+    return mat2_transpose( x );
+}
+attr_always_inline attr_header attr_hot
+f32 determinant( mat2 x ) {
+    return mat2_determinant( x );
 }
 
 #endif /* header guard */

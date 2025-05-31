@@ -6,7 +6,6 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/math/vector2.h"
@@ -17,13 +16,6 @@
 // NOTE(alicia): forward declaration
 
 struct Quaternion;
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief Column-major 4x4 matrix.
 struct Matrix4x4 {
@@ -102,55 +94,67 @@ struct Matrix4x4 {
         f32  array[16];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief Column-major 4x4 matrix.
-    typedef struct Matrix4x4 mat4x4;
-    /// @brief Column-major 4x4 matrix.
-    typedef mat4x4 mat4;
-#endif
 
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a new 4x4 Matrix.
+#if defined(__cplusplus)
+    /// @brief Create matrix.
     /// @param m00, m01, m02, m03 First column components.
     /// @param m10, m11, m12, m13 Second column components.
     /// @param m20, m21, m22, m23 Third column components.
     /// @param m30, m31, m32, m33 Fourth column components.
-    /// @return Matrix4x4.
-    #define mat4(\
-        m00, m01, m02, m03,\
-        m10, m11, m12, m13,\
-        m20, m21, m22, m23,\
-        m30, m31, m32, m33 )
-#else /* Doxygen */
-
-#if defined(CORE_CPLUSPLUS)
-    #define mat4_new(\
-        m00, m01, m02, m03,\
-        m10, m11, m12, m13,\
-        m20, m21, m22, m23,\
-        m30, m31, m32, m33 )\
-        Matrix4x4{ .array={\
-            (m00), (m01), (m02), (m03),\
-            (m10), (m11), (m12), (m13),\
-            (m20), (m21), (m22), (m23),\
-            (m30), (m31), (m32), (m33),\
+    /// @return Matrix.
+    #define mat4_new(                    \
+        m00, m01, m02, m03,              \
+        m10, m11, m12, m13,              \
+        m20, m21, m22, m23,              \
+        m30, m31, m32, m33 )             \
+        Matrix4x4 { .array={             \
+            (m00), (m01), (m02), (m03),  \
+            (m10), (m11), (m12), (m13),  \
+            (m20), (m21), (m22), (m23),  \
+            (m30), (m31), (m32), (m33)   \
         } }
 #else
-    #define mat4_new(\
-        m00, m01, m02, m03,\
-        m10, m11, m12, m13,\
-        m20, m21, m22, m23,\
-        m30, m31, m32, m33 )\
-        (struct Matrix4x4){ .array={\
-            (m00), (m01), (m02), (m03),\
-            (m10), (m11), (m12), (m13),\
-            (m20), (m21), (m22), (m23),\
-            (m30), (m31), (m32), (m33),\
-        } }
-    #define mat4(...) mat4_new(__VA_ARGS__)
-#endif
+    /// @brief Column-major 4x4 matrix.
+    typedef struct Matrix4x4 mat4x4;
+    /// @brief Column-major 4x4 matrix.
+    typedef struct Matrix4x4 mat4;
 
-#endif /* Doxygen */
+    /// @brief Create matrix.
+    /// @param m00, m01, m02, m03 First column components.
+    /// @param m10, m11, m12, m13 Second column components.
+    /// @param m20, m21, m22, m23 Third column components.
+    /// @param m30, m31, m32, m33 Fourth column components.
+    /// @return Matrix.
+    #define mat4_new(                    \
+        m00, m01, m02, m03,              \
+        m10, m11, m12, m13,              \
+        m20, m21, m22, m23,              \
+        m30, m31, m32, m33 )             \
+        (struct Matrix4x4){ .array={     \
+            (m00), (m01), (m02), (m03),  \
+            (m10), (m11), (m12), (m13),  \
+            (m20), (m21), (m22), (m23),  \
+            (m30), (m31), (m32), (m33)   \
+        } }
+
+    /// @brief Create matrix.
+    /// @param m00, m01, m02, m03 First column components.
+    /// @param m10, m11, m12, m13 Second column components.
+    /// @param m20, m21, m22, m23 Third column components.
+    /// @param m30, m31, m32, m33 Fourth column components.
+    /// @return Matrix.
+    #define mat4(                        \
+        m00, m01, m02, m03,              \
+        m10, m11, m12, m13,              \
+        m20, m21, m22, m23,              \
+        m30, m31, m32, m33 )             \
+        (struct Matrix4x4){ .array={     \
+            (m00), (m01), (m02), (m03),  \
+            (m10), (m11), (m12), (m13),  \
+            (m20), (m21), (m22), (m23),  \
+            (m30), (m31), (m32), (m33)   \
+        } }
+#endif
 
 /// @brief Matrix4x4 zero constant.
 #define MAT4_ZERO mat4_new(\
@@ -174,7 +178,7 @@ struct Matrix4x4 mat4_from_array( const f32 array[16] );
 /// @param m Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 16 floats.
 attr_core_api
-void mat4_to_array( const struct Matrix4x4* m, f32* out_array );
+void array_from_mat4( const struct Matrix4x4* m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
@@ -192,28 +196,18 @@ struct Matrix4x4 mat4_sub(
 /// @param rhs Scalar to multiply components by.
 /// @return Result of multiplication.
 attr_core_api
-struct Matrix4x4 mat4_mul(
-    const struct Matrix4x4* lhs, f32 rhs );
-/// @brief Divide matrix components.
-/// @param lhs Matrix to divide.
-/// @param rhs Scalar to divide components by.
-/// @return Result of division.
-attr_core_api
-struct Matrix4x4 mat4_div(
-    const struct Matrix4x4* lhs, f32 rhs );
+struct Matrix4x4 mat4_mul( const struct Matrix4x4* lhs, f32 rhs );
 /// @brief Multiply matrices.
 /// @param lhs, rhs Matrices to multiply.
 /// @return Result of multiplication.
 attr_core_api
-struct Matrix4x4 mat4_mul_mat4(
-    const struct Matrix4x4* lhs, const struct Matrix4x4* rhs );
+struct Matrix4x4 mat4_mul_mat4( const struct Matrix4x4* lhs, const struct Matrix4x4* rhs );
 /// @brief Multiply vector by matrix.
 /// @param lhs Matrix to multiply.
 /// @param rhs Vector4 to multiply.
 /// @return Result of multiplication.
 attr_core_api
-struct Vector4 mat4_mul_vec4(
-    const struct Matrix4x4* lhs, struct Vector4 rhs );
+struct Vector4 mat4_mul_vec4( const struct Matrix4x4* lhs, struct Vector4 rhs );
 /// @brief Multiply vector by matrix.
 /// @param lhs Matrix to multiply.
 /// @param rhs Vector3 to multiply.
@@ -226,6 +220,12 @@ attr_header struct Vector3 mat4_mul_vec3(
     rhs_v4.w   = 1.0f;
     return mat4_mul_vec4( lhs, rhs_v4 ).xyz;
 }
+/// @brief Divide matrix components.
+/// @param lhs Matrix to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+attr_core_api
+struct Matrix4x4 mat4_div( const struct Matrix4x4* lhs, f32 rhs );
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
 /// @return Transposed matrix.
@@ -333,7 +333,7 @@ attr_core_api
 struct Matrix4x4 mat4_ortho(
     f32 left, f32 right,
     f32 bottom, f32 top,
-    f32 clip_near, f32 clip_far );
+    f32 clip_near, f32 clip_far, ... );
 /// @brief Construct a perspective projection matrix.
 /// @param field_of_view FOV in radians.
 /// @param aspect_ratio Aspect ratio of render target.
@@ -341,7 +341,7 @@ struct Matrix4x4 mat4_ortho(
 /// @return Perspective projection matrix.
 attr_core_api
 struct Matrix4x4 mat4_perspective(
-    f32 field_of_view, f32 aspect_ratio, f32 clip_near, f32 clip_far );
+    f32 field_of_view, f32 aspect_ratio, f32 clip_near, f32 clip_far, ... );
 /// @brief Construct a translation matrix.
 /// @param x, y, z Translation coordinates.
 /// @return Translation matrix.
@@ -371,7 +371,7 @@ struct Matrix4x4 mat4_translation_2d( f32 x, f32 y ) {
 /// @param translation Translation coordinates.
 /// @return Translation matrix.
 attr_always_inline attr_header
-struct Matrix4x4 mat4_translation_vec2( struct Vector2 translation ) {
+struct Matrix4x4 mat4_translation_2d_vec2( struct Vector2 translation ) {
     return mat4_translation_2d( translation.x, translation.y );
 }
 /// @brief Construct a rotation matrix for pitch rotation.
@@ -442,7 +442,7 @@ struct Matrix4x4 mat4_scale_2d( f32 width, f32 height ) {
 /// @param dimensions Dimensions.
 /// @return Scale matrix.
 attr_always_inline attr_header
-struct Matrix4x4 mat4_scale_vec2( struct Vector2 dimensions ) {
+struct Matrix4x4 mat4_scale_2d_vec2( struct Vector2 dimensions ) {
     return mat4_scale_2d( dimensions.x, dimensions.y );
 }
 /// @brief Construct a transform matrix.
@@ -478,17 +478,8 @@ struct Matrix4x4 mat4_transform_2d(
     return mat4_transform_euler( translation3d, rotation3d, scale3d );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_MATRIX4X4_HPP)
-        #include "core/cpp/math/matrix4x4.hpp"
-    #endif
-    typedef Matrix4x4CPP mat4x4;
-    typedef mat4x4 mat4;
+#if !defined(CORE_CPP_MATH_MATRIX4X4_HPP)
+    #include "core/cpp/math/matrix4x4.hpp"
 #endif
 
 #endif /* header guard */

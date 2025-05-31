@@ -2,25 +2,16 @@
 #define CORE_MATH_VECTOR3_H
 /**
  * @file   vector3.h
- * @brief  Vector3 definition.
+ * @brief  Vector3.
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
-
 #include "core/math/trig.h"
 #include "core/math/exponential.h"
 #include "core/math/common.h"
 #include "core/math/vector2.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief 3 Component 32-bit Floating Point Vector.
 struct Vector3 {
@@ -37,48 +28,38 @@ struct Vector3 {
                     /// @brief Y component.
                     f32 y;
                 };
-                /// @brief Red and Green channels.
+                /// @brief X and Y components -- as Red and Green channels.
                 struct {
-                    /// @brief Red channel (X component).
+                    /// @brief X component -- as Red channel.
                     f32 r;
-                    /// @brief Green channel (Y component).
+                    /// @brief Y component -- as Green channel.
                     f32 g;
                 };
-                /// @brief Hue and Saturation.
-                struct {
-                    /// @brief Hue (X component).
-                    f32 h;
-                    /// @brief Saturation (X component).
-                    f32 s;
-                };
-                /// @brief X and Y components as a #Vector2.
+                /// @brief Swizzle X and Y components.
                 struct Vector2 xy;
-                /// @brief Red and Green channels as a #Vector2.
+                /// @brief Swizzle X and Y components -- as Red and Green channels.
                 struct Vector2 rg;
             };
             /// @brief Z component.
             union {
                 /// @brief Z component.
                 f32 z;
-                /// @brief Blue channel (Z component).
+                /// @brief Z component -- as Blue channel.
                 f32 b;
-                /// @brief Lightness (Z component).
-                f32 l;
             };
         };
-        /// @brief Swizzle yz.
+        /// @brief Swizzle Y and Z components.
         struct {
             f32 __unused0;
-            /// @brief Y and Z components as a #Vector2.
-            struct Vector2 yz;
+            /// @brief Swizzle Y and Z components.
+            union {
+                /// @brief Swizzle Y and Z components.
+                struct Vector2 yz;
+                /// @brief Swizzle Y and Z components -- as Green and Blue channels.
+                struct Vector2 gb;
+            };
         };
-        /// @brief Swizzle gb.
-        struct {
-            f32 __unused1;
-            /// @brief Green and Blue channels as a #Vector2.
-            struct Vector2 gb;
-        };
-        /// @brief X, Y and Z as an array.
+        /// @brief X, Y and Z components as an array.
         f32 array[3];
     };
 };
@@ -146,66 +127,117 @@ struct BVector3 {
         b32 array[3];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief 3 Component 32-bit Signed Integer Vector.
-    typedef struct IVector3 ivec3;
+
+#if defined(__cplusplus)
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define vec3_new( x, y, z )   Vector3 { .array={x, y, z} }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define ivec3_new( x, y, z ) IVector3 { .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define bvec3_new( x, y, z ) BVector3 { .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define uvec3_new( x, y, z ) UVector3 { .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define dvec3_new( x, y, z ) DVector3 { .array={ x, y, z } }
+#else
     /// @brief 3 Component 32-bit Floating Point Vector.
-    typedef struct Vector3 vec3;
+    typedef struct Vector3   vec3;
+    /// @brief 3 Component 32-bit Integer Vector.
+    typedef struct IVector3 ivec3;
     /// @brief 3 Component 32-bit Boolean Vector.
     typedef struct BVector3 bvec3;
+    /// @brief 3 Component 32-bit Unsigned Integer Vector.
+    typedef struct UVector3 uvec3;
+    /// @brief 3 Component 64-bit Floating Point Vector.
+    typedef struct DVector3 dvec3;
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define vec3_new( x, y, z )   (struct Vector3){ .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define ivec3_new( x, y, z ) (struct IVector3){ .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define bvec3_new( x, y, z ) (struct BVector3){ .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define uvec3_new( x, y, z ) (struct UVector3){ .array={ x, y, z } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define dvec3_new( x, y, z ) (struct DVector3){ .array={ x, y, z } }
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define  vec3( x, y, z )  vec3_new( x, y, z )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define ivec3( x, y, z ) ivec3_new( x, y, z )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define bvec3( x, y, z ) bvec3_new( x, y, z )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define uvec3( x, y, z ) uvec3_new( x, y, z )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Vector.
+    #define dvec3( x, y, z ) dvec3_new( x, y, z )
 #endif
-/// @brief 3 Component 32-bit Unsigned Integer Vector.
-typedef struct UVector3 uvec3;
-/// @brief 3 Component 64-bit Floating Point Vector.
-typedef struct DVector3 dvec3;
-
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a Vector3.
-    /// @param x, y, z (f32) Components.
-    /// @return Vector3.
-    #define vec3_new( x, y, z )
-    /// @brief Construct an IVector3.
-    /// @param x, y, z (i32) Components.
-    /// @return IVector3.
-    #define ivec3_new( x, y, z )
-#else
-
-#if defined(CORE_CPLUSPLUS)
-    #define vec3_new( x, y, z )\
-        Vector3{ .array={ (x), (y), (z) } }
-    #define ivec3_new( x, y, z )\
-        IVector3{ .array={ (x), (y), (z) } }
-    #define bvec3_new( x, y, z )\
-        BVector3{ .array={ (x), (y), (z) } }
-#else /* C++ constructors */
-    #define vec3( x, y, z )\
-        (struct Vector3){ .array={ (x), (y), (z) } }
-    #define ivec3( x, y, z )\
-        (struct IVector3){ .array={ (x), (y), (z) } }
-    #define bvec3( x, y, z )\
-        (struct BVector3){ .array={ (x), (y), (z) } }
-    #define vec3_new(...)  vec3(__VA_ARGS__)
-    #define ivec3_new(...) ivec3(__VA_ARGS__)
-    #define bvec3_new(...) bvec3(__VA_ARGS__)
-#endif /* C constructors */
-
-#endif /* Doxygen */
-
-/// @brief Construct a new Vector3 with identical components.
-/// @param x (f32) Value for components.
-/// @return Vector3.
-#define vec3_set( x )\
-    vec3_new( (x), (x), (x) )
-/// @brief Construct a new IVector3 with identical components.
-/// @param x (i32) Value for components.
-/// @return IVector3.
-#define ivec3_set( x )\
-    ivec3_new( (x), (x), (x) )
 
 /// @brief Vector3 zero constant.
-#define VEC3_ZERO    ( vec3_set( 0.0f ) )
+#define VEC3_ZERO    ( vec3_new( 0.0f, 0.0f, 0.0f ) )
 /// @brief Vector3 one constant.
-#define VEC3_ONE     ( vec3_set( 1.0f ) )
+#define VEC3_ONE     ( vec3_new( 1.0f, 1.0f, 1.0f ) )
 /// @brief Vector3 left constant.
 #define VEC3_LEFT    ( vec3_new( -1.0f,  0.0f,  0.0f ) )
 /// @brief Vector3 right constant.
@@ -220,9 +252,9 @@ typedef struct DVector3 dvec3;
 #define VEC3_BACK    ( vec3_new(  0.0f,  0.0f, -1.0f ) )
 
 /// @brief IVector3 zero constant.
-#define IVEC3_ZERO    ( ivec3_set( 0 ) )
+#define IVEC3_ZERO    ( ivec3_new( 0, 0, 0 ) )
 /// @brief IVector3 one constant.
-#define IVEC3_ONE     ( ivec3_set( 1 ) )
+#define IVEC3_ONE     ( ivec3_new( 1, 1, 1 ) )
 /// @brief IVector3 left constant.
 #define IVEC3_LEFT    ( ivec3_new( -1,  0,  0 ) )
 /// @brief IVector3 right constant.
@@ -233,8 +265,13 @@ typedef struct DVector3 dvec3;
 #define IVEC3_DOWN    ( ivec3_new(  0, -1,  0 ) )
 /// @brief IVector3 forward constant.
 #define IVEC3_FORWARD ( ivec3_new(  0,  0,  1 ) )
-/// @brief IVector3 zero constant.
+/// @brief IVector3 back constant.
 #define IVEC3_BACK    ( ivec3_new(  0,  0, -1 ) )
+
+/// @brief BVector3 zero constant.
+#define BVEC3_ZERO ( bvec3_new( false, false, false ) )
+/// @brief BVector3 one constant.
+#define BVEC3_ONE  ( bvec3_new( true, true, true ) )
 
 /// @brief RGB red constant.
 #define RGB_RED     ( vec3_new( 1.0f, 0.0f, 0.0f ) )
@@ -249,9 +286,9 @@ typedef struct DVector3 dvec3;
 /// @brief RGB cyan constant.
 #define RGB_CYAN    ( vec3_new( 0.0f, 1.0f, 1.0f ) )
 /// @brief RGB black constant.
-#define RGB_BLACK   ( vec3_set( 0.0f ) )
+#define RGB_BLACK   ( vec3_new( 0.0f, 0.0f, 0.0f ) )
 /// @brief RGB white constant.
-#define RGB_WHITE   ( vec3_set( 1.0f ) )
+#define RGB_WHITE   ( vec3_new( 1.0f, 1.0f, 1.0f ) )
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 3 values.
@@ -411,7 +448,7 @@ struct Vector3 vec3_rotr( struct Vector3 x ) {
 /// @param x Vector to get maximum of.
 /// @return Component with largest value.
 attr_always_inline attr_header
-f32 vec3_hmax( struct Vector3 x ) {
+f32 vec3_max( struct Vector3 x ) {
     f32 _0 = x.x < x.y ? x.y : x.x;
     return _0 < x.z ? x.z : _0;
 }
@@ -419,7 +456,7 @@ f32 vec3_hmax( struct Vector3 x ) {
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
 attr_always_inline attr_header
-struct Vector3 vec3_max( struct Vector3 x, struct Vector3 y ) {
+struct Vector3 vec3_max_vec3( struct Vector3 x, struct Vector3 y ) {
     struct Vector3 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
@@ -430,7 +467,7 @@ struct Vector3 vec3_max( struct Vector3 x, struct Vector3 y ) {
 /// @param x Vector to get mid of.
 /// @return Component in between min and max component.
 attr_always_inline attr_header
-f32 vec3_hmid( struct Vector3 x ) {
+f32 vec3_mid( struct Vector3 x ) {
     if( x.x < x.y ) {
         if( x.y < x.z ) {
             return x.z;
@@ -449,7 +486,7 @@ f32 vec3_hmid( struct Vector3 x ) {
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
 attr_always_inline attr_header
-f32 vec3_hmin( struct Vector3 x ) {
+f32 vec3_min( struct Vector3 x ) {
     f32 _0 = x.x < x.y ? x.x : x.y;
     return _0 < x.z ? _0 : x.z;
 }
@@ -457,7 +494,7 @@ f32 vec3_hmin( struct Vector3 x ) {
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
 attr_always_inline attr_header
-struct Vector3 vec3_min( struct Vector3 x, struct Vector3 y ) {
+struct Vector3 vec3_min_vec3( struct Vector3 x, struct Vector3 y ) {
     struct Vector3 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
@@ -477,28 +514,6 @@ f32 vec3_length_sqr( struct Vector3 x ) {
 attr_always_inline attr_header
 f32 vec3_length( struct Vector3 x ) {
     return f32_sqrt( vec3_length_sqr( x ) );
-}
-/// @brief Component-wise minimum value.
-/// @param x, y Vectors.
-/// @return Vector with minimum value in components.
-attr_always_inline attr_header
-struct IVector3 ivec3_min( struct IVector3 x, struct IVector3 y ) {
-    struct IVector3 result;
-    result.x = x.x < y.x ? x.x : y.x;
-    result.y = x.y < y.y ? x.y : y.y;
-    result.z = x.z < y.z ? x.z : y.z;
-    return result;
-}
-/// @brief Component-wise maximum value.
-/// @param x, y Vectors.
-/// @return Vector with maximum value in components.
-attr_always_inline attr_header
-struct IVector3 ivec3_max( struct IVector3 x, struct IVector3 y ) {
-    struct IVector3 result;
-    result.x = x.x < y.x ? y.x : x.x;
-    result.y = x.y < y.y ? y.y : x.y;
-    result.z = x.z < y.z ? y.z : x.z;
-    return result;
 }
 /// @brief Calculate distance between two points.
 /// @param a, b Points to calculate distance of.
@@ -527,29 +542,28 @@ struct Vector3 vec3_normalize( struct Vector3 x ) {
     }
 }
 /// @brief Reflect direction vector off surface.
-/// @param direction Direction vector to reflect.
-/// @param normal    Normal of the surface to reflect off of.
+/// @param d Direction vector to reflect.
+/// @param n Normal of the surface to reflect off of.
 /// @return Reflected vector.
 attr_always_inline attr_header
 struct Vector3 vec3_reflect(
-    struct Vector3 direction, struct Vector3 normal
+    struct Vector3 d, struct Vector3 n
 ) {
     return vec3_mul(
-        vec3_sub( normal, direction ),
-        2.0f * vec3_dot( direction, normal ) );
+        vec3_sub( n, d ), 2.0f * vec3_dot( d, n ) );
 }
 /// @brief Component-wise clamp.
-/// @param v        Vector.
-/// @param min, max Range.
+/// @param v          Vector.
+/// @param min_, max_ Range.
 /// @return Clamped vector.
 attr_always_inline attr_header
 struct Vector3 vec3_clamp(
-    struct Vector3 v, struct Vector3 min, struct Vector3 max
+    struct Vector3 v, struct Vector3 min_, struct Vector3 max_
 ) {
     struct Vector3 result;
-    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
-    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
-    result.z = ( (v.z) < (min.z) ? (min.z) : ( (v.z) > (max.z) ? (max.z) : (v.z) ) );
+    result.x = ( (v.x) < (min_.x) ? (min_.x) : ( (v.x) > (max_.x) ? (max_.x) : (v.x) ) );
+    result.y = ( (v.y) < (min_.y) ? (min_.y) : ( (v.y) > (max_.y) ? (max_.y) : (v.y) ) );
+    result.z = ( (v.z) < (min_.z) ? (min_.z) : ( (v.z) > (max_.z) ? (max_.z) : (v.z) ) );
     return result;
 }
 /// @brief Clamp vector's magnitude to range min -> max.
@@ -649,23 +663,49 @@ struct Vector3 vec3_fract( struct Vector3 v ) {
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
-/// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @param t    Where to interpolate to.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector3 vec3_lerp(
     struct Vector3 a, struct Vector3 b, f32 t 
 ) {
-    return vec3_add( vec3_mul( a, 1.0f - t ), vec3_mul( b, t ) );
+    return vec3_new(
+        f32_lerp( a.x, b.x, t ),
+        f32_lerp( a.y, b.y, t ),
+        f32_lerp( a.z, b.z, t ) );
 }
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
-/// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @param t    Where to interpolate to.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector3 vec3_lerp_vec3(
+    struct Vector3 a, struct Vector3 b, struct Vector3 t 
+) {
+    return vec3_new(
+        f32_lerp( a.x, b.x, t.x ),
+        f32_lerp( a.y, b.y, t.y ),
+        f32_lerp( a.z, b.z, t.z ) );
+}
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t    Where to interpolate to.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector3 vec3_mix(
     struct Vector3 a, struct Vector3 b, f32 t 
 ) {
     return vec3_lerp( a, b, t );
+}
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t    Where to interpolate to.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector3 vec3_mix_vec3(
+    struct Vector3 a, struct Vector3 b, struct Vector3 t 
+) {
+    return vec3_lerp_vec3( a, b, t );
 }
 /// @brief Spherical interpolation from a to b.
 /// @param a, b Interpolation.
@@ -678,7 +718,7 @@ struct Vector3 vec3_slerp( struct Vector3 a, struct Vector3 b, f32 t );
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector3 vec3_step( struct Vector3 edge, struct Vector3 x ) {
+struct Vector3 vec3_step_vec3( struct Vector3 edge, struct Vector3 x ) {
     return vec3_new( f32_step( edge.x, x.x ), f32_step( edge.y, x.y ), f32_step( edge.z, x.z ) );
 }
 /// @brief Step function.
@@ -686,15 +726,15 @@ struct Vector3 vec3_step( struct Vector3 edge, struct Vector3 x ) {
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector3 vec3_step_scalar( f32 edge, struct Vector3 x ) {
-    return vec3_step( vec3_set( edge ), x );
+struct Vector3 vec3_step( f32 edge, struct Vector3 x ) {
+    return vec3_step_vec3( vec3_new( edge, edge, edge ), x );
 }
 /// @brief Smooth step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector3 vec3_smoothstep(
+struct Vector3 vec3_smoothstep_vec3(
     struct Vector3 edge0, struct Vector3 edge1, struct Vector3 x
 ) {
     return vec3_new(
@@ -707,15 +747,18 @@ struct Vector3 vec3_smoothstep(
 /// @param x            Value.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector3 vec3_smoothstep_scalar( f32 edge0, f32 edge1, struct Vector3 x ) {
-    return vec3_smoothstep( vec3_set( edge0 ), vec3_set( edge1 ), x );
+struct Vector3 vec3_smoothstep( f32 edge0, f32 edge1, struct Vector3 x ) {
+    return vec3_smoothstep_vec3(
+        vec3_new( edge0, edge0, edge0 ),
+        vec3_new( edge1, edge1, edge1 ),
+        x );
 }
 /// @brief Smoother step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
 /// @return Vector in range a -> b.
 attr_always_inline attr_header
-struct Vector3 vec3_smootherstep(
+struct Vector3 vec3_smootherstep_vec3(
     struct Vector3 edge0, struct Vector3 edge1, struct Vector3 x
 ) {
     return vec3_new(
@@ -728,10 +771,13 @@ struct Vector3 vec3_smootherstep(
 /// @param x            Value.
 /// @return Vector in range a -> b.
 attr_always_inline attr_header
-struct Vector3 vec3_smootherstep_scalar(
+struct Vector3 vec3_smootherstep(
     f32 edge0, f32 edge1, struct Vector3 x
 ) {
-    return vec3_smootherstep( vec3_set( edge0 ), vec3_set( edge1 ), x );
+    return vec3_smootherstep_vec3(
+        vec3_new( edge0, edge0, edge0 ),
+        vec3_new( edge1, edge1, edge1 ),
+        x );
 }
 /// @brief Check if vector components are NaN.
 /// @param x Vector.
@@ -903,6 +949,16 @@ struct Vector3 vec3_inversesqrt( struct Vector3 x ) {
         f32_inversesqrt( x.y ),
         f32_inversesqrt( x.z ) );
 }
+/// @brief Calculate cube root.
+/// @param x Value to get cube root of.
+/// @return Cube root.
+attr_always_inline attr_header
+struct Vector3 vec3_cbrt( struct Vector3 x ) {
+    return vec3_new(
+        f32_cbrt( x.x ),
+        f32_cbrt( x.y ),
+        f32_cbrt( x.z ) );
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
@@ -915,7 +971,7 @@ b32 vec3_cmp( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_less_than( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_lt( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new(
         a.x < b.x,
         a.y < b.y,
@@ -925,7 +981,7 @@ struct BVector3 vec3_less_than( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_greater_than( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_gt( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new(
         a.x > b.x,
         a.y > b.y,
@@ -935,7 +991,7 @@ struct BVector3 vec3_greater_than( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_less_than_equal( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_lteq( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new(
         a.x <= b.x,
         a.y <= b.y,
@@ -945,7 +1001,7 @@ struct BVector3 vec3_less_than_equal( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_greater_than_equal( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_gteq( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new( 
         a.x >= b.x,
         a.y >= b.y,
@@ -955,7 +1011,7 @@ struct BVector3 vec3_greater_than_equal( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_equal( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_eq( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new(
         f32_cmp( a.x, b.x ),
         f32_cmp( a.y, b.y ),
@@ -965,7 +1021,7 @@ struct BVector3 vec3_equal( struct Vector3 a, struct Vector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 vec3_not_equal( struct Vector3 a, struct Vector3 b ) {
+struct BVector3 vec3_neq( struct Vector3 a, struct Vector3 b ) {
     return bvec3_new(
         !f32_cmp( a.x, b.x ),
         !f32_cmp( a.y, b.y ),
@@ -1154,6 +1210,77 @@ struct IVector3 ivec3_sign( struct IVector3 v ) {
     result.z = (v.z > 0) - (v.z < 0);
     return result;
 }
+/// @brief Get the minimum component in vector.
+/// @param x Vector to get minimum of.
+/// @return Component with smallest value.
+attr_always_inline attr_header
+i32 ivec3_min( struct IVector3 x ) {
+    i32 _0 = x.x < x.y ? x.x : x.y;
+    return _0 < x.z ? _0 : x.z;
+}
+/// @brief Component-wise minimum value.
+/// @param x, y Vectors.
+/// @return Vector with minimum value in components.
+attr_always_inline attr_header
+struct IVector3 ivec3_min_ivec3( struct IVector3 x, struct IVector3 y ) {
+    struct IVector3 result;
+    result.x = x.x < y.x ? x.x : y.x;
+    result.y = x.y < y.y ? x.y : y.y;
+    result.z = x.z < y.z ? x.z : y.z;
+    return result;
+}
+/// @brief Get the component in between min and max component.
+/// @param x Vector to get mid of.
+/// @return Component in between min and max component.
+attr_always_inline attr_header
+i32 ivec3_mid( struct IVector3 x ) {
+    if( x.x < x.y ) {
+        if( x.y < x.z ) {
+            return x.z;
+        } else {
+            return x.y;
+        }
+    } else {
+        if( x.x < x.z ) {
+            return x.z;
+        } else {
+            return x.x;
+        }
+    }
+}
+/// @brief Get the maximum component in vector.
+/// @param x Vector to get maximum of.
+/// @return Component with largest value.
+attr_always_inline attr_header
+i32 ivec3_max( struct IVector3 x ) {
+    i32 _0 = x.x < x.y ? x.y : x.x;
+    return _0 < x.z ? x.z : _0;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline attr_header
+struct IVector3 ivec3_max_ivec3( struct IVector3 x, struct IVector3 y ) {
+    struct IVector3 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
+    result.z = x.z < y.z ? y.z : x.z;
+    return result;
+}
+/// @brief Component-wise clamp.
+/// @param v        Vector.
+/// @param min, max Range.
+/// @return Clamped vector.
+attr_always_inline attr_header
+struct IVector3 ivec3_clamp(
+    struct IVector3 v, struct IVector3 min, struct IVector3 max
+) {
+    struct IVector3 result;
+    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
+    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
+    result.z = ( (v.z) < (min.z) ? (min.z) : ( (v.z) > (max.z) ? (max.z) : (v.z) ) );
+    return result;
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if vector components are equal.
@@ -1168,7 +1295,7 @@ b32 ivec3_cmp( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_less_than( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_lt( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new(
         a.x < b.x,
         a.y < b.y,
@@ -1178,7 +1305,7 @@ struct BVector3 ivec3_less_than( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_greater_than( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_gt( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new(
         a.x > b.x,
         a.y > b.y,
@@ -1188,7 +1315,7 @@ struct BVector3 ivec3_greater_than( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_less_than_equal( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_lteq( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new(
         a.x <= b.x,
         a.y <= b.y,
@@ -1198,7 +1325,7 @@ struct BVector3 ivec3_less_than_equal( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_greater_than_equal( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_gteq( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new( 
         a.x >= b.x,
         a.y >= b.y,
@@ -1208,7 +1335,7 @@ struct BVector3 ivec3_greater_than_equal( struct IVector3 a, struct IVector3 b )
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_equal( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_eq( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new(
         a.x == b.x,
         a.y == b.y,
@@ -1218,7 +1345,7 @@ struct BVector3 ivec3_equal( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 ivec3_not_equal( struct IVector3 a, struct IVector3 b ) {
+struct BVector3 ivec3_neq( struct IVector3 a, struct IVector3 b ) {
     return bvec3_new(
         a.x != b.x,
         a.y != b.y,
@@ -1229,14 +1356,14 @@ struct BVector3 ivec3_not_equal( struct IVector3 a, struct IVector3 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 bvec3_equal( struct BVector3 a, struct BVector3 b ) {
+struct BVector3 bvec3_eq( struct BVector3 a, struct BVector3 b ) {
     return bvec3_new( (a.x == b.x), (a.y == b.y), (a.z == b.z) );
 }
 /// @brief Check if not equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector3 bvec3_not_equal( struct BVector3 a, struct BVector3 b ) {
+struct BVector3 bvec3_neq( struct BVector3 a, struct BVector3 b ) {
     return bvec3_new( !(a.x == b.x), !(a.y == b.y), !(a.z == b.z) );
 }
 /// @brief Check if any component of vector is true.
@@ -1261,22 +1388,12 @@ b32 bvec3_all( struct BVector3 x ) {
 /// @param x Vector to check.
 /// @return Booleans notted.
 attr_always_inline attr_header
-struct BVector3 bvec3_not( struct BVector3 x ) {
+struct BVector3 bvec3_flip( struct BVector3 x ) {
     return bvec3_new( !x.x, !x.y, !x.z );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_VECTOR3_HPP)
-        #include "core/cpp/math/vector3.hpp"
-    #endif
-    typedef Vector3CPP  vec3;
-    typedef IVector3CPP ivec3;
-    typedef BVector3CPP bvec3;
+#if !defined(CORE_CPP_MATH_VECTOR3_HPP)
+    #include "core/cpp/math/vector3.hpp"
 #endif
 
 #endif /* header guard */

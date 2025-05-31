@@ -53,19 +53,6 @@ typedef signed int   i32;
     typedef i32 isize;
 #endif
 
-#if !defined(CORE_INT128_H)
-    #include "core/int128.h"
-#endif
-
-#if !defined(__cplusplus)
-    typedef struct Integer128C Integer128;
-#endif
-
-/// @brief Signed 128-bit integer.
-typedef Integer128 i128;
-/// @brief Unsigned 128-bit integer.
-typedef Integer128 u128;
-
 #if defined(CORE_PLATFORM_WINDOWS)
     /// @brief Signed 32-bit integer for atomic operations.
     typedef volatile long      atomic32;
@@ -82,8 +69,6 @@ typedef volatile isize atomic_size;
 
 /// @brief 64-bit hash.
 typedef u64  hash64;
-/// @brief 128-bit hash.
-typedef u128 hash128;
 
 /// @brief 8-bit boolean.
 typedef u8  b8;

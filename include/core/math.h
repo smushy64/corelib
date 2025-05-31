@@ -18,13 +18,7 @@
 #include "core/math/matrix3x3.h"
 #include "core/math/matrix4x4.h"
 #include "core/math/color.h"
-
-#if defined(CORE_CPLUSPLUS)
-    #include "core/cpp/math/overload.hpp"
-#else
-    #include "core/math/overload.h"
-#endif
-
+#include "core/math/overload.h"
 // IWYU pragma: end_exports
 
 #endif /* header guard */

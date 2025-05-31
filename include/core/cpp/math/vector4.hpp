@@ -1,20 +1,22 @@
-#if !defined(CORE_CPP_MATH_VECTOR4_HPP)
+#if !defined(CORE_CPP_MATH_VECTOR4_HPP) && defined(__cplusplus)
 #define CORE_CPP_MATH_VECTOR4_HPP
 /**
  * @file   vector4.hpp
- * @brief  C++ Vector4.
+ * @brief  C++ Math: Vector4.
  * @author Alicia Amarilla (smushyaa@gmail.com)
- * @date   September 28, 2024
+ * @date   May 30, 2025
 */
-
-struct Vector4CPP;
-struct IVector4CPP;
-struct BVector4CPP;
-
 #if !defined(CORE_MATH_VECTOR4_H)
     #include "core/math/vector4.h"
 #endif
+#include "core/cpp/math/swizzler.hpp"
 
+/// @brief 4 Component 32-bit Unsigned Integer Vector.
+typedef UVector4 uvec4;
+/// @brief 4 Component 64-bit Floating Point Vector.
+typedef DVector4 dvec4;
+
+/// @brief 4 Component 32-bit Floating Point Vector.
 struct Vector4CPP {
     union {
         /// @brief X, Y, Z and W components.
@@ -101,22 +103,20 @@ struct Vector4CPP {
             /// @brief Blue and Alpha channels as a #Vector2.
             Vector2CPP ba;
         };
-        // struct { f32 x, y, z, w; };
-        // struct { f32 r, g, b, a; };
-        struct Vector4 pod;
+        /// @brief Swizzle XYZW.
+        struct Vector4 xyzw;
+        /// @brief Swizzle RGBA.
+        struct Vector4 rgba;
 
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 0, 0> xx, rr;
-        // SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 0, 1> xy, rg;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 0, 2> xz, rb;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 0, 3> xw, ra;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 1, 0> yx, gr;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 1, 1> yy, gg;
-        // SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 1, 2> yz, gb;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 1, 3> yw, ga;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 2, 0> zx, br;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 2, 1> zy, bg;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 2, 2> zz, bb;
-        // SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 2, 3> zw, ba;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 3, 0> wx, ar;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 3, 1> wy, ag;
         SwizzlerConvert<Vector4CPP, Vector2CPP, f32, 3, 2> wz, ab;
@@ -128,7 +128,6 @@ struct Vector4CPP {
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 0, 3> xxw, rra;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 1, 0> xyx, rgr;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 1, 1> xyy, rgg;
-        // SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 1, 2> xyz, rgb;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 1, 3> xyw, rga;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 2, 0> xzx, rbr;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 0, 2, 1> xzy, rbg;
@@ -149,7 +148,6 @@ struct Vector4CPP {
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 2, 0> yzx, gbr;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 2, 1> yzy, gbg;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 2, 2> yzz, gbb;
-        // SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 2, 3> yzw, gba;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 3, 0> ywx, gar;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 3, 1> ywy, gag;
         SwizzlerConvert<Vector4CPP, Vector3CPP, f32, 1, 3, 2> ywz, gab;
@@ -214,7 +212,6 @@ struct Vector4CPP {
         Swizzler<Vector4CPP, f32, 0, 1, 2, 0> xyzx, rgbr;
         Swizzler<Vector4CPP, f32, 0, 1, 2, 1> xyzy, rgbg;
         Swizzler<Vector4CPP, f32, 0, 1, 2, 2> xyzz, rgbb;
-        Swizzler<Vector4CPP, f32, 0, 1, 2, 3> xyzw, rgba;
         Swizzler<Vector4CPP, f32, 0, 1, 3, 0> xywx, rgar;
         Swizzler<Vector4CPP, f32, 0, 1, 3, 1> xywy, rgag;
         Swizzler<Vector4CPP, f32, 0, 1, 3, 2> xywz, rgab;
@@ -447,101 +444,94 @@ struct Vector4CPP {
         f32 array[4];
     };
 
-    attr_always_inline attr_header constexpr
-    Vector4CPP() : x(0), y(0), z(0), w(0) {}
-    attr_always_inline attr_header constexpr
-    Vector4CPP( const struct Vector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( const struct IVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( f32 s ) : x(s), y(s), z(s), w(s) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( f32 x, f32 y, f32 z, f32 w ) : x(x), y(y), z(z), w(w) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( Vector2CPP xy, f32 z, f32 w ) : Vector4CPP( xy.x, xy.y, z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( f32 x, f32 y, Vector2CPP zw ) : Vector4CPP( x, y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( f32 x, Vector2CPP yz, f32 w ) : Vector4CPP( x, yz.x, yz.y, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( Vector2CPP xy, Vector2CPP zw ) : Vector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( Vector3CPP xyz, f32 w ) : Vector4CPP( xyz.xy, xyz.z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit Vector4CPP( f32 x, Vector3CPP yzw ) : Vector4CPP( x, yzw.xy, yzw.z ) {}
+    /// @brief Create empty vector.
+    constexpr Vector4CPP();
+    /// @brief Implicitly convert POD vector to C++ vector.
+    constexpr Vector4CPP( const Vector4& __pod );
+    /// @brief Create vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    constexpr explicit Vector4CPP( f32 x, f32 y, f32 z, f32 w );
+    /// @brief Create vector.
+    /// @param x X, Y, Z and W components.
+    constexpr explicit Vector4CPP( f32 x );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param y  Y component.
+    /// @param zw Z and W components.
+    constexpr explicit Vector4CPP( f32 x, f32 y, Vector2CPP zw );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param yz Y and Z components.
+    /// @param w  W component.
+    constexpr explicit Vector4CPP( f32 x, Vector2CPP yz, f32 w );
+    /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param z  Z component.
+    /// @param w  W component.
+    constexpr explicit Vector4CPP( Vector2CPP xy, f32 z, f32 w );
+    /// @brief Create vector.
+    /// @param x   X component.
+    /// @param yzw Y, Z and W components.
+    constexpr explicit Vector4CPP( f32 x, Vector3CPP yzw );
+    /// @brief Create vector.
+    /// @param xyz X, Y and Z components.
+    /// @param w   W component.
+    constexpr explicit Vector4CPP( Vector3CPP xyz, f32 w );
+    /// @brief Convert integer vector to float vector.
+    constexpr explicit Vector4CPP( const IVector4& iv );
+    /// @brief Convert boolean vector to float vector.
+    constexpr explicit Vector4CPP( const BVector4& bv );
 
-    attr_always_inline attr_header constexpr
-    operator Vector4() const {
-        return *(struct Vector4*)this;
-    }
+    /// @brief Implicitly convert C++ vector to POD vector.
+    constexpr operator Vector4() const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr f32 operator[]( usize index ) const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr f32& operator[]( usize index );
 
-    attr_always_inline attr_header static constexpr
-    Vector4CPP zero() {
-        return Vector4CPP();
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP one() {
-        return Vector4CPP( 1.0, 1.0, 1.0, 1.0 );
-    }
+    /// @brief Vector zero constant.
+    /// @return Value.
+    static constexpr Vector4CPP zero();
+    /// @brief Vector one constant.
+    /// @return Value.
+    static constexpr Vector4CPP one();
 
-    attr_always_inline attr_header static constexpr
-    Vector4CPP red() {
-        return Vector4CPP( 1.0, 0.0, 0.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP green() {
-        return Vector4CPP( 0.0, 1.0, 0.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP blue() {
-        return Vector4CPP( 0.0, 0.0, 1.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP yellow() {
-        return Vector4CPP( 1.0, 1.0, 0.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP magenta() {
-        return Vector4CPP( 1.0, 0.0, 1.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP cyan() {
-        return Vector4CPP( 0.0, 1.0, 1.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP black() {
-        return Vector4CPP( 0.0, 0.0, 0.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP white() {
-        return Vector4CPP( 1.0, 1.0, 1.0, 1.0 );
-    }
-    attr_always_inline attr_header static constexpr
-    Vector4CPP clear() {
-        return Vector4CPP( 0.0, 0.0, 0.0, 0.0 );
-    }
-
-    attr_always_inline attr_header static constexpr
-    Vector4CPP from_array( const f32 array[4] ) {
-        return *(Vector4CPP*)array;
-    }
-    attr_always_inline attr_header constexpr
-    void to_array( f32 out_array[4] ) const {
-        out_array[0] = array[0];
-        out_array[1] = array[1];
-        out_array[2] = array[2];
-        out_array[3] = array[3];
-    }
-
-    attr_always_inline attr_header constexpr
-    f32 operator[]( usize idx ) const {
-        return array[idx];
-    }
-    attr_always_inline attr_header constexpr
-    f32& operator[]( usize idx ) {
-        return array[idx];
-    }
+    /// @brief Vector color clear constant.
+    /// @return Value.
+    static constexpr Vector4CPP clear();
+    /// @brief Vector color black constant.
+    /// @return Value.
+    static constexpr Vector4CPP black();
+    /// @brief Vector color white constant.
+    /// @return Value.
+    static constexpr Vector4CPP white();
+    /// @brief Vector color red constant.
+    /// @return Value.
+    static constexpr Vector4CPP red();
+    /// @brief Vector color green constant.
+    /// @return Value.
+    static constexpr Vector4CPP green();
+    /// @brief Vector color blue constant.
+    /// @return Value.
+    static constexpr Vector4CPP blue();
+    /// @brief Vector color yellow constant.
+    /// @return Value.
+    static constexpr Vector4CPP yellow();
+    /// @brief Vector color magenta constant.
+    /// @return Value.
+    static constexpr Vector4CPP magenta();
+    /// @brief Vector color cyan constant.
+    /// @return Value.
+    static constexpr Vector4CPP cyan();
 };
+/// @brief 4 Component 32-bit Integer Vector.
 struct IVector4CPP {
     union {
         /// @brief X, Y, Z and W components.
@@ -559,57 +549,48 @@ struct IVector4CPP {
                             /// @brief Y component.
                             i32 y;
                         };
-                        /// @brief X and Y components as an #IVector2.
+                        /// @brief X and Y components as a #IVector2.
                         IVector2CPP xy;
                     };
                     /// @brief Z component.
-                    union {
-                        /// @brief Z component.
-                        i32 z;
-                    };
+                    i32 z;
                 };
                 /// @brief Swizzle yz.
                 struct {
                     i32 __unused0;
-                    /// @brief Y and Z components as an #IVector2.
+                    /// @brief Y and Z components as a #IVector2.
                     IVector2CPP yz;
                 };
-                /// @brief X, Y and Z components as an #IVector3.
+                /// @brief X, Y and Z components as a #IVector3.
                 IVector3CPP xyz;
             };
             /// @brief W component.
-            union {
-                /// @brief W component.
-                i32 w;
-            };
+            i32 w;
         };
         /// @brief Swizzle yzw.
         struct {
             i32 __unused2;
-            /// @brief Y, Z and W components as an #IVector3.
+            /// @brief Y, Z and W components as a #IVector3.
             IVector3CPP yzw;
         };
         /// @brief Swizzle zw.
         struct {
             IVector2CPP __unused4;
-            /// @brief Z and W components as an #IVector2.
+            /// @brief Z and W components as a #IVector2.
             IVector2CPP zw;
         };
-        // struct { i32 x, y, z, w; };
-        struct IVector4 pod;
+        /// @brief Swizzle XYZW.
+        struct IVector4 xyzw;
 
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 0, 0> xx;
-        // SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 0, 1> xy;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 0, 2> xz;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 0, 3> xw;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 1, 0> yx;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 1, 1> yy;
-        // SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 1, 2> yz;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 1, 3> yw;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 2, 0> zx;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 2, 1> zy;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 2, 2> zz;
-        // SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 2, 3> zw;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 3, 0> wx;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 3, 1> wy;
         SwizzlerConvert<IVector4CPP, IVector2CPP, i32, 3, 2> wz;
@@ -621,7 +602,6 @@ struct IVector4CPP {
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 0, 3> xxw;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 1, 0> xyx;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 1, 1> xyy;
-        // SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 1, 2> xyz;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 1, 3> xyw;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 2, 0> xzx;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 0, 2, 1> xzy;
@@ -642,7 +622,6 @@ struct IVector4CPP {
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 2, 0> yzx;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 2, 1> yzy;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 2, 2> yzz;
-        // SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 2, 3> yzw;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 3, 0> ywx;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 3, 1> ywy;
         SwizzlerConvert<IVector4CPP, IVector3CPP, i32, 1, 3, 2> ywz;
@@ -707,7 +686,6 @@ struct IVector4CPP {
         Swizzler<IVector4CPP, i32, 0, 1, 2, 0> xyzx;
         Swizzler<IVector4CPP, i32, 0, 1, 2, 1> xyzy;
         Swizzler<IVector4CPP, i32, 0, 1, 2, 2> xyzz;
-        Swizzler<IVector4CPP, i32, 0, 1, 2, 3> xyzw;
         Swizzler<IVector4CPP, i32, 0, 1, 3, 0> xywx;
         Swizzler<IVector4CPP, i32, 0, 1, 3, 1> xywy;
         Swizzler<IVector4CPP, i32, 0, 1, 3, 2> xywz;
@@ -940,64 +918,66 @@ struct IVector4CPP {
         i32 array[4];
     };
 
-    attr_always_inline attr_header constexpr
-    IVector4CPP() : x(0), y(0), z(0), w(0) {}
-    attr_always_inline attr_header constexpr
-    IVector4CPP( const struct IVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( const Vector4CPP& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( i32 s ) : x(s), y(s), z(s), w(s) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( i32 x, i32 y, i32 z, i32 w ) : x(x), y(y), z(z), w(w) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( IVector2CPP xy, i32 z, i32 w ) : IVector4CPP( xy.x, xy.y, z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( i32 x, i32 y, IVector2CPP zw ) : IVector4CPP( x, y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( i32 x, IVector2CPP yz, i32 w ) : IVector4CPP( x, yz.x, yz.y, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( IVector2CPP xy, IVector2CPP zw ) : IVector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( IVector3CPP xyz, i32 w ) : IVector4CPP( xyz.xy, xyz.z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit IVector4CPP( i32 x, IVector3CPP yzw ) : IVector4CPP( x, yzw.xy, yzw.z ) {}
+    /// @brief Create empty vector.
+    constexpr IVector4CPP();
+    /// @brief Implicitly convert POD vector to C++ vector.
+    constexpr IVector4CPP( const IVector4& __pod );
+    /// @brief Create vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    constexpr explicit IVector4CPP( i32 x, i32 y, i32 z, i32 w );
+    /// @brief Create vector.
+    /// @param x X, Y, Z and W components.
+    constexpr explicit IVector4CPP( i32 x );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param y  Y component.
+    /// @param zw Z and W components.
+    constexpr explicit IVector4CPP( i32 x, i32 y, IVector2CPP zw );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param yz Y and Z components.
+    /// @param w  W component.
+    constexpr explicit IVector4CPP( i32 x, IVector2CPP yz, i32 w );
+    /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param z  Z component.
+    /// @param w  W component.
+    constexpr explicit IVector4CPP( IVector2CPP xy, i32 z, i32 w );
+    /// @brief Create vector.
+    /// @param x   X component.
+    /// @param yzw Y, Z and W components.
+    constexpr explicit IVector4CPP( i32 x, IVector3CPP yzw );
+    /// @brief Create vector.
+    /// @param xyz X, Y and Z components.
+    /// @param w   W component.
+    constexpr explicit IVector4CPP( IVector3CPP xyz, i32 w );
+    /// @brief Convert float vector to integer vector.
+    constexpr explicit IVector4CPP( const Vector4& iv );
+    /// @brief Convert boolean vector to float vector.
+    constexpr explicit IVector4CPP( const BVector4& bv );
 
-    attr_always_inline attr_header constexpr
-    operator IVector4() const {
-        return *(struct IVector4*)this;
-    }
+    /// @brief Implicitly convert C++ vector to POD vector.
+    constexpr operator IVector4() const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr i32 operator[]( usize index ) const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr i32& operator[]( usize index );
 
-    attr_always_inline attr_header static constexpr
-    IVector4CPP zero() {
-        return IVector4CPP();
-    }
-    attr_always_inline attr_header static constexpr
-    IVector4CPP one() {
-        return IVector4CPP( 1 );
-    }
-
-    attr_always_inline attr_header static constexpr
-    IVector4CPP from_array( const i32 array[4] ) {
-        return *(IVector4CPP*)array;
-    }
-    attr_always_inline attr_header constexpr
-    void to_array( i32 out_array[4] ) const {
-        out_array[0] = array[0];
-        out_array[1] = array[1];
-        out_array[2] = array[2];
-        out_array[3] = array[3];
-    }
-
-    attr_always_inline attr_header constexpr
-    i32 operator[]( usize idx ) const {
-        return array[idx];
-    }
-    attr_always_inline attr_header constexpr
-    i32& operator[]( usize idx ) {
-        return array[idx];
-    }
+    /// @brief Vector zero constant.
+    /// @return Value.
+    static constexpr IVector4CPP zero();
+    /// @brief Vector one constant.
+    /// @return Value.
+    static constexpr IVector4CPP one();
 };
+/// @brief 4 Component 32-bit Boolean Vector.
 struct BVector4CPP {
     union {
         /// @brief X, Y, Z and W components.
@@ -1015,57 +995,48 @@ struct BVector4CPP {
                             /// @brief Y component.
                             b32 y;
                         };
-                        /// @brief X and Y components as an #IVector2.
+                        /// @brief X and Y components as a #BVector2.
                         BVector2CPP xy;
                     };
                     /// @brief Z component.
-                    union {
-                        /// @brief Z component.
-                        b32 z;
-                    };
+                    b32 z;
                 };
                 /// @brief Swizzle yz.
                 struct {
                     b32 __unused0;
-                    /// @brief Y and Z components as an #IVector2.
+                    /// @brief Y and Z components as a #BVector2.
                     BVector2CPP yz;
                 };
-                /// @brief X, Y and Z components as an #IVector3.
+                /// @brief X, Y and Z components as a #BVector3.
                 BVector3CPP xyz;
             };
             /// @brief W component.
-            union {
-                /// @brief W component.
-                b32 w;
-            };
+            b32 w;
         };
         /// @brief Swizzle yzw.
         struct {
             b32 __unused2;
-            /// @brief Y, Z and W components as an #IVector3.
+            /// @brief Y, Z and W components as a #BVector3.
             BVector3CPP yzw;
         };
         /// @brief Swizzle zw.
         struct {
             BVector2CPP __unused4;
-            /// @brief Z and W components as an #IVector2.
+            /// @brief Z and W components as a #BVector2.
             BVector2CPP zw;
         };
-        // struct { i32 x, y, z, w; };
-        struct BVector4 pod;
+        /// @brief Swizzle XYZW.
+        struct BVector4 xyzw;
 
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 0> xx;
-        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 1> xy;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 2> xz;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 0, 3> xw;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 0> yx;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 1> yy;
-        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 2> yz;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 1, 3> yw;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 0> zx;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 1> zy;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 2> zz;
-        // SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 2, 3> zw;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 0> wx;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 1> wy;
         SwizzlerConvert<BVector4CPP, BVector2CPP, b32, 3, 2> wz;
@@ -1077,7 +1048,6 @@ struct BVector4CPP {
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 0, 3> xxw;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 0> xyx;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 1> xyy;
-        // SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 2> xyz;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 1, 3> xyw;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 0> xzx;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 0, 2, 1> xzy;
@@ -1098,7 +1068,6 @@ struct BVector4CPP {
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 0> yzx;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 1> yzy;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 2> yzz;
-        // SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 2, 3> yzw;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 0> ywx;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 1> ywy;
         SwizzlerConvert<BVector4CPP, BVector3CPP, b32, 1, 3, 2> ywz;
@@ -1163,7 +1132,6 @@ struct BVector4CPP {
         Swizzler<BVector4CPP, b32, 0, 1, 2, 0> xyzx;
         Swizzler<BVector4CPP, b32, 0, 1, 2, 1> xyzy;
         Swizzler<BVector4CPP, b32, 0, 1, 2, 2> xyzz;
-        Swizzler<BVector4CPP, b32, 0, 1, 2, 3> xyzw;
         Swizzler<BVector4CPP, b32, 0, 1, 3, 0> xywx;
         Swizzler<BVector4CPP, b32, 0, 1, 3, 1> xywy;
         Swizzler<BVector4CPP, b32, 0, 1, 3, 2> xywz;
@@ -1396,605 +1364,946 @@ struct BVector4CPP {
         b32 array[4];
     };
 
-    attr_always_inline attr_header constexpr
-    BVector4CPP() : x(0), y(0), z(0), w(0) {}
-    attr_always_inline attr_header constexpr
-    BVector4CPP( const struct BVector4& v ) : x(v.x), y(v.y), z(v.z), w(v.w) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( b32 s ) : x(s), y(s), z(s), w(s) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( b32 x, b32 y, b32 z, b32 w ) : x(x), y(y), z(z), w(w) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( BVector2CPP xy, b32 z, b32 w ) : BVector4CPP( xy.x, xy.y, z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( b32 x, b32 y, BVector2CPP zw ) : BVector4CPP( x, y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( b32 x, BVector2CPP yz, b32 w ) : BVector4CPP( x, yz.x, yz.y, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( BVector2CPP xy, BVector2CPP zw ) : BVector4CPP( xy.x, xy.y, zw.x, zw.y ) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( BVector3CPP xyz, b32 w ) : BVector4CPP( xyz.xy, xyz.z, w ) {}
-    attr_always_inline attr_header constexpr
-    explicit BVector4CPP( b32 x, BVector3CPP yzw ) : BVector4CPP( x, yzw.xy, yzw.z ) {}
+    /// @brief Create empty vector.
+    constexpr BVector4CPP();
+    /// @brief Implicitly convert POD vector to C++ vector.
+    constexpr BVector4CPP( const BVector4& __pod );
+    /// @brief Create vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @param w W component.
+    constexpr explicit BVector4CPP( b32 x, b32 y, b32 z, b32 w );
+    /// @brief Create vector.
+    /// @param x X, Y, Z and W components.
+    constexpr explicit BVector4CPP( b32 x );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param y  Y component.
+    /// @param zw Z and W components.
+    constexpr explicit BVector4CPP( b32 x, b32 y, BVector2CPP zw );
+    /// @brief Create vector.
+    /// @param x  X component.
+    /// @param yz Y and Z components.
+    /// @param w  W component.
+    constexpr explicit BVector4CPP( b32 x, BVector2CPP yz, b32 w );
+    /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param z  Z component.
+    /// @param w  W component.
+    constexpr explicit BVector4CPP( BVector2CPP xy, b32 z, b32 w );
+    /// @brief Create vector.
+    /// @param x   X component.
+    /// @param yzw Y, Z and W components.
+    constexpr explicit BVector4CPP( b32 x, BVector3CPP yzw );
+    /// @brief Create vector.
+    /// @param xyz X, Y and Z components.
+    /// @param w   W component.
+    constexpr explicit BVector4CPP( BVector3CPP xyz, b32 w );
+    /// @brief Convert float vector to boolean vector.
+    constexpr explicit BVector4CPP( const Vector4& iv );
+    /// @brief Convert integer vector to boolean vector.
+    constexpr explicit BVector4CPP( const IVector4& bv );
 
-    attr_always_inline attr_header constexpr
-    operator BVector4() const {
-        return *(struct BVector4*)this;
-    }
+    /// @brief Implicitly convert C++ vector to POD vector.
+    constexpr operator BVector4() const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr b32 operator[]( usize index ) const;
+    /// @brief Index into vector.
+    /// @param index Index of component.
+    /// @return Component.
+    constexpr b32& operator[]( usize index );
 
-    attr_always_inline attr_header static constexpr
-    BVector4CPP from_array( const b32 array[4] ) {
-        return *(BVector4CPP*)array;
-    }
-    attr_always_inline attr_header constexpr
-    void to_array( b32 out_array[4] ) const {
-        out_array[0] = array[0];
-        out_array[1] = array[1];
-        out_array[2] = array[2];
-        out_array[3] = array[3];
-    }
-
-    attr_always_inline attr_header constexpr
-    b32 operator[]( usize idx ) const {
-        return array[idx];
-    }
-    attr_always_inline attr_header constexpr
-    b32& operator[]( usize idx ) {
-        return array[idx];
-    }
+    /// @brief Vector zero constant.
+    /// @return Value.
+    static constexpr BVector4CPP zero();
+    /// @brief Vector one constant.
+    /// @return Value.
+    static constexpr BVector4CPP one();
 };
-attr_always_inline attr_header
-Vector4CPP add(
-    Vector4CPP lhs, Vector4CPP rhs
-) {
-    return vec4_add( lhs.pod, rhs.pod );
+
+/// @brief 4 Component 32-bit Floating Point Vector.
+typedef Vector4CPP vec4;
+/// @brief 4 Component 32-bit Integer Vector.
+typedef IVector4CPP ivec4;
+/// @brief 4 Component 32-bit Boolean Vector.
+typedef BVector4CPP bvec4;
+
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP()
+    : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( const Vector4& __pod )
+    : x(__pod.x), y(__pod.y), z(__pod.z), w(__pod.w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( f32 x, f32 y, f32 z, f32 w )
+    : x(x), y(y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( f32 x )
+    : x(x), y(x), z(x), w(x) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( f32 x, f32 y, Vector2CPP zw )
+    : x(x), y(y), z(zw.x), w(zw.y) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( f32 x, Vector2CPP yz, f32 w )
+    : x(x), y(yz.x), z(yz.y), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( Vector2CPP xy, f32 z, f32 w )
+    : x(xy.x), y(xy.y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( f32 x, Vector3CPP yzw )
+    : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( Vector3CPP xyz, f32 w )
+    : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( const IVector4& iv )
+    : x(iv.x), y(iv.y), z(iv.z), w(iv.w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( const BVector4& bv )
+    : x(bv.x ? 1.0f : 0.0f),
+      y(bv.y ? 1.0f : 0.0f),
+      z(bv.z ? 1.0f : 0.0f),
+      w(bv.w ? 1.0f : 0.0f) {}
+
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::operator Vector4() const {
+    return *(Vector4*)this;
 }
-attr_always_inline attr_header
-Vector4CPP sub(
-    Vector4CPP lhs, Vector4CPP rhs
-) {
-    return vec4_sub( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+f32 Vector4CPP::operator[]( usize index ) const {
+    return this->array[index];
 }
-attr_always_inline attr_header
-Vector4CPP mul( Vector4CPP lhs, f32 rhs ) {
-    return vec4_mul( lhs.pod, rhs );
+constexpr attr_always_inline attr_header attr_hot
+f32& Vector4CPP::operator[]( usize index ) {
+    return this->array[index];
 }
-attr_always_inline attr_header
-Vector4CPP mul( f32 lhs, Vector4CPP rhs ) {
-    return vec4_mul( rhs.pod, lhs );
+
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::zero() {
+    return VEC4_ZERO;
 }
-attr_always_inline attr_header
-Vector4CPP mul(
-    Vector4CPP lhs, Vector4CPP rhs
-) {
-    return vec4_mul_vec4( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::one() {
+    return VEC4_ONE;
 }
-attr_always_inline attr_header
-Vector4CPP hadamard(
-    Vector4CPP lhs, Vector4CPP rhs
-) {
-    return mul(lhs, rhs);
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::clear() {
+    return RGBA_CLEAR;
 }
-attr_always_inline attr_header
-Vector4CPP div( Vector4CPP lhs, f32 rhs ) {
-    return vec4_div( lhs.pod, rhs );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::black() {
+    return RGBA_BLACK;
 }
-attr_always_inline attr_header
-Vector4CPP div( Vector4CPP lhs, Vector4CPP rhs ) {
-    return vec4_div_vec4( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::white() {
+    return RGBA_WHITE;
 }
-attr_always_inline attr_header
-Vector4CPP mod( Vector4CPP lhs, f32 rhs ) {
-    return vec4_mod( lhs.pod, rhs );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::red() {
+    return RGBA_RED;
 }
-attr_always_inline attr_header
-Vector4CPP mod( Vector4CPP lhs, Vector4CPP rhs ) {
-    return vec4_mod_vec4( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::green() {
+    return RGBA_GREEN;
 }
-attr_always_inline attr_header
-Vector4CPP neg( Vector4CPP x ) {
-    return vec4_neg( x.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::blue() {
+    return RGBA_BLUE;
 }
-attr_always_inline attr_header
-f32 hadd( Vector4CPP x ) {
-    return vec4_hadd( x.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::yellow() {
+    return RGBA_YELLOW;
 }
-attr_always_inline attr_header
-f32 hmul( Vector4CPP x ) {
-    return vec4_hmul( x.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::magenta() {
+    return RGBA_MAGENTA;
 }
-attr_always_inline attr_header
-f32 dot( Vector4CPP lhs, Vector4CPP rhs ) {
-    return vec4_dot( lhs.pod, rhs.pod );
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP Vector4CPP::cyan() {
+    return RGBA_CYAN;
 }
-attr_always_inline attr_header
-f32 hmax( Vector4CPP x ) {
-    return vec4_hmax( x.pod );
+
+/// @brief Component-wise add vectors.
+/// @param lhs, rhs Vectors to add.
+/// @return Result of addition.
+constexpr attr_always_inline attr_header attr_hot
+vec4 add( vec4 lhs, vec4 rhs ) {
+    return vec4_add( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP max( Vector4CPP x, Vector4CPP y ) {
-    return vec4_max( x.pod, y.pod );
+/// @brief Component-wise subtract vectors.
+/// @param lhs, rhs Vectors to subtract.
+/// @return Result of subtraction.
+constexpr attr_always_inline attr_header attr_hot
+vec4 sub( vec4 lhs, vec4 rhs ) {
+    return vec4_sub( lhs, rhs );
 }
-attr_always_inline attr_header
-f32 hmin( Vector4CPP x ) {
-    return vec4_hmin( x.pod );
+/// @brief Multiply vector components.
+/// @param lhs Vector to multiply.
+/// @param rhs Scalar to multiply components by.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 mul( vec4 lhs, f32 rhs ) {
+    return vec4_mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP min( Vector4CPP x, Vector4CPP y ) {
-    return vec4_min( x.pod, y.pod );
+/// @brief Multiply vector components.
+/// @param lhs Scalar to multiply components by.
+/// @param rhs Vector to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 mul( f32 lhs, vec4 rhs ) {
+    return vec4_mul( rhs, lhs );
 }
-attr_always_inline attr_header
-f32 length_sqr( Vector4CPP x ) {
-    return vec4_length_sqr( x.pod );
+/// @brief Hadamard product between two vectors.
+///
+/// Component-wise multiplication of two vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 mul( vec4 lhs, vec4 rhs ) {
+    return vec4_mul_vec4( lhs, rhs );
 }
-attr_always_inline attr_header
-f32 length( Vector4CPP x ) {
-    return vec4_length( x.pod );
+/// @brief Hadamard product between two vectors.
+///
+/// Component-wise multiplication of two vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 hadamard( vec4 lhs, vec4 rhs ) {
+    return vec4_mul_vec4( lhs, rhs );
 }
-attr_always_inline attr_header
-f32 distance_sqr( Vector4CPP a, Vector4CPP b ) {
-    return vec4_distance_sqr( a.pod, b.pod );
+/// @brief Divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 div( vec4 lhs, f32 rhs ) {
+    return vec4_div( lhs, rhs );
 }
-attr_always_inline attr_header
-f32 distance( Vector4CPP a, Vector4CPP b ) {
-    return vec4_distance( a.pod, b.pod );
+/// @brief Component-wise division.
+/// @param lhs Vector to divide.
+/// @param rhs Vector to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 div( vec4 lhs, vec4 rhs ) {
+    return vec4_div_vec4( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP normalize( Vector4CPP x ) {
-    return vec4_normalize( x.pod );
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of modulus division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 mod( vec4 lhs, f32 rhs ) {
+    return vec4_mod( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP clamp(
-    Vector4CPP v, Vector4CPP min, Vector4CPP max
-) {
-    return vec4_clamp( v.pod, min.pod, max.pod );
+/// @brief Modulus divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Vector to divide components by.
+/// @return Result of modulus division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 mod( vec4 lhs, vec4 rhs ) {
+    return vec4_mod_vec4( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP clamp(
-    Vector4CPP v, f32 min, f32 max
-) {
-    return vec4_clamp_length( v.pod, min, max );
+/// @brief Negate components of a vector.
+/// @param x Vector to negate.
+/// @return Result of negation.
+constexpr attr_always_inline attr_header attr_hot
+vec4 neg( vec4 x ) {
+    return vec4_neg( x );
 }
-attr_header
-Vector4CPP abs( Vector4CPP v ) {
-    return vec4_abs( v.pod );
+
+/// @brief Component-wise add vectors.
+/// @param lhs, rhs Vectors to add.
+/// @return Result of addition.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator+( vec4 lhs, vec4 rhs ) {
+    return add( lhs, rhs );
 }
-attr_header
-Vector4CPP sign( Vector4CPP v ) {
-    return vec4_sign( v.pod );
+/// @brief Component-wise add vectors.
+/// @param lhs, rhs Vectors to add.
+/// @return Result of addition.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator+=( vec4& lhs, vec4 rhs ) {
+    return lhs = lhs + rhs;
 }
-attr_header
-Vector4CPP trunc( Vector4CPP v ) {
-    return vec4_trunc( v.pod );
+/// @brief Component-wise subtract vectors.
+/// @param lhs, rhs Vectors to subtract.
+/// @return Result of subtraction.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator-( vec4 lhs, vec4 rhs ) {
+    return sub( lhs, rhs );
 }
-attr_header
-Vector4CPP floor( Vector4CPP v ) {
-    return vec4_floor( v.pod );
+/// @brief Component-wise subtract vectors.
+/// @param lhs, rhs Vectors to subtract.
+/// @return Result of subtraction.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator-=( vec4& lhs, vec4 rhs ) {
+    return lhs = lhs - rhs;
 }
-attr_header
-Vector4CPP ceil( Vector4CPP v ) {
-    return vec4_ceil( v.pod );
+/// @brief Multiply vector components.
+/// @param lhs Vector to multiply.
+/// @param rhs Scalar to multiply components by.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator*( vec4 lhs, f32 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header
-Vector4CPP round( Vector4CPP v ) {
-    return vec4_round( v.pod );
+/// @brief Multiply vector components.
+/// @param lhs Scalar to multiply components by.
+/// @param rhs Vector to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator*( f32 lhs, vec4 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_header
-Vector4CPP fract( Vector4CPP v ) {
-    return vec4_fract( v.pod );
+/// @brief Hadamard product between two vectors.
+///
+/// Component-wise multiplication of two vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator*( vec4 lhs, vec4 rhs ) {
+    return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP lerp(
-    Vector4CPP a, Vector4CPP b, f32 t
-) {
-    return vec4_lerp( a.pod, b.pod, t );
+/// @brief Multiply vector components.
+/// @param lhs Vector to multiply.
+/// @param rhs Scalar to multiply components by.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator*=( vec4& lhs, f32 rhs ) {
+    return lhs = lhs * rhs;
 }
-attr_always_inline attr_header
-Vector4CPP mix(
-    Vector4CPP a, Vector4CPP b, f32 t
-) {
+/// @brief Hadamard product between two vectors.
+///
+/// Component-wise multiplication of two vectors.
+/// @param lhs, rhs Vectors to multiply.
+/// @return Result of multiplication.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator*=( vec4& lhs, vec4 rhs ) {
+    return lhs = lhs * rhs;
+}
+/// @brief Divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator/( vec4 lhs, f32 rhs ) {
+    return div( lhs, rhs );
+}
+/// @brief Component-wise division.
+/// @param lhs Vector to divide.
+/// @param rhs Vector to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator/( vec4 lhs, vec4 rhs ) {
+    return div( lhs, rhs );
+}
+/// @brief Divide vector components.
+/// @param lhs Vector to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator/=( vec4 lhs, f32 rhs ) {
+    return lhs = lhs / rhs;
+}
+/// @brief Component-wise division.
+/// @param lhs Vector to divide.
+/// @param rhs Vector to divide components by.
+/// @return Result of division.
+constexpr attr_always_inline attr_header attr_hot
+vec4& operator/=( vec4 lhs, vec4 rhs ) {
+    return lhs = lhs / rhs;
+}
+/// @brief Negate components of a vector.
+/// @param x Vector to negate.
+/// @return Result of negation.
+constexpr attr_always_inline attr_header attr_hot
+vec4 operator-( vec4 x ) {
+    return neg(x);
+}
+
+attr_always_inline attr_header attr_hot
+vec4 rotl( vec4 x ) {
+    return vec4_rotl( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 rotr( vec4 x ) {
+    return vec4_rotr( x );
+}
+attr_always_inline attr_header attr_hot
+f32 hadd( vec4 x ) {
+    return vec4_hadd( x );
+}
+attr_always_inline attr_header attr_hot
+f32 hmul( vec4 x ) {
+    return vec4_hmul( x );
+}
+attr_always_inline attr_header attr_hot
+f32 dot( vec4 lhs, vec4 rhs ) {
+    return vec4_dot( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+f32 min( vec4 x ) {
+    return vec4_min( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 min( vec4 x, vec4 y ) {
+    return vec4_min_vec4( x, y );
+}
+attr_always_inline attr_header attr_hot
+f32 max( vec4 x ) {
+    return vec4_max( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 max( vec4 x, vec4 y ) {
+    return vec4_max_vec4( x, y );
+}
+attr_always_inline attr_header attr_hot
+vec4 clamp( vec4 v, vec4 min, vec4 max ) {
+    return vec4_clamp( v, min, max );
+}
+attr_always_inline attr_header attr_hot
+vec4 clamp( vec4 v, f32 min, f32 max ) {
+    return vec4_clamp_length( v, min, max );
+}
+attr_always_inline attr_header attr_hot
+f32 length_sqr( vec4 x ) {
+    return vec4_length_sqr( x );
+}
+attr_always_inline attr_header attr_hot
+f32 length( vec4 x ) {
+    return vec4_length( x );
+}
+attr_always_inline attr_header attr_hot
+f32 distance_sqr( vec4 a, vec4 b ) {
+    return vec4_distance_sqr( a, b );
+}
+attr_always_inline attr_header attr_hot
+f32 distance( vec4 a, vec4 b ) {
+    return vec4_distance( a, b );
+}
+attr_always_inline attr_header attr_hot
+vec4 normalize( vec4 x ) {
+    return vec4_normalize( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 abs( vec4 x ) {
+    return vec4_abs( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 sign( vec4 x ) {
+    return vec4_sign( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 trunc( vec4 x ) {
+    return vec4_trunc( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 floor( vec4 x ) {
+    return vec4_floor( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 ceil( vec4 x ) {
+    return vec4_ceil( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 round( vec4 x ) {
+    return vec4_round( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 fract( vec4 x ) {
+    return vec4_fract( x );
+}
+attr_always_inline attr_header attr_hot
+vec4 lerp( vec4 a, vec4 b, f32 t ) {
+    return vec4_lerp( a, b, t );
+}
+attr_always_inline attr_header attr_hot
+vec4 lerp( vec4 a, vec4 b, vec4 t ) {
+    return vec4_lerp_vec4( a, b, t );
+}
+attr_always_inline attr_header attr_hot
+vec4 mix( vec4 a, vec4 b, f32 t ) {
     return lerp( a, b, t );
 }
-attr_always_inline attr_header
-Vector4CPP step( Vector4CPP edge, Vector4CPP x ) {
-    return vec4_step( edge.pod, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 mix( vec4 a, vec4 b, vec4 t ) {
+    return lerp( a, b, t );
 }
-attr_always_inline attr_header
-Vector4CPP step( f32 edge, Vector4CPP x ) {
-    return vec4_step_scalar( edge, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 step( vec4 edge, vec4 x ) {
+    return vec4_step_vec4( edge, x );
 }
-attr_always_inline attr_header
-Vector4CPP smoothstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
-    return vec4_smoothstep( edge0.pod, edge1.pod, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 step( f32 edge, vec4 x ) {
+    return vec4_step( edge, x );
 }
-attr_always_inline attr_header
-Vector4CPP smoothstep( f32 edge0, f32 edge1, Vector4CPP x ) {
-    return vec4_smoothstep_scalar( edge0, edge1, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 smoothstep( vec4 edge0, vec4 edge1, vec4 x ) {
+    return vec4_smoothstep_vec4( edge0, edge1, x );
 }
-attr_always_inline attr_header
-Vector4CPP smootherstep( Vector4CPP edge0, Vector4CPP edge1, Vector4CPP x ) {
-    return vec4_smootherstep( edge0.pod, edge1.pod, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 smoothstep( f32 edge0, f32 edge1, vec4 x ) {
+    return vec4_smoothstep( edge0, edge1, x );
 }
-attr_always_inline attr_header
-Vector4CPP smootherstep( f32 edge0, f32 edge1, Vector4CPP x ) {
-    return vec4_smootherstep_scalar( edge0, edge1, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 smootherstep( vec4 edge0, vec4 edge1, vec4 x ) {
+    return vec4_smootherstep_vec4( edge0, edge1, x );
 }
-attr_always_inline attr_header
-BVector4CPP isnan( Vector4CPP x ) {
-    return vec4_isnan( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 smootherstep( f32 edge0, f32 edge1, vec4 x ) {
+    return vec4_smootherstep( edge0, edge1, x );
 }
-attr_always_inline attr_header
-BVector4CPP isinf( Vector4CPP x ) {
-    return vec4_isinf( x.pod );
+attr_always_inline attr_header attr_hot
+bvec4 isnan( vec4 x ) {
+    return vec4_isnan( x );
 }
-attr_always_inline attr_header
-Vector4CPP radians( Vector4CPP degrees ) {
-    return vec4_radians( degrees.pod );
+attr_always_inline attr_header attr_hot
+bvec4 isinf( vec4 x ) {
+    return vec4_isinf( x );
 }
-attr_always_inline attr_header
-Vector4CPP degrees( Vector4CPP radians ) {
-    return vec4_degrees( radians.pod );
+attr_always_inline attr_header attr_hot
+vec4 radians( vec4 degrees ) {
+    return vec4_radians( degrees );
 }
-attr_always_inline attr_header
-Vector4CPP sin( Vector4CPP angle ) {
-    return vec4_sin( angle.pod );
+attr_always_inline attr_header attr_hot
+vec4 degrees( vec4 radians ) {
+    return vec4_degrees( radians );
 }
-attr_always_inline attr_header
-Vector4CPP cos( Vector4CPP angle ) {
-    return vec4_cos( angle.pod );
+attr_always_inline attr_header attr_hot
+vec4 sin( vec4 x ) {
+    return vec4_sin( x );
 }
-attr_always_inline attr_header
-Vector4CPP tan( Vector4CPP angle ) {
-    return vec4_tan( angle.pod );
+attr_always_inline attr_header attr_hot
+vec4 cos( vec4 x ) {
+    return vec4_cos( x );
 }
-attr_always_inline attr_header
-Vector4CPP asin( Vector4CPP angle ) {
-    return vec4_asin( angle.pod );
+attr_always_inline attr_header attr_hot
+vec4 tan( vec4 x ) {
+    return vec4_tan( x );
 }
-attr_always_inline attr_header
-Vector4CPP acos( Vector4CPP angle ) {
-    return vec4_acos( angle.pod );
+attr_always_inline attr_header attr_hot
+vec4 asin( vec4 x ) {
+    return vec4_asin( x );
 }
-attr_always_inline attr_header
-Vector4CPP atan2( Vector4CPP y, Vector4CPP x ) {
-    return vec4_atan2( y.pod, x.pod );
+attr_always_inline attr_header attr_hot
+vec4 acos( vec4 x ) {
+    return vec4_acos( x );
 }
-attr_always_inline attr_header
-Vector4CPP pow( Vector4CPP base, Vector4CPP exp ) {
-    return vec4_pow( base.pod, exp.pod );
+attr_always_inline attr_header attr_hot
+vec4 atan( vec4 x ) {
+    return vec4_atan( x );
 }
-attr_always_inline attr_header
-Vector4CPP exp( Vector4CPP x ) {
-    return vec4_exp( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 atan2( vec4 y, vec4 x ) {
+    return vec4_atan2( y, x );
 }
-attr_always_inline attr_header
-Vector4CPP exp2( Vector4CPP x ) {
-    return vec4_exp2( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 pow( vec4 base, vec4 exp ) {
+    return vec4_pow( base, exp );
 }
-attr_always_inline attr_header
-Vector4CPP ln( Vector4CPP x ) {
-    return vec4_ln( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 exp( vec4 x ) {
+    return vec4_exp( x );
 }
-attr_always_inline attr_header
-Vector4CPP log2( Vector4CPP x ) {
-    return vec4_log2( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 exp2( vec4 x ) {
+    return vec4_exp2( x );
 }
-attr_always_inline attr_header
-Vector4CPP log10( Vector4CPP x ) {
-    return vec4_log10( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 ln( vec4 x ) {
+    return vec4_ln( x );
 }
-attr_always_inline attr_header
-Vector4CPP sqrt( Vector4CPP x ) {
-    return vec4_sqrt( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 log2( vec4 x ) {
+    return vec4_log2( x );
 }
-attr_always_inline attr_header
-Vector4CPP inversesqrt( Vector4CPP x ) {
-    return vec4_inversesqrt( x.pod );
+attr_always_inline attr_header attr_hot
+vec4 log10( vec4 x ) {
+    return vec4_log10( x );
 }
-attr_always_inline attr_header
-b32 cmp( Vector4CPP a, Vector4CPP b ) {
-    return vec4_cmp( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+vec4 sqrt( vec4 x ) {
+    return vec4_sqrt( x );
 }
-attr_always_inline attr_header
-BVector4 less_than( Vector4CPP a, Vector4CPP b ) {
-    return vec4_less_than( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+vec4 inversesqrt( vec4 x ) {
+    return vec4_inversesqrt( x );
 }
-attr_always_inline attr_header
-BVector4 greater_than( Vector4CPP a, Vector4CPP b ) {
-    return vec4_greater_than( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+bool cmp( vec4 a, vec4 b ) {
+    return vec4_cmp( a, b );
 }
-attr_always_inline attr_header
-BVector4 less_than_equal( Vector4CPP a, Vector4CPP b ) {
-    return vec4_less_than_equal( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+bvec4 lt( vec4 a, vec4 b ) {
+    return vec4_lt( a, b );
 }
-attr_always_inline attr_header
-BVector4 greater_than_equal( Vector4CPP a, Vector4CPP b ) {
-    return vec4_greater_than_equal( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+bvec4 gt( vec4 a, vec4 b ) {
+    return vec4_gt( a, b );
 }
-attr_always_inline attr_header
-BVector4 equal( Vector4CPP a, Vector4CPP b ) {
-    return vec4_equal( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+bvec4 lteq( vec4 a, vec4 b ) {
+    return vec4_lteq( a, b );
 }
-attr_always_inline attr_header
-BVector4 not_equal( Vector4CPP a, Vector4CPP b ) {
-    return vec4_not_equal( a.pod, b.pod );
+attr_always_inline attr_header attr_hot
+bvec4 gteq( vec4 a, vec4 b ) {
+    return vec4_gteq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 eq( vec4 a, vec4 b ) {
+    return vec4_eq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 neq( vec4 a, vec4 b ) {
+    return vec4_neq( a, b );
 }
 
-attr_always_inline attr_header
-Vector4CPP operator-( Vector4CPP v ) {
-    return neg( v );
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP()
+    : x(0), y(0), z(0), w(0) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( const IVector4& __pod )
+     : x(__pod.x), y(__pod.y), z(__pod.z), w(__pod.w) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( i32 x, i32 y, i32 z, i32 w )
+    : x(x), y(y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( i32 x )
+    : x(x), y(x), z(x), w(x) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( i32 x, i32 y, IVector2CPP zw )
+    : x(x), y(y), z(zw.x), w(zw.y) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( i32 x, IVector2CPP yz, i32 w )
+    : x(x), y(yz.x), z(yz.y), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( IVector2CPP xy, i32 z, i32 w )
+    : x(xy.x), y(xy.y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( i32 x, IVector3CPP yzw )
+    : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( IVector3CPP xyz, i32 w )
+    : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( const Vector4& v )
+    : x(trunc(v.x)), y(trunc(v.y)), z(trunc(v.z)), w(trunc(v.w)) {}
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( const BVector4& bv )
+    : x(bv.x ? 1 : 0),
+      y(bv.y ? 1 : 0),
+      z(bv.z ? 1 : 0),
+      w(bv.w ? 1 : 0) {}
+
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::operator IVector4() const {
+    return *(IVector4*)this;
 }
-attr_always_inline attr_header
-Vector4CPP& operator+=( Vector4CPP& lhs, Vector4CPP rhs ) {
-    return lhs = add( lhs, rhs );
+constexpr attr_always_inline attr_header attr_hot
+i32 IVector4CPP::operator[]( usize index ) const {
+    return this->array[index];
 }
-attr_always_inline attr_header
-Vector4CPP& operator-=( Vector4CPP& lhs, Vector4CPP rhs ) {
-    return lhs = sub( lhs, rhs );
+constexpr attr_always_inline attr_header attr_hot
+i32& IVector4CPP::operator[]( usize index ) {
+    return this->array[index];
 }
-attr_always_inline attr_header
-Vector4CPP& operator*=( Vector4CPP& lhs, Vector4CPP rhs ) {
-    return lhs = mul( lhs, rhs );
+
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP IVector4CPP::zero() {
+    return IVEC4_ZERO;
 }
-attr_always_inline attr_header
-Vector4CPP& operator*=( Vector4CPP& lhs, f32 rhs ) {
-    return lhs = mul( lhs, rhs );
+constexpr attr_always_inline attr_header attr_hot
+IVector4CPP IVector4CPP::one() {
+    return IVEC4_ONE;
 }
-attr_always_inline attr_header
-Vector4CPP& operator/=( Vector4CPP& lhs, Vector4CPP rhs ) {
-    return lhs = div( lhs, rhs );
+
+constexpr attr_always_inline attr_header attr_hot
+ivec4 add( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_add( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP& operator/=( Vector4CPP& lhs, f32 rhs ) {
-    return lhs = div( lhs, rhs );
+constexpr attr_always_inline attr_header attr_hot
+ivec4 sub( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_sub( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator+( Vector4CPP lhs, Vector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 mul( ivec4 lhs, i32 rhs ) {
+    return ivec4_mul( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 mul( i32 lhs, ivec4 rhs ) {
+    return mul( rhs, lhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 mul( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_mul_ivec4( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 hadamard( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_hadamard( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 div( ivec4 lhs, i32 rhs ) {
+    return ivec4_div( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 div( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_div_ivec4( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 mod( ivec4 lhs, i32 rhs ) {
+    return ivec4_mod( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 mod( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_mod_ivec4( lhs, rhs );
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 neg( ivec4 x ) {
+    return ivec4_neg( x );
+}
+
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator+( ivec4 lhs, ivec4 rhs ) {
     return add( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator-( Vector4CPP lhs, Vector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator+=( ivec4& lhs, ivec4 rhs ) {
+    return lhs = lhs + rhs;
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator-( ivec4 lhs, ivec4 rhs ) {
     return sub( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator*( Vector4CPP lhs, Vector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator-=( ivec4& lhs, ivec4 rhs ) {
+    return lhs = lhs - rhs;
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator*( ivec4 lhs, i32 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator*( Vector4CPP lhs, f32 rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator*( i32 lhs, ivec4 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator*( f32 lhs, Vector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator*( ivec4 lhs, ivec4 rhs ) {
     return mul( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator/( Vector4CPP lhs, Vector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator*=( ivec4& lhs, i32 rhs ) {
+    return lhs = lhs * rhs;
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator*=( ivec4& lhs, ivec4 rhs ) {
+    return lhs = lhs * rhs;
+}
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator/( ivec4 lhs, i32 rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline attr_header
-Vector4CPP operator/( Vector4CPP lhs, f32 rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator/( ivec4 lhs, ivec4 rhs ) {
     return div( lhs, rhs );
 }
-attr_always_inline attr_header
-b32 operator==( Vector4CPP a, Vector4CPP b ) {
-    return cmp( a, b );
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator/=( ivec4& lhs, i32 rhs ) {
+    return lhs = lhs / rhs;
 }
-attr_always_inline attr_header
-b32 operator!=( Vector4CPP a, Vector4CPP b ) {
-    return !( a == b );
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator/=( ivec4& lhs, ivec4 rhs ) {
+    return lhs = lhs / rhs;
 }
-
-attr_always_inline attr_header
-IVector4CPP add( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_add( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP sub( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_sub( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP mul( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_mul_ivec4( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP mul( IVector4CPP lhs, i32 rhs ) {
-    return ivec4_mul( lhs.pod, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP mul( i32 lhs, IVector4CPP rhs ) {
-    return ivec4_mul( rhs.pod, lhs );
-}
-attr_always_inline attr_header
-IVector4CPP hadamard( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_hadamard( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP div( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_div_ivec4( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP div( IVector4CPP lhs, i32 rhs ) {
-    return ivec4_div( lhs.pod, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP mod( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_mod_ivec4( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-IVector4CPP mod( IVector4CPP lhs, i32 rhs ) {
-    return ivec4_mod( lhs.pod, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP neg( IVector4CPP v ) {
-    return ivec4_neg( v.pod );
-}
-attr_always_inline attr_header
-i32 hadd( IVector4CPP v ) {
-    return ivec4_hadd( v.pod );
-}
-attr_always_inline attr_header
-i32 hmul( IVector4CPP v ) {
-    return ivec4_hmul( v.pod );
-}
-attr_always_inline attr_header
-f32 dot( IVector4CPP lhs, IVector4CPP rhs ) {
-    return ivec4_dot( lhs.pod, rhs.pod );
-}
-attr_always_inline attr_header
-f32 length_sqr( IVector4CPP v ) {
-    return ivec4_length_sqr( v.pod );
-}
-attr_always_inline attr_header
-f32 length( IVector4CPP v ) {
-    return ivec4_length( v.pod );
-}
-attr_always_inline attr_header
-IVector4CPP min( IVector4CPP x, IVector4CPP y ) {
-    return ivec4_min( x.pod, y.pod );
-}
-attr_always_inline attr_header
-IVector4CPP max( IVector4CPP x, IVector4CPP y ) {
-    return ivec4_max( x.pod, y.pod );
-}
-attr_always_inline attr_header
-IVector4CPP abs( IVector4CPP v ) {
-    return ivec4_abs( v.pod );
-}
-attr_always_inline attr_header
-IVector4CPP sign( IVector4CPP v ) {
-    return ivec4_sign( v.pod );
-}
-attr_always_inline attr_header
-b32 cmp( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_cmp( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 less_than( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_less_than( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 greater_than( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_greater_than( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 less_than_equal( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_less_than_equal( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 greater_than_equal( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_greater_than_equal( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 equal( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_equal( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 not_equal( IVector4CPP a, IVector4CPP b ) {
-    return ivec4_not_equal( a.pod, b.pod );
-}
-
-attr_always_inline attr_header
-IVector4CPP& operator+=( IVector4CPP& lhs, IVector4CPP rhs ) {
-    return lhs = add( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator-=( IVector4CPP& lhs, IVector4CPP rhs ) {
-    return lhs = sub( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator*=( IVector4CPP& lhs, IVector4CPP rhs ) {
-    return lhs = mul( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator*=( IVector4CPP& lhs, i32 rhs ) {
-    return lhs = mul( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator/=( IVector4CPP& lhs, IVector4CPP rhs ) {
-    return lhs = div( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator/=( IVector4CPP& lhs, i32 rhs ) {
-    return lhs = div( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator%=( IVector4CPP& lhs, IVector4CPP rhs ) {
-    return lhs = mod( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP& operator%=( IVector4CPP& lhs, i32 rhs ) {
-    return lhs = mod( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator+( IVector4CPP lhs, IVector4CPP rhs ) {
-    return add( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator-( IVector4CPP lhs, IVector4CPP rhs ) {
-    return sub( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator*( IVector4CPP lhs, IVector4CPP rhs ) {
-    return mul( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator*( IVector4CPP lhs, i32 rhs ) {
-    return mul( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator*( i32 lhs, IVector4CPP rhs ) {
-    return mul( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator/( IVector4CPP lhs, IVector4CPP rhs ) {
-    return div( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator/( IVector4CPP lhs, i32 rhs ) {
-    return div( lhs, rhs );
-}
-attr_always_inline attr_header
-IVector4CPP operator%( IVector4CPP lhs, IVector4CPP rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator%( ivec4 lhs, i32 rhs ) {
     return mod( lhs, rhs );
 }
-attr_always_inline attr_header
-IVector4CPP operator%( IVector4CPP lhs, i32 rhs ) {
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator%( ivec4 lhs, ivec4 rhs ) {
     return mod( lhs, rhs );
 }
-attr_always_inline attr_header
-IVector4CPP operator-( IVector4CPP v ) {
-    return neg( v );
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator%=( ivec4& lhs, i32 rhs ) {
+    return lhs = lhs % rhs;
 }
-attr_always_inline attr_header
-b32 operator==( IVector4CPP a, IVector4CPP b ) {
-    return cmp( a, b );
+constexpr attr_always_inline attr_header attr_hot
+ivec4& operator%=( ivec4& lhs, ivec4 rhs ) {
+    return lhs = lhs % rhs;
 }
-attr_always_inline attr_header
-b32 operator!=( IVector4CPP a, IVector4CPP b ) {
-    return !( a == b );
-}
-
-attr_always_inline attr_header
-BVector4 equal( BVector4CPP a, BVector4CPP b ) {
-    return bvec4_equal( a.pod, b.pod );
-}
-attr_always_inline attr_header
-BVector4 not_equal( BVector4CPP a, BVector4CPP b ) {
-    return bvec4_not_equal( a.pod, b.pod );
-}
-attr_always_inline attr_header
-b32 any( BVector4CPP x ) {
-    return bvec4_any( x.pod );
-}
-attr_always_inline attr_header
-b32 all( BVector4CPP x ) {
-    return bvec4_all( x.pod );
-}
-attr_always_inline attr_header
-BVector4 bnot( BVector4CPP x ) {
-    return bvec4_not( x.pod );
+constexpr attr_always_inline attr_header attr_hot
+ivec4 operator-( ivec4 x ) {
+    return neg( x );
 }
 
+attr_always_inline attr_header attr_hot
+ivec4 rotl( ivec4 x ) {
+    return ivec4_rotl( x );
+}
+attr_always_inline attr_header attr_hot
+ivec4 rotr( ivec4 x ) {
+    return ivec4_rotr( x );
+}
+attr_always_inline attr_header attr_hot
+i32 hadd( ivec4 x ) {
+    return ivec4_hadd( x );
+}
+attr_always_inline attr_header attr_hot
+i32 hmul( ivec4 x ) {
+    return ivec4_hmul( x );
+}
+attr_always_inline attr_header attr_hot
+f32 length_sqr( ivec4 x ) {
+    return ivec4_length_sqr( x );
+}
+attr_always_inline attr_header attr_hot
+f32 length( ivec4 x ) {
+    return ivec4_length( x );
+}
+attr_always_inline attr_header attr_hot
+f32 dot( ivec4 lhs, ivec4 rhs ) {
+    return ivec4_dot( lhs, rhs );
+}
+attr_always_inline attr_header attr_hot
+i32 min( ivec4 x ) {
+    return ivec4_min( x );
+}
+attr_always_inline attr_header attr_hot
+ivec4 min( ivec4 x, ivec4 y ) {
+    return ivec4_min_ivec4( x, y );
+}
+attr_always_inline attr_header attr_hot
+i32 max( ivec4 x ) {
+    return ivec4_max( x );
+}
+attr_always_inline attr_header attr_hot
+ivec4 max( ivec4 x, ivec4 y ) {
+    return ivec4_max_ivec4( x, y );
+}
+attr_always_inline attr_header attr_hot
+ivec4 clamp( ivec4 v, ivec4 min, ivec4 max ) {
+    return ivec4_clamp( v, min, max );
+}
+attr_always_inline attr_header attr_hot
+ivec4 abs( ivec4 x ) {
+    return ivec4_abs( x );
+}
+attr_always_inline attr_header attr_hot
+ivec4 sign( ivec4 x ) {
+    return ivec4_sign( x );
+}
+attr_always_inline attr_header attr_hot
+bool cmp( ivec4 a, ivec4 b ) {
+    return ivec4_cmp( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 lt( ivec4 a, ivec4 b ) {
+    return ivec4_lt( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 gt( ivec4 a, ivec4 b ) {
+    return ivec4_gt( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 lteq( ivec4 a, ivec4 b ) {
+    return ivec4_lteq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 gteq( ivec4 a, ivec4 b ) {
+    return ivec4_gteq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 eq( ivec4 a, ivec4 b ) {
+    return ivec4_eq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 neq( ivec4 a, ivec4 b ) {
+    return ivec4_neq( a, b );
+}
+
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP()
+    : x(false), y(false), z(false), w(false) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( const BVector4& __pod )
+     : x(__pod.x), y(__pod.y), z(__pod.z), w(__pod.w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( b32 x, b32 y, b32 z, b32 w )
+    : x(x), y(y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( b32 x )
+    : x(x), y(x), z(x), w(x) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( b32 x, b32 y, BVector2CPP zw )
+    : x(x), y(y), z(zw.x), w(zw.y) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( b32 x, BVector2CPP yz, b32 w )
+    : x(x), y(yz.x), z(yz.y), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( BVector2CPP xy, b32 z, b32 w )
+    : x(xy.x), y(xy.y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( b32 x, BVector3CPP yzw )
+    : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( BVector3CPP xyz, b32 w )
+    : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( const Vector4& v )
+    : x(v.x == 0.0f ? false : true),
+      y(v.y == 0.0f ? false : true),
+      z(v.z == 0.0f ? false : true),
+      w(v.w == 0.0f ? false : true) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( const IVector4& iv )
+    : x(iv.x ? true : false),
+      y(iv.y ? true : false),
+      z(iv.z ? true : false),
+      w(iv.w ? true : false) {}
+
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::operator BVector4() const {
+    return *(BVector4*)this;
+}
+constexpr attr_always_inline attr_header attr_hot
+b32 BVector4CPP::operator[]( usize index ) const {
+    return this->array[index];
+}
+constexpr attr_always_inline attr_header attr_hot
+b32& BVector4CPP::operator[]( usize index ) {
+    return this->array[index];
+}
+
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP BVector4CPP::zero() {
+    return BVEC4_ZERO;
+}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP BVector4CPP::one() {
+    return BVEC4_ONE;
+}
+
+attr_always_inline attr_header attr_hot
+bvec4 eq( bvec4 a, bvec4 b ) {
+    return bvec4_eq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bvec4 neq( bvec4 a, bvec4 b ) {
+    return bvec4_neq( a, b );
+}
+attr_always_inline attr_header attr_hot
+bool any( bvec4 x ) {
+    return bvec4_any( x );
+}
+attr_always_inline attr_header attr_hot
+bool all( bvec4 x ) {
+    return bvec4_all( x );
+}
+attr_always_inline attr_header attr_hot
+bvec4 flip( bvec4 x ) {
+    return bvec4_flip( x );
+}
 
 #endif /* header guard */

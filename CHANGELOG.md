@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.3
 -----
 
+- math: rewrote C overloaded API
+- math: rewrote C++ API
 - process: added API for executing sub-processes
 - alloc: renamed interface to allocator in parameter lists
 - string: internal_string_buf_try_fmt: removed attr_always_inline

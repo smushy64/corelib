@@ -6,21 +6,12 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/constants.h"
-#include "core/macros.h" // IWYU pragma: export
 #include "core/math/trig.h"
 #include "core/math/exponential.h"
 #include "core/math/common.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief 2 Component 32-bit Floating Point Vector.
 struct Vector2 {
@@ -32,6 +23,13 @@ struct Vector2 {
             f32 x;
             /// @brief Y component.
             f32 y;
+        };
+        /// @brief X and Y components -- as Red and Green channels.
+        struct {
+            /// @brief X component -- as Red channel.
+            f32 r;
+            /// @brief Y component -- as Green channel.
+            f32 g;
         };
         /// @brief Width and Height (X and Y).
         struct {
@@ -103,69 +101,102 @@ struct BVector2 {
         b32 array[2];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
+
+#if defined(__cplusplus)
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define vec2_new( x, y )   Vector2 { .array={x, y} }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define ivec2_new( x, y ) IVector2 { .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define bvec2_new( x, y ) BVector2 { .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define uvec2_new( x, y ) UVector2 { .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define dvec2_new( x, y ) DVector2 { .array={ x, y } }
+#else
     /// @brief 2 Component 32-bit Floating Point Vector.
-    /// @see struct Vector2
-    typedef struct Vector2 vec2;
-    /// @brief 2 Component 32-bit Signed Integer Vector.
-    /// @see struct IVector2
+    typedef struct Vector2   vec2;
+    /// @brief 2 Component 32-bit Integer Vector.
     typedef struct IVector2 ivec2;
     /// @brief 2 Component 32-bit Boolean Vector.
-    /// @see struct BVector2
     typedef struct BVector2 bvec2;
+    /// @brief 2 Component 32-bit Unsigned Integer Vector.
+    typedef struct UVector2 uvec2;
+    /// @brief 2 Component 64-bit Floating Point Vector.
+    typedef struct DVector2 dvec2;
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define vec2_new( x, y )   (struct Vector2){ .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define ivec2_new( x, y ) (struct IVector2){ .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define bvec2_new( x, y ) (struct BVector2){ .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define uvec2_new( x, y ) (struct UVector2){ .array={ x, y } }
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define dvec2_new( x, y ) (struct DVector2){ .array={ x, y } }
+
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define  vec2( x, y )  vec2_new( x, y )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define ivec2( x, y ) ivec2_new( x, y )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define bvec2( x, y ) bvec2_new( x, y )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define uvec2( x, y ) uvec2_new( x, y )
+    /// @brief Create new vector.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @return Vector.
+    #define dvec2( x, y ) dvec2_new( x, y )
 #endif
-/// @brief 2 Component 32-bit Unsigned Integer Vector.
-typedef struct UVector2 uvec2;
-/// @brief 2 Component 64-bit Floating Point Vector.
-typedef struct DVector2 dvec2;
-
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a Vector2.
-    /// @param x, y (f32) Components.
-    /// @return Vector2.
-    #define vec2( x, y )
-    /// @brief Construct an IVector2.
-    /// @param x, y (i32) Components.
-    /// @return IVector2.
-    #define ivec2( x, y )
-#else
-
-#if defined(CORE_CPLUSPLUS)
-    #define vec2_new( _x, _y ) \
-        Vector2{ .array={ (_x), (_y) } }
-    #define ivec2_new( _x, _y ) \
-        IVector2{ .array={ (_x), (_y) } }
-    #define bvec2_new( _x, _y ) \
-        BVector2{ .array={ (_x), (_y) } }
-#else /* C++ constructors */
-    #define vec2( x, y ) \
-        (struct Vector2){ .array={ (x), (y) } }
-    #define ivec2( x, y ) \
-        (struct IVector2){ .array={ (x), (y) } }
-    #define bvec2( x, y ) \
-        (struct BVector2){ .array={ (x), (y) } }
-    #define vec2_new(...)  vec2(__VA_ARGS__)
-    #define ivec2_new(...) ivec2(__VA_ARGS__)
-    #define bvec2_new(...) bvec2(__VA_ARGS__)
-#endif /* C constructors */
-
-#endif /* Doxygen */
-
-/// @brief Contruct a new Vector2 with identical components.
-/// @param s (f32) Value for components.
-/// @return Vector2.
-#define vec2_set( s )\
-    vec2_new( s, s )
-/// @brief Contruct a new IVector2 with identical components.
-/// @param s (i32) Value for components.
-/// @return IVector2.
-#define ivec2_set( s )\
-    ivec2_new( s, s )
 
 /// @brief Vector2 zero constant.
-#define VEC2_ZERO  ( vec2_set( 0.0f ) )
+#define VEC2_ZERO  ( vec2_new( 0.0f, 0.0f ) )
 /// @brief Vector2 one constant.
-#define VEC2_ONE   ( vec2_set( 1.0f ) )
+#define VEC2_ONE   ( vec2_new( 1.0f, 1.0f ) )
 /// @brief Vector2 left constant.
 #define VEC2_LEFT  ( vec2_new( -1.0f, 0.0f ) )
 /// @brief Vector2 right constant.
@@ -176,9 +207,9 @@ typedef struct DVector2 dvec2;
 #define VEC2_DOWN  ( vec2_new(  0.0f,-1.0f ) )
 
 /// @brief IVector2 zero constant.
-#define IVEC2_ZERO  ( ivec2_set(0) )
+#define IVEC2_ZERO  ( ivec2_new( 0, 0 ) )
 /// @brief IVector2 one constant.
-#define IVEC2_ONE   ( ivec2_set(1) )
+#define IVEC2_ONE   ( ivec2_new( 1, 1 ) )
 /// @brief IVector2 left constant.
 #define IVEC2_LEFT  ( ivec2_new( -1, 0 ) )
 /// @brief IVector2 right constant.
@@ -187,6 +218,11 @@ typedef struct DVector2 dvec2;
 #define IVEC2_UP    ( ivec2_new(  0, 1 ) )
 /// @brief IVector2 down constant.
 #define IVEC2_DOWN  ( ivec2_new(  0,-1 ) )
+
+/// @brief BVector2 zero constant.
+#define BVEC2_ZERO ( bvec2_new( false, false ) )
+/// @brief BVector2 one constant.
+#define BVEC2_ONE  ( bvec2_new( true, true ) )
 
 /// @brief Create vector from array.
 /// @param[in] array Array, must have at least 2 values.
@@ -297,7 +333,7 @@ struct Vector2 vec2_mod( struct Vector2 lhs, f32 rhs ) {
 }
 /// @brief Modulus divide vector components.
 /// @param lhs Vector to divide.
-/// @param rhs Scalar to divide components by.
+/// @param rhs Vector to divide components by.
 /// @return Result of modulus division.
 attr_always_inline attr_header
 struct Vector2 vec2_mod_vec2( struct Vector2 lhs, struct Vector2 rhs ) {
@@ -353,38 +389,38 @@ attr_always_inline attr_header
 f32 vec2_aspect_ratio( struct Vector2 x ) {
     return x.x / x.y;
 }
-/// @brief Get the maximum component in vector.
-/// @param x Vector to get maximum of.
-/// @return Component with largest value.
-attr_always_inline attr_header
-f32 vec2_hmax( struct Vector2 x ) {
-    return x.x < x.y ? x.y : x.x;
-}
-/// @brief Component-wise maximum value.
-/// @param x, y Vectors.
-/// @return Vector with maximum value in components.
-attr_always_inline attr_header
-struct Vector2 vec2_max( struct Vector2 x, struct Vector2 y ) {
-    struct Vector2 result;
-    result.x = x.x < y.x ? y.x : x.x;
-    result.y = x.y < y.y ? y.y : x.y;
-    return result;
-}
 /// @brief Get the minimum component in vector.
 /// @param x Vector to get minimum of.
 /// @return Component with smallest value.
 attr_always_inline attr_header
-f32 vec2_hmin( struct Vector2 x ) {
+f32 vec2_min( struct Vector2 x ) {
     return x.x < x.y ? x.x : x.y;
 }
 /// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
 attr_always_inline attr_header
-struct Vector2 vec2_min( struct Vector2 x, struct Vector2 y ) {
+struct Vector2 vec2_min_vec2( struct Vector2 x, struct Vector2 y ) {
     struct Vector2 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
+    return result;
+}
+/// @brief Get the maximum component in vector.
+/// @param x Vector to get maximum of.
+/// @return Component with largest value.
+attr_always_inline attr_header
+f32 vec2_max( struct Vector2 x, ... ) {
+    return x.x < x.y ? x.y : x.x;
+}
+/// @brief Component-wise maximum value.
+/// @param x, y Vectors.
+/// @return Vector with maximum value in components.
+attr_always_inline attr_header
+struct Vector2 vec2_max_vec2( struct Vector2 x, struct Vector2 y ) {
+    struct Vector2 result;
+    result.x = x.x < y.x ? y.x : x.x;
+    result.y = x.y < y.y ? y.y : x.y;
     return result;
 }
 /// @brief Calculate the square magnitude of Vector.
@@ -428,17 +464,17 @@ struct Vector2 vec2_normalize( struct Vector2 x ) {
     }
 }
 /// @brief Reflect direction vector off surface.
-/// @param direction Direction vector to reflect.
-/// @param normal    Normal of the surface to reflect off of.
+/// @param d Direction vector to reflect.
+/// @param n Normal of the surface to reflect off of.
 /// @return Reflected vector.
 attr_always_inline attr_header
 struct Vector2 vec2_reflect(
-    struct Vector2 direction, struct Vector2 normal
+    struct Vector2 d, struct Vector2 n
 ) {
-    return vec2_mul( vec2_sub( normal, direction ), 2.0f * vec2_dot( direction, normal ) );
+    return vec2_mul( vec2_sub( n, d ), 2.0f * vec2_dot( d, n ) );
 }
 /// @brief Rotate vector by given angle.
-/// @param v Vector to rotate.
+/// @param v     Vector to rotate.
 /// @param angle Angle to rotate by (in radians).
 /// @return Rotated vector.
 attr_always_inline attr_header
@@ -466,7 +502,7 @@ struct Vector2 vec2_clamp(
     result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
     return result;
 }
-/// @brief Clamp vector's magnitude to range min -> max.
+/// @brief Clamp vector's magnitude to range [min,max].
 /// @param v Vector to clamp.
 /// @param min_, max_ Range to clamp to, min_ must be < max_.
 /// @return Clamped vector.
@@ -558,7 +594,7 @@ struct Vector2 vec2_fract( struct Vector2 v ) {
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector2 vec2_lerp(
     struct Vector2 a, struct Vector2 b, f32 t
@@ -568,19 +604,39 @@ struct Vector2 vec2_lerp(
 /// @brief Linearly interpolate from a to b.
 /// @param a, b Range to interpolate within.
 /// @param t Where to interpolate to.
-/// @return Vector in range a -> b.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector2 vec2_lerp_vec2(
+    struct Vector2 a, struct Vector2 b, struct Vector2 t
+) {
+    return vec2_new( f32_lerp( a.x, b.x, t.x ), f32_lerp( a.y, b.y, t.y ) );
+}
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Vector in range [a,b].
 attr_always_inline attr_header
 struct Vector2 vec2_mix(
     struct Vector2 a, struct Vector2 b, f32 t
 ) {
     return vec2_lerp( a, b, t );
 }
+/// @brief Linearly interpolate from a to b.
+/// @param a, b Range to interpolate within.
+/// @param t Where to interpolate to.
+/// @return Vector in range [a,b].
+attr_always_inline attr_header
+struct Vector2 vec2_mix_vec2(
+    struct Vector2 a, struct Vector2 b, struct Vector2 t
+) {
+    return vec2_lerp_vec2( a, b, t );
+}
 /// @brief Step function.
 /// @param edge Value to compare @c x to.
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector2 vec2_step( struct Vector2 edge, struct Vector2 x ) {
+struct Vector2 vec2_step_vec2( struct Vector2 edge, struct Vector2 x ) {
     return vec2_new( f32_step( edge.x, x.x ), f32_step( edge.y, x.y ) );
 }
 /// @brief Step function.
@@ -588,8 +644,8 @@ struct Vector2 vec2_step( struct Vector2 edge, struct Vector2 x ) {
 /// @param x    Value.
 /// @return 0 if x < edge, otherwise 1.
 attr_always_inline attr_header
-struct Vector2 vec2_step_scalar( f32 edge, struct Vector2 x ) {
-    return vec2_step( vec2_set( edge ), x );
+struct Vector2 vec2_step( f32 edge, struct Vector2 x ) {
+    return vec2_step_vec2( vec2_new( edge, edge ), x );
 }
 /// @brief Smooth step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
@@ -597,41 +653,47 @@ struct Vector2 vec2_step_scalar( f32 edge, struct Vector2 x ) {
 /// @return Result.
 attr_always_inline attr_header
 struct Vector2 vec2_smoothstep(
-    struct Vector2 edge0, struct Vector2 edge1, struct Vector2 x
+    f32 edge0, f32 edge1, struct Vector2 x
 ) {
     return vec2_new(
-        f32_smoothstep( edge0.x, edge1.x, x.x ),
-        f32_smoothstep( edge0.y, edge1.y, x.y ) );
+        f32_smoothstep( edge0, edge1, x.x ),
+        f32_smoothstep( edge0, edge1, x.y ) );
 }
 /// @brief Smooth step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector2 vec2_smoothstep_scalar( f32 edge0, f32 edge1, struct Vector2 x ) {
-    return vec2_smoothstep( vec2_set( edge0 ), vec2_set( edge1 ), x );
+struct Vector2 vec2_smoothstep_vec2(
+    struct Vector2 edge0, struct Vector2 edge1, struct Vector2 x
+) {
+    return vec2_new(
+        f32_smoothstep( edge0.x, edge1.x, x.x ),
+        f32_smoothstep( edge0.y, edge1.y, x.y ) );
 }
 /// @brief Smoother step interpolation.
 /// @param edge0, edge1 Edges to interpolate between.
 /// @param x            Value.
-/// @return Vector in range a -> b.
+/// @return Result.
 attr_always_inline attr_header
 struct Vector2 vec2_smootherstep(
+    f32 edge0, f32 edge1, struct Vector2 x
+) {
+    return vec2_new(
+        f32_smootherstep( edge0, edge1, x.x ),
+        f32_smootherstep( edge0, edge1, x.y ) );
+}
+/// @brief Smoother step interpolation.
+/// @param edge0, edge1 Edges to interpolate between.
+/// @param x            Value.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_smootherstep_vec2(
     struct Vector2 edge0, struct Vector2 edge1, struct Vector2 x
 ) {
     return vec2_new(
         f32_smootherstep( edge0.x, edge1.x, x.x ),
         f32_smootherstep( edge0.y, edge1.y, x.y ) );
-}
-/// @brief Smoother step interpolation.
-/// @param edge0, edge1 Edges to interpolate between.
-/// @param x            Value.
-/// @return Vector in range a -> b.
-attr_always_inline attr_header
-struct Vector2 vec2_smootherstep_scalar(
-    f32 edge0, f32 edge1, struct Vector2 x
-) {
-    return vec2_smootherstep( vec2_set( edge0 ), vec2_set( edge1 ), x );
 }
 /// @brief Check if vector components are NaN.
 /// @param x Vector.
@@ -683,11 +745,20 @@ attr_always_inline attr_header
 struct Vector2 vec2_tan( struct Vector2 angle ) {
     return vec2_new( f32_tan(angle.x), f32_tan(angle.y) );
 }
+/// @brief Calculate sine and cosine of x.
+/// @param x Angle to calculate sine and cosine of (in radians).
+/// @return Vector with sine and cosine of x.
+attr_always_inline attr_header
+struct Vector2 sincos_vec2( f32 x ) {
+    f32 s, c;
+    f32_sincos( x, &s, &c );
+    return vec2_new( s, c );
+}
 /// @brief Calculate arcsine of x.
 ///
 /// Does not produce NaN when outside valid range.
 /// @param angle Value to get arcsine of.
-/// @return Arcsine of x clamped to -Pi -> Pi.
+/// @return Arcsine of x clamped to [-Pi,Pi].
 /// @see #F32_PI
 /// @see #asin()
 attr_always_inline attr_header
@@ -718,10 +789,18 @@ struct Vector2 vec2_atan2( struct Vector2 y, struct Vector2 x ) {
 }
 /// @brief Raise base to the power of exponent.
 /// @param base Number to raise.
-/// @param exp Power to raise to.
+/// @param exp  Power to raise to.
 /// @return Result.
 attr_always_inline attr_header
-struct Vector2 vec2_pow( struct Vector2 base, struct Vector2 exp ) {
+struct Vector2 vec2_pow( struct Vector2 base, f32 exp ) {
+    return vec2_new( f32_pow( base.x, exp ), f32_pow( base.y, exp ) );
+}
+/// @brief Raise base to the power of exponent.
+/// @param base Number to raise.
+/// @param exp  Power to raise to.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 vec2_pow_vec2( struct Vector2 base, struct Vector2 exp ) {
     return vec2_new( f32_pow( base.x, exp.x ), f32_pow( base.y, exp.y ) );
 }
 /// @brief Raise e to the power of x.
@@ -773,6 +852,13 @@ attr_always_inline attr_header
 struct Vector2 vec2_inversesqrt( struct Vector2 x ) {
     return vec2_new( f32_inversesqrt( x.x ), f32_inversesqrt( x.y ) );
 }
+/// @brief Calculate cube root.
+/// @param x Value to get cube root of.
+/// @return Cube root.
+attr_always_inline attr_header
+struct Vector2 vec2_cbrt( struct Vector2 x ) {
+    return vec2_new( f32_cbrt( x.x ), f32_cbrt( x.y ) );
+}
 /// @brief Compare two vectors for equality.
 /// @param a, b Vectors to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
@@ -785,42 +871,42 @@ b32 vec2_cmp( struct Vector2 a, struct Vector2 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 vec2_less_than( struct Vector2 a, struct Vector2 b ) {
+struct BVector2 vec2_lt( struct Vector2 a, struct Vector2 b ) {
     return bvec2_new( a.x < b.x, a.y < b.y );
-}
-/// @brief Check if greater than, component-wise.
-/// @param a, b Vectors.
-/// @return Component-wise result.
-attr_always_inline attr_header
-struct BVector2 vec2_greater_than( struct Vector2 a, struct Vector2 b ) {
-    return bvec2_new( a.x > b.x, a.y > b.y );
 }
 /// @brief Check if less than or equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 vec2_less_than_equal( struct Vector2 a, struct Vector2 b ) {
+struct BVector2 vec2_lteq( struct Vector2 a, struct Vector2 b ) {
     return bvec2_new( a.x <= b.x, a.y <= b.y );
+}
+/// @brief Check if greater than, component-wise.
+/// @param a, b Vectors.
+/// @return Component-wise result.
+attr_always_inline attr_header
+struct BVector2 vec2_gt( struct Vector2 a, struct Vector2 b ) {
+    return bvec2_new( a.x > b.x, a.y > b.y );
 }
 /// @brief Check if greater than or equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 vec2_greater_than_equal( struct Vector2 a, struct Vector2 b ) {
+struct BVector2 vec2_gteq( struct Vector2 a, struct Vector2 b ) {
     return bvec2_new( a.x >= b.x, a.y >= b.y );
 }
 /// @brief Check if equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 vec2_equal( struct Vector2 a, struct Vector2 b ) {
+struct BVector2 vec2_eq( struct Vector2 a, struct Vector2 b ) {
     return bvec2_new( f32_cmp( a.x, b.x ), f32_cmp( a.y, b.y ) );
 }
 /// @brief Check if not equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 vec2_not_equal( struct Vector2 a, struct Vector2 b ) {
+struct BVector2 vec2_neq( struct Vector2 a, struct Vector2 b ) {
     return bvec2_new( !f32_cmp( a.x, b.x ), !f32_cmp( a.y, b.y ) );
 }
 
@@ -1008,24 +1094,51 @@ f32 ivec2_length( struct IVector2 x ) {
     struct Vector2 _x = vec2_new( (f32)x.x, (f32)x.y );
     return vec2_length( _x );
 }
+/// @brief Minimum value of x and y.
+/// @param x Vector.
+/// @return Smaller component of vector.
+attr_always_inline attr_header
+i32 ivec2_min( struct IVector2 x ) {
+    return x.x < x.y ? x.x : x.y;
+}
 /// @brief Component-wise minimum value.
 /// @param x, y Vectors.
 /// @return Vector with minimum value in components.
 attr_always_inline attr_header
-struct IVector2 ivec2_min( struct IVector2 x, struct IVector2 y ) {
+struct IVector2 ivec2_min_ivec2( struct IVector2 x, struct IVector2 y ) {
     struct IVector2 result;
     result.x = x.x < y.x ? x.x : y.x;
     result.y = x.y < y.y ? x.y : y.y;
     return result;
 }
+/// @brief Maximum value of x and y.
+/// @param x Vector.
+/// @return Larger component of vector.
+attr_always_inline attr_header
+i32 ivec2_max( struct IVector2 x ) {
+    return x.x < x.y ? x.y : x.x;
+}
 /// @brief Component-wise maximum value.
 /// @param x, y Vectors.
 /// @return Vector with maximum value in components.
 attr_always_inline attr_header
-struct IVector2 ivec2_max( struct IVector2 x, struct IVector2 y ) {
+struct IVector2 ivec2_max_ivec2( struct IVector2 x, struct IVector2 y ) {
     struct IVector2 result;
     result.x = x.x < y.x ? y.x : x.x;
     result.y = x.y < y.y ? y.y : x.y;
+    return result;
+}
+/// @brief Component-wise clamp.
+/// @param v        Vector.
+/// @param min, max Range.
+/// @return Clamped vector.
+attr_always_inline attr_header
+struct IVector2 ivec2_clamp(
+    struct IVector2 v, struct IVector2 min, struct IVector2 max
+) {
+    struct IVector2 result;
+    result.x = ( (v.x) < (min.x) ? (min.x) : ( (v.x) > (max.x) ? (max.x) : (v.x) ) );
+    result.y = ( (v.y) < (min.y) ? (min.y) : ( (v.y) > (max.y) ? (max.y) : (v.y) ) );
     return result;
 }
 /// @brief Component-wise abs.
@@ -1061,42 +1174,42 @@ b32 ivec2_cmp( struct IVector2 a, struct IVector2 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_less_than( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_lt( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( a.x < b.x, a.y < b.y );
 }
 /// @brief Check if greater than, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_greater_than( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_gt( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( a.x > b.x, a.y > b.y );
 }
 /// @brief Check if less than or equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_less_than_equal( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_lteq( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( a.x <= b.x, a.y <= b.y );
 }
 /// @brief Check if greater than or equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_greater_than_equal( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_gteq( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( a.x >= b.x, a.y >= b.y );
 }
 /// @brief Check if equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_equal( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_eq( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( (a.x == b.x), (a.y == b.y) );
 }
 /// @brief Check if not equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 ivec2_not_equal( struct IVector2 a, struct IVector2 b ) {
+struct BVector2 ivec2_neq( struct IVector2 a, struct IVector2 b ) {
     return bvec2_new( !(a.x == b.x), !(a.y == b.y) );
 }
 
@@ -1104,14 +1217,14 @@ struct BVector2 ivec2_not_equal( struct IVector2 a, struct IVector2 b ) {
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 bvec2_equal( struct BVector2 a, struct BVector2 b ) {
+struct BVector2 bvec2_eq( struct BVector2 a, struct BVector2 b ) {
     return bvec2_new( (a.x == b.x), (a.y == b.y) );
 }
 /// @brief Check if not equals, component-wise.
 /// @param a, b Vectors.
 /// @return Component-wise result.
 attr_always_inline attr_header
-struct BVector2 bvec2_not_equal( struct BVector2 a, struct BVector2 b ) {
+struct BVector2 bvec2_neq( struct BVector2 a, struct BVector2 b ) {
     return bvec2_new( !(a.x == b.x), !(a.y == b.y) );
 }
 /// @brief Check if any component of vector is true.
@@ -1136,22 +1249,12 @@ b32 bvec2_all( struct BVector2 x ) {
 /// @param x Vector to check.
 /// @return Booleans notted.
 attr_always_inline attr_header
-struct BVector2 bvec2_not( struct BVector2 x ) {
+struct BVector2 bvec2_flip( struct BVector2 x ) {
     return bvec2_new( !x.x, !x.y );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_VECTOR2_HPP)
-        #include "core/cpp/math/vector2.hpp"
-    #endif
-    typedef Vector2CPP  vec2;
-    typedef IVector2CPP ivec2;
-    typedef BVector2CPP bvec2;
+#if !defined(CORE_CPP_MATH_VECTOR2_HPP)
+    #include "core/cpp/math/vector2.hpp"
 #endif
 
 #endif /* header guard */

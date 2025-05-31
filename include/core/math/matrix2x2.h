@@ -2,21 +2,13 @@
 #define CORE_MATH_MATRIX2X2_H
 /**
  * @file   matrix2x2.h
- * @brief  Matrix2x2 definition.
+ * @brief  Matrix2x2.
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/math/vector2.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief Column-major 2x2 matrix.
 struct Matrix2x2 {
@@ -55,40 +47,41 @@ struct Matrix2x2 {
         f32  array[4];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief Column-major 2x2 Matrix.
-    /// @see Matrix2x2
+
+#if defined(__cplusplus)
+    /// @brief Create new Matrix.
+    /// @param m00 Column 0, Row 0
+    /// @param m01 Column 0, Row 1
+    /// @param m10 Column 1, Row 0
+    /// @param m11 Column 1, Row 1
+    /// @return Matrix.
+    #define mat2_new( m00, m01, m10, m11 ) Matrix2x2{ .array={ m00, m01, m10, m11 } }
+#else
+    /// @brief Column-major 2x2 matrix.
     typedef struct Matrix2x2 mat2x2;
-    /// @brief Column-major 2x2 Matrix.
-    /// @see Matrix2x2
+    /// @brief Column-major 2x2 matrix.
     typedef mat2x2 mat2;
+
+    /// @brief Create new Matrix.
+    /// @param m00 Column 0, Row 0
+    /// @param m01 Column 0, Row 1
+    /// @param m10 Column 1, Row 0
+    /// @param m11 Column 1, Row 1
+    /// @return Matrix.
+    #define mat2_new( m00, m01, m10, m11 ) (struct Matrix2x2){ .array={ m00, m01, m10, m11 } }
+    /// @brief Create new Matrix.
+    /// @param m00 Column 0, Row 0
+    /// @param m01 Column 0, Row 1
+    /// @param m10 Column 1, Row 0
+    /// @param m11 Column 1, Row 1
+    /// @return Matrix.
+    #define mat2( m00, m01, m10, m11 )     mat2_new( m00, m01, m10, m11 )
 #endif
 
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-    /// @brief Construct a new 2x2 Matrix.
-    /// @param m00, m01 First column components.
-    /// @param m10, m11 Second column components.
-    /// @return Matrix2x2.
-    #define mat2( m00, m01, m10, m11 )
-#else /* Doxygen */
-
-#if defined(CORE_CPLUSPLUS)
-    #define mat2_new(\
-        m00, m01,\
-        m10, m11 )\
-        Matrix2x2{ .array={ (m00), (m01), (m10), (m11) } }
-#else /* C++ constructor */
-    #define mat2_new( m00, m01, m10, m11 )\
-        (struct Matrix2x2){ .array={ (m00), (m01), (m10), (m11) } }
-    #define mat2(...) mat2_new(__VA_ARGS__)
-#endif /* C constructor */
-
-#endif /* Doxygen */
-
 /// @brief Matrix2x2 zero constant.
-#define MAT2_ZERO     mat2( 0.0f, 0.0f, 0.0f, 0.0f )
+#define MAT2_ZERO     mat2_new( 0.0f, 0.0f, 0.0f, 0.0f )
 /// @brief Matrix2x2 identity constant.
-#define MAT2_IDENTITY mat2( 1.0f, 0.0f, 0.0f, 1.0f )
+#define MAT2_IDENTITY mat2_new( 1.0f, 0.0f, 0.0f, 1.0f )
 
 /// @brief Create matrix from array.
 /// @param array Array, must have at least 4 floats.
@@ -96,10 +89,10 @@ struct Matrix2x2 {
 attr_core_api
 struct Matrix2x2 mat2_from_array( const f32 array[4] );
 /// @brief Fill array with components from matrix.
-/// @param m Matrix to pull components from.
+/// @param      m         Matrix to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 floats.
 attr_core_api
-void mat2_to_array( struct Matrix2x2 m, f32* out_array );
+void array_from_mat2( struct Matrix2x2 m, f32* out_array );
 /// @brief Component-wise add matrices.
 /// @param lhs, rhs Matrices to add.
 /// @return Result of addition.
@@ -138,18 +131,6 @@ struct Matrix2x2 mat2_mul(
     return result;
 }
 /// @brief Divide matrix components.
-/// @param lhs Matrix to divide.
-/// @param rhs Scalar to divide components by.
-/// @return Result of division.
-attr_always_inline attr_header
-struct Matrix2x2 mat2_div(
-    struct Matrix2x2 lhs, f32 rhs
-) {
-    struct Matrix2x2 result;
-    result.col0 = vec2_div( lhs.col0, rhs );
-    result.col1 = vec2_div( lhs.col1, rhs );
-    return result;
-}
 /// @brief Multiply matrices.
 /// @param lhs, rhs Matrices to multiply.
 /// @return Result of multiplication
@@ -162,6 +143,29 @@ struct Matrix2x2 mat2_mul_mat2(
         (lhs.array[1] * rhs.array[0]) + (lhs.array[3] * rhs.array[2]),
         (lhs.array[0] * rhs.array[2]) + (lhs.array[2] * rhs.array[3]),
         (lhs.array[1] * rhs.array[2]) + (lhs.array[3] * rhs.array[3]) );
+}
+/// @brief Multiply.
+/// @param lhs Matrix.
+/// @param rhs Vector.
+/// @return Result.
+attr_always_inline attr_header
+struct Vector2 mat2_mul_vec2( struct Matrix2x2 lhs, struct Vector2 rhs ) {
+    struct Vector2 result;
+    result.x = lhs.array[0] * rhs.x + lhs.array[2] * rhs.y;
+    result.y = lhs.array[1] * rhs.x + lhs.array[3] * rhs.y;
+    return result;
+}
+/// @param lhs Matrix to divide.
+/// @param rhs Scalar to divide components by.
+/// @return Result of division.
+attr_always_inline attr_header
+struct Matrix2x2 mat2_div(
+    struct Matrix2x2 lhs, f32 rhs
+) {
+    struct Matrix2x2 result;
+    result.col0 = vec2_div( lhs.col0, rhs );
+    result.col1 = vec2_div( lhs.col1, rhs );
+    return result;
 }
 /// @brief Transpose matrix.
 /// @param m Matrix to transpose.
@@ -180,17 +184,8 @@ f32 mat2_determinant( struct Matrix2x2 m ) {
     return ( m.array[0] * m.array[3] ) - ( m.array[2] * m.array[1] );
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_MATRIX2X2_HPP)
-        #include "core/cpp/math/matrix2x2.hpp"
-    #endif
-    typedef Matrix2x2CPP mat2x2;
-    typedef mat2x2 mat2;
+#if !defined(CORE_CPP_MATH_MATRIX2X2_HPP)
+    #include "core/cpp/math/matrix2x2.hpp"
 #endif
 
 #endif /* header guard */

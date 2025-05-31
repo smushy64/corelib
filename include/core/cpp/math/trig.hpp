@@ -1,124 +1,132 @@
-#if !defined(CORE_MATH_TRIG_H)
-#define CORE_MATH_TRIG_H
+#if !defined(CORE_CPP_MATH_TRIG_HPP) && defined(__cplusplus)
+#define CORE_CPP_MATH_TRIG_HPP
 /**
- * @file   trig.h
- * @brief  Trigonometric functions.
+ * @file   trig.hpp
+ * @brief  C++ Math: Trigonometric functions.
  * @author Alicia Amarilla (smushyaa@gmail.com)
- * @date   March 01, 2024
+ * @date   May 29, 2025
 */
-#include "core/types.h"
+#if !defined(CORE_MATH_TRIG_H)
+    #include "core/math/trig.h"
+#endif
 #include "core/attributes.h"
-#include "core/constants.h"
 
 /// @brief Convert degrees to radians.
 /// @param theta Angle in degrees.
 /// @return Angle in radians.
-attr_always_inline attr_header
-f32 f32_radians( f32 theta ) {
-    return theta * F32_TO_RAD;
+attr_always_inline attr_header attr_hot
+f32 radians( f32 theta ) {
+    return f32_radians( theta );
 }
 /// @brief Convert degrees to radians.
 /// @param theta Angle in degrees.
 /// @return Angle in radians.
-attr_always_inline attr_header
-f64 f64_radians( f64 theta ) {
-    return theta * F64_TO_RAD;
+attr_always_inline attr_header attr_hot
+f64 radians( f64 theta ) {
+    return f64_radians( theta );
 }
 /// @brief Convert radians to degrees.
 /// @param theta Angle in radians.
 /// @return Angle in degrees.
-attr_always_inline attr_header
-f32 f32_degrees( f32 theta ) {
-    return theta * F32_TO_DEG;
+attr_always_inline attr_header attr_hot
+f32 degrees( f32 theta ) {
+    return f32_degrees( theta );
 }
 /// @brief Convert radians to degrees.
 /// @param theta Angle in radians.
 /// @return Angle in degrees.
-attr_always_inline attr_header
-f64 f64_degrees( f64 theta ) {
-    return theta * F64_TO_DEG;
+attr_always_inline attr_header attr_hot
+f64 degrees( f64 theta ) {
+    return f64_degrees( theta );
 }
 /// @brief Calculate sine of x.
 /// @param x Value to get sine of.
 /// @return Sine of angle.
-/// @see #f32_sincos() if both sine and cosine of x are needed.
-attr_core_api
-f32 f32_sin( f32 x );
+/// @see #sincos() if both sine and cosine of x are needed.
+attr_always_inline attr_header attr_hot
+f32 sin( f32 x ) {
+    return f32_sin( x );
+}
 /// @brief Calculate cosine of x.
 /// @param x Value to get cosine of.
 /// @return Cosine of angle.
-/// @see #f32_sincos() if both sine and cosine of x are needed.
-attr_core_api
-f32 f32_cos( f32 x );
+/// @see #sincos() if both sine and cosine of x are needed.
+attr_always_inline attr_header attr_hot
+f32 cos( f32 x ) {
+    return f32_cos( x );
+}
 /// @brief Calculate sine and cosine of x simultaneously.
 /// @param      x          Value to get sine and cosine of.
 /// @param[out] out_sine   Sine of angle.
 /// @param[out] out_cosine Cosine of angle.
-attr_core_api
-void f32_sincos( f32 x, f32* out_sine, f32* out_cosine );
+attr_always_inline attr_header attr_hot
+void sincos( f32 x, f32* out_sine, f32* out_cosine ) {
+    f32_sincos( x, out_sine, out_cosine );
+}
 /// @brief Calculate tangent of x.
 /// @warning Returns NaN if cosine of angle is zero.
 /// @param x Value to get tangent of.
 /// @return Tangent of angle.
-attr_always_inline attr_header
-f32 f32_tan( f32 x ) {
-    f32 sine, cosine;
-    f32_sincos( x, &sine, &cosine );
-    return cosine == 0.0f ? F32_NAN : sine / cosine;
+attr_always_inline attr_header attr_hot
+f32 tan( f32 x ) {
+    return f32_tan( x );
 }
 
 /// @brief Calculate arcsine of x.
 /// @param x Value to get arcsine of.
 /// @return Arcsine of x.
-attr_core_api
-f32 f32_asin( f32 x );
+attr_always_inline attr_header attr_hot
+f32 asin( f32 x ) {
+    return f32_asin( x );
+}
 /// @brief Calculate arcsine of x.
 ///
 /// Does not produce NaN when outside valid range.
 /// @param x Value to get arcsine of.
 /// @return Arcsine of x clamped to -Pi -> Pi.
 /// @see #F32_PI
-/// @see #f32_asin()
-attr_always_inline attr_header
-f32 f32_asin_real( f32 x ) {
-    f32 abs  = x < 0 ? -x : x;
-    f32 sign = x < 0 ? -1.0f : 1.0f;
-    return abs >= 1.0f ?
-        F32_HALF_PI * sign : f32_asin( x );
+/// @see #asin()
+attr_always_inline attr_header attr_hot
+f32 asin_real( f32 x ) {
+    return f32_asin_real( x );
 }
 /// @brief Calculate arccosine of x.
 /// @param x Value to get arccosine of.
 /// @return Arccosine of x.
-attr_always_inline attr_header
-f32 f32_acos( f32 x ) {
-    return -f32_asin( x ) + F32_HALF_PI;
+attr_always_inline attr_header attr_hot
+f32 acos( f32 x ) {
+    return f32_acos( x );
 }
 /// @brief Calculate arctangent of x.
 /// @param x Value to get arctangent of.
 /// @return Arctangent of x.
-attr_core_api
-f32 f32_atan( f32 x );
+attr_always_inline attr_header attr_hot
+f32 atan( f32 x ) {
+    return f32_atan( x );
+}
 /// @brief Calculate 2 component arctangent of y and x.
 /// @param y Value to get arctangent of.
 /// @param x Value to get arctangent of.
 /// @return Arctangent of y and x.
-attr_core_api
-f32 f32_atan2( f32 y, f32 x );
+attr_always_inline attr_header attr_hot
+f32 atan2( f32 y, f32 x ) {
+    return f32_atan2( y, x );
+}
 
 /// @brief Wrap degrees between 0.0 -> 360.0
 /// @param degrees Degrees.
 /// @return Degrees wrapped between 0.0 -> 360.0.
-attr_core_api
-f32 f32_wrap_degrees( f32 degrees );
+attr_always_inline attr_header attr_hot
+f32 wrap_degrees( f32 degrees ) {
+    return f32_wrap_degrees( degrees );
+}
 /// @brief Wrap radians between -Pi -> Pi
 /// @param radians Radians.
 /// @return Radians wrapped bnetween -Pi -> Pi.
 /// @see #F32_PI
-attr_core_api
-f32 f32_wrap_radians( f32 radians );
-
-#if !defined(CORE_CPP_MATH_TRIG_HPP)
-    #include "core/cpp/math/trig.hpp"
-#endif
+attr_always_inline attr_header attr_hot
+f32 wrap_radians( f32 radians ) {
+    return f32_wrap_radians( radians );
+}
 
 #endif /* header guard */

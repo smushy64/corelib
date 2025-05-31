@@ -6,20 +6,12 @@
  * @author Alicia Amarilla (smushyaa@gmail.com)
  * @date   February 28, 2024
 */
-#include "core/defines.h"
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/constants.h"
 
 #include "core/math/exponential.h"
 #include "core/math/vector3.h"
-
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
 
 /// @brief %Quaternion rotation.
 struct Quaternion {
@@ -64,12 +56,8 @@ struct Quaternion {
         f32 array[4];
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief Quaternion rotation.
-    typedef struct Quaternion quat;
-#endif
 /// @brief Angle Axis representation of 3D rotation.
-struct AngleAxis_ {
+struct __AngleAxisPOD {
     /// @brief Angle in radians.
     f32 angle;
     /// @brief Union of axis components.
@@ -87,29 +75,37 @@ struct AngleAxis_ {
         struct Vector3 axis;
     };
 };
-#if !defined(CORE_CPLUSPLUS)
-    /// @brief Angle Axis Rotation
-    typedef struct AngleAxis_ AngleAxis;
-#endif
 
-#if defined(CORE_DOXYGEN) && !defined(CORE_CPLUSPLUS)
-
-/// @brief Construct a new Quaternion.
-/// @param w Real component.
-/// @param x, y, z Imaginary components.
-/// @return Quaternion.
-#define quat( w, x, y, z )
-
-#else /* Doxygen */
-
-#if defined(CORE_CPLUSPLUS)
-    #define quat_new( w, x, y, z ) Quaternion{ .array={ w, x, y, z } }
+#if defined(__cplusplus)
+    /// @brief Create new quaternion.
+    /// @param w W component.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Quaternion.
+    #define quat_new( w, x, y, z ) Quaternion { .array={ w, x, y, z } }
 #else
-    #define quat_new( w, x, y, z ) (struct Quaternion){ .array={ w, x, y, z } }
-    #define quat(...) quat_new(__VA_ARGS__)
-#endif
+    /// @brief %Quaternion rotation.
+    typedef struct     Quaternion     quat;
+    /// @brief Angle Axis representation of 3D rotation.
+    typedef struct __AngleAxisPOD AngleAxis;
 
-#endif /* Doxygen */
+    /// @brief Create new quaternion.
+    /// @param w W component.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Quaternion.
+    #define quat_new( w, x, y, z ) (struct Quaternion){ .array={ w, x, y, z } }
+
+    /// @brief Create new quaternion.
+    /// @param w W component.
+    /// @param x X component.
+    /// @param y Y component.
+    /// @param z Z component.
+    /// @return Quaternion.
+    #define quat( w, x, y, z ) quat_new( w, x, y, z )
+#endif
 
 /// @brief Quaternion zero constant.
 #define QUAT_ZERO     quat_new( 0.0f, 0.0f, 0.0f, 0.0f )
@@ -127,7 +123,7 @@ struct Quaternion quat_from_array( const f32 array[4] ) {
 /// @param v Vector to pull components from.
 /// @param[out] out_array Pointer to array, must be able to hold at least 4 floats.
 attr_always_inline attr_header
-void quat_to_array( struct Quaternion v, f32* out_array ) {
+void array_from_quat( struct Quaternion v, f32* out_array ) {
     out_array[0] = v.array[0]; out_array[1] = v.array[1];
     out_array[2] = v.array[2]; out_array[3] = v.array[3];
 }
@@ -163,6 +159,18 @@ struct Quaternion quat_mul( struct Quaternion lhs, f32 rhs ) {
         lhs.w * rhs, lhs.x * rhs,
         lhs.y * rhs, lhs.z * rhs );
 }
+/// @brief Multiply quaternion by quaternion.
+/// @param lhs, rhs Quaternions to multiply.
+/// @return Result of quaternion multiplication.
+/// @note lhs X rhs and rhs X lhs give different results!
+attr_core_api
+struct Quaternion quat_mul_quat( struct Quaternion lhs, struct Quaternion rhs );
+/// @brief Multiply Vector3 by Quaternion.
+/// @param lhs Quaternion to multiply.
+/// @param rhs Vector3 to multiply
+/// @return Result of quaternion vector multiplication.
+attr_core_api
+struct Vector3 quat_mul_vec3( struct Quaternion lhs, struct Vector3 rhs );
 /// @brief Divide quaternion components.
 /// @param lhs Quaternion to multiply.
 /// @param rhs Scalar to divide components by.
@@ -173,20 +181,6 @@ struct Quaternion quat_div( struct Quaternion lhs, f32 rhs ) {
         lhs.w / rhs, lhs.x / rhs,
         lhs.y / rhs, lhs.z / rhs );
 }
-/// @brief Multiply quaternion by quaternion.
-/// @param lhs, rhs Quaternions to multiply.
-/// @return Result of quaternion multiplication.
-/// @note lhs X rhs and rhs X lhs give different results!
-attr_core_api
-struct Quaternion quat_mul_quat(
-    struct Quaternion lhs, struct Quaternion rhs );
-/// @brief Multiply Vector3 by Quaternion.
-/// @param lhs Quaternion to multiply.
-/// @param rhs Vector3 to multiply
-/// @return Result of quaternion vector multiplication.
-attr_core_api
-struct Vector3 quat_mul_vec3(
-    struct Quaternion lhs, struct Vector3 rhs );
 /// @brief Negate quaternion.
 /// @param x Quaternion to negate.
 /// @return Negated quaternion.
@@ -285,7 +279,7 @@ struct Quaternion quat_slerp(
 /// @param angle_axis Angle axis.
 /// @return Quaternion representation of angle axis rotation.
 attr_core_api
-struct Quaternion quat_from_angle_axis( struct AngleAxis_ angle_axis );
+struct Quaternion quat_from_angle_axis( struct __AngleAxisPOD angle_axis );
 /// @brief Convert euler angles rotation to quaternion rotation.
 /// @param x, y, z Euler angles.
 /// @return Euler angle rotation as quaternion.
@@ -302,12 +296,12 @@ struct Quaternion quat_from_euler_vec3( struct Vector3 euler_angles ) {
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as euler angles.
 attr_core_api
-struct Vector3 quat_to_euler( struct Quaternion q );
+struct Vector3 euler_from_quat( struct Quaternion q );
 /// @brief Convert quaternion rotation to angle axis rotation.
 /// @param q Quaternion to convert.
 /// @return Quaternion rotation as angle axis rotation.
 attr_core_api
-struct AngleAxis_ quat_to_angle_axis( struct Quaternion q );
+struct __AngleAxisPOD angle_axis_from_quat( struct Quaternion q );
 /// @brief Compare two quaternions for equality.
 /// @param a, b Quaternions to compare.
 /// @return True if the square magnitude of a - b is < F32_EPSILON.
@@ -317,17 +311,8 @@ b32 quat_cmp( struct Quaternion a, struct Quaternion b ) {
     return quat_length_sqr( quat_sub( a, b ) ) < F32_EPSILON;
 }
 
-#if defined(CORE_CPLUSPLUS) && defined(CORE_COMPILER_CLANG) && !defined(CORE_LSP_CLANGD)
-    #pragma clang diagnostic pop
-    #pragma clang diagnostic pop
-#endif
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_MATH_QUATERNION_HPP)
-        #include "core/cpp/math/quaternion.hpp"
-    #endif
-    typedef QuaternionCPP quat;
-    typedef AngleAxisCPP  AngleAxis;
+#if !defined(CORE_CPP_MATH_QUATERNION_HPP)
+    #include "core/cpp/math/quaternion.hpp"
 #endif
 
 #endif /* header guard */
