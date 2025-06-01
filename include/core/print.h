@@ -8,16 +8,16 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
+#include "core/string.h"
 
 // forward declarations
-struct PipeWrite;
+struct FD;
 attr_core_api
-struct PipeWrite* pipe_stdout(void);
+struct FD* pipe_stdout(void);
 attr_core_api
-struct PipeWrite* pipe_stderr(void);
+struct FD* pipe_stderr(void);
 attr_core_api
-usize internal_pipe_write_fmt(
-    struct PipeWrite* pipe, usize format_len, const char* format, ... );
+usize file_write_fmt( struct FD* file, struct _StringPOD format, ... );
 
 /// @brief Color codes for printing to the console.
 ///
@@ -51,24 +51,22 @@ typedef const char AnsiColor;
 /// @brief Print message to stdout.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
-#define print( format, ... ) \
-    internal_pipe_write_fmt( pipe_stdout(), sizeof(format) - 1, format, ##__VA_ARGS__ )
-
+#define print( fmt, ... ) \
+    file_write_fmt( pipe_stdout(), string_text(fmt), ##__VA_ARGS__ )
 /// @brief Print message to stderr.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
-#define print_err( format, ... )\
-    internal_pipe_write_fmt( pipe_stderr(), sizeof(format) - 1, format, ##__VA_ARGS__ )
-
-/// @brief Print message to stdout. Adds new line after message.
+#define eprint( fmt, ... ) \
+    file_write_fmt( pipe_stderr(), string_text(fmt), ##__VA_ARGS__ )
+/// @brief Print message to stdout.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
-#define println( format, ... )\
-    print( format "\n", ##__VA_ARGS__ )
-/// @brief Print message to stderr. Adds new line after message.
+#define println( fmt, ... ) \
+    print( fmt "\n", ##__VA_ARGS__ )
+/// @brief Print message to stderr.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
-#define println_err( format, ... )\
-    print_err( format "\n", ##__VA_ARGS__ )
+#define eprintln( fmt, ... ) \
+    eprint( fmt "\n", ##__VA_ARGS__ )
 
 #endif /* header guard */

@@ -12,13 +12,13 @@
 struct _StringPOD platform_environment_query( struct _StringPOD key );
 b32 platform_environment_set( struct _StringPOD key, struct _StringPOD value );
 b32 platform_process_exec_async(
-    Command               command,
-    Process*              out_pid,
-    const _PathPOD*       opt_working_directory,
-    const EnvironmentBuf* opt_environment,
-    const PipeRead*       opt_stdin,
-    const PipeWrite*      opt_stdout,
-    const PipeWrite*      opt_stderr );
+    Command                  command,
+    Process*                 out_pid,
+    const struct _StringPOD* opt_working_directory,
+    const EnvironmentBuf*    opt_environment,
+    const FD*                opt_stdin,
+    const FD*                opt_stdout,
+    const FD*                opt_stderr );
 void platform_process_discard( Process* pid );
 int  platform_process_wait( Process* pid );
 b32  platform_process_wait_timed( Process* pid, u32 msec, int* opt_out_exit_code );

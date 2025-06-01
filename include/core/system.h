@@ -51,9 +51,9 @@ typedef enum CPUFeatureFlags {
 /// @brief System Information.
 typedef struct SystemInfo {
     /// @brief #String containing CPU name.
-    String cpu_name;
+    struct _StringPOD cpu_name;
     /// @brief #String containing GPU name.
-    String gpu_name;
+    struct _StringPOD gpu_name;
     /// @brief Total memory in system.
     usize total_memory;
     /// @brief Size of pages.
@@ -91,5 +91,9 @@ CPUFeatureFlags system_feature_check_x86_avx( CPUFeatureFlags flags ) {
     u32 f = (u32)flags;
     return (CPUFeatureFlags)(~f & (u32)CPU_FEATURE_AVX_MASK);
 }
+
+#if !defined(CORE_CPP_SYSTEM_HPP)
+    #include "core/cpp/system.hpp"
+#endif
 
 #endif /* header guard */

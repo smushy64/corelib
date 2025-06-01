@@ -3,7 +3,7 @@
  * Author:       Alicia Amarilla (smushyaa@gmail.com)
  * File Created: February 08, 2024
 */
-#include "core/defines.h"
+#include "core/defines.h" // IWYU pragma: keep
 #if defined(CORE_PLATFORM_WINDOWS)
 
 #include "core/types.h"
@@ -81,9 +81,9 @@ struct Win32Platform {
     atomic32      running_thread_id;
     LARGE_INTEGER qpf;
 
-    PipeRead  stdin;
-    PipeWrite stdout;
-    PipeWrite stderr;
+    FD stdin;
+    FD stdout;
+    FD stderr;
 
     char cpu_name[255];
     char gpu_name[255];
@@ -105,14 +105,14 @@ attr_global struct Win32Platform* global_win32 = NULL;
 attr_internal
 char* win32_get_local_buffer(void);
 attr_internal
-void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path );
+void win32_canonical_from_path( struct _StringBufPOD* buf, struct _StringPOD path );
 attr_internal
-usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path );
+usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, struct _StringPOD path );
 attr_internal
-wchar_t* win32_canonical_from_path_ucs2_local( _PathPOD path );
+wchar_t* win32_canonical_from_path_ucs2_local( struct _StringPOD path );
 attr_internal
 void win32_path_buf_push_chunk(
-    usize buffer_cap, usize* buffer_len, wchar_t* buffer, _PathPOD chunk );
+    usize buffer_cap, usize* buffer_len, wchar_t* buffer, struct _StringPOD chunk );
 
 attr_internal
 b32 win32_ucs2_cmp( const wchar_t* a, const wchar_t* b );
@@ -165,9 +165,9 @@ b32 win32_init(void) {
     win32_get_cpu_name( global_win32->cpu_name );
     win32_get_gpu_name( global_win32->gpu_name );
 
-    global_win32->stdin.fd.opaque  = GetStdHandle( STD_INPUT_HANDLE );
-    global_win32->stdout.fd.opaque = GetStdHandle( STD_OUTPUT_HANDLE );
-    global_win32->stderr.fd.opaque = GetStdHandle( STD_ERROR_HANDLE );
+    global_win32->stdin.opaque  = GetStdHandle( STD_INPUT_HANDLE );
+    global_win32->stdout.opaque = GetStdHandle( STD_OUTPUT_HANDLE );
+    global_win32->stderr.opaque = GetStdHandle( STD_ERROR_HANDLE );
 
     QueryPerformanceFrequency( &global_win32->qpf );
 
@@ -779,17 +779,17 @@ b32 platform_directory_current_set( struct _StringPOD in_path ) {
     return true;
 }
 
-struct PipeRead* platform_pipe_stdin(void) {
+struct FD* platform_pipe_stdin(void) {
     return &global_win32->stdin;
 }
-struct PipeWrite* platform_pipe_stdout(void) {
+struct FD* platform_pipe_stdout(void) {
     return &global_win32->stdout;
 }
-struct PipeWrite* platform_pipe_stderr(void) {
+struct FD* platform_pipe_stderr(void) {
     return &global_win32->stderr;
 }
 
-b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write ) {
+b32 platform_pipe_open( struct FD* out_read, struct FD* out_write ) {
     HANDLE read, write;
 
     SECURITY_ATTRIBUTES sa;
@@ -801,25 +801,16 @@ b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write )
         return false;
     }
 
-    out_read->fd.opaque  = read;
-    out_write->fd.opaque = write;
+    out_read->opaque  = read;
+    out_write->opaque = write;
 
     return true;
 }
-void platform_pipe_close( const void* pipe ) {
-    struct PipeRead* p = (struct PipeRead*)pipe;
-    CloseHandle( p->fd.opaque );
-}
-b32 platform_pipe_write(
-    struct PipeWrite* pipe, usize bytes, const void* buf, usize* out_write
-) {
-    return platform_file_write( &pipe->fd, bytes, buf, out_write );
-}
-b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read ) {
-    return platform_file_read( &pipe->fd, bytes, buf, out_read );
+void platform_pipe_close( const FD* pipe ) {
+    CloseHandle( pipe->opaque );
 }
 
-usize platform_path_chunk_count( _PathPOD path ) {
+usize platform_path_chunk_count( struct _StringPOD path ) {
     struct _StringPOD remaining = path;
     if( !remaining.len ) {
         return 0;
@@ -846,11 +837,11 @@ usize platform_path_chunk_count( _PathPOD path ) {
     }
     return result;
 }
-_PathPOD platform_path_clip_chunk( _PathPOD path ) {
+struct _StringPOD platform_path_clip_chunk( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
-    _PathPOD result = path;
+    struct _StringPOD result = path;
 
     if(
         (result.len >= 3)                           &&
@@ -870,12 +861,12 @@ _PathPOD platform_path_clip_chunk( _PathPOD path ) {
 
     return result;
 }
-_PathPOD platform_path_clip_chunk_last( _PathPOD path ) {
+struct _StringPOD platform_path_clip_chunk_last( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
 
-    _PathPOD result = path;
+    struct _StringPOD result = path;
     char last = string_last_unchecked( result );
     if( ascii_is_path_separator( last ) ) {
         result = string_trim( result, 1 );
@@ -892,41 +883,41 @@ _PathPOD platform_path_clip_chunk_last( _PathPOD path ) {
 
     return result;
 }
-_PathPOD platform_path_advance_chunk( _PathPOD path ) {
+struct _StringPOD platform_path_advance_chunk( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
-    _PathPOD first_chunk = path_clip_chunk( path );
+    struct _StringPOD first_chunk = path_clip_chunk( path );
     if( first_chunk.len ) {
         return string_advance_by( path, first_chunk.len + 1 );
     } else {
-        return path_empty();
+        return string_empty();
     }
 }
-_PathPOD platform_path_pop_chunk( _PathPOD path ) {
-    _PathPOD last = path_clip_chunk_last( path );
+struct _StringPOD platform_path_pop_chunk( struct _StringPOD path ) {
+    struct _StringPOD last = path_clip_chunk_last( path );
     if( last.len ) {
         return string_trim( path, last.len + 1 );
     } else {
         return path;
     }
 }
-b32 platform_path_is_absolute( _PathPOD path ) {
+b32 platform_path_is_absolute( struct _StringPOD path ) {
     return
         (path.len >= 3)                           &&
         (ascii_is_alphabetic( path.cbuf[0] ))     &&
         (path.cbuf[1] == ':')                     &&
         (ascii_is_path_separator( path.cbuf[2] ));
 }
-b32 platform_path_parent( _PathPOD path, _PathPOD* out_parent ) {
-    _PathPOD parent = path_pop_chunk( path );
+b32 platform_path_parent( struct _StringPOD path, struct _StringPOD* out_parent ) {
+    struct _StringPOD parent = path_pop_chunk( path );
     if( !parent.len ) {
         return false;
     }
     *out_parent = path_clip_chunk_last( parent );
     return true;
 }
-b32 platform_path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
+b32 platform_path_file_name( struct _StringPOD path, struct _StringPOD* out_file_name ) {
     if( !path.len ) {
         return false;
     }
@@ -939,22 +930,22 @@ b32 platform_path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
     return true;
 }
 b32 platform_path_stream_set_native_separators(
-    StreamBytesFN* stream, void* target, _PathPOD path
+    StreamBytesFN* stream, void* target, struct _StringPOD path
 ) {
     return path_stream_set_windows_separators( stream, target, path );
 }
-void platform_path_set_native_separators( _PathPOD path ) {
+void platform_path_set_native_separators( struct _StringPOD path ) {
     path_set_windows_separators( path );
 }
 attr_internal
-void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path ) {
+void win32_canonical_from_path( struct _StringBufPOD* buf, struct _StringPOD path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
         WIN32_PATH_ABS,
     } type = WIN32_PATH_REL;
 
-    Path rem = path;
+    struct _StringPOD rem = path;
 
     if( path_is_absolute( path ) ) {
         type = WIN32_PATH_ABS;
@@ -968,16 +959,16 @@ void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path ) {
         } break;
         case WIN32_PATH_HOME: {
             path_buf_try_push_chunk(
-                buf, path_new( global_win32->home.len, global_win32->home.buf ) );
+                buf, string_new( global_win32->home.len, global_win32->home.buf ) );
             rem = string_advance_by( rem, 2 );
         } break;
         case WIN32_PATH_ABS: break;
     }
 
-    usize min = path_text("A:\\").len;
+    usize min = string_text("A:\\").len;
 
-    while( !path_is_empty( rem ) ) {
-        Path chunk = rem;
+    while( !string_is_empty( rem ) ) {
+        struct _StringPOD chunk = rem;
         usize sep = 0;
         if( string_find_set( rem, string_text("/\\"), &sep ) ) {
             if( !sep ) {
@@ -988,11 +979,11 @@ void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path ) {
         }
 
         if( chunk.len < 3 ) {
-            if( path_cmp( chunk, path_text(".") )) {
+            if( string_cmp( chunk, string_text(".") )) {
                 rem = string_advance_by( rem, chunk.len + 1 );
                 continue;
             }
-            if( path_cmp( chunk, path_text(".."))) {
+            if( string_cmp( chunk, string_text(".."))) {
                 for( usize i = buf->len; i-- > 0; ) {
                     if( buf->cbuf[i] == '\\' ) {
                         buf->len = i;
@@ -1015,13 +1006,13 @@ void win32_canonical_from_path( _PathBufPOD* buf, _PathPOD path ) {
     }
 }
 usize platform_path_stream_canonicalize(
-    StreamBytesFN* stream, void* target, _PathPOD path
+    StreamBytesFN* stream, void* target, struct _StringPOD path
 ) {
-    _PathBufPOD buffer = path_buf_new( CORE_PATH_NAME_LEN * 2, win32_get_local_buffer() );
+    struct _StringBufPOD buffer = string_buf_new( CORE_PATH_NAME_LEN * 2, win32_get_local_buffer() );
     win32_canonical_from_path( &buffer, path );
     return stream( target, buffer.len, buffer.buf );
 }
-b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
+b32 platform_path_buf_try_push_chunk( struct _StringBufPOD* buf, struct _StringPOD chunk ) {
     if( !chunk.len ) {
         return true;
     }
@@ -1032,12 +1023,12 @@ b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
     }
 
     b32 buf_has_separator = false;
-    if( !path_buf_is_empty( *buf ) ) {
+    if( !string_buf_is_empty( *buf ) ) {
         buf_has_separator = ascii_is_path_separator( string_last_unchecked( buf->slice ) );
     }
 
     if(
-        path_buf_remaining( *buf ) <
+        string_buf_remaining( *buf ) <
         (chunk.len + !(chunk_has_separator || buf_has_separator))
     ) {
         return false;
@@ -1054,19 +1045,19 @@ b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
 
     return true;
 }
-b32 platform_path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension ) {
+b32 platform_path_buf_try_set_extension( struct _StringBufPOD* buf, struct _StringPOD extension ) {
     if( !extension.len ) {
         return true;
     }
 
-    _PathPOD exisiting_extension = {};
+    struct _StringPOD exisiting_extension = {};
     if( path_extension( buf->slice, &exisiting_extension ) ) {
         buf->len -= exisiting_extension.len;
     }
 
     b32 has_dot = string_first_unchecked( extension ) == '.';
 
-    if( path_buf_remaining( *buf ) < (extension.len + !has_dot) ) {
+    if( string_buf_remaining( *buf ) < (extension.len + !has_dot) ) {
         return false;
     }
 
@@ -1439,7 +1430,7 @@ char* win32_get_local_buffer(void) {
     return tls->text_buffer;
 }
 attr_internal
-usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathPOD path ) {
+usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, struct _StringPOD path ) {
     enum {
         WIN32_PATH_REL,
         WIN32_PATH_HOME,
@@ -1448,7 +1439,7 @@ usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathP
 
     usize buffer_len = 0;
 
-    _PathPOD rem = path;
+    struct _StringPOD rem = path;
 
     if( path_is_absolute( path ) ) {
         type = WIN32_PATH_ABS;
@@ -1488,10 +1479,10 @@ usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathP
         buffer_len += sizeof("\\\\?");
     }
 
-    usize min = path_text("\\\\?\\A:\\").len;
+    usize min = string_text("\\\\?\\A:\\").len;
 
-    while( !path_is_empty( rem ) ) {
-        Path chunk = rem;
+    while( !string_is_empty( rem ) ) {
+        struct _StringPOD chunk = rem;
         usize sep = 0;
         if( string_find_set( rem, string_text("/\\"), &sep ) ) {
             if( !sep ) {
@@ -1502,11 +1493,11 @@ usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathP
         }
 
         if( chunk.len < 3 ) {
-            if( path_cmp( chunk, path_text(".") )) {
+            if( string_cmp( chunk, string_text(".") )) {
                 rem = string_advance_by( rem, chunk.len + 1 );
                 continue;
             }
-            if( path_cmp( chunk, path_text(".."))) {
+            if( string_cmp( chunk, string_text(".."))) {
                 for( usize i = buffer_len; i-- > 0; ) {
                     if( buffer[i] == '\\' ) {
                         buffer_len = i;
@@ -1532,7 +1523,7 @@ usize win32_canonical_from_path_ucs2( usize buffer_size, wchar_t* buffer, _PathP
 }
 attr_internal
 void win32_path_buf_push_chunk(
-    usize buffer_cap, usize* buffer_len, wchar_t* buffer, _PathPOD chunk
+    usize buffer_cap, usize* buffer_len, wchar_t* buffer, struct _StringPOD chunk
 ) {
     if( !chunk.len ) {
         return;
@@ -1561,7 +1552,7 @@ void win32_path_buf_push_chunk(
         buffer + *buffer_len, buffer_cap - *buffer_len );
 }
 attr_internal
-wchar_t* win32_canonical_from_path_ucs2_local( _PathPOD path ) {
+wchar_t* win32_canonical_from_path_ucs2_local( struct _StringPOD path ) {
     wchar_t* buffer = (wchar_t*)win32_get_local_buffer();
     win32_canonical_from_path_ucs2( CORE_PATH_NAME_LEN, buffer, path );
     return buffer;
@@ -1954,17 +1945,14 @@ void win32_environment_block_complete(
     FreeEnvironmentStringsW( (LPWCH)block->source );
 }
 b32 platform_process_exec_async(
-    Command               command,
-    Process*              out_pid,
-    const _PathPOD*       opt_working_directory,
-    const EnvironmentBuf* opt_environment,
-    const PipeRead*       opt_stdin,
-    const PipeWrite*      opt_stdout,
-    const PipeWrite*      opt_stderr
+    Command                  command,
+    Process*                 out_pid,
+    const struct _StringPOD* opt_working_directory,
+    const EnvironmentBuf*    opt_environment,
+    const FD*                opt_stdin,
+    const FD*                opt_stdout,
+    const FD*                opt_stderr
 ) {
-    // TODO(alicia): 
-    unused(command,out_pid,opt_working_directory,opt_environment,opt_stdin,opt_stdout,opt_stderr);
-
     STARTUPINFOW        si = {};
     PROCESS_INFORMATION pi = {};
 
@@ -1974,19 +1962,19 @@ b32 platform_process_exec_async(
     DWORD dwCreationFlags = 0;
     BOOL  bInheritHandles = FALSE;
     if( opt_stdin ) {
-        si.hStdInput    = (HANDLE)opt_stdin->fd.opaque;
+        si.hStdInput    = (HANDLE)opt_stdin->opaque;
         bInheritHandles = TRUE;
     } else {
         si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
     }
     if( opt_stdout ) {
-        si.hStdOutput   = (HANDLE)opt_stdout->fd.opaque;
+        si.hStdOutput   = (HANDLE)opt_stdout->opaque;
         bInheritHandles = TRUE;
     } else {
         si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
     }
     if( opt_stderr ) {
-        si.hStdError    = (HANDLE)opt_stderr->fd.opaque;
+        si.hStdError    = (HANDLE)opt_stderr->opaque;
         bInheritHandles = TRUE;
     } else {
         si.hStdError = GetStdHandle( STD_ERROR_HANDLE );

@@ -117,6 +117,13 @@ b32 cstr_cmp( const char* a, const char* b );
     #define string_new( length, start ) \
         (struct _StringPOD){ .len = length, .cbuf = (const char*)(start) }
 #endif
+
+/// @brief Shorthand for #string_text()
+/// @param literal String literal.
+/// @return String.
+#define S(literal) \
+    string_text(literal)
+
 /// @brief Create empty string slice.
 /// @return String slice.
 #define string_empty() \

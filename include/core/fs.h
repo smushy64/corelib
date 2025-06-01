@@ -1,5 +1,5 @@
-#if !defined(CORE_FILESYSTEM_H)
-#define CORE_FILESYSTEM_H
+#if !defined(CORE_FS_H)
+#define CORE_FS_H
 /**
  * @file   fs.h
  * @brief  File system functions.
@@ -27,7 +27,7 @@
 */
 #include "core/types.h"
 #include "core/attributes.h"
-#include "core/path.h"
+#include "core/path.h"   // IWYU pragma: export
 #include "core/macros.h" // IWYU pragma: export
 
 /// @brief Maximum allowed path name length.
@@ -44,16 +44,6 @@ typedef struct FD {
     void* opaque;
 #endif
 } FD;
-/// @brief Pipe used exclusively for reading.
-typedef struct PipeRead {
-    /// @brief Pipe file descriptor.
-    FD fd;
-} PipeRead;
-/// @brief Pipe used exclusively for writing.
-typedef struct PipeWrite {
-    /// @brief Pipe file descriptor.
-    FD fd;
-} PipeWrite;
 /// @brief Flags for opening a file.
 typedef enum FileOpenFlags {
     /// @brief Open a file for reading.
@@ -182,20 +172,14 @@ struct _StringPOD file_type_to_string( FileType ft );
 /// @param[in] walk_info (const DirectoryWalkInfo*) Pointer to directory walk.
 /// @return (Path) Path to current item.
 #define directory_walk_info_path( walk_info ) \
-    path_new( (walk_info)->path_len, (walk_info)->path )
+    string_new( (walk_info)->path_len, (walk_info)->path )
 /// @brief Get file name from directory walk info.
 /// @param[in] walk_info (const DirectoryWalkInfo*) Pointer to directory walk.
 /// @return (Path) Name of current item.
 #define directory_walk_info_file_name( walk_info ) \
-    path_new( \
+    string_new( \
         (walk_info)->path_len - (walk_info)->path_name_offset, \
         (walk_info)->path + (walk_info)->path_name_offset )
-
-/// @brief Get file descriptor from pipe.
-/// @param[in] pipe Pointer to pipe (Read or Write).
-/// @return File descriptor.
-#define fd_from_pipe( pipe ) \
-    ((pipe)->fd)
 
 /// @brief Copy contents of source file to destination file.
 /// @param dst        Path to destination file. 
@@ -206,7 +190,7 @@ struct _StringPOD file_type_to_string( FileType ft );
 ///     - @c false : Failed to copy.
 ///     - @c false : If @c create_dst, @c dst already exists.
 attr_core_api
-b32 file_copy_by_path( _PathPOD dst, _PathPOD src, b32 create_dst );
+b32 file_copy_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_dst );
 /// @brief Move contents of source file to destination file.
 /// @param dst        Path to destination file. 
 /// @param src        Path to source file. 
@@ -216,14 +200,14 @@ b32 file_copy_by_path( _PathPOD dst, _PathPOD src, b32 create_dst );
 ///     - @c false : Failed to move.
 ///     - @c false : If @c create_dst, @c dst already exists.
 attr_core_api
-b32 file_move_by_path( _PathPOD dst, _PathPOD src, b32 create_dst );
+b32 file_move_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_dst );
 /// @brief Remove file at path.
 /// @param path Path of file to remove. 
 /// @return
 ///     - @c true  : Removed file successfully.
 ///     - @c false : Failed to remove file.
 attr_core_api
-b32 file_remove_by_path( _PathPOD path );
+b32 file_remove_by_path( struct _StringPOD path );
 /// @brief Query info about a file.
 /// @param      path     Path to file.
 /// @param[out] out_info Pointer to file info struct to fill out.
@@ -231,7 +215,7 @@ b32 file_remove_by_path( _PathPOD path );
 ///     - true  : Successfully obtained information about the specified file.
 ///     - false : Failed to obtain file information.
 attr_core_api
-b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info );
+b32 file_query_info_by_path( struct _StringPOD path, FileInfo* out_info );
 /// @brief Query file descriptor file type by path.
 /// @note
 /// This is the same as calling file_query_info_by_path() and only reading
@@ -239,7 +223,7 @@ b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info );
 /// @param path Path to file.
 /// @return Type of file.
 attr_core_api
-FileType file_query_type_by_path( _PathPOD path );
+FileType file_query_type_by_path( struct _StringPOD path );
 /// @brief Query when file was created by path.
 /// @note
 /// This is the same as calling file_query_info_by_path() and only reading
@@ -247,7 +231,7 @@ FileType file_query_type_by_path( _PathPOD path );
 /// @param path Path to file.
 /// @return Time created.
 attr_core_api
-TimePosix file_query_time_create_by_path( _PathPOD path );
+TimePosix file_query_time_create_by_path( struct _StringPOD path );
 /// @brief Query when file was last modified by path.
 /// @note
 /// This is the same as calling file_query_info_by_path() and only reading
@@ -255,7 +239,7 @@ TimePosix file_query_time_create_by_path( _PathPOD path );
 /// @param path Path to file.
 /// @return Time modified.
 attr_core_api
-TimePosix file_query_time_modify_by_path( _PathPOD path );
+TimePosix file_query_time_modify_by_path( struct _StringPOD path );
 
 /// @brief Open file descriptor.
 /// @param      path   Path to file.
@@ -265,7 +249,7 @@ TimePosix file_query_time_modify_by_path( _PathPOD path );
 ///     - @c true  : File was opened successfully.
 ///     - @c false : Failed to open file.
 attr_core_api
-b32 file_open( _PathPOD path, FileOpenFlags flags, FD* out_fd );
+b32 file_open( struct _StringPOD path, FileOpenFlags flags, FD* out_fd );
 /// @brief Close file descriptor.
 /// @param[in] fd File descriptor to close.
 attr_core_api
@@ -349,37 +333,33 @@ attr_core_api
 b32 file_read(
     FD* fd, usize buf_size, void* buf, usize* opt_out_read );
 /// @brief Write formatted string to file.
-/// @param[in]  fd         File descriptor.
-/// @param      format_len Length of format string.
-/// @param[in]  format     Pointer to start of format string.
-/// @param      va         Variadic format arguments.
-/// @return Number of bytes that function failed to write to file.
+/// @param[in] fd     File descriptor.
+/// @param     format Format string.
+/// @param[in] va     Variadic arguments.
+/// @return Number of bytes that could not be written to file.
 attr_core_api
-usize internal_file_write_fmt_va(
-    FD* fd, usize format_len, const char* format, va_list va );
+usize file_write_fmt_va( FD* fd, struct _StringPOD format, va_list va );
 /// @brief Write formatted string to file.
-/// @param[in]  fd         File descriptor.
-/// @param      format_len Length of format string.
-/// @param[in]  format     Pointer to start of format string.
-/// @param      ...        Format arguments.
-/// @return Number of bytes that function failed to write to file.
+/// @param[in] fd     File descriptor.
+/// @param     format Format string.
+/// @param[in] ...    Arguments.
+/// @return Number of bytes that could not be written to file.
 attr_core_api
-usize internal_file_write_fmt(
-    FD* fd, usize format_len, const char* format, ... );
+usize file_write_fmt( FD* fd, struct _StringPOD format, ... );
 /// @brief Write formatted string to file.
-/// @param[in]  fd     (FD*)            File descriptor.
-/// @param[in]  format (string literal) Format string literal.
-/// @param      va     (va_list)        Variadic format arguments.
-/// @return Number of bytes that function failed to write to file.
-#define file_write_fmt_va( fd, format, va )\
-    internal_file_write_fmt_va( fd, sizeof(format) - 1, format, va )
+/// @param[in] fd     File descriptor.
+/// @param     format Format string.
+/// @param[in] va     Variadic arguments.
+/// @return Number of bytes that could not be written to file.
+#define file_write_fmt_va_text( fd, format, va ) \
+    file_write_fmt_va( fd, string_new( format ), va )
 /// @brief Write formatted string to file.
-/// @param[in]  fd     (FD*)            File descriptor.
-/// @param[in]  format (string literal) Format string literal.
-/// @param      ...    (args)           Format arguments.
-/// @return Number of bytes that function failed to write to file.
-#define file_write_fmt( fd, format, ... )\
-    internal_file_write_fmt( fd, sizeof(format) - 1, format, ##__VA_ARGS__ )
+/// @param[in] fd     File descriptor.
+/// @param     format Format string.
+/// @param[in] ...    Arguments.
+/// @return Number of bytes that could not be written to file.
+#define file_write_fmt_text( fd, format, ... ) \
+    file_write_fmt( fd, string_new( format ), ##__VA_ARGS__ )
 /// @brief File streaming function.
 /// @param[in] struct_FD (FD*) File to stream to. Must have write access.
 /// @param     count     Number of bytes to write.
@@ -396,7 +376,7 @@ usize file_stream_write( void* struct_FD, usize count, const void* buf );
 ///     - @c true  : Successfully created directory.
 ///     - @c false : Failed to create directory.
 attr_core_api
-b32 directory_create( _PathPOD path );
+b32 directory_create( struct _StringPOD path );
 /// @brief Remove directory from file system.
 /// @param path      Path of directory to remove.
 /// @param recursive If false, directory must be empty.
@@ -404,7 +384,7 @@ b32 directory_create( _PathPOD path );
 ///     - @c true  : Successfully removed directory.
 ///     - @c false : Failed to remove directory.
 attr_core_api
-b32 directory_remove( _PathPOD path, b32 recursive );
+b32 directory_remove( struct _StringPOD path, b32 recursive );
 /// @brief Walk directory and call callback for each item in directory.
 /// @param     path     Path to directory to walk.
 /// @param[in] callback Callback function to call for each item.
@@ -413,12 +393,12 @@ b32 directory_remove( _PathPOD path, b32 recursive );
 ///     - true  : Successfully walked directory.
 ///     - false : Failed to walk directory.
 attr_core_api
-b32 directory_walk( _PathPOD path, DirectoryWalkFN* callback, void* params );
+b32 directory_walk( struct _StringPOD path, DirectoryWalkFN* callback, void* params );
 
 /// @brief Get read-only current working directory.
 /// @return Current working directory.
 attr_core_api
-_PathPOD directory_current_query(void);
+struct _StringPOD directory_current_query(void);
 /// @brief Set current working directory.
 /// @warning
 /// This function is not thread safe! Make sure to only call it
@@ -428,20 +408,20 @@ _PathPOD directory_current_query(void);
 ///     - @c true  : Set current working directory successfully.
 ///     - @c false : Failed to set current working directory.
 attr_core_api
-b32 directory_current_set( _PathPOD path );
+b32 directory_current_set( struct _StringPOD path );
 
 /// @brief Get standard in pipe.
 /// @return Standard in pipe.
 attr_core_api
-PipeRead*  pipe_stdin(void);
+FD* pipe_stdin(void);
 /// @brief Get standard out pipe.
 /// @return Standard out pipe.
 attr_core_api
-PipeWrite* pipe_stdout(void);
+FD* pipe_stdout(void);
 /// @brief Get standard error pipe.
 /// @return Standard error pipe.
 attr_core_api
-PipeWrite* pipe_stderr(void);
+FD* pipe_stderr(void);
 
 /// @brief Open read and write pipes.
 /// @param[out] out_read Pointer to write read pipe.
@@ -450,73 +430,15 @@ PipeWrite* pipe_stderr(void);
 ///     - @c true  : Opened pipes successfully.
 ///     - @c false : Failed to open pipes.
 attr_core_api
-b32 pipe_open( PipeRead* out_read, PipeWrite* out_write );
+b32 pipe_open( FD* out_read, FD* out_write );
 /// @brief Close a pipe.
 /// @param[in] pipe Pointer to pipe to close.
 attr_core_api
-void pipe_close( const void* pipe );
-/// @brief Write to pipe.
-/// @param[in]  pipe          Pipe to write to.
-/// @param      bytes         Bytes to write to pipe.
-/// @param[in]  buf           Pointer to start of buffer to write.
-/// @param[out] opt_out_write (optional) Pointer to write bytes written.
-/// @return
-///     - @c true  : Wrote to pipe successfully.
-///     - @c false : Failed to write to pipe.
-attr_core_api
-b32 pipe_write(
-    PipeWrite* pipe, usize bytes, const void* buf, usize* opt_out_write );
-/// @brief Read from pipe.
-/// @param[in]  pipe         Pipe to read from.
-/// @param      bytes        Bytes to read.
-/// @param[in]  buf          Pointer to start of buffer to read into.
-/// @param[out] opt_out_read (optional) Pointer to write bytes read.
-/// @return
-///     - @c true  : Read from pipe successfully.
-///     - @c false : Failed to read from pipe.
-attr_core_api
-b32 pipe_read(
-    PipeRead* pipe, usize bytes, void* buf, usize* opt_out_read );
-/// @brief Write formatted string to pipe.
-/// @param[in]  pipe       Pipe to write to.
-/// @param      format_len Length of format string.
-/// @param[in]  format     Pointer to start of format string.
-/// @param      va         Variadic format arguments.
-/// @return Number of bytes that could not be written to pipe.
-attr_core_api
-usize internal_pipe_write_fmt_va(
-    PipeWrite* pipe, usize format_len, const char* format, va_list va );
-/// @brief Write formatted string to pipe.
-/// @param[in]  pipe       Pipe to write to.
-/// @param      format_len Length of format string.
-/// @param[in]  format     Pointer to start of format string.
-/// @param      ...        Format arguments.
-/// @return Number of bytes that could not be written to pipe.
-attr_core_api
-usize internal_pipe_write_fmt(
-    PipeWrite* pipe, usize format_len, const char* format, ... );
-/// @brief Write formatted string to pipe.
-/// @param[in]  pipe   (PipeWrite*)     Pipe to write to.
-/// @param      format (string literal) Format string literal.
-/// @param      va     (va_list)        Variadic format arguments.
-/// @return Number of bytes that could not be written to pipe.
-#define pipe_write_fmt_va( pipe, format, va )\
-    internal_pipe_write_fmt_va( pipe, sizeof(format) - 1, format, va )
-/// @brief Write formatted string to pipe.
-/// @param[in]  pipe   (PipeWrite*)     Pipe to write to.
-/// @param      format (string literal) Format string literal.
-/// @param      ...    (args)           Format arguments.
-/// @return Number of bytes that could not be written to pipe.
-#define pipe_write_fmt( pipe, format, ... )\
-    internal_pipe_write_fmt( pipe, sizeof(format) - 1, format, ##__VA_ARGS__ )
-/// @brief Pipe streaming function.
-/// @param[in] struct_PipeWrite Pointer to #PipeWrite.
-/// @param     count            Number of bytes to stream to pipe.
-/// @param[in] buf              Pointer to start of buffer to write to pipe.
-/// @return Number of bytes that couldn't be streamed to pipe.
-attr_core_api
-usize pipe_stream_write(
-    void* struct_PipeWrite, usize count, const void* buf );
+void pipe_close( FD* pipe );
+
+// NOTE(alicia): implementation -----------------------------------------------
+
+#include "core/print.h"
 
 attr_always_inline attr_header
 struct _StringPOD file_type_to_string( FileType ft ) {
@@ -529,5 +451,9 @@ struct _StringPOD file_type_to_string( FileType ft ) {
     }
     unreachable();
 }
+
+#if !defined(CORE_CPP_FS_HPP)
+    #include "core/cpp/fs.hpp"
+#endif
 
 #endif /* header guard */

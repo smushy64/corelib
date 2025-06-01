@@ -10,8 +10,6 @@
 
 struct _StringPOD;
 struct FD;
-struct PipeRead;
-struct PipeWrite;
 enum   FileOpenFlags;
 enum   FileSeek;
 enum   FileType;
@@ -48,13 +46,11 @@ b32 platform_directory_walk(
 struct _StringPOD platform_directory_current_query(void);
 b32 platform_directory_current_set( struct _StringPOD path );
 
-struct PipeRead*  platform_pipe_stdin(void);
-struct PipeWrite* platform_pipe_stdout(void);
-struct PipeWrite* platform_pipe_stderr(void);
+struct FD* platform_pipe_stdin(void);
+struct FD* platform_pipe_stdout(void);
+struct FD* platform_pipe_stderr(void);
 
-b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write );
-void platform_pipe_close( const void* pipe );
-b32 platform_pipe_write( struct PipeWrite* pipe, usize bytes, const void* buf, usize* out_write );
-b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read );
+b32 platform_pipe_open( struct FD* out_read, struct FD* out_write );
+void platform_pipe_close( const struct FD* pipe );
 
 #endif /* header guard */

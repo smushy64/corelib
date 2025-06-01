@@ -490,12 +490,12 @@ b32 environment_set( struct _StringPOD key, struct _StringPOD value ) {
 }
 attr_core_api
 int _internal_process_exec(
-    Command                command,
-    const _PathPOD*        opt_working_directory,
-    const EnvironmentBuf*  opt_environment,
-    const PipeRead*        opt_stdin,
-    const PipeWrite*       opt_stdout,
-    const PipeWrite*       opt_stderr,
+    Command                  command,
+    const struct _StringPOD* opt_working_directory,
+    const EnvironmentBuf*    opt_environment,
+    const FD*                opt_stdin,
+    const FD*                opt_stdout,
+    const FD*                opt_stderr,
     ...
 ) {
     Process pid;
@@ -509,13 +509,13 @@ int _internal_process_exec(
 }
 attr_core_api
 b32 _internal_process_exec_async(
-    Command                command,
-    Process*               out_pid,
-    const _PathPOD*        opt_working_directory,
-    const EnvironmentBuf*  opt_environment,
-    const PipeRead*        opt_stdin,
-    const PipeWrite*       opt_stdout,
-    const PipeWrite*       opt_stderr,
+    Command                  command,
+    Process*                 out_pid,
+    const struct _StringPOD* opt_working_directory,
+    const EnvironmentBuf*    opt_environment,
+    const FD*                opt_stdin,
+    const FD*                opt_stdout,
+    const FD*                opt_stderr,
     ...
 ) {
     return platform_process_exec_async(

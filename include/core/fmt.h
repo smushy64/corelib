@@ -13,6 +13,7 @@
 
 // forward declaration
 struct TimeSplit;
+struct _StringPOD;
 attr_core_api
 usize stream_fmt_time(
     StreamBytesFN* stream, void* target, const struct TimeSplit* ts,
@@ -311,33 +312,29 @@ usize stream_fmt_args(
 /// @brief Stream formatted string.
 /// @param[in] stream     Pointer to streaming function.
 /// @param[in] target     Pointer to streaming function parameters.
-/// @param     format_len Length of format string.
 /// @param[in] format     Pointer to start of format string.
 /// @param     va         Variadic format arguments.
 /// @return Number of characters that could not be streamed to target.
 attr_core_api
 usize stream_fmt_va(
-    StreamBytesFN* stream, void* target,
-    usize format_len, const char* format, va_list va );
+    StreamBytesFN* stream, void* target, struct _StringPOD format, va_list va );
 /// @brief Stream formatted string.
 /// @param[in] stream     Pointer to streaming function.
 /// @param[in] target     Pointer to streaming function parameters.
-/// @param     format_len Length of format string.
 /// @param[in] format     Pointer to start of format string.
 /// @param     ...        Format arguments.
 /// @return Number of characters that could not be streamed to target.
 attr_core_api
 usize stream_fmt(
-    StreamBytesFN* stream, void* target,
-    usize format_len, const char* format, ... );
+    StreamBytesFN* stream, void* target, struct _StringPOD format, ... );
 /// @brief Stream formatted string.
 /// @param[in] stream (StreamBytesFN*) Pointer to streaming function.
 /// @param[in] target (void*)          Pointer to streaming function parameters.
 /// @param[in] format (string literal) Format string literal.
 /// @param     va     (va_list)        Variadic format arguments.
 /// @return (usize) Number of characters that could not be streamed to target.
-#define stream_fmt_text_va( stream, target, format, va )\
-    stream_fmt_va( stream, target, sizeof(format) - 1, format, va )
+#define stream_fmt_va_text( stream, target, format, va )\
+    stream_fmt_va( stream, target, string_text(format), va )
 /// @brief Stream formatted string.
 /// @param[in] stream (StreamBytesFN*) Pointer to streaming function.
 /// @param[in] target (void*)          Pointer to streaming function parameters.
@@ -345,6 +342,10 @@ usize stream_fmt(
 /// @param     ...    (args)           Format arguments.
 /// @return (usize) Number of characters that could not be streamed to target.
 #define stream_fmt_text( stream, target, format, ... )\
-    stream_fmt( stream, target, sizeof(format) - 1, format, ##__VA_ARGS__ )
+    stream_fmt( stream, target, string_text(format), ##__VA_ARGS__ )
+
+#if !defined(CORE_CPP_FMT_HPP)
+    #include "core/cpp/fmt.hpp"
+#endif
 
 #endif /* header guard */

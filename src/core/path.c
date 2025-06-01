@@ -10,28 +10,28 @@
 #include "core/internal/platform/path.h"
 
 attr_core_api
-usize path_chunk_count( _PathPOD path ) {
+usize path_chunk_count( struct _StringPOD path ) {
     return platform_path_chunk_count( path );
 }
 attr_core_api
-_PathPOD path_clip_chunk( _PathPOD path ) {
+struct _StringPOD path_clip_chunk( struct _StringPOD path ) {
     return platform_path_clip_chunk( path );
 }
 attr_core_api
-_PathPOD path_clip_chunk_last( _PathPOD path ) {
+struct _StringPOD path_clip_chunk_last( struct _StringPOD path ) {
     return platform_path_clip_chunk_last( path );
 }
 attr_core_api
-_PathPOD path_advance_chunk( _PathPOD path ) {
+struct _StringPOD path_advance_chunk( struct _StringPOD path ) {
     return platform_path_advance_chunk( path );
 }
 attr_core_api
-_PathPOD path_pop_chunk( _PathPOD path ) {
+struct _StringPOD path_pop_chunk( struct _StringPOD path ) {
     return platform_path_pop_chunk( path );
 }
 attr_core_api
 usize path_split_chunks(
-    _PathPOD path, usize chunk_buffer_cap, _PathPOD* chunk_buffer
+    struct _StringPOD path, usize chunk_buffer_cap, struct _StringPOD* chunk_buffer
 ) {
     usize count = path_chunk_count( path );
     usize max   = count;
@@ -39,9 +39,9 @@ usize path_split_chunks(
         max = chunk_buffer_cap;
     }
 
-    _PathPOD remaining = path;
+    struct _StringPOD remaining = path;
     for( usize i = 0; i < max; ++i ) {
-        _PathPOD chunk  = path_clip_chunk( remaining );
+        struct _StringPOD chunk  = path_clip_chunk( remaining );
         chunk_buffer[i] = chunk;
 
         remaining = path_advance_chunk( remaining );
@@ -50,24 +50,24 @@ usize path_split_chunks(
     return count - max;
 }
 attr_core_api
-b32 path_is_absolute( _PathPOD path ) {
+b32 path_is_absolute( struct _StringPOD path ) {
     return platform_path_is_absolute( path );
 }
 attr_core_api
-b32 path_parent( _PathPOD path, _PathPOD* out_parent ) {
+b32 path_parent( struct _StringPOD path, struct _StringPOD* out_parent ) {
     return platform_path_parent( path, out_parent );
 }
 attr_core_api
-b32 path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
+b32 path_file_name( struct _StringPOD path, struct _StringPOD* out_file_name ) {
     return platform_path_file_name( path, out_file_name );
 }
 attr_core_api
-b32 path_file_stem( _PathPOD path, _PathPOD* out_file_stem ) {
+b32 path_file_stem( struct _StringPOD path, struct _StringPOD* out_file_stem ) {
     if( !path_file_name( path, out_file_stem ) ) {
         return false;
     }
 
-    _PathPOD ext;
+    struct _StringPOD ext;
     if( path_extension( *out_file_stem, &ext ) ) {
         *out_file_stem = string_trim( *out_file_stem, ext.len );
     }
@@ -75,7 +75,7 @@ b32 path_file_stem( _PathPOD path, _PathPOD* out_file_stem ) {
     return true;
 }
 attr_core_api
-b32 path_extension( _PathPOD path, _PathPOD* out_extension ) {
+b32 path_extension( struct _StringPOD path, struct _StringPOD* out_extension ) {
     usize pos = 0;
     if( !string_find_rev( path, '.', &pos ) ) {
         return false;
@@ -86,13 +86,13 @@ b32 path_extension( _PathPOD path, _PathPOD* out_extension ) {
     return true;
 }
 attr_core_api
-usize path_stream_set_posix_separators( StreamBytesFN* stream, void* target, _PathPOD path ) {
+usize path_stream_set_posix_separators( StreamBytesFN* stream, void* target, struct _StringPOD path ) {
     usize    result    = 0;
-    _PathPOD remaining = path;
+    struct _StringPOD remaining = path;
 
     char separator = '/';
-    while( !path_is_empty( remaining ) ) {
-        _PathPOD chunk = remaining;
+    while( !string_is_empty( remaining ) ) {
+        struct _StringPOD chunk = remaining;
         string_find( remaining, '\\', &chunk.len );
 
         result += stream( target, chunk.len, chunk.cbuf );
@@ -103,13 +103,13 @@ usize path_stream_set_posix_separators( StreamBytesFN* stream, void* target, _Pa
     return result;
 }
 attr_core_api
-usize path_stream_set_windows_separators( StreamBytesFN* stream, void* target, _PathPOD path ) {
+usize path_stream_set_windows_separators( StreamBytesFN* stream, void* target, struct _StringPOD path ) {
     usize    result    = 0;
-    _PathPOD remaining = path;
+    struct _StringPOD remaining = path;
 
     char separator = '\\';
-    while( !path_is_empty( remaining ) ) {
-        _PathPOD chunk = remaining;
+    while( !string_is_empty( remaining ) ) {
+        struct _StringPOD chunk = remaining;
         string_find( remaining, '/', &chunk.len );
 
         result += stream( target, chunk.len, chunk.cbuf );
@@ -120,14 +120,14 @@ usize path_stream_set_windows_separators( StreamBytesFN* stream, void* target, _
     return result;
 }
 attr_core_api
-usize path_stream_set_native_separators( StreamBytesFN* stream, void* target, _PathPOD path ) {
+usize path_stream_set_native_separators( StreamBytesFN* stream, void* target, struct _StringPOD path ) {
     return platform_path_stream_set_native_separators( stream, target, path );
 }
 attr_core_api
-void path_set_posix_separators( _PathPOD path ) {
-    _PathPOD remaining = path;
-    while( !path_is_empty( remaining ) ) {
-        _PathPOD chunk = remaining;
+void path_set_posix_separators( struct _StringPOD path ) {
+    struct _StringPOD remaining = path;
+    while( !string_is_empty( remaining ) ) {
+        struct _StringPOD chunk = remaining;
         if( !string_find( remaining, '\\', &chunk.len ) ) {
             break;
         }
@@ -138,10 +138,10 @@ void path_set_posix_separators( _PathPOD path ) {
     }
 }
 attr_core_api
-void path_set_windows_separators( _PathPOD path ) {
-    _PathPOD remaining = path;
-    while( !path_is_empty( remaining ) ) {
-        _PathPOD chunk = remaining;
+void path_set_windows_separators( struct _StringPOD path ) {
+    struct _StringPOD remaining = path;
+    while( !string_is_empty( remaining ) ) {
+        struct _StringPOD chunk = remaining;
         if( !string_find( remaining, '/', &chunk.len ) ) {
             break;
         }
@@ -152,23 +152,23 @@ void path_set_windows_separators( _PathPOD path ) {
     }
 }
 attr_core_api
-void path_set_native_separators( _PathPOD path ) {
+void path_set_native_separators( struct _StringPOD path ) {
     platform_path_set_native_separators( path );
 }
 attr_core_api
-usize path_stream_canonicalize( StreamBytesFN* stream, void* target, _PathPOD path ) {
+usize path_stream_canonicalize( StreamBytesFN* stream, void* target, struct _StringPOD path ) {
     return platform_path_stream_canonicalize( stream, target, path );
 }
 attr_core_api
-b32 path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
+b32 path_buf_try_push_chunk( struct _StringBufPOD* buf, struct _StringPOD chunk ) {
     return platform_path_buf_try_push_chunk( buf, chunk );
 }
 attr_core_api
 b32 path_buf_push_chunk(
-    struct AllocatorInterface* allocator, _PathBufPOD* buf, _PathPOD chunk
+    struct AllocatorInterface* allocator, struct _StringBufPOD* buf, struct _StringPOD chunk
 ) {
     if( !path_buf_try_push_chunk( buf, chunk ) ) {
-        if( !path_buf_grow( allocator, buf, chunk.len + 12 ) ) {
+        if( !string_buf_grow( allocator, buf, chunk.len + 12 ) ) {
             return false;
         }
         path_buf_try_push_chunk( buf, chunk );
@@ -176,8 +176,8 @@ b32 path_buf_push_chunk(
     return true;
 }
 attr_core_api
-b32 path_buf_pop_chunk( _PathBufPOD* buf ) {
-    _PathPOD path = path_pop_chunk( buf->slice );
+b32 path_buf_pop_chunk( struct _StringBufPOD* buf ) {
+    struct _StringPOD path = path_pop_chunk( buf->slice );
     if( path.len == buf->len ) {
         return false;
     }
@@ -185,15 +185,15 @@ b32 path_buf_pop_chunk( _PathBufPOD* buf ) {
     return true;
 }
 attr_core_api
-b32 path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension ) {
+b32 path_buf_try_set_extension( struct _StringBufPOD* buf, struct _StringPOD extension ) {
     return platform_path_buf_try_set_extension( buf, extension );
 }
 attr_core_api
 b32 path_buf_set_extension(
-    struct AllocatorInterface* allocator, _PathBufPOD* buf, _PathPOD extension
+    struct AllocatorInterface* allocator, struct _StringBufPOD* buf, struct _StringPOD extension
 ) {
     if( !path_buf_try_set_extension( buf, extension ) ) {
-        if( !path_buf_grow( allocator, buf, extension.len + 12 ) ) {
+        if( !string_buf_grow( allocator, buf, extension.len + 12 ) ) {
             return false;
         }
         path_buf_try_set_extension( buf, extension );

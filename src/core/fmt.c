@@ -10,6 +10,7 @@
 #include "core/memory.h"
 #include "core/string.h"
 #include "core/path.h"
+#include "core/print.h" // IWYU pragma: keep
 
 #include "core/time.h"
 #include "core/macros.h"
@@ -64,8 +65,8 @@ union FmtValue {
     i64          i64;
     isize        isize;
     usize        usize;
-    String       s;
-    Path         p;
+    struct _StringPOD       s;
+    struct _StringPOD       p;
     const char*  cc;
     vec2         v2;
     vec3         v3;
@@ -134,7 +135,7 @@ usize stream_fmt_bool(
     }
 
     for( u32 i = 0; i < count; ++i ) {
-        String message = args->binary ?
+        struct _StringPOD message = args->binary ?
             ( booleans[i] ? string_text( "1" ) : string_text( "0" ) ) :
             ( booleans[i] ? string_text( "true" ) : string_text( "false" ) );
 
@@ -214,7 +215,7 @@ usize stream_fmt_char(
 attr_internal
 usize internal_stream_fmt_path(
     StreamBytesFN* stream, void* target,
-    Path path, struct StringFormatArguments* args
+    struct _StringPOD path, struct StringFormatArguments* args
 ) {
     usize result = 0;
     if( args->flags & FMT_STRING_PATH_CANONICALIZE ) {
@@ -227,7 +228,7 @@ usize internal_stream_fmt_path(
 attr_internal
 usize internal_stream_fmt_string(
     StreamBytesFN* stream, void* target,
-    String string, struct StringFormatArguments* args
+    struct _StringPOD string, struct StringFormatArguments* args
 ) {
     FormatStringFlags casing = (args->flags & FMT_STRING_CASING_MASK) >> 4;
     usize result = 0;
@@ -269,7 +270,7 @@ usize stream_fmt_string(
 
     if( args->flags & FMT_STRING_IS_PATH ) {
         res += internal_stream_fmt_path(
-            stream, target, path_new( string_len, string ), args );
+            stream, target, string_new( string_len, string ), args );
     } else {
         res += internal_stream_fmt_string(
             stream, target, string_new( string_len, string ), args );
@@ -299,10 +300,10 @@ f64 internal_float_index(
 }
 attr_internal 
 void internal_float_fmt(
-    f64 value, b32 separate, int precision, StringBuf* buf );
+    f64 value, b32 separate, int precision, struct _StringBufPOD* buf );
 attr_internal
 void internal_memory_fmt(
-    f64 value, int precision, b32 kibi, StringBuf* buf );
+    f64 value, int precision, b32 kibi, struct _StringBufPOD* buf );
 attr_core_api
 usize stream_fmt_float(
     StreamBytesFN* stream, void* target,
@@ -321,7 +322,7 @@ usize stream_fmt_float(
     char _buf[NUMBER_FORMAT_BUFFER_SIZE];
     memory_zero( _buf, sizeof(_buf) );
 
-    StringBuf buf = string_buf_new( sizeof(_buf), _buf );
+    struct _StringBufPOD buf = string_buf_new( sizeof(_buf), _buf );
 
     int precision = args->precision;
     if( precision < 0 ) {
@@ -379,7 +380,7 @@ usize stream_fmt_float(
             internal_float_fmt( value, seperate, precision, &buf );
         }
 
-        String output_string = string_new( buf.len, buf.cbuf );
+        struct _StringPOD output_string = string_new( buf.len, buf.cbuf );
 
         if( buf.buf[0] == '-' && padding_c == '0' ) {
             output_string = string_advance( output_string );
@@ -453,7 +454,7 @@ u64 internal_int_index(
 attr_internal
 void internal_int_fmt(
     u64 value, b32 is_signed, int bitdepth, int base,
-    enum FmtIntWidth width, StringBuf* buf );
+    enum FmtIntWidth width, struct _StringBufPOD* buf );
 attr_core_api
 usize stream_fmt_int(
     StreamBytesFN* stream, void* target,
@@ -472,7 +473,7 @@ usize stream_fmt_int(
     char _buf[NUMBER_FORMAT_BUFFER_SIZE];
     memory_zero( _buf, sizeof(_buf) );
 
-    StringBuf buf = string_buf_new( sizeof(_buf), _buf );
+    struct _StringBufPOD buf = string_buf_new( sizeof(_buf), _buf );
 
     int bitdepth = 8;
     switch( args->flags & FMT_INT_BITDEPTH_MASK ) {
@@ -630,33 +631,31 @@ usize stream_fmt_args(
 #if defined(CORE_PLATFORM_WINDOWS)
 attr_internal
 b32 internal_fmt_parse_args(
-    String text, FormatArguments* args,
+    struct _StringPOD text, FormatArguments* args,
     union FmtValue* out_val, va_list* in_va );
 #else
 attr_internal
 b32 internal_fmt_parse_args(
-    String text, FormatArguments* args,
+    struct _StringPOD text, FormatArguments* args,
     union FmtValue* out_val, va_list va );
 #endif
 
 attr_core_api
 usize stream_fmt(
     StreamBytesFN* stream, void* target,
-    usize format_len, const char* format, ...
+    struct _StringPOD format, ...
 ) {
     va_list va;
     va_start( va, format );
-    usize res = stream_fmt_va( stream, target, format_len, format, va );
+    usize res = stream_fmt_va( stream, target, format, va );
     va_end( va );
     return res;
 }
 attr_core_api
 usize stream_fmt_va(
     StreamBytesFN* stream, void* target,
-    usize format_len, const char* format_cc, va_list va
+    struct _StringPOD format, va_list va
 ) {
-    String format = string_new( format_len, format_cc );
-
     usize res = 0;
     FormatArguments args;
     union FmtValue  val;
@@ -665,7 +664,7 @@ usize stream_fmt_va(
     while( !string_is_empty( format ) ) {
         usize open = 0;
         if( string_find( format, '{', &open ) ) {
-            String args_text = string_advance_by( format, open );
+            struct _StringPOD args_text = string_advance_by( format, open );
 
             res   += stream( target, args_text.cbuf - format.cbuf, format.cbuf );
             format = string_advance_by( format, args_text.cbuf - format.cbuf );
@@ -735,7 +734,7 @@ u32 internal_int_max_digits( int bitdepth, int base ) {
 }
 attr_internal
 void internal_int_0(
-    enum FmtIntWidth width, int bitdepth, int base, StringBuf* buf
+    enum FmtIntWidth width, int bitdepth, int base, struct _StringBufPOD* buf
 ) {
     switch( base ) {
         case FMT_INT_BINARY: {
@@ -807,7 +806,7 @@ void internal_int_0(
 attr_internal
 void internal_int_fmt(
     u64 value, b32 is_signed, int bitdepth, int base,
-    enum FmtIntWidth width, StringBuf* in_buf
+    enum FmtIntWidth width, struct _StringBufPOD* in_buf
 ) {
     if( !value ) {
         internal_int_0( width, bitdepth, base, in_buf );
@@ -893,7 +892,7 @@ internal_int_fmt_end:
 }
 attr_internal
 void internal_float_fmt(
-    f64 value, b32 seperate, int precision, StringBuf* buf 
+    f64 value, b32 seperate, int precision, struct _StringBufPOD* buf 
 ) {
     // TODO(alicia): Grisu3
     if( f64_isnan( value ) ) {
@@ -944,7 +943,7 @@ void internal_float_fmt(
 }
 attr_internal
 void internal_memory_fmt(
-    f64 value, int precision, b32 kibi, StringBuf* buf
+    f64 value, int precision, b32 kibi, struct _StringBufPOD* buf
 ) {
     #define BYTES 0
     #define KB    1
@@ -973,7 +972,7 @@ void internal_memory_fmt(
     }
 
     internal_float_fmt( f, true, precision, buf );
-    String storage_text = string_text( " B" );
+    struct _StringPOD storage_text = string_text( " B" );
     switch( storage ) {
         case KB: {
             storage_text = kibi ? string_text( " KiB" ) : string_text( " KB" );
@@ -1005,7 +1004,7 @@ void internal_memory_fmt(
 
 attr_internal
 b32 internal_fmt_parse_format_type(
-    String spec, FormatArguments* out_args
+    struct _StringPOD spec, FormatArguments* out_args
 ) {
     if( string_is_empty( spec ) ) {
         return false;
@@ -1095,7 +1094,7 @@ b32 internal_fmt_parse_format_type(
                     out_args->type           = FT_INT;
                 } return true;
                 case 3: {
-                    String bitdepth = string_advance( spec );
+                    struct _StringPOD bitdepth = string_advance( spec );
                     if( string_cmp( bitdepth, string_text( "32" ) ) ) {
                         out_args->integer.flags |= FMT_INT_BITDEPTH_32;
                         out_args->type           = FT_INT;
@@ -1146,12 +1145,12 @@ b32 internal_fmt_parse_format_type(
 #if defined(CORE_PLATFORM_WINDOWS)
 attr_internal
 b32 internal_fmt_parse_args(
-    String text, FormatArguments* args,
+    struct _StringPOD text, FormatArguments* args,
     union FmtValue* out_val, va_list* in_va )
 #else
 attr_internal
 b32 internal_fmt_parse_args(
-    String text, FormatArguments* args,
+    struct _StringPOD text, FormatArguments* args,
     union FmtValue* out_val, va_list va )
 #endif
 {
@@ -1159,8 +1158,8 @@ b32 internal_fmt_parse_args(
     #define skip()\
         goto internal_fmt_parse_args_skip
 
-    String rem  = text;
-    String spec = string_empty(); {
+    struct _StringPOD rem  = text;
+    struct _StringPOD spec = string_empty(); {
         usize  comma = 0;
         if( string_find( rem, ',', &comma ) ) {
             spec     = rem;
@@ -1209,7 +1208,7 @@ b32 internal_fmt_parse_args(
     }
 
     while( args->type != FT_ANY && !string_is_empty( rem ) ) {
-        String arg = rem;
+        struct _StringPOD arg = rem;
         usize comma = 0;
         if( string_find( rem, ',', &comma ) ) {
             arg.len = comma;
@@ -1227,7 +1226,7 @@ b32 internal_fmt_parse_args(
                     if( !(args->type == FT_STRING && spec.cbuf[0] == 's') ) {
                         pointer = true;
                     }
-                    String arg_num = string_advance( arg );
+                    struct _StringPOD arg_num = string_advance( arg );
 
                     if( arg_num.len ) {
                         if( arg_num.cbuf[0] == '_' && arg_num.len == 1 ) {
@@ -1305,7 +1304,7 @@ b32 internal_fmt_parse_args(
                     arg.cbuf[0] == '.' ||
                     ascii_is_numeric( arg.cbuf[0] )
                 ) {
-                    String prec = string_empty();
+                    struct _StringPOD prec = string_empty();
                     if( arg.cbuf[0] != '.' ) {
                         i64 padding = 0;
                         if( !string_parse_int( arg, &padding ) ) {
@@ -1444,7 +1443,7 @@ b32 internal_fmt_parse_args(
                         pointer = true;
                         skip();
                     } else {
-                        String inline_fmt = arg;
+                        struct _StringPOD inline_fmt = arg;
                         if( inline_fmt.len > 2 ) {
                             if(
                                 inline_fmt.cbuf[0] == '\'' &&
@@ -1505,7 +1504,7 @@ b32 internal_fmt_parse_args(
         switch( args->type ) {
             case FT_CHAR: {
                 if( arg.cbuf[0] == 'r' ) {
-                    String arg_num = string_advance( arg );
+                    struct _StringPOD arg_num = string_advance( arg );
                     b32 parse_int  = false;
                     switch( arg_num.len ) {
                         case 0: {
@@ -1584,7 +1583,7 @@ internal_fmt_parse_args_skip:
                 out_val->c  = va_arg( va, u32 );
             } break;
             case FT_STRING: {
-                String str = va_arg( va, String );
+                struct _StringPOD str = va_arg( va, struct _StringPOD );
 
                 if( args->count <= 0 || args->count > str.len ) {
                     args->count = str.len;

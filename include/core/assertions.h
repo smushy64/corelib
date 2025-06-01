@@ -7,14 +7,13 @@
  * @date   June 10, 2024
 */
 #include "core/defines.h" // IWYU pragma: keep
-#include "core/print.h"   // IWYU pragma: export
 
 #define ___helper(x) #x
 #define ___helper2(x) ___helper(x)
 #define ___helper3( prefix, ...)\
-    print_err( ANSI_COLOR_MAGENTA __FILE__ ",{cc}:" ___helper2(__LINE__) ": " prefix, __FUNCTION__ );\
-    print_err( "" __VA_ARGS__ );\
-    println_err( ANSI_COLOR_RESET )
+    eprint( ANSI_COLOR_MAGENTA __FILE__ ",{cc}:" ___helper2(__LINE__) ": " prefix, __FUNCTION__ );\
+    eprint( "" __VA_ARGS__ );\
+    eprintln( ANSI_COLOR_RESET )
 
 // NOTE(alicia): C++ includes static_assert as first class macro.
 #if !defined(CORE_CPLUSPLUS)

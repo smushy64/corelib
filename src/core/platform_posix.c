@@ -56,9 +56,9 @@
 #include <string.h>
 #include <ftw.h>
 
-attr_global PipeRead  global_posix_stdin_fd  = (PipeRead){.fd=(FD){0}};
-attr_global PipeWrite global_posix_stdout_fd = (PipeWrite){.fd=(FD){1}};
-attr_global PipeWrite global_posix_stderr_fd = (PipeWrite){.fd=(FD){2}};
+attr_global FD global_posix_stdin_fd  = (FD){.opaque=0};
+attr_global FD global_posix_stdout_fd = (FD){.opaque=1};
+attr_global FD global_posix_stderr_fd = (FD){.opaque=2};
 
 attr_global atomic32 global_running_thread_id = 1;
 _Thread_local u32 tls_global_thread_id = 0;
@@ -909,17 +909,17 @@ b32 platform_directory_current_set( struct _StringPOD path ) {
     return true;
 }
 
-struct PipeRead*  platform_pipe_stdin(void) {
+struct FD*  platform_pipe_stdin(void) {
     return &global_posix_stdin_fd;
 }
-struct PipeWrite* platform_pipe_stdout(void) {
+struct FD* platform_pipe_stdout(void) {
     return &global_posix_stdout_fd;
 }
-struct PipeWrite* platform_pipe_stderr(void) {
+struct FD* platform_pipe_stderr(void) {
     return &global_posix_stderr_fd;
 }
 
-b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write ) {
+b32 platform_pipe_open( FD* out_read, FD* out_write ) {
     int fd[2];
     if( pipe( fd ) ) {
         int errnum = errno;
@@ -927,22 +927,13 @@ b32 platform_pipe_open( struct PipeRead* out_read, struct PipeWrite* out_write )
             "POSIX: pipe_open(): failed to open pipes! reason: {cc}", strerror(errnum) );
         return false;
     }
-    out_read->fd.opaque  = fd[0];
-    out_write->fd.opaque = fd[1];
+    out_read->opaque  = fd[0];
+    out_write->opaque = fd[1];
     return true;
 }
-void platform_pipe_close( const void* pipe ) {
-    PipeRead* read = (PipeRead*)pipe;
-    close( read->fd.opaque );
-    memory_zero( read, sizeof(*read) );
-}
-b32 platform_pipe_write(
-    struct PipeWrite* pipe, usize bytes, const void* buf, usize* out_write
-) {
-    return platform_file_write( &pipe->fd, bytes, buf, out_write );
-}
-b32 platform_pipe_read( struct PipeRead* pipe, usize bytes, void* buf, usize* out_read ) {
-    return platform_file_read( &pipe->fd, bytes, buf, out_read );
+void platform_pipe_close( const FD* pipe ) {
+    close( pipe->opaque );
+    memory_zero( (FD*)pipe, sizeof(*pipe) );
 }
 
 #if defined(CORE_ARCH_X86)
@@ -1049,7 +1040,7 @@ void platform_library_close( void* lib ) {
     dlclose( lib );
 }
 
-void posix_canonicalize( _PathBufPOD* buf, _PathPOD path ) {
+void posix_canonicalize( struct _StringBufPOD* buf, struct _StringPOD path ) {
     enum {
         POSIX_PATH_REL,
         POSIX_PATH_HOME,
@@ -1144,13 +1135,13 @@ void posix_canonicalize( _PathBufPOD* buf, _PathPOD path ) {
             }
         }
 
-        _PathPOD chunk = path_new( chunk_str.len, chunk_str.cbuf );
+        struct _StringPOD chunk = string_new( chunk_str.len, chunk_str.cbuf );
         path_buf_try_push_chunk( buf, chunk );
         rem = string_advance_by( rem, chunk.len + 1 );
     }
 }
 
-usize platform_path_chunk_count( _PathPOD path ) {
+usize platform_path_chunk_count( struct _StringPOD path ) {
     struct _StringPOD remaining = path;
     if( !remaining.len ) {
         return 0;
@@ -1174,11 +1165,11 @@ usize platform_path_chunk_count( _PathPOD path ) {
     return result;
 }
 
-_PathPOD platform_path_clip_chunk( _PathPOD path ) {
+struct _StringPOD platform_path_clip_chunk( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
-    _PathPOD result = path;
+    struct _StringPOD result = path;
     if( path.buf[0] == '/' ) {
         if( path.len == 1 ) {
             return result;
@@ -1191,12 +1182,12 @@ _PathPOD platform_path_clip_chunk( _PathPOD path ) {
     return result;
 }
 
-_PathPOD platform_path_clip_chunk_last( _PathPOD path ) {
+struct _StringPOD platform_path_clip_chunk_last( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
 
-    _PathPOD result = path;
+    struct _StringPOD result = path;
     if( string_last_unchecked( result ) == '/' ) {
         result = string_trim( result, 1 );
 
@@ -1212,21 +1203,21 @@ _PathPOD platform_path_clip_chunk_last( _PathPOD path ) {
     return result;
 }
 
-_PathPOD platform_path_advance_chunk( _PathPOD path ) {
+struct _StringPOD platform_path_advance_chunk( struct _StringPOD path ) {
     if( !path.len ) {
         return path;
     }
 
-    _PathPOD first_chunk = path_clip_chunk( path );
+    struct _StringPOD first_chunk = path_clip_chunk( path );
     if( first_chunk.len ) {
         return string_advance_by( path, first_chunk.len + 1 );
     } else {
-        return path_empty();
+        return string_empty();
     }
 }
 
-_PathPOD platform_path_pop_chunk( _PathPOD path ) {
-    _PathPOD last = path_clip_chunk_last( path );
+struct _StringPOD platform_path_pop_chunk( struct _StringPOD path ) {
+    struct _StringPOD last = path_clip_chunk_last( path );
     if( last.len ) {
         return string_trim( path, last.len + 1 );
     } else {
@@ -1234,12 +1225,12 @@ _PathPOD platform_path_pop_chunk( _PathPOD path ) {
     }
 }
 
-b32 platform_path_is_absolute( _PathPOD path ) {
+b32 platform_path_is_absolute( struct _StringPOD path ) {
     return path.buf[0] == '/';
 }
 
-b32 platform_path_parent( _PathPOD path, _PathPOD* out_parent ) {
-    _PathPOD parent = path_pop_chunk( path );
+b32 platform_path_parent( struct _StringPOD path, struct _StringPOD* out_parent ) {
+    struct _StringPOD parent = path_pop_chunk( path );
     if( !parent.len ) {
         return false;
     }
@@ -1247,7 +1238,7 @@ b32 platform_path_parent( _PathPOD path, _PathPOD* out_parent ) {
     return true;
 }
 
-b32 platform_path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
+b32 platform_path_file_name( struct _StringPOD path, struct _StringPOD* out_file_name ) {
     if( !path.len ) {
         return false;
     }
@@ -1261,24 +1252,24 @@ b32 platform_path_file_name( _PathPOD path, _PathPOD* out_file_name ) {
 }
 
 b32 platform_path_stream_set_native_separators(
-    StreamBytesFN* stream, void* target, _PathPOD path
+    StreamBytesFN* stream, void* target, struct _StringPOD path
 ) {
     return path_stream_set_posix_separators( stream, target, path );
 }
 
-void platform_path_set_native_separators( _PathPOD path ) {
+void platform_path_set_native_separators( struct _StringPOD path ) {
     path_set_posix_separators( path );
 }
 
 usize platform_path_stream_canonicalize(
-    StreamBytesFN* stream, void* target, _PathPOD path
+    StreamBytesFN* stream, void* target, struct _StringPOD path
 ) {
-    path_buf_from_stack( buffer, CORE_PATH_NAME_LEN );
+    string_buf_from_stack( buffer, CORE_PATH_NAME_LEN );
     posix_canonicalize( &buffer, path );
     return stream( target, buffer.len, buffer.cbuf );
 }
 
-b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
+b32 platform_path_buf_try_push_chunk( struct _StringBufPOD* buf, struct _StringPOD chunk ) {
     if( !chunk.len ) {
         return true;
     }
@@ -1289,12 +1280,12 @@ b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
     }
 
     b32 buf_has_separator = false;
-    if( !path_buf_is_empty( *buf ) ) {
+    if( !string_buf_is_empty( *buf ) ) {
         buf_has_separator = string_last_unchecked( buf->slice ) == '/';
     }
 
     if(
-        path_buf_remaining( *buf ) <
+        string_buf_remaining( *buf ) <
         (chunk.len + !(chunk_has_separator || buf_has_separator))
     ) {
         return false;
@@ -1312,19 +1303,19 @@ b32 platform_path_buf_try_push_chunk( _PathBufPOD* buf, _PathPOD chunk ) {
     return true;
 }
 
-b32 platform_path_buf_try_set_extension( _PathBufPOD* buf, _PathPOD extension ) {
+b32 platform_path_buf_try_set_extension( struct _StringBufPOD* buf, struct _StringPOD extension ) {
     if( !extension.len ) {
         return true;
     }
 
-    _PathPOD exisiting_extension = {};
+    struct _StringPOD exisiting_extension = {};
     if( path_extension( buf->slice, &exisiting_extension ) ) {
         buf->len -= exisiting_extension.len;
     }
 
     b32 has_dot = string_first_unchecked( extension ) == '.';
 
-    if( path_buf_remaining( *buf ) < (extension.len + !has_dot) ) {
+    if( string_buf_remaining( *buf ) < (extension.len + !has_dot) ) {
         return false;
     }
 
@@ -1360,13 +1351,13 @@ b32 platform_environment_set( struct _StringPOD key, struct _StringPOD value ) {
     return true;
 }
 b32 platform_process_exec_async(
-    Command               command,
-    Process*              out_pid,
-    const _PathPOD*       opt_working_directory,
-    const EnvironmentBuf* opt_environment,
-    const PipeRead*       opt_stdin,
-    const PipeWrite*      opt_stdout,
-    const PipeWrite*      opt_stderr
+    Command                  command,
+    Process*                 out_pid,
+    const struct _StringPOD* opt_working_directory,
+    const EnvironmentBuf*    opt_environment,
+    const FD*                opt_stdin,
+    const FD*                opt_stdout,
+    const FD*                opt_stderr
 ) {
     if( !command.len ) {
         core_error( "posix: process_exec: command is empty!" );
@@ -1374,11 +1365,11 @@ b32 platform_process_exec_async(
     }
 
     int _pipe_stdin  =
-        opt_stdin  ? opt_stdin->fd.opaque : STDIN_FILENO;
+        opt_stdin  ? opt_stdin->opaque : STDIN_FILENO;
     int _pipe_stdout =
-        opt_stdout ? opt_stdout->fd.opaque : STDOUT_FILENO;
+        opt_stdout ? opt_stdout->opaque : STDOUT_FILENO;
     int _pipe_stderr =
-        opt_stderr ? opt_stderr->fd.opaque : STDERR_FILENO;
+        opt_stderr ? opt_stderr->opaque : STDERR_FILENO;
 
     pid_t pid = fork();
     if( pid < 0 ) {

@@ -22,6 +22,17 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.3
 -----
 
+- fs: pipes are now just file descriptors
+- assertions: applied name change from print.h
+- print: renamed print_err to eprint
+- system:cpp bitwise operators for CPUFeatureFlags
+- process:cpp  overloads for using _StringCPP directly
+- fmt:cpp: overloads for using _StringCPP directly
+- library:cpp: overloads for using _StringCPP directly
+- fs:cpp: overloads for using _StringCPP directly
+- fs: removed internal write formatted functions
+- string: S() macro shorthand for string_text()
+- path: removed Path and PathBuf in favor of just using String and StringBuf
 - string: use .ptr string field instead of ._void
 - process: use .ptr string field instead of ._void
 - platform:posix/win32: use new string_buf_fmt functions

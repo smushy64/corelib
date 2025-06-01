@@ -38,4 +38,8 @@ void library_close( LibraryHandle* lib );
 attr_core_api
 void* library_load( LibraryHandle* lib, struct _StringPOD function );
 
+#if !defined(CORE_CPP_LIBRARY_HPP)
+    #include "core/cpp/library.hpp"
+#endif
+
 #endif /* header guard */

@@ -36,7 +36,7 @@ b32 internal_file_copy( FD* dst, FD* src ) {
 }
 
 attr_core_api
-b32 file_copy_by_path( _PathPOD dst, _PathPOD src, b32 create_dst ) {
+b32 file_copy_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_dst ) {
     FileOpenFlags dst_flags, src_flags;
     src_flags = FOPEN_READ | FOPEN_SHARE_READ;
     dst_flags = FOPEN_WRITE;
@@ -75,47 +75,47 @@ b32 file_copy_by_path( _PathPOD dst, _PathPOD src, b32 create_dst ) {
     return result;
 }
 attr_core_api
-b32 file_move_by_path( _PathPOD dst, _PathPOD src, b32 create_dst ) {
+b32 file_move_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_dst ) {
     if( !file_copy_by_path( dst, src, create_dst ) ) {
         return false;
     }
     return file_remove_by_path( src );
 }
 attr_core_api
-b32 file_remove_by_path( _PathPOD path ) {
-    if( path_is_empty( path ) ) {
+b32 file_remove_by_path( struct _StringPOD path ) {
+    if( string_is_empty( path ) ) {
         core_error( "core/fs:file_remove(): path is empty!" );
         return false;
     }
     return platform_file_remove_by_path( path );
 }
 attr_core_api
-b32 file_query_info_by_path( _PathPOD path, FileInfo* out_info ) {
-    if( path_is_empty( path ) ) {
+b32 file_query_info_by_path( struct _StringPOD path, FileInfo* out_info ) {
+    if( string_is_empty( path ) ) {
         core_error( "core/fs:file_query_info_by_path(): path is empty!" );
         return false;
     }
     return platform_file_query_info_by_path( path, out_info );
 }
 attr_core_api
-FileType file_query_type_by_path( _PathPOD path ) {
-    if( path_is_empty( path ) ) {
+FileType file_query_type_by_path( struct _StringPOD path ) {
+    if( string_is_empty( path ) ) {
         core_error( "core/fs:file_query_type_by_path(): path is empty!" );
         return FTYPE_NULL;
     }
     return platform_file_query_type_by_path( path );
 }
 attr_core_api
-TimePosix file_query_time_create_by_path( _PathPOD path ) {
-    if( path_is_empty( path ) ) {
+TimePosix file_query_time_create_by_path( struct _StringPOD path ) {
+    if( string_is_empty( path ) ) {
         core_error( "core/fs:file_query_time_create_by_path(): path is empty!" );
         return 0;
     }
     return platform_file_query_time_create_by_path( path );
 }
 attr_core_api
-TimePosix file_query_time_modify_by_path( _PathPOD path ) {
-    if( path_is_empty( path ) ) {
+TimePosix file_query_time_modify_by_path( struct _StringPOD path ) {
+    if( string_is_empty( path ) ) {
         core_error( "core/fs:file_query_time_modify_by_path(): path is empty!" );
         return 0;
     }
@@ -123,8 +123,8 @@ TimePosix file_query_time_modify_by_path( _PathPOD path ) {
 }
 
 attr_core_api
-b32 file_open( _PathPOD path, FileOpenFlags flags, FD* out_fd ) {
-    if( path_is_empty(path) ) {
+b32 file_open( struct _StringPOD path, FileOpenFlags flags, FD* out_fd ) {
+    if( string_is_empty(path) ) {
         core_error( "core/fs:file_open(): path is empty!" );
         return false;
     }
@@ -212,20 +212,16 @@ b32 file_read(
     return platform_file_read( fd, buf_size, buf, read_ptr );
 }
 attr_core_api
-usize internal_file_write_fmt_va(
-    FD* fd, usize format_len, const char* format, va_list va
+usize file_write_fmt_va(
+    FD* fd, struct _StringPOD format, va_list va
 ) {
-    return stream_fmt_va( file_stream_write, fd, format_len, format, va );
+    return stream_fmt_va( file_stream_write, fd, format, va );
 }
 attr_core_api
-usize internal_file_write_fmt(
-    FD* fd, usize format_len, const char* format, ...
-) {
+usize file_write_fmt( FD* fd, struct _StringPOD format, ... ) {
     va_list va;
     va_start( va, format );
-
-    usize result = stream_fmt_va( file_stream_write, fd, format_len, format, va );
-
+    usize result = file_write_fmt_va( fd, format, va );
     va_end( va );
     return result;
 }
@@ -240,24 +236,24 @@ usize file_stream_write( void* struct_FD, usize count, const void* buf ) {
 }
 
 attr_core_api
-b32 directory_create( _PathPOD path ) {
-    if( path_is_empty(path) ) {
+b32 directory_create( struct _StringPOD path ) {
+    if( string_is_empty(path) ) {
         core_error( "core/fs:directory_create(): path is empty!" );
         return false;
     }
     return platform_directory_create( path );
 }
 attr_core_api
-b32 directory_remove( _PathPOD path, b32 recursive ) {
-    if( path_is_empty(path) ) {
+b32 directory_remove( struct _StringPOD path, b32 recursive ) {
+    if( string_is_empty(path) ) {
         core_error( "core/fs:directory_remove(): path is empty!" );
         return false;
     }
     return platform_directory_remove( path, recursive );
 }
 attr_core_api
-b32 directory_walk( _PathPOD path, DirectoryWalkFN* callback, void* params ) {
-    if( path_is_empty(path) ) {
+b32 directory_walk( struct _StringPOD path, DirectoryWalkFN* callback, void* params ) {
+    if( string_is_empty(path) ) {
         core_error( "core/fs:directory_walk(): path is empty!" );
         return false;
     }
@@ -265,12 +261,12 @@ b32 directory_walk( _PathPOD path, DirectoryWalkFN* callback, void* params ) {
 }
 
 attr_core_api
-_PathPOD directory_current_query(void) {
+struct _StringPOD directory_current_query(void) {
     return platform_directory_current_query();
 }
 attr_core_api
-b32 directory_current_set( _PathPOD path ) {
-    if( path_is_empty(path) ) {
+b32 directory_current_set( struct _StringPOD path ) {
+    if( string_is_empty(path) ) {
         core_error( "core/fs:directory_current_set(): path is empty!" );
         return false;
     }
@@ -278,75 +274,24 @@ b32 directory_current_set( _PathPOD path ) {
 }
 
 attr_core_api
-PipeRead* pipe_stdin(void) {
+FD* pipe_stdin(void) {
     return platform_pipe_stdin();
 }
 attr_core_api
-PipeWrite* pipe_stdout(void) {
+FD* pipe_stdout(void) {
     return platform_pipe_stdout();
 }
 attr_core_api
-PipeWrite* pipe_stderr(void) {
+FD* pipe_stderr(void) {
     return platform_pipe_stderr();
 }
 
 attr_core_api
-b32 pipe_open( PipeRead* out_read, PipeWrite* out_write ) {
+b32 pipe_open( FD* out_read, FD* out_write ) {
     return platform_pipe_open( out_read, out_write );
 }
 attr_core_api
-void pipe_close( const void* pipe ) {
+void pipe_close( FD* pipe ) {
     platform_pipe_close( pipe );
-}
-attr_core_api
-b32 pipe_write(
-    PipeWrite* pipe, usize bytes, const void* buf, usize* opt_out_write
-) {
-    usize write;
-    usize* write_ptr = opt_out_write;
-    if( !write_ptr ) {
-        write_ptr = &write;
-    }
-    return platform_pipe_write( pipe, bytes, buf, write_ptr );
-}
-attr_core_api
-b32 pipe_read(
-    PipeRead* pipe, usize bytes, void* buf, usize* opt_out_read
-) {
-    usize read;
-    usize* read_ptr = opt_out_read;
-    if( !read_ptr ) {
-        read_ptr = &read;
-    }
-    return platform_pipe_read( pipe, bytes, buf, read_ptr );
-}
-attr_core_api
-usize internal_pipe_write_fmt_va(
-    PipeWrite* pipe, usize format_len, const char* format, va_list va
-) {
-    return stream_fmt_va( pipe_stream_write, pipe, format_len, format, va );
-}
-attr_core_api
-usize internal_pipe_write_fmt(
-    PipeWrite* pipe, usize format_len, const char* format, ... 
-) {
-    va_list va;
-    va_start( va, format );
-
-    usize result = stream_fmt_va( pipe_stream_write, pipe, format_len, format, va );
-
-    va_end( va );
-    return result;
-}
-attr_core_api
-usize pipe_stream_write(
-    void* struct_PipeWrite, usize count, const void* buf
-) {
-    PipeWrite* fd = (PipeWrite*)struct_PipeWrite;
-    usize written = 0;
-    if( !platform_pipe_write( fd, count, buf, &written ) ) {
-        return count;
-    }
-    return count - written;
 }
 

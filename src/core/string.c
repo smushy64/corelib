@@ -730,7 +730,7 @@ attr_core_api
 usize string_buf_try_fmt_va(
     struct _StringBufPOD* buf, struct _StringPOD format, va_list va
 ) {
-    return stream_fmt_va( string_buf_try_stream, buf, format.len, format.cbuf, va );
+    return stream_fmt_va( string_buf_try_stream, buf, format, va );
 }
 attr_core_api
 bsize string_buf_fmt_va(
@@ -742,6 +742,6 @@ bsize string_buf_fmt_va(
     StringBufStreamTarget target;
     target.buf       = buf;
     target.allocator = allocator;
-    return stream_fmt_va( string_buf_stream, &target, format.len, format.cbuf, va ) != 0;
+    return stream_fmt_va( string_buf_stream, &target, format, va ) != 0;
 }
 
