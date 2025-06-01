@@ -22,6 +22,16 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.3
 -----
 
+- string: use .ptr string field instead of ._void
+- process: use .ptr string field instead of ._void
+- platform:posix/win32: use new string_buf_fmt functions
+- hash: renamed internal macro swap to __swap to avoid naming conflict with math/swap
+- fmt: use .ptr string field instead of ._void
+- string: renamed ._void field to .ptr
+- string: removed internal functions and replaced formatting functions with ones that take in a string
+- string: rewrote C++ API
+- bitwise: added C++ enumerator bitwise operator implementation
+- slice: removed C API -- was completely unused/useless
 - math: rewrote C overloaded API
 - math: rewrote C++ API
 - process: added API for executing sub-processes

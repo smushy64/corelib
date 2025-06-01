@@ -33,12 +33,12 @@ struct _StringPOD {
         /// @brief Pointer to string UTF-8 code units.
         c8*         utf8;
         /// @brief Void pointer to string buffer.
-        void*       _void;
+        void*       ptr;
     };
 };
 /// @brief UTF-8 String Buffer.
 /// @details
-/// Always accounts for null terminator.
+/// Not necessarily null terminated.
 struct _StringBufPOD {
     /// @brief Byte capacity of string buffer.
     usize cap;
@@ -56,21 +56,23 @@ struct _StringBufPOD {
                 /// @brief Pointer to string UTF-8 code units.
                 c8*         utf8;
                 /// @brief Void pointer to string buffer.
-                void*       _void;
+                void*       ptr;
             };
         };
         /// @brief String buffer as a slice.
         struct _StringPOD slice;
     };
 };
-#if !defined(CORE_CPLUSPLUS)
+
+#if defined(__cplusplus)
+#else
     /// @brief UTF-8 String.
     /// @details
     /// Not necessarily null terminated.
     typedef struct _StringPOD    String;
     /// @brief UTF-8 String Buffer.
     /// @details
-    /// Always accounts for null terminator.
+    /// Not necessarily null terminated.
     typedef struct _StringBufPOD StringBuf;
 #endif
 
@@ -134,19 +136,19 @@ b32 cstr_cmp( const char* a, const char* b );
 /// @param str (String) String to hash.
 /// @return 64-bit hash of @c str.
 #define string_hash_elf_64( str ) \
-    hash_elf_64( (str).len, (str)._void )
+    hash_elf_64( (str).len, (str).ptr )
 /// @brief Hash string using MurmurHash2 algorithm.
 /// @note Requires core/hash.h
 /// @param str (String) String to hash.
 /// @return 64-bit hash of @c str.
 #define string_hash_murmur2_64( str ) \
-    hash_murmur2_64( (str).len, (str)._void )
+    hash_murmur2_64( (str).len, (str).ptr )
 /// @brief Hash string using Cityhash algorithm.
 /// @note Requires core/hash.h
 /// @param str (String) String to hash.
 /// @return 64-bit hash of @c str.
 #define string_hash_city_64( str ) \
-    hash_city_64( (str).len, (str)._void )
+    hash_city_64( (str).len, (str).ptr )
 /// @brief Check if string is empty.
 /// @param str String to check.
 /// @return
@@ -464,6 +466,9 @@ b32 string_split_whitespace(
         }
         return true;
     }
+    if( opt_out_left ) {
+        *opt_out_left = source;
+    }
     return false;
 }
 /// @brief Parse signed integer from source string.
@@ -628,7 +633,7 @@ b32 string_buf_is_full( struct _StringBufPOD buf ) {
 /// @param[in] buf Pointer to string buffer.
 attr_always_inline attr_header
 void string_buf_clear( struct _StringBufPOD* buf ) {
-    memory_set( buf->_void, 0, buf->len );
+    memory_set( buf->ptr, 0, buf->len );
     buf->len = 0;
 }
 /// @brief Clone string buffer.
@@ -791,90 +796,110 @@ usize string_buf_try_stream(
 attr_core_api
 bsize string_buf_stream(
     void* StringBufStreamTarget, usize count, const void* bytes );
-
-/// @brief Try to write formatted string to end of string buffer.
-/// @param[in] buf (StringBuf*)     Pointer to string buffer to write to.
-/// @param     fmt (string literal) Format string literal.
-/// @param     va  (va_list)        Variadic arguments.
+/// @brief Attempt to write formatted string to end of string buffer.
+/// @param[in] buf    Pointer to string buffer.
+/// @param     format Format string.
+/// @param[in] va     Variadic arguments.
 /// @return Number of bytes that could not be written to buffer.
-#define string_buf_try_fmt_va( buf, fmt, va ) \
-    internal_string_buf_try_fmt_va( buf, sizeof(fmt) - 1, fmt, va )
-
-/// @brief Try to write formatted string to end of string buffer.
-/// @param[in] buf (StringBuf*)     Pointer to string buffer to write to.
-/// @param     fmt (string literal) Format string literal.
-/// @param     ... (arguments)      Arguments.
-/// @return Number of bytes that could not be written to buffer.
-#define string_buf_try_fmt( buf, fmt, ... ) \
-    internal_string_buf_try_fmt( buf, sizeof(fmt) - 1, fmt, ##__VA_ARGS__ )
-
-/// @brief Write formatted string to end of string buffer.
-/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
-/// @param[in] buf       (StringBuf*)          Pointer to string buffer to write to.
-/// @param     fmt       (string literal)      Format string literal.
-/// @param     va        (va_list)             Variadic arguments.
-/// @return
-///     - true  : Wrote formatted string to buffer successfully.
-///     - false : Failed to reallocate string buffer.
-#define string_buf_fmt_va( allocator, buf, fmt, va ) \
-    internal_string_buf_fmt_va( allocator, buf, sizeof(fmt) - 1, fmt, va )
-
-/// @brief Write formatted string to end of string buffer.
-/// @param[in] allocator (AllocatorInterface*) Pointer to allocator.
-/// @param[in] buf       (StringBuf*)          Pointer to string buffer to write to.
-/// @param     fmt       (string literal)      Format string literal.
-/// @param     ...       (arguments)           Arguments.
-/// @return
-///     - true  : Wrote formatted string to buffer successfully.
-///     - false : Failed to reallocate string buffer.
-#define string_buf_fmt( allocator, buf, fmt, ... ) \
-    internal_string_buf_fmt( allocator, buf, sizeof(fmt) - 1, fmt, ##__VA_ARGS__ )
-
-
 attr_core_api
-usize internal_string_buf_try_fmt_va(
-    struct _StringBufPOD* buf, usize format_len, const char* format, va_list va );
+usize string_buf_try_fmt_va( struct _StringBufPOD* buf, struct _StringPOD format, va_list va );
+/// @brief Attempt to write formatted string to end of string buffer.
+/// @param[in] buf    Pointer to string buffer.
+/// @param     format Format string.
+/// @param[in] ...    Arguments.
+/// @return Number of bytes that could not be written to buffer.
+attr_header
+usize string_buf_try_fmt( struct _StringBufPOD* buf, struct _StringPOD format, ... );
+/// @brief Write formatted string to end of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer.
+/// @param     format    Format string.
+/// @param[in] va        Variadic arguments.
+/// @return
+///     - @c true  : Formatted string written to string buffer.
+///     - @c false : Failed to reallocate string buffer.
+attr_core_api
+bsize string_buf_fmt_va(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD*      buf,
+    struct _StringPOD          format,
+    va_list                    va );
+/// @brief Write formatted string to end of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer.
+/// @param     format    Format string.
+/// @param[in] ...       Arguments.
+/// @return
+///     - @c true  : Formatted string written to string buffer.
+///     - @c false : Failed to reallocate string buffer.
+attr_header
+bsize string_buf_fmt(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD*      buf,
+    struct _StringPOD          format,
+    ... );
+
+/// @brief Attempt to write formatted string to end of string buffer.
+/// @param[in] buf    Pointer to string buffer.
+/// @param     format Format string.
+/// @param[in] va     Variadic arguments.
+/// @return Number of bytes that could not be written to buffer.
+#define string_buf_try_fmt_va_text( buf, format, va ) \
+    string_buf_try_fmt_va( buf, string_text(format), va )
+/// @brief Attempt to write formatted string to end of string buffer.
+/// @param[in] buf    Pointer to string buffer.
+/// @param     format Format string.
+/// @param[in] ...    Arguments.
+/// @return Number of bytes that could not be written to buffer.
+#define string_buf_try_fmt_text( buf, format, ... ) \
+    string_buf_try_fmt( buf, string_text(format), ##__VA_ARGS__ )
+/// @brief Write formatted string to end of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer.
+/// @param     format    Format string.
+/// @param[in] va        Variadic arguments.
+/// @return
+///     - @c true  : Formatted string written to string buffer.
+///     - @c false : Failed to reallocate string buffer.
+#define string_buf_fmt_va_text( allocator, buf, format, va ) \
+    string_buf_fmt_va( allocator, buf, string_text(format), va )
+/// @brief Write formatted string to end of string buffer.
+/// @param[in] allocator Pointer to allocator interface.
+/// @param[in] buf       Pointer to string buffer.
+/// @param     format    Format string.
+/// @param[in] ...       Arguments.
+/// @return
+///     - @c true  : Formatted string written to string buffer.
+///     - @c false : Failed to reallocate string buffer.
+#define string_buf_fmt_text( allocator, buf, format, ... ) \
+    string_buf_fmt( allocator, buf, string_text(format), ##__VA_ARGS__ )
+
+// NOTE(alicia): implementation -----------------------------------------------
 
 attr_header
-usize internal_string_buf_try_fmt(
-    struct _StringBufPOD* buf, usize format_len, const char* format, ...
+usize string_buf_try_fmt( struct _StringBufPOD* buf, struct _StringPOD format, ... ) {
+    va_list va;
+    va_start( va, format );
+    usize result = string_buf_try_fmt_va( buf, format, va );
+    va_end( va );
+    return result;
+}
+attr_header
+bsize string_buf_fmt(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD*      buf,
+    struct _StringPOD          format,
+    ...
 ) {
     va_list va;
     va_start( va, format );
-    usize result = internal_string_buf_try_fmt_va( buf, format_len, format, va );
+    bsize result = string_buf_fmt_va( allocator, buf, format, va );
     va_end( va );
     return result;
 }
 
-attr_core_api
-b32 internal_string_buf_fmt_va(
-    struct AllocatorInterface* allocator, struct _StringBufPOD* buf,
-    usize format_len, const char* format, va_list va );
-
-attr_always_inline attr_header
-b32 internal_string_buf_fmt(
-    struct AllocatorInterface* allocator, struct _StringBufPOD* buf,
-    usize format_len, const char* format, ...
-) {
-    va_list va;
-    va_start( va, format );
-    b32 result = internal_string_buf_fmt_va( allocator, buf, format_len, format, va );
-    va_end( va );
-    return result;
-}
-
-#if defined(CORE_CPLUSPLUS)
-    #if !defined(CORE_CPP_STRING_HPP)
-        #include "core/cpp/string.hpp"
-    #endif
-    /// @brief UTF-8 String.
-    /// @details
-    /// Not necessarily null terminated.
-    typedef _StringCPP    String;
-    /// @brief UTF-8 String Buffer.
-    /// @details
-    /// Always accounts for null terminator.
-    typedef _StringBufCPP StringBuf;
+#if !defined(CORE_CPP_STRING_HPP)
+    #include "core/cpp/string.hpp"
 #endif
 
 #endif /* header guard */

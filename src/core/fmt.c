@@ -239,7 +239,7 @@ usize internal_stream_fmt_string(
             result += string_stream_to_lower( stream, target, string );
         } break;
         default: {
-            result += stream( target, string.len, string._void );
+            result += stream( target, string.len, string.ptr );
         } break;
     }
     return result;

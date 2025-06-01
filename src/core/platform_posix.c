@@ -1534,7 +1534,7 @@ b32 platform_process_find( struct _StringPOD process_name ) {
     // TODO(alicia): replace use of 'which' and system!
     StringBuf buf = string_buf_new( CORE_PATH_NAME_LEN, posix_get_local_buffer() );
 
-    string_buf_try_fmt( &buf, "which {s} > /dev/null 2>&1{c}", process_name, 0 );
+    string_buf_try_fmt_text( &buf, "which {s} > /dev/null 2>&1{c}", process_name, 0 );
 
     return system( buf.buf ) == 0;
 }

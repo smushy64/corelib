@@ -102,7 +102,7 @@ u32 internal_hash_unaligned_load_32( const char* p ) {
     memory_copy( &result, p, sizeof(result) );
     return result;
 }
-#define swap( a, b ) \
+#define __swap( a, b ) \
     tmp = a;\
     a = b;\
     b = tmp
@@ -113,10 +113,10 @@ u64 internal_hash_bswap_64( u64 v ) {
 
     u8 tmp;
 
-    swap( bytes[0], bytes[7] );
-    swap( bytes[1], bytes[6] );
-    swap( bytes[2], bytes[5] );
-    swap( bytes[3], bytes[4] );
+    __swap( bytes[0], bytes[7] );
+    __swap( bytes[1], bytes[6] );
+    __swap( bytes[2], bytes[5] );
+    __swap( bytes[3], bytes[4] );
 
     return v;
 }
@@ -125,12 +125,12 @@ u32 internal_hash_bswap_32( u32 v ) {
     u8* bytes = (u8*)&v;
     u8 tmp;
 
-    swap( bytes[0], bytes[3] );
-    swap( bytes[1], bytes[2] );
+    __swap( bytes[0], bytes[3] );
+    __swap( bytes[1], bytes[2] );
 
     return v;
 }
-#undef swap
+#undef __swap
 attr_internal
 u64 internal_hash_fetch_64( const char* p ) {
     u64 result = internal_hash_unaligned_load_64( p );

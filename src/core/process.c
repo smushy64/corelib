@@ -40,7 +40,7 @@ b32 command_buf_append_arguments(
         if( string_buf_remaining( buf->text ) < total_size ) {
             // NOTE(alicia): convert string pointers to offsets.
             for( usize i = 0; i < buf->len; ++i ) {
-                buf->buf[i]._void = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
+                buf->buf[i].ptr = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
             }
 
             usize realloc_size = total_size - string_buf_remaining( buf->text );
@@ -49,7 +49,7 @@ b32 command_buf_append_arguments(
 
             // NOTE(alicia): convert string offset back to pointers.
             for( usize i = 0; i < buf->len; ++i ) {
-                buf->buf[i]._void = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
+                buf->buf[i].ptr = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
             }
 
             if( !realloc_result ) {
@@ -200,7 +200,7 @@ b32 environment_buf_add(
         if( string_buf_remaining( buf->text ) < total_size ) {
             // NOTE(alicia): convert string pointers to offsets.
             for( usize i = 0; i < (buf->len * 2); ++i ) {
-                buf->buf[i]._void = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
+                buf->buf[i].ptr = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
             }
 
             usize realloc_size = total_size - string_buf_remaining( buf->text );
@@ -208,7 +208,7 @@ b32 environment_buf_add(
 
             // NOTE(alicia): convert string offset back to pointers.
             for( usize i = 0; i < (buf->len * 2); ++i ) {
-                buf->buf[i]._void = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
+                buf->buf[i].ptr = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
             }
 
             if( !realloc_result ) {
@@ -293,7 +293,7 @@ b32 environment_buf_set(
     if( string_buf_remaining( buf->text ) < total_size ) {
         // NOTE(alicia): convert string pointers to offsets.
         for( usize i = 0; i < buf->len; ++i ) {
-            buf->buf[i]._void = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
+            buf->buf[i].ptr = (void*)((usize)(buf->buf[i].buf) - (usize)(buf->text.buf));
         }
 
         usize realloc_size = total_size - string_buf_remaining( buf->text );
@@ -301,7 +301,7 @@ b32 environment_buf_set(
 
         // NOTE(alicia): convert string offset back to pointers.
         for( usize i = 0; i < buf->len; ++i ) {
-            buf->buf[i]._void = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
+            buf->buf[i].ptr = (void*)((usize)(buf->text.buf) + (usize)(buf->buf[i].buf));
         }
 
         if( !realloc_result ) {

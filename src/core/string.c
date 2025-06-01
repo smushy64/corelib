@@ -95,7 +95,7 @@ b32 string_cmp( struct _StringPOD a, struct _StringPOD b ) {
     if( !a.len && !b.len ) {
         return true;
     }
-    return memory_cmp( a._void, b._void, a.len );
+    return memory_cmp( a.ptr, b.ptr, a.len );
 }
 
 attr_core_api
@@ -303,7 +303,7 @@ void string_mut_reverse( struct _StringPOD str ) {
 }
 attr_core_api
 void string_mut_set( struct _StringPOD str, char c ) {
-    memory_set( str._void, rcast( u8, &c ), str.len );
+    memory_set( str.ptr, rcast( u8, &c ), str.len );
 }
 attr_core_api
 void string_mut_to_upper( struct _StringPOD str ) {
@@ -521,7 +521,7 @@ b32 string_buf_from_alloc(
     }
     out_buf->cap = _size;
     out_buf->len = 0;
-    out_buf->_void   = ptr;
+    out_buf->ptr   = ptr;
     return true;
 }
 attr_core_api
@@ -531,7 +531,7 @@ b32 string_buf_from_string_alloc(
     if( !string_buf_from_alloc( allocator, str.len + 16, out_buf ) ) {
         return false;
     }
-    memory_copy( out_buf->_void, str.cbuf, str.len );
+    memory_copy( out_buf->ptr, str.cbuf, str.len );
     out_buf->len = str.len;
     return true;
 }
@@ -539,11 +539,11 @@ attr_core_api
 b32 string_buf_grow(
     struct AllocatorInterface* allocator, struct _StringBufPOD* buf, usize amount
 ) {
-    void* ptr = allocator_realloc( allocator, buf->_void, buf->cap, buf->cap + amount );
+    void* ptr = allocator_realloc( allocator, buf->ptr, buf->cap, buf->cap + amount );
     if( !ptr ) {
         return false;
     }
-    buf->_void    = ptr;
+    buf->ptr    = ptr;
     buf->cap += amount;
     return true;
 }
@@ -551,8 +551,8 @@ attr_core_api
 void string_buf_free(
     struct AllocatorInterface* allocator, struct _StringBufPOD* buf
 ) {
-    if( buf && buf->_void ) {
-        allocator_free( allocator, buf->_void, buf->cap );
+    if( buf && buf->ptr ) {
+        allocator_free( allocator, buf->ptr, buf->cap );
         memory_zero( buf, sizeof(*buf) );
     }
 }
@@ -562,7 +562,7 @@ b32 string_buf_clone(
     struct _StringBufPOD* dst, struct _StringPOD src
 ) {
     if( dst->cap != src.len + 1 ) {
-        if( dst->_void ) {
+        if( dst->ptr ) {
             usize diff = (src.len + 1) - dst->cap;
             if( !string_buf_grow( allocator, dst, diff ) ) {
                 return false;
@@ -574,7 +574,7 @@ b32 string_buf_clone(
         }
     }
 
-    memory_copy( dst->_void, src._void, src.len );
+    memory_copy( dst->ptr, src.ptr, src.len );
     dst->len = src.len;
     return true;
 }
@@ -642,7 +642,7 @@ b32 string_buf_try_insert( struct _StringBufPOD* buf, struct _StringPOD insert, 
     }
     usize move = buf->len ? ((buf->len - at) + 1) : (0);
     memory_move( buf->buf + at + insert.len, buf->buf + at, move );
-    memory_copy( buf->buf + at, insert._void, insert.len );
+    memory_copy( buf->buf + at, insert.ptr, insert.len );
     buf->len += insert.len;
     return true;
 }
@@ -727,19 +727,21 @@ bsize string_buf_stream(
 }
 
 attr_core_api
-usize internal_string_buf_try_fmt_va(
-    struct _StringBufPOD* buf, usize format_len, const char* format, va_list va
+usize string_buf_try_fmt_va(
+    struct _StringBufPOD* buf, struct _StringPOD format, va_list va
 ) {
-    return stream_fmt_va( string_buf_try_stream, buf, format_len, format, va );
+    return stream_fmt_va( string_buf_try_stream, buf, format.len, format.cbuf, va );
 }
 attr_core_api
-b32 internal_string_buf_fmt_va(
-    struct AllocatorInterface* allocator, struct _StringBufPOD* buf,
-    usize format_len, const char* format, va_list va
+bsize string_buf_fmt_va(
+    struct AllocatorInterface* allocator,
+    struct _StringBufPOD*      buf,
+    struct _StringPOD          format,
+    va_list                    va
 ) {
     StringBufStreamTarget target;
     target.buf       = buf;
     target.allocator = allocator;
-    return stream_fmt_va( string_buf_stream, &target, format_len, format, va ) != 0;
+    return stream_fmt_va( string_buf_stream, &target, format.len, format.cbuf, va ) != 0;
 }
 

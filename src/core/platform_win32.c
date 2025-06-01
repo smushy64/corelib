@@ -2145,7 +2145,7 @@ b32 platform_process_find( struct _StringPOD process_name ) {
     };
 
     StringBuf buf = string_buf_new( CORE_PATH_NAME_LEN, utf8_buf );
-    string_buf_try_fmt( &buf, "CMD /C WHERE {s}", process_name );
+    string_buf_try_fmt_text( &buf, "CMD /C WHERE {s}", process_name );
     if( buf.len == buf.cap ) {
         buf.buf[buf.len - 1] = 0;
     } else {
