@@ -473,6 +473,10 @@ struct Vector4CPP {
     /// @param w  W component.
     constexpr explicit Vector4CPP( Vector2CPP xy, f32 z, f32 w );
     /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param zw Z and W components.
+    constexpr explicit Vector4CPP( Vector2CPP xy, Vector2CPP zw );
+    /// @brief Create vector.
     /// @param x   X component.
     /// @param yzw Y, Z and W components.
     constexpr explicit Vector4CPP( f32 x, Vector3CPP yzw );
@@ -947,6 +951,10 @@ struct IVector4CPP {
     /// @param w  W component.
     constexpr explicit IVector4CPP( IVector2CPP xy, i32 z, i32 w );
     /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param zw Z and W components.
+    constexpr explicit IVector4CPP( IVector2CPP xy, IVector2CPP zw );
+    /// @brief Create vector.
     /// @param x   X component.
     /// @param yzw Y, Z and W components.
     constexpr explicit IVector4CPP( i32 x, IVector3CPP yzw );
@@ -1393,6 +1401,10 @@ struct BVector4CPP {
     /// @param w  W component.
     constexpr explicit BVector4CPP( BVector2CPP xy, b32 z, b32 w );
     /// @brief Create vector.
+    /// @param xy X and Y components.
+    /// @param zw Z and W components.
+    constexpr explicit BVector4CPP( BVector2CPP xy, BVector2CPP zw );
+    /// @brief Create vector.
     /// @param x   X component.
     /// @param yzw Y, Z and W components.
     constexpr explicit BVector4CPP( b32 x, BVector3CPP yzw );
@@ -1452,6 +1464,9 @@ Vector4CPP::Vector4CPP( f32 x, Vector2CPP yz, f32 w )
 constexpr attr_always_inline attr_header attr_hot
 Vector4CPP::Vector4CPP( Vector2CPP xy, f32 z, f32 w )
     : x(xy.x), y(xy.y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+Vector4CPP::Vector4CPP( Vector2CPP xy, Vector2CPP zw )
+    : x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
 constexpr attr_always_inline attr_header attr_hot
 Vector4CPP::Vector4CPP( f32 x, Vector3CPP yzw )
     : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
@@ -1983,6 +1998,9 @@ constexpr attr_always_inline attr_header attr_hot
 IVector4CPP::IVector4CPP( IVector2CPP xy, i32 z, i32 w )
     : x(xy.x), y(xy.y), z(z), w(w) {}
 constexpr attr_always_inline attr_header attr_hot
+IVector4CPP::IVector4CPP( IVector2CPP xy, IVector2CPP zw )
+    : x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
+constexpr attr_always_inline attr_header attr_hot
 IVector4CPP::IVector4CPP( i32 x, IVector3CPP yzw )
     : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
 constexpr attr_always_inline attr_header attr_hot
@@ -2244,6 +2262,9 @@ BVector4CPP::BVector4CPP( b32 x, BVector2CPP yz, b32 w )
 constexpr attr_always_inline attr_header attr_hot
 BVector4CPP::BVector4CPP( BVector2CPP xy, b32 z, b32 w )
     : x(xy.x), y(xy.y), z(z), w(w) {}
+constexpr attr_always_inline attr_header attr_hot
+BVector4CPP::BVector4CPP( BVector2CPP xy, BVector2CPP zw )
+    : x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
 constexpr attr_always_inline attr_header attr_hot
 BVector4CPP::BVector4CPP( b32 x, BVector3CPP yzw )
     : x(x), y(yzw.x), z(yzw.y), w(yzw.z) {}
