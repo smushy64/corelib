@@ -240,7 +240,7 @@ mat3 normal_matrix( const mat4& m ) {
 }
 
 attr_always_inline attr_header attr_hot
-mat4 view( vec3 position, vec3 target, vec3 up ) {
+mat4 view( vec3 position, vec3 target, vec3 up = vec3::up() ) {
     return mat4_view( position, target, up );
 }
 attr_always_inline attr_header attr_hot
