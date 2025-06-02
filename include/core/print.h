@@ -49,6 +49,8 @@ typedef const char AnsiColor;
 #define ansi_color( color, literal ) ANSI_COLOR_##color literal ANSI_COLOR_RESET
 
 #if defined(__cplusplus)
+    #include "core/fs.h"
+
     /// @brief Print message to stdout.
     /// @param format (string literal) Format string.
     /// @param ...    (args)           Format arguments.

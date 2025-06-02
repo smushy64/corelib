@@ -28,7 +28,6 @@
 #include "core/types.h"
 #include "core/attributes.h"
 #include "core/path.h"   // IWYU pragma: export
-#include "core/macros.h" // IWYU pragma: export
 
 /// @brief Maximum allowed path name length.
 #define CORE_PATH_NAME_LEN (kibibytes(4))
@@ -449,7 +448,7 @@ struct _StringPOD file_type_to_string( FileType ft ) {
         case FTYPE_PIPE:      return string_text( "Pipe" );
         case FTYPE_UNKNOWN:   return string_text( "Unknown" );
     }
-    unreachable();
+    return string_text("");
 }
 
 #if !defined(CORE_CPP_FS_HPP)
