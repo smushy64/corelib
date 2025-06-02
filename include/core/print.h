@@ -48,16 +48,29 @@ typedef const char AnsiColor;
 /// @return (string literal) Text wrapped with given color.
 #define ansi_color( color, literal ) ANSI_COLOR_##color literal ANSI_COLOR_RESET
 
-/// @brief Print message to stdout.
-/// @param format (string literal) Format string.
-/// @param ...    (args)           Format arguments.
-#define print( fmt, ... ) \
-    file_write_fmt( pipe_stdout(), string_text(fmt), ##__VA_ARGS__ )
-/// @brief Print message to stderr.
-/// @param format (string literal) Format string.
-/// @param ...    (args)           Format arguments.
-#define eprint( fmt, ... ) \
-    file_write_fmt( pipe_stderr(), string_text(fmt), ##__VA_ARGS__ )
+#if defined(__cplusplus)
+    /// @brief Print message to stdout.
+    /// @param format (string literal) Format string.
+    /// @param ...    (args)           Format arguments.
+    #define print( fmt, ... ) \
+        file_write_fmt( pipe_stdout(), fmt, ##__VA_ARGS__ )
+    /// @brief Print message to stderr.
+    /// @param format (string literal) Format string.
+    /// @param ...    (args)           Format arguments.
+    #define eprint( fmt, ... ) \
+        file_write_fmt( pipe_stderr(), fmt, ##__VA_ARGS__ )
+#else
+    /// @brief Print message to stdout.
+    /// @param format (string literal) Format string.
+    /// @param ...    (args)           Format arguments.
+    #define print( fmt, ... ) \
+        file_write_fmt( pipe_stdout(), string_text(fmt), ##__VA_ARGS__ )
+    /// @brief Print message to stderr.
+    /// @param format (string literal) Format string.
+    /// @param ...    (args)           Format arguments.
+    #define eprint( fmt, ... ) \
+        file_write_fmt( pipe_stderr(), string_text(fmt), ##__VA_ARGS__ )
+#endif
 /// @brief Print message to stdout.
 /// @param format (string literal) Format string.
 /// @param ...    (args)           Format arguments.
