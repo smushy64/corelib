@@ -22,6 +22,8 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.3
 -----
 
+- string:cpp: implicit conversion from StringBufPOD to StringBufCPP 
+- quat:cpp: quat_from_angle_axis
 - fs: pipes are now just file descriptors
 - assertions: applied name change from print.h
 - print: renamed print_err to eprint

@@ -763,6 +763,10 @@ struct _StringBufCPP {
     template<usize ArrayLength>
     constexpr explicit _StringBufCPP( const char (&array)[ArrayLength], usize opt_len = 0 );
 
+    /// @brief Implicitly convert POD string buffer to C++ string buffer.
+    /// @param pod String buffer (POD).
+    constexpr _StringBufCPP( const _StringBufPOD& pod );
+
     /// @brief Implicitly convert C++ string buffer to POD string buffer.
     /// @return POD string buffer.
     constexpr operator _StringBufPOD() const;
@@ -1073,6 +1077,9 @@ _StringBufCPP::_StringBufCPP( const Slice<u8>& slice, usize opt_len )
 template<usize ArrayLength> constexpr attr_header
 _StringBufCPP::_StringBufCPP( const char (&array)[ArrayLength], usize opt_len )
     : cap(ArrayLength), len(opt_len), cbuf(array) {}
+constexpr attr_header attr_always_inline attr_hot
+_StringBufCPP::_StringBufCPP( const _StringBufPOD& pod )
+    : cap(pod.cap), len(pod.len), cbuf(pod.cbuf) {}
 
 constexpr attr_header
 _StringBufCPP::operator _StringBufPOD() const {

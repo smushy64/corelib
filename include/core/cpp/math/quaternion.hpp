@@ -298,6 +298,14 @@ quat slerp( quat a, quat b, f32 t ) {
     return quat_slerp( a, b, t );
 }
 attr_always_inline attr_header attr_hot
+quat quat_from_angle_axis( f32 angle, f32 x, f32 y, f32 z ) {
+    return quat_from_angle_axis( AngleAxis( angle, x, y, z) );
+}
+attr_always_inline attr_header attr_hot
+quat quat_from_angle_axis( f32 angle, vec3 axis ) {
+    return quat_from_angle_axis( AngleAxis( angle, axis ) );
+}
+attr_always_inline attr_header attr_hot
 quat quat_from_euler( vec3 euler ) {
     return quat_from_euler_vec3( euler );
 }
