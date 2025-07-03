@@ -42,7 +42,7 @@ b32 file_copy_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_
     dst_flags = FOPEN_WRITE;
 
     if( create_dst ) {
-        if( file_query_type_by_path( dst ) != FTYPE_NULL ) {
+        if( file_exists_by_path( dst ) ) {
             core_error(
                 "core/fs:file_copy_by_path(): "
                 "attempted to copy {p} to {p} but {p} "
@@ -52,10 +52,10 @@ b32 file_copy_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_
 
         dst_flags |= FOPEN_CREATE;
     } else {
-        if( file_query_type_by_path( dst ) == FTYPE_NULL ) {
-            dst_flags |= FOPEN_CREATE;
-        } else {
+        if( file_exists_by_path( dst ) ) {
             dst_flags |= FOPEN_TRUNCATE;
+        } else {
+            dst_flags |= FOPEN_CREATE;
         }
     }
 
