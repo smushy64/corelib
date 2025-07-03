@@ -90,6 +90,10 @@ b32 file_remove_by_path( struct _StringPOD path ) {
     return platform_file_remove_by_path( path );
 }
 attr_core_api
+b32 file_exists_by_path( struct _StringPOD path ) {
+    return platform_file_exists_by_path( path );
+}
+attr_core_api
 b32 file_query_info_by_path( struct _StringPOD path, FileInfo* out_info ) {
     if( string_is_empty( path ) ) {
         core_error( "core/fs:file_query_info_by_path(): path is empty!" );

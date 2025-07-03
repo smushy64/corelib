@@ -318,6 +318,10 @@ enum FileType platform_file_query_type_by_path( struct _StringPOD in_path ) {
     
     return win32_file_attrib_to_file_type( attrib );
 }
+b32 platform_file_exists_by_path( struct _StringPOD in_path ) {
+    wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
+    return GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES;
+}
 TimePosix platform_file_query_time_create_by_path( struct _StringPOD in_path ) {
     wchar_t* path = win32_canonical_from_path_ucs2_local( in_path );
     WIN32_FILE_ATTRIBUTE_DATA data = {};

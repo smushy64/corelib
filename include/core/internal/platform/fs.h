@@ -20,6 +20,7 @@ struct DirectoryWalkInfo;
 
 b32 platform_file_remove_by_path( struct _StringPOD path );
 b32 platform_file_query_info_by_path( struct _StringPOD path, struct FileInfo* out_info );
+b32 platform_file_exists_by_path( struct _StringPOD path );
 enum FileType platform_file_query_type_by_path( struct _StringPOD path );
 TimePosix platform_file_query_time_create_by_path( struct _StringPOD path );
 TimePosix platform_file_query_time_modify_by_path( struct _StringPOD path );

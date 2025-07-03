@@ -207,6 +207,13 @@ b32 file_move_by_path( struct _StringPOD dst, struct _StringPOD src, b32 create_
 ///     - @c false : Failed to remove file.
 attr_core_api
 b32 file_remove_by_path( struct _StringPOD path );
+/// @brief Check if file exists by path.
+/// @param path Path to file.
+/// @return
+///     - @c true  : File exists (file or directory).
+///     - @c false : File does not exist.
+attr_core_api
+b32 file_exists_by_path( struct _StringPOD path );
 /// @brief Query info about a file.
 /// @param      path     Path to file.
 /// @param[out] out_info Pointer to file info struct to fill out.

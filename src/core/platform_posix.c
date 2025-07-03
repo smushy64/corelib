@@ -590,6 +590,15 @@ enum FileType platform_file_query_type_by_path( struct _StringPOD path ) {
 
     return internal_posix_file_type_from_stat( &st );
 }
+b32 platform_file_exists_by_path( struct _StringPOD path ) {
+    const char* p = posix_path_null_terminated( path );
+    struct stat st;
+    if( stat( p, &st ) ) {
+        return false;
+    } else {
+        return true;
+    }
+}
 TimePosix platform_file_query_time_create_by_path( struct _StringPOD path ) {
     const char* p = posix_path_null_terminated( path );
     struct stat st;

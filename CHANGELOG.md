@@ -22,6 +22,7 @@ Indicates additions to API, minor bug fixes and other small changes.
 0.1.3
 -----
 
+- fs: added file_exists_by_path()
 - string:cpp: implicit conversion from StringBufPOD to StringBufCPP 
 - quat:cpp: quat_from_angle_axis
 - fs: pipes are now just file descriptors

@@ -49,6 +49,13 @@ bool file_remove_by_path( String path );
 ///     - false : Failed to obtain file information.
 attr_header
 bool file_query_info_by_path( String path, FileInfo* out_info );
+/// @brief Check if file exists by path.
+/// @param path Path to file.
+/// @return
+///     - @c true  : File exists (file or directory).
+///     - @c false : File does not exist.
+attr_header
+bool file_exists_by_path( String path );
 /// @brief Query file descriptor file type by path.
 /// @note
 /// This is the same as calling file_query_info_by_path() and only reading
@@ -175,6 +182,10 @@ bool file_query_info_by_path( String path, FileInfo* out_info ) {
 attr_always_inline attr_header attr_hot
 FileType file_query_type_by_path( String path ) {
     return file_query_type_by_path( path.__pod );
+}
+attr_always_inline attr_header attr_hot
+bool file_exists_by_path( String path ) {
+    return file_exists_by_path( path.__pod );
 }
 attr_always_inline attr_header attr_hot
 TimePosix file_query_time_create_by_path( String path ) {
